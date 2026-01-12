@@ -1,7 +1,3 @@
-; 00003D80 lineDrawingBuffer
-; 000060A8 lineDrawingBufferEnd
-; 0000648F someBufferEnd
-; 0007B08A
 ; 00007D00 frameBufferSize
 ; bpl1 $78000
 ; bpl2 $7a000
@@ -153,6 +149,8 @@ color28 = $1b8
 color29 = $1ba
 color30 = $1bc
 color31 = $1be
+cop1lch = $080
+intenar = $01c 
 spr0pth = $120
 spr0ptl = $122
 spr1pth = $124
@@ -169,11 +167,258 @@ spr6pth = $138
 spr6ptl = $13a
 spr7pth = $13c
 spr7ptl = $13e
+_LVOOpenLibrary		equ	-$228
+_LVOCloseLibrary	equ	-$19e
+_LVOForbid		equ	-$84
+_LVOPermit		equ	-$8a
+_LVOSuperVisor		equ	-$1e
+_LVOAllocMem		equ	-$c6
+_LVOFreeMem		equ	-$d2
+_LVOCacheControl	equ	-$288
+_LVOLoadView		equ	-$de
+_LVOWaitTOF		equ	-$10e
+AttnFlags		equ	$128
+CACR_EnableI		equ	$00000001
+CACR_FreezeI		equ	$00000002
+CACR_ClearI		equ	$00000008
+CACR_IBE		equ	$00000010
+CACR_EnableD		equ	$00000100
+CACR_FreezeD		equ	$00000200
+CACR_ClearD		equ	$00000800
+CACR_DBE		equ	$00001000
+CACR_WriteAllocate	equ	$00002000
+CACR_EnableE		equ	$40000000
+CACR_CopyBack		equ	$80000000
+gb_ActiView		equ	34
+gb_copinit		equ	38
+DMAF_ALL		equ	$01FF
+MEMF_CHIP		equ	$00000002
+MEMF_CLEAR		equ	$00010000
 	
 	section	ChipCode,code_c
 
 	incdir	"scr:"
+startup:
+	; Allocate memory
+	move.l	4.w,a6
+	move.l	#$20000,d0
+	move.l	#MEMF_CHIP|MEMF_CLEAR,d1
+	jsr	_LVOAllocMem(a6)
+	move.l	d0,memory_chip
+	beq	startupFailure
+	move.l	d0,memory_3D80
+	move.l	d0,memory_60A8
+	move.l	d0,memory_6490
+	add.l	#$10000,d0
+	move.l	d0,memory_79360
+	move.l	d0,memory_7A01A
+	move.l	d0,memory_7A035
+	move.l	d0,memory_7A03A
+	move.l	d0,memory_7A03F
+	move.l	d0,memory_7A21A
+	move.l	d0,memory_7A41A
+	move.l	d0,memory_7A43A
+	move.l	d0,memory_7A4BA
+	move.l	d0,memory_7A4FA
+	move.l	d0,memory_7A51A
+	move.l	d0,memory_7A61A
+	move.l	d0,memory_7A71A
+	move.l	d0,memory_7A81A
+	move.l	d0,memory_7A91A
+	move.l	d0,memory_7A9FA
+	move.l	d0,memory_7AA1A
+	move.l	d0,memory_7AAE6
+	move.l	d0,memory_7AB5A
+	move.l	d0,memory_7ABDA
+	move.l	d0,memory_7B08A
+	move.l	d0,memory_7B6FA
+	add.l	#$3D80,memory_3D80
+	add.l	#$60A8,memory_60A8
+	add.l	#$6490,memory_6490
+	add.l	#$9360,memory_79360
+	add.l	#$A01A,memory_7A01A
+	add.l	#$A035,memory_7A035
+	add.l	#$A03A,memory_7A03A
+	add.l	#$A03F,memory_7A03F
+	add.l	#$A21A,memory_7A21A
+	add.l	#$A41A,memory_7A41A
+	add.l	#$A43A,memory_7A43A
+	add.l	#$A4BA,memory_7A4BA
+	add.l	#$A4FA,memory_7A4FA
+	add.l	#$A51A,memory_7A51A
+	add.l	#$A61A,memory_7A61A
+	add.l	#$A71A,memory_7A71A
+	add.l	#$A81A,memory_7A81A
+	add.l	#$A91A,memory_7A91A
+	add.l	#$A9FA,memory_7A9FA
+	add.l	#$AA1A,memory_7AA1A
+	add.l	#$AAE6,memory_7AAE6
+	add.l	#$AB5A,memory_7AB5A
+	add.l	#$ABDA,memory_7ABDA
+	add.l	#$B08A,memory_7B08A
+	add.l	#$B6FA,memory_7B6FA
+
+	; Open libraries
+	moveq	#0,d0
+	lea	name_graphics,a1
+	jsr	_LVOOpenLibrary(a6)
+	move.l	d0,base_graphics
+	beq	startupFailure
+
+	; Get Vector Base Register
+	jsr	_LVOForbid(a6)
+	move.w	AttnFlags(a6),d0
+	beq	.no680x0
+	lea	GetVBR(pc),a5
+	jsr	_LVOSuperVisor(a6)
+
+	; Enable caches
+	move.l	#CACR_CopyBack|CACR_WriteAllocate|CACR_DBE|CACR_EnableD|CACR_IBE|CACR_EnableI,d0
+	move.l	#CACR_CopyBack|CACR_EnableE|CACR_DBE|CACR_ClearD|CACR_EnableD|CACR_FreezeD|CACR_IBE|CACR_ClearI|CACR_FreezeI|CACR_EnableI,d1
+	jsr	_LVOCacheControl(a6)
+	move.l	d0,cachebits_old
+
+.no680x0:
+	; Store old values
+	move.l	base_vector,a5
+	move.l	base_graphics,a6
+	move.l	gb_ActiView(a6),gb_ActiView_old
+	move.l 	gb_copinit(a6),gb_copinit_old
+	move.l	tv_Lev1IntVect(a5),tv_Lev1IntVect_old
+	move.l	tv_Lev2IntVect(a5),tv_Lev2IntVect_old
+	move.l	tv_Lev3IntVect(a5),tv_Lev3IntVect_old
+	move.l	tv_Lev4IntVect(a5),tv_Lev4IntVect_old
+	move.l	tv_Lev5IntVect(a5),tv_Lev5IntVect_old
+	move.l	tv_Lev6IntVect(a5),tv_Lev6IntVect_old
+	move.l	tv_Lev7IntVect(a5),tv_Lev7IntVect_old
+	sub.l	a1,a1
+	jsr	_LVOLoadView(a6)
+	jsr	_LVOWaitTOF(a6)
+	jsr	_LVOWaitTOF(a6)
+
+	lea	_custom,a6
+	move.w	dmaconr(a6),dmaconr_old
+	move.w	intenar(a6),intenar_old
+	move.w	#DMAF_BLITHOG|DMAF_ALL,dmacon(a6)
+	move.w	#$ffff-INTF_SETCLR,intena(a6)
 	bra	begin
+
+startupFailure:
+	moveq	#1,d0
+	rts
+
+shutdown:
+	; Disable interrupts and DMA
+	lea	_custom,a6
+	move.w	#INTF_BLIT|INTF_VERTB,intreq(a6)
+	move.w	#INTF_BLIT|INTF_VERTB,intreq(a6)
+	move.w	#$ffff-INTF_SETCLR,intena(a6)
+;	waitb
+	move.w	#DMAF_COPPER,dmacon(a6)
+
+	; Restore old values
+	move.l	gb_copinit_old,cop1lch(a6)
+	clr.w	copjmp1(a6)
+	move.l	base_vector,a5
+	move.w	#DMAF_SETCLR|DMAF_COPPER,dmacon(a6)
+	move.l	tv_Lev1IntVect_old,tv_Lev1IntVect(a5)
+	move.l	tv_Lev2IntVect_old,tv_Lev2IntVect(a5)
+	move.l	tv_Lev3IntVect_old,tv_Lev3IntVect(a5)
+	move.l	tv_Lev4IntVect_old,tv_Lev4IntVect(a5)
+	move.l	tv_Lev5IntVect_old,tv_Lev5IntVect(a5)
+	move.l	tv_Lev6IntVect_old,tv_Lev6IntVect(a5)
+	move.l	tv_Lev7IntVect_old,tv_Lev7IntVect(a5)
+	move.w	dmaconr_old,d0
+	or.w	#DMAF_SETCLR,d0
+	move.w	d0,dmacon(a6)
+	move.w	intenar_old,d0
+	or.w	#INTF_SETCLR|INTF_INTEN,d0
+	move.w	d0,intena(a6)
+	move.l	base_graphics,a6
+	move.l	gb_ActiView_old,a1
+	jsr	_LVOLoadView(a6)
+	jsr	_LVOWaitTOF(a6)
+	jsr	_LVOWaitTOF(a6)
+
+	move.l	4.w,a6
+	jsr	_LVOPermit(a6)
+	tst.l	base_graphics
+	beq.b	.nobase_graphics
+	move.l	base_graphics,a1
+	jsr	_LVOCloseLibrary(a6)
+.nobase_graphics:
+	move.w	AttnFlags(a6),d0
+	beq.b	.no680x0
+	move.l	cachebits_old,d0
+	move.l	#CACR_CopyBack|CACR_EnableE|CACR_DBE|CACR_ClearD|CACR_EnableD|CACR_FreezeD|CACR_IBE|CACR_ClearI|CACR_FreezeI|CACR_EnableI,d1
+	jsr	_LVOCacheControl(a6)
+.no680x0:
+	move.l	memory_chip,d0
+	beq.b	.nochipmem
+	move.l	d0,a1
+	move.l	#$20000,d0
+	jsr	_LVOFreeMem(a6)
+.nochipmem:
+	moveq	#0,d0
+	rts
+
+; Get VBR address
+GetVBR:	ORI	#$0700,SR
+	movec	vbr,d0
+	move.l	d0,base_vector
+	RTE
+
+memory_chip:	ds.l	1
+memory_3D80:	ds.l	1
+memory_60A8:	ds.l	1
+memory_6490:	ds.l	1
+memory_79360:	ds.l	1
+memory_7A01A:	ds.l	1
+memory_7A035:	ds.l	1
+memory_7A03A:	ds.l	1
+memory_7A03F:	ds.l	1
+memory_7A21A:	ds.l	1
+memory_7A41A:	ds.l	1
+memory_7A43A:	ds.l	1
+memory_7A4BA:	ds.l	1
+memory_7A4FA:	ds.l	1
+memory_7A51A:	ds.l	1
+memory_7A61A:	ds.l	1
+memory_7A71A:	ds.l	1
+memory_7A81A:	ds.l	1
+memory_7A91A:	ds.l	1
+memory_7A9FA:	ds.l	1
+memory_7AA1A:	ds.l	1
+memory_7AAE6:	ds.l	1
+memory_7AB5A:	ds.l	1
+memory_7ABDA:	ds.l	1
+memory_7B08A:	ds.l	1
+memory_7B6FA:	ds.l	1
+base_vector:	ds.l	1
+base_graphics:	ds.l	1
+gb_copinit_old:	ds.l	1
+gb_ActiView_old:	ds.l	1
+tv_Lev1IntVect_old:	ds.l	1
+tv_Lev2IntVect_old:	ds.l	1
+tv_Lev3IntVect_old:	ds.l	1
+tv_Lev4IntVect_old:	ds.l	1
+tv_Lev5IntVect_old:	ds.l	1
+tv_Lev6IntVect_old:	ds.l	1
+tv_Lev7IntVect_old:	ds.l	1
+cachebits_old:	ds.l	1
+dmaconr_old:	ds.w	1
+intenar_old:	ds.w	1
+name_graphics:	dc.b	"graphics.library",0
+quit:			ds.b	1
+		even
+
+testQuit:
+	btst	#10,$dff016
+	bne.s	.noQuit
+	move.b	#1,quit
+.noQuit:
+	rts
+
 ****************************************************************************
 	MOVE.L	#codeStart,A0
 	MOVE.L	#codeEnd,D3
@@ -196,7 +441,7 @@ codeStart:
 	MOVE.L	#begin,$00000080
 	TRAP	#$00
 begin:
-	MOVE.L	#stackEnd,SP
+;	MOVE.L	#stackEnd,SP
 	JSR	initialize
 	JMP	mainGame1
 
@@ -314,7 +559,7 @@ serialTransmitBuffer:
 	dc.b	$00,$00,$00,$00
 
 initialize:
-	MOVE.W	#$2700,SR
+;	MOVE.W	#$2700,SR
 	MOVE.W	#(INTF_TBE|INTF_DSKBLK|INTF_SOFTINT|INTF_PORTS|INTF_COPER|INTF_VERTB|INTF_BLIT|INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3|INTF_RBF|INTF_DSKSYNC|INTF_EXTER|INTF_INTEN),_custom+intena
 	MOVE.W	#(INTF_TBE|INTF_DSKBLK|INTF_SOFTINT|INTF_PORTS|INTF_COPER|INTF_VERTB|INTF_BLIT|INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3|INTF_RBF|INTF_DSKSYNC|INTF_EXTER|INTF_INTEN),_custom+intreq
 	MOVE.W	#(INTF_TBE|INTF_PORTS|INTF_COPER|INTF_VERTB|INTF_RBF|INTF_EXTER|INTF_INTEN|INTF_SETCLR),_custom+intena
@@ -326,7 +571,7 @@ initialize:
 	MOVE.L	#level5Interrupt,tv_Lev5IntVect
 	MOVE.L	#level6Interrupt,tv_Lev6IntVect
 	MOVE.L	#level7Interrupt,tv_Lev7IntVect
-	MOVE.W	#$2000,SR
+;	MOVE.W	#$2000,SR
 	MOVE.L	#lbL05BE94,D0
 	MOVE.L	D0,primaryFrameBuffer
 	MOVE.L	D0,currentFrameBuffer
@@ -970,10 +1215,10 @@ clearKeyboardStateLoop:
 	MOVE.B	#$00,$00(A0,D1.W)
 	SUBQ.B	#$01,D1
 	BPL	clearKeyboardStateLoop
-	MOVE.L	#$0007A01A,A0
+	MOVE.L	memory_7A01A,A0
 clearSomethingLoop:
 	MOVE.B	#$00,(A0)+
-	CMP.L	#$0007B6FA,A0
+	CMP.L	memory_7B6FA,A0
 	BLT	clearSomethingLoop
 	TST.B	checksum
 	BEQ	checksumOk
@@ -19686,10 +19931,10 @@ lbC049758:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	JSR	lbC04989E
 	BMI	lbC049758
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.B	(A6)+,D0
 	CMP.B	#$08,D0
 	BLT	lbC04978A
@@ -19723,7 +19968,7 @@ lbC0497E8:
 	TST.B	multiplayerEnabled
 	BEQ	lbC0497B6
 	JSR	lbC049B00
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.B	multiplayerEnabled,(A6)+
 	MOVE.W	#$00BF,D7
 	MOVE.L	#playerNamesWithSpaces,A0
@@ -19734,7 +19979,7 @@ lbC049814:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	JSR	lbC04984C
 	BMI	lbC049814
 	JSR	lbC049B92
@@ -19938,7 +20183,7 @@ lbC049BB4:
 	MOVE.B	#$01,D0
 	JSR	lbC050C74
 	MOVE.B	#$00,lbB00E331
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.W	#$00FF,D7
 	CMP.B	#$40,lbB00D46B
 	BNE	lbC049BE8
@@ -19987,7 +20232,7 @@ lbC049C7E:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049CE6
 	MOVE.W	#$0002,D7
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	TST.B	lbB00D46B
 	BEQ	lbC049CB0
 	MOVE.W	#$00FF,D7
@@ -20000,7 +20245,7 @@ lbC049CB0:
 	TST.B	lbB00D46B
 	BNE	lbC049CDC
 	MOVE.L	#selectedTrack,A0
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.W	#$0002,D7
 lbC049CD4:
 	MOVE.B	(A6)+,(A0)+
@@ -20022,14 +20267,14 @@ lbC049CE8:
 lbC049D02:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049D70
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.W	#$0004,D7
 	JSR	lbC04989E
 	BMI	lbC049D02
 	JSR	lbC049DDE
 	MOVE.B	opponentID,D0
 	JSR	lbC049D72
-	MOVE.L	#$0007A41A,A1
+	MOVE.L	memory_7A41A,A1
 	JSR	lbC049D8A
 	TST.B	networkGameMode
 	BMI	lbC049D70
@@ -20088,7 +20333,7 @@ lbC049DD4:
 	RTS
 
 lbC049DDE:
-	MOVE.L	#$0007A41A,A0
+	MOVE.L	memory_7A41A,A0
 	MOVE.L	#lbW049E00,A2
 	CLR.W	D0
 	MOVE.W	#$0004,D3
@@ -20176,12 +20421,12 @@ synchronizeRaceData:
 lbC049F88:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.W	#$0063,D7
 	JSR	lbC04989E
 	BMI	lbC049F88
 	MOVE.L	#playerStatsArray,A0
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.W	#$0047,D7
 lbC049FB6:
 	MOVE.B	(A6)+,(A0)+
@@ -20200,7 +20445,7 @@ lbC049FE6:
 	RTS
 
 lbC049FF4:
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.L	#playerStatsArray,A0
 	MOVE.W	#$0047,D7
 copyGameStateData:
@@ -20219,7 +20464,7 @@ lbC04A02C:
 lbC04A038:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	#$0007A41A,A6
+	MOVE.L	memory_7A41A,A6
 	MOVE.W	#$0063,D7
 	JSR	lbC04984C
 	BMI	lbC04A038
@@ -22260,7 +22505,7 @@ lbC04C1AC:
 	BNE	lbC04C188
 	TST.B	graphicsUpdateFlag
 	BEQ	lbC04C24A
-	MOVE.L	#$0007AAE6,A1
+	MOVE.L	memory_7AAE6,A1
 	MOVE.L	(A1),A1
 	MOVE.B	$0010(A0),D0
 	ASL.W	#$08,D0
@@ -23528,7 +23773,7 @@ startGameSession:
 	MOVE.B	D0,D1
 	MOVE.B	#$00,D2
 lbC04D4EC:
-	MOVE.L	#$0007A01A,A2
+	MOVE.L	memory_7A01A,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.L	#lbL00DB80,A2
 	MOVE.B	D0,$00(A2,D2.W)
@@ -23574,7 +23819,7 @@ restoreGameData:
 	MOVE.B	#$00,D2
 	MOVE.B	lbB00D4D0,lbB00E334
 	MOVE.L	#lbL00DB80,A2
-	MOVE.L	#$0007A01A,A0
+	MOVE.L	memory_7A01A,A0
 lbC04D5C2:
 	MOVE.B	$00(A2,D2.W),$00(A0,D2.W)
 	SUBQ.B	#$01,D2
@@ -24397,13 +24642,13 @@ mainGame2:
 	MOVE.W	#$0000,imageMenuScreenPalette
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
-	MOVE.L	#$0007A91A,A1
+	MOVE.L	memory_7A91A,A1
 copyPlayerNamesLoop:
 	MOVE.B	(A0)+,(A1)+
 	DBRA	D0,copyPlayerNamesLoop
 	MOVE.L	#divider,A0
-	MOVE.L	#$0007A61A,A1
-	MOVE.L	#$0007A71A,A2
+	MOVE.L	memory_7A61A,A1
+	MOVE.L	memory_7A71A,A2
 	CLR.W	D1
 	CLR.W	D2
 copyDividerLoop:
@@ -24577,7 +24822,7 @@ mainGame6:
 	MOVE.L	#stackEnd,SP
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
-	MOVE.L	#$0007A91A,A1
+	MOVE.L	memory_7A91A,A1
 copyPlayerNamesWithSpacesLoop:
 	MOVE.B	(A1)+,(A0)+
 	DBRA	D0,copyPlayerNamesWithSpacesLoop
@@ -25049,7 +25294,7 @@ lbC04F108:
 lbC04F130:
 	MOVE.B	#$00,$00(A0,D0.W)
 	DBRA	D0,lbC04F130
-	MOVE.L	#$00003D80,A0
+	MOVE.L	memory_3D80,A0
 	MOVE.W	#$270F,D3
 	MOVE.B	#$00,D0
 lbC04F148:
@@ -26457,9 +26702,9 @@ lbC0507B0:
 	MOVE.B	D0,lbB05047E
 lbC0507B6:
 	MOVE.L	#lbL04C442,A0
-	MOVE.L	#$0007A9FA,A1
+	MOVE.L	memory_7A9FA,A1
 	MOVE.L	#engineCharacteristics,A2
-	MOVE.L	#$0007A91A,A3
+	MOVE.L	memory_7A91A,A3
 	MOVE.L	#playerNamesWithSpaces,A4
 	MOVE.L	#lbW04AA40,A5
 	ADD.B	$00(A0,D2.W),D0
@@ -26568,8 +26813,8 @@ lbC050946:
 	RTS
 
 lbC05094A:
-	MOVE.L	#$0007A41A,A0
-	MOVE.L	#$0007A01A,A1
+	MOVE.L	memory_7A41A,A0
+	MOVE.L	memory_7A01A,A1
 	MOVE.W	#$00BF,D0
 	TST.B	lbB00E331
 	BNE	lbC05096C
@@ -26719,32 +26964,32 @@ lbC050B7E:
 lbC050B90:
 	MOVE.L	#lbL050548,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.L	#$0007A61A,A1
+	MOVE.L	memory_7A61A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.L	#Newtrackrecor.MSG,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.L	#$0007A71A,A1
+	MOVE.L	memory_7A71A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D1
 	ADDQ.B	#$01,D2
 	CMP.B	#$0C,D2
 	BNE	lbC050B90
-	MOVE.L	#$0007A61A,A1
+	MOVE.L	memory_7A61A,A1
 	MOVE.B	lbB00E216,$00(A1,D1.W)
 	MOVE.B	lbB00E22E,$01(A1,D1.W)
 	MOVE.B	lbB00E246,$02(A1,D1.W)
-	MOVE.L	#$0007A71A,A1
+	MOVE.L	memory_7A71A,A1
 	MOVE.B	lbB00E217,$00(A1,D1.W)
 	MOVE.B	lbB00E22F,$01(A1,D1.W)
 	MOVE.B	lbB00E247,$02(A1,D1.W)
 	RTS
 
 lbC050C02:
-	MOVE.L	#$0007A61A,A1
+	MOVE.L	memory_7A61A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lbL050548,A2
 	MOVE.B	D0,$00(A2,D2.W)
-	MOVE.L	#$0007A71A,A1
+	MOVE.L	memory_7A71A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#Newtrackrecor.MSG,A2
 	MOVE.B	D0,$00(A2,D2.W)
@@ -26752,11 +26997,11 @@ lbC050C02:
 	ADDQ.B	#$01,D2
 	CMP.B	#$0C,D2
 	BNE	lbC050C02
-	MOVE.L	#$0007A61A,A1
+	MOVE.L	memory_7A61A,A1
 	MOVE.B	$00(A1,D1.W),lbB00E216
 	MOVE.B	$01(A1,D1.W),lbB00E22E
 	MOVE.B	$02(A1,D1.W),lbB00E246
-	MOVE.L	#$0007A71A,A1
+	MOVE.L	memory_7A71A,A1
 	MOVE.B	$00(A1,D1.W),lbB00E217
 	MOVE.B	$01(A1,D1.W),lbB00E22F
 	MOVE.B	$02(A1,D1.W),lbB00E247
@@ -26780,13 +27025,13 @@ lbC050CA6:
 	BEQ	lbC050CEA
 	MOVE.B	#$00,D1
 lbC050CB4:
-	MOVE.L	#$0007A61A,A1
+	MOVE.L	memory_7A61A,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	#$0007A41A,A1
+	MOVE.L	memory_7A41A,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.L	#$0007A71A,A1
+	MOVE.L	memory_7A71A,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	#$0007A51A,A1
+	MOVE.L	memory_7A51A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	SUBQ.B	#$01,D1
 	BNE	lbC050CB4
@@ -26797,8 +27042,8 @@ lbC050CE8:
 lbC050CEA:
 	JSR	lbC051192
 	BCS	lbC050CE8
-	MOVE.L	#$0007A41A,A0
-	MOVE.L	#$0007A61A,A1
+	MOVE.L	memory_7A41A,A0
+	MOVE.L	memory_7A61A,A1
 	MOVE.B	#$00,D1
 lbC050D04:
 	MOVE.B	$0C(A0,D1.W),D0
@@ -26826,8 +27071,8 @@ lbC050D48:
 lbC050D4C:
 	CMP.B	#$00,D1
 	BNE	lbC050D04
-	MOVE.L	#$0007A51A,A0
-	MOVE.L	#$0007A71A,A1
+	MOVE.L	memory_7A51A,A0
+	MOVE.L	memory_7A71A,A1
 lbC050D60:
 	MOVE.B	$0C(A0,D1.W),D0
 	CMP.B	$0C(A1,D1.W),D0
@@ -27082,12 +27327,12 @@ lbC05102C:
 	MOVE.B	#$80,D0
 lbC051030:
 	MOVE.B	D0,lbB00D416
-	MOVE.L	#$0007A41A,lbW00D5C0
+	MOVE.L	memory_7A41A,lbW00D5C0
 	MOVE.W	#$683B,lbW051020
 	MOVE.B	#$00,D1
 lbC05104C:
 	JSR	lbC051008
-	MOVE.L	#$0007A81A,A1
+	MOVE.L	memory_7A81A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D1
 	BNE	lbC05104C
@@ -27106,7 +27351,7 @@ lbC051086:
 lbC051096:
 	MOVE.B	#$00,D2
 	MOVE.L	lbW00D5C0,A0
-	MOVE.L	#$0007A81A,A1
+	MOVE.L	memory_7A81A,A1
 	TST.B	lbB00D416
 	BMI	lbC0510CC
 	MOVE.B	D2,D0
@@ -27181,20 +27426,20 @@ lbC0511A8:
 lbC0511B6:
 	MOVE.L	#BigEdMaxBoost.MSG,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	#$0007A43A,A1
+	MOVE.L	memory_7A43A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	CMP.B	#$3C,D1
 	BCC	lbC0511E6
 	MOVE.L	#lbL00E2DE,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	#$0007A4BA,A1
+	MOVE.L	memory_7A4BA,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC0511E6:
 	CMP.B	#$0C,D1
 	BCC	lbC051202
 	MOVE.L	#lbL00E336,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	#$0007A4FA,A1
+	MOVE.L	memory_7A4FA,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC051202:
 	SUBQ.B	#$01,D1
@@ -27209,20 +27454,20 @@ lbC05121C:
 	BCS	lbC051288
 	MOVE.B	#$7F,D1
 lbC05122A:
-	MOVE.L	#$0007A43A,A1
+	MOVE.L	memory_7A43A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#BigEdMaxBoost.MSG,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	CMP.B	#$3C,D1
 	BCC	lbC05125A
-	MOVE.L	#$0007A4BA,A1
+	MOVE.L	memory_7A4BA,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lbL00E2DE,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC05125A:
 	CMP.B	#$0C,D1
 	BCC	lbC051276
-	MOVE.L	#$0007A4FA,A1
+	MOVE.L	memory_7A4FA,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lbL00E336,A1
 	MOVE.B	D0,$00(A1,D1.W)
@@ -27394,11 +27639,11 @@ lbC0514C6:
 	BEQ	lbC051500
 	MOVE.B	#$FF,D2
 lbC051500:
-	MOVE.L	#$0007A61A,A2
+	MOVE.L	memory_7A61A,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.L	#audioDataTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.L	#$0007A71A,A2
+	MOVE.L	memory_7A71A,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.L	#lbL00DF6C,A1
 	MOVE.B	D0,$00(A1,D1.W)
@@ -27926,7 +28171,7 @@ lbC051D4C:
 	MOVE.B	#$00,lbB00D514
 	MOVE.B	#$00,lbB00D4E4
 	ADD.W	#$0010,renderDataPointer
-	MOVE.L	#$00003D80,lineDrawingBufferPointer
+	MOVE.L	memory_3D80,lineDrawingBufferPointer
 	JSR	lbC058BCC
 	JSR	processSecondaryRendering
 lbC051DA6:
@@ -28253,7 +28498,7 @@ lbC0522A6:
 saveLoadGameData:
 	MOVE.B	D0,lbB00D416
 	MOVE.L	#randomSeed1,A0
-	MOVE.L	#$0007A035,A1
+	MOVE.L	memory_7A035,A1
 	MOVE.B	#$04,D1
 lbC0522C4:
 	TST.B	lbB00D416
@@ -28288,10 +28533,10 @@ lbC05231E:
 lbC052322:
 	TST.B	lbB00D416
 	BPL	lbC05234C
-	MOVE.L	#$0007A01A,A1
+	MOVE.L	memory_7A01A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,lbB00D418
-	MOVE.L	#$0007A03F,A1
+	MOVE.L	memory_7A03F,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,audioChannelCounter
 lbC05234C:
@@ -28311,10 +28556,10 @@ lbC052366:
 	CMP.B	$00(A1,D1.W),D0
 	BNE	lbC052356
 	MOVE.B	D2,D0
-	MOVE.L	#$0007A01A,A1
+	MOVE.L	memory_7A01A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.B	lbB00D41A,D0
-	MOVE.L	#$0007A03F,A1
+	MOVE.L	memory_7A03F,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	JMP	lbC0523D6
 
@@ -28325,7 +28570,7 @@ lbC0523AC:
 	CMP.B	audioChannelCounter,D0
 	BNE	lbC052356
 	MOVE.B	lbB00D417,D0
-	MOVE.L	#$0007A41A,A1
+	MOVE.L	memory_7A41A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC0523D6:
 	SUBQ.B	#$01,D1
@@ -28337,11 +28582,11 @@ lbC0523EA:
 	MOVE.B	(A0)+,D0
 	TST.B	lbB00D416
 	BMI	lbC052404
-	MOVE.L	#$0007A03A,A1
+	MOVE.L	memory_7A03A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	BPL	lbC052412
 lbC052404:
-	MOVE.L	#$0007A03A,A1
+	MOVE.L	memory_7A03A,A1
 	CMP.B	$00(A1,D1.W),D0
 	BNE	lbC052482
 lbC052412:
@@ -28350,7 +28595,7 @@ lbC052412:
 	TST.B	lbB00D416
 	BPL	lbC052472
 	MOVE.L	#lbL00E2B6,A3
-	MOVE.L	#$0007A41A,A0
+	MOVE.L	memory_7A41A,A0
 	MOVE.B	#$1A,D1
 lbC052432:
 	TST.B	multiplayerEnabled
@@ -28847,7 +29092,7 @@ lbC052AD4:
 	AND.L	#$0000000F,D2
 	LSR.W	D2,D0
 	SUB.W	D0,D4
-	MOVE.L	#$00079360,A0
+	MOVE.L	memory_79360,A0
 	SUB.L	#$6174,A0
 	MOVE.L	#$667B379F,D3
 	ADD.L	#$36729563,D3
@@ -30451,7 +30696,7 @@ lbC05424A:
 	MOVE.W	D0,lbW054632
 lbC05428A:
 	MOVE.W	lbW054632,D0
-	MOVE.L	#$0007A41A,A0
+	MOVE.L	memory_7A41A,A0
 	TST.B	lbB00E331
 	BEQ	lbC0542D2
 	JSR	displaySlotRight
@@ -30639,14 +30884,14 @@ saveSlotTextAndDisplay:
 	ASL.L	#$04,D0
 	MOVE.W	#$0007,D3
 	MOVE.L	#lbB01066B,A0
-	MOVE.L	#$0007A21A,A1
+	MOVE.L	memory_7A21A,A1
 	ADD.L	D0,A1
 lbC0544E0:
 	MOVE.B	$00(A0,D3.W),$00(A1,D3.W)
 	DBRA	D3,lbC0544E0
 	MOVE.B	#$00,$000F(A1)
 lbC0544F0:
-	MOVE.L	#$0007A21A,A0
+	MOVE.L	memory_7A21A,A0
 	MOVE.W	#$0016,D0
 	MOVE.L	#$47826653,$0007A234
 	MOVE.B	lbB0544B6,$0007A224
@@ -30662,7 +30907,7 @@ loadSaveGameFromDisk:
 lbC054530:
 	MOVE.B	#$00,lbB0544BB
 	MOVE.B	#$00,lbB00D492
-	MOVE.L	#$0007A21A,A0
+	MOVE.L	memory_7A21A,A0
 	MOVE.W	#$0016,D0
 	JSR	displaySlotLeft
 	BEQ	lbC05455C
@@ -30719,7 +30964,7 @@ renderSlotGraphicsAtPosition:
 	MOVE.W	#$0005,D1
 	MOVE.W	#$0001,D2
 	MOVE.W	#$0000,D3
-	MOVE.L	#$0007A21A,A0
+	MOVE.L	memory_7A21A,A0
 	MOVE.L	#$00000400,A1
 	JSR	renderSlotGraphics
 	CLR.W	D1
@@ -30776,7 +31021,7 @@ lbC0546CA:
 	CLR.W	D0
 	MOVE.B	lbB0544B4,D0
 	ASL.W	#$04,D0
-	MOVE.L	#$0007A21A,A0
+	MOVE.L	memory_7A21A,A0
 	LEA	$00(A0,D0.W),A0
 	MOVE.W	#$0000,D3
 lbC054700:
@@ -33590,7 +33835,7 @@ lbC056ED8:
 processAudioData:
 	CLR.W	D0
 	MOVE.B	audioParameterIndex,D0
-	MOVE.L	#$0007AA1A,A0
+	MOVE.L	memory_7AA1A,A0
 	ASL.W	#$02,D0
 	MOVE.L	$00(A0,D0.W),A0
 	MOVE.W	(A0),lbW057A00
@@ -33945,7 +34190,7 @@ lbC05739C:
 	RTS
 
 lbC0573CC:
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	RTS
@@ -34029,14 +34274,14 @@ lbC0574E2:
 
 generateAudioTrackData:
 	JSR	initializeAudioBuffers
-	MOVE.L	#$0007ABDA,lbL057A02
+	MOVE.L	memory_7ABDA,lbL057A02
 	MOVE.B	#$00,lbB00D4C5
 	MOVE.L	#lbL00D770,A6
 	MOVE.B	#$00,D1
 lbC05750E:
 	MOVE.B	D1,audioParameterIndex
 	MOVE.W	D1,D0
-	MOVE.L	#$0007AA1A,A0
+	MOVE.L	memory_7AA1A,A0
 	ASL.W	#$02,D0
 	MOVE.L	lbL057A02,$00(A0,D0.W)
 	MOVE.W	#$0000,lbW057A00
@@ -34199,13 +34444,13 @@ lbB0577C2:
 transformCoordinates:
 	CLR.W	D0
 	MOVE.B	audioParameterIndex,D0
-	MOVE.L	#$0007AA1A,A0
+	MOVE.L	memory_7AA1A,A0
 	ASL.W	#$02,D0
 	MOVE.L	$00(A0,D0.W),A6
 	MOVE.W	#$0004,D1
 lbC0577DC:
 	MOVE.W	(A6)+,D0
-	MOVE.L	#$0007AB5A,A0
+	MOVE.L	memory_7AB5A,A0
 	MOVE.W	D0,$00(A0,D1.W)
 	MOVE.W	D0,lbW057A00
 	MOVE.B	D0,audioParameterIndex
@@ -34320,7 +34565,7 @@ lbC057974:
 	MOVE.L	(SP)+,A6
 	CMP.L	lbL057A02,A6
 	BLT	lbC05798C
-	MOVE.L	#$0007ABDA,A6
+	MOVE.L	memory_7ABDA,A6
 lbC05798C:
 	ADDQ.B	#$02,D1
 	BTST	#$01,D1
@@ -34969,12 +35214,12 @@ lbW0581A6:
 	dc.w	$0000
 
 drawClippedLine:
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.W	#$0000,lbW0581A6
 	MOVE.W	#$FFFF,lbW0581A2
 	MOVE.W	renderDataPointer,D0
 	MOVE.L	lineDrawingBufferPointer,A0
-	CMP.L	#$000060A8,A0
+	CMP.L	memory_60A8,A0
 	BLT	lbC0581EC
 	TST.B	lbB00D477
 	BMI	lbC0581EC
@@ -35700,8 +35945,8 @@ lbC0588A8:
 	RTS
 
 initializeRenderBuffer:
-	MOVE.L	#$00003D80,A0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_3D80,A0
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	A1,A3
 	MOVE.L	#$80000000,D0
 	MOVE.L	D0,(A3)+
@@ -35720,7 +35965,7 @@ manageRenderBounds:
 	MOVE.B	#$FF,lbB00D47C
 	MOVE.W	renderDataPointer,D0
 lbC0588FE:
-	MOVE.L	#$0007B08A,A0
+	MOVE.L	memory_7B08A,A0
 	SUB.W	#$0020,D0
 	CMP.W	#$FF00,lbW0557DE
 	BLT	lbC058922
@@ -35820,7 +36065,7 @@ lbC058A14:
 
 lbC058A84:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058A98:
 	ADD.W	#$0004,renderDataPointer
@@ -35838,7 +36083,7 @@ lbC058A98:
 
 lbC058AD0:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058AE4:
 	ADD.W	#$0004,renderDataPointer
@@ -35856,7 +36101,7 @@ lbC058AE4:
 
 lbC058B1C:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058B30:
 	ADD.W	#$0004,renderDataPointer
@@ -35874,7 +36119,7 @@ lbC058B30:
 
 lbC058B68:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058B7C:
 	ADD.W	#$0004,renderDataPointer
@@ -35886,7 +36131,7 @@ lbC058B84:
 	BTST	#$06,lbB05B3DA
 	BNE	lbC058BCC
 	MOVE.W	renderDataPointer,D3
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	MOVE.L	#$80000000,$04(A1,D3.W)
 	ADD.W	#$0008,renderDataPointer
@@ -35907,7 +36152,7 @@ lbC058BCC:
 
 lbC058BFC:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058C10:
 	ADD.W	#$0004,renderDataPointer
@@ -35925,7 +36170,7 @@ lbC058C10:
 
 lbC058C48:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058C5C:
 	ADD.W	#$0004,renderDataPointer
@@ -35933,7 +36178,7 @@ lbC058C64:
 	TST.B	lbB05B3DA
 	BPL	lbC058C8C
 	MOVE.W	renderDataPointer,D3
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	ADDQ.W	#$04,renderDataPointer
 	BRA	lbC058CD8
@@ -35953,7 +36198,7 @@ lbC058C8C:
 
 lbC058CBC:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058CD0:
 	ADD.W	#$0004,renderDataPointer
@@ -36012,7 +36257,7 @@ lbC058D76:
 
 lbC058DBE:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058DD2:
 	ADD.W	#$0004,renderDataPointer
@@ -36030,7 +36275,7 @@ lbC058DD2:
 
 lbC058E0A:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058E1E:
 	ADD.W	#$0004,renderDataPointer
@@ -36048,7 +36293,7 @@ lbC058E1E:
 
 lbC058E56:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058E6A:
 	ADD.W	#$0004,renderDataPointer
@@ -36066,7 +36311,7 @@ lbC058E6A:
 
 lbC058EA2:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058EB6:
 	ADD.W	#$0004,renderDataPointer
@@ -36084,7 +36329,7 @@ lbC058EB6:
 
 lbC058EEE:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F02:
 	ADD.W	#$0004,renderDataPointer
@@ -36102,7 +36347,7 @@ lbC058F02:
 
 lbC058F3A:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F4E:
 	ADD.W	#$0004,renderDataPointer
@@ -36120,13 +36365,13 @@ lbC058F4E:
 
 lbC058F86:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	#$0007B08A,A1
+	MOVE.L	memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F9A:
 	ADD.W	#$0004,renderDataPointer
-	MOVE.L	#$0007B08A,A0
+	MOVE.L	memory_7B08A,A0
 	MOVE.W	renderDataPointer,D3
-	MOVE.L	#$0007AB5A,A3
+	MOVE.L	memory_7AB5A,A3
 	MOVE.W	$00(A3,D1.W),lbB00D41A
 	MOVE.B	randomValue,D0
 	MOVE.B	D0,$00(A0,D3.W)
@@ -36497,7 +36742,7 @@ lbC0593A6:
 	CMP.W	#$00E4,networkEngineFlag
 	BGT	lbC0594B8
 	ADD.W	#$0080,renderDataPointer
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$00(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36550,7 +36795,7 @@ lbC0594AA:
 lbC0594B0:
 	SUB.W	#$0080,renderDataPointer
 lbC0594B8:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$60(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36601,7 +36846,7 @@ lbC059544:
 lbC05954E:
 	JSR	renderQuadrilateral
 lbC059554:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$70(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36652,7 +36897,7 @@ lbC0595E0:
 lbC0595EA:
 	JSR	renderQuadrilateral
 lbC0595F0:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$20(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36703,7 +36948,7 @@ lbC05967C:
 lbC059686:
 	JSR	renderQuadrilateral
 lbC05968C:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$18(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36754,7 +36999,7 @@ lbC059718:
 lbC059722:
 	JSR	renderQuadrilateral
 lbC059728:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$10(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36805,7 +37050,7 @@ lbC0597B4:
 lbC0597BE:
 	JSR	renderQuadrilateral
 lbC0597C4:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$38(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36856,7 +37101,7 @@ lbC059850:
 lbC05985A:
 	JSR	renderQuadrilateral
 lbC059860:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$30(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36907,7 +37152,7 @@ lbC0598EC:
 lbC0598F6:
 	JSR	renderQuadrilateral
 lbC0598FC:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$40(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -36958,7 +37203,7 @@ lbC059988:
 lbC059992:
 	JSR	renderQuadrilateral
 lbC059998:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$50(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -37025,7 +37270,7 @@ lbC059A4A:
 	EXG	D1,D2
 lbC059A52:
 	MOVE.L	lineDrawingBufferPointer,A0
-	CMP.L	#$000060A8,A0
+	CMP.L	memory_60A8,A0
 	BGT	lbC059AB2
 	CMP.W	#$0081,D2
 	BCC	lbC059AB2
@@ -37680,7 +37925,7 @@ lbC05A1D2:
 	BRA	lbC05A1D2
 
 lbC05A1FC:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.B	#$0F,D0
 	JSR	lbC057C48
@@ -37693,7 +37938,7 @@ lbC05A228:
 	RTS
 
 lbC05A22A:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A270
 
@@ -37717,7 +37962,7 @@ lbC05A270:
 	RTS
 
 lbC05A27C:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A2C2
 
@@ -37741,7 +37986,7 @@ lbC05A2C2:
 	RTS
 
 lbC05A2CE:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A306
 
@@ -37762,7 +38007,7 @@ lbC05A306:
 	RTS
 
 lbC05A312:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A34A
 
@@ -37784,7 +38029,7 @@ lbC05A34A:
 
 lbC05A356:
 	MOVE.B	#$80,lbB059DA9
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 lbC05A36A:
 	MOVE.W	D3,lbW05B3E8
@@ -37892,7 +38137,7 @@ lbC05A4EA:
 
 lbC05A4EC:
 	MOVE.B	#$02,lbB059DA9
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 lbC05A500:
 	MOVE.W	D3,lbW05B3E8
@@ -38002,7 +38247,7 @@ lbC05A682:
 	MOVE.B	#$00,lbB059DA9
 	MOVE.B	#$00,lbB00D461
 	MOVE.B	#$80,lbB00D4D2
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.W	D3,lbW05B3E8
 	MOVE.L	$18(A4,D3.W),D0
@@ -38108,7 +38353,7 @@ processSecondaryRendering:
 	CMP.W	#$0040,renderDataPointer
 	BLT	lbC05A9BA
 lbC05A83C:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 lbC05A848:
 	SUB.W	#$0020,D3
@@ -38261,14 +38506,14 @@ hudDisplayMode1:
 	dc.b	$09
 
 lbC05AAB4:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.B	#$0F,D7
 	BTST	#$00,$1C(A4,D3.W)
 	BEQ	lbC05AAD4
 	MOVE.B	hudDisplayMode2,D7
 lbC05AAD4:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$0C(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -38322,14 +38567,14 @@ lbC05AB6E:
 	RTS
 
 lbC05AB70:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.B	#$0F,D7
 	BTST	#$00,$1C(A4,D3.W)
 	BEQ	lbC05AB90
 	MOVE.B	hudDisplayMode2,D7
 lbC05AB90:
-	MOVE.L	#$0007B08A,A4
+	MOVE.L	memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$08(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -38655,7 +38900,7 @@ lbC05AF20:
 	BNE	lbC05AF20
 	MOVE.B	(A6)+,lbB05B098
 lbC05AF44:
-	MOVE.L	#$0007B08A,A5
+	MOVE.L	memory_7B08A,A5
 	MOVE.B	(A6)+,D0
 	JSR	setupBitplaneMasks
 	MOVE.B	(A6)+,lbB05B096
@@ -38858,7 +39103,7 @@ lbL05B4FC:
 	dc.l	$00000000,$00000000,$00000000,$00000000
 
 initializeGraphicsData:
-	MOVE.L	#$00006490,A1
+	MOVE.L	memory_6490,A1
 	MOVE.W	#$0000,D4
 lbC05B606:
 	JSR	loadGraphicsElement
