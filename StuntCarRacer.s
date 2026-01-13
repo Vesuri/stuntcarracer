@@ -207,6 +207,7 @@ startup:
 	jsr	_LVOAllocMem(a6)
 	move.l	d0,memory_chip
 	beq	startupFailure
+	move.l	d0,memory_0400
 	move.l	d0,memory_3D80
 	move.l	d0,memory_60A8
 	move.l	d0,memory_6490
@@ -233,6 +234,7 @@ startup:
 	move.l	d0,memory_7ABDA
 	move.l	d0,memory_7B08A
 	move.l	d0,memory_7B6FA
+	add.l	#$0400,memory_0400
 	add.l	#$3D80,memory_3D80
 	add.l	#$60A8,memory_60A8
 	add.l	#$6490,memory_6490
@@ -300,6 +302,10 @@ startup:
 	lea	_custom,a6
 	move.w	dmaconr(a6),dmaconr_old
 	move.w	intenar(a6),intenar_old
+	move.b	_ciaa+ciacra,ciaacra_old
+	move.b	_ciaa+ciacrb,ciaacrb_old
+	move.b	_ciab+ciacra,ciabcra_old
+	move.b	_ciab+ciacrb,ciabcrb_old
 	move.w	#DMAF_BLITHOG|DMAF_ALL,dmacon(a6)
 	move.w	#$ffff-INTF_SETCLR,intena(a6)
 	bra	begin
@@ -321,6 +327,10 @@ shutdown:
 	move.l	gb_copinit_old,cop1lch(a6)
 	clr.w	copjmp1(a6)
 	move.l	base_vector,a5
+	move.b	ciaacra_old,_ciaa+ciacra
+	move.b	ciaacrb_old,_ciaa+ciacrb
+	move.b	ciabcra_old,_ciab+ciacra
+	move.b	ciabcrb_old,_ciab+ciacrb
 	move.w	#DMAF_SETCLR|DMAF_COPPER,dmacon(a6)
 	move.l	tv_Lev1IntVect_old,tv_Lev1IntVect(a5)
 	move.l	tv_Lev2IntVect_old,tv_Lev2IntVect(a5)
@@ -370,6 +380,7 @@ GetVBR:	ORI	#$0700,SR
 	RTE
 
 memory_chip:	ds.l	1
+memory_0400:	ds.l	1
 memory_3D80:	ds.l	1
 memory_60A8:	ds.l	1
 memory_6490:	ds.l	1
@@ -409,6 +420,10 @@ tv_Lev7IntVect_old:	ds.l	1
 cachebits_old:	ds.l	1
 dmaconr_old:	ds.w	1
 intenar_old:	ds.w	1
+ciaacra_old:	ds.b	1
+ciaacrb_old:	ds.b	1
+ciabcra_old:	ds.b	1
+ciabcrb_old:	ds.b	1
 name_graphics:	dc.b	"graphics.library",0
 quit:			ds.b	1
 		even
@@ -8565,6 +8580,7 @@ copyDividerLoop:
 dividerIndexOk:
 	SUBQ.B	#$01,D1
 	BNE	copyDividerLoop
+	JMP	shutdown
 	TST.B	lbB0563F0
 	BNE	lbC04E826
 	JSR	renderSlotGraphicsAtPosition
@@ -14750,7 +14766,7 @@ lbC054480:
 	MOVE.W	D0,D1
 	MOVE.W	#$0000,D0
 	MOVE.W	#$0001,D2
-	MOVE.L	#$00000400,A1
+	MOVE.L	memory_0400,A1
 	JSR	renderSlotGraphics
 	CLR.W	D1
 	CLR.W	D2
@@ -14870,7 +14886,7 @@ renderSlotGraphicsAtPosition:
 	MOVE.W	#$0001,D2
 	MOVE.W	#$0000,D3
 	MOVE.L	memory_7A21A,A0
-	MOVE.L	#$00000400,A1
+	MOVE.L	memory_0400,A1
 	JSR	renderSlotGraphics
 	CLR.W	D1
 	CLR.W	D0
