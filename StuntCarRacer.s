@@ -1,3 +1,4 @@
+; memory_7A21A saveSlots
 ; 00007D00 frameBufferSize
 ; bpl1 $78000
 ; bpl2 $7a000
@@ -200,6 +201,8 @@ MEMF_CLEAR		equ	$00010000
 
 	incdir	"scr:"
 startup:
+	move.b	#$80,skipSaveSlotScreen
+
 	; Allocate memory
 	move.l	4.w,a6
 	move.l	#$20000,d0
@@ -459,7 +462,7 @@ codeStart:
 begin:
 ;	MOVE.L	#stackEnd,SP
 	JSR	initialize
-	JMP	mainGame1
+	JMP	initializeGameMemoryAndState
 
 copperlist:
 	dc.w	bpl1pth,$0007,bpl1ptl,$8000,bpl2pth,$0007,bpl2ptl,$A000,bpl3pth
@@ -535,13 +538,14 @@ initialize:
 	MOVE.W	#(INTF_TBE|INTF_DSKBLK|INTF_SOFTINT|INTF_PORTS|INTF_COPER|INTF_VERTB|INTF_BLIT|INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3|INTF_RBF|INTF_DSKSYNC|INTF_EXTER|INTF_INTEN),_custom+intreq
 	MOVE.W	#(INTF_TBE|INTF_PORTS|INTF_COPER|INTF_VERTB|INTF_RBF|INTF_EXTER|INTF_INTEN|INTF_SETCLR),_custom+intena
 	MOVE.W	#(DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3|DMAF_AUDIO|DMAF_DISK|DMAF_BLITTER|DMAF_COPPER|DMAF_BLITHOG|DMAF_BLTNZERO|DMAF_BLTDONE|$00001800),_custom+dmacon
-	MOVE.L	#level1Interrupt,tv_Lev1IntVect
-	MOVE.L	#level2Interrupt,tv_Lev2IntVect
-	MOVE.L	#level3Interrupt,tv_Lev3IntVect
-	MOVE.L	#level4Interrupt,tv_Lev4IntVect
-	MOVE.L	#level5Interrupt,tv_Lev5IntVect
-	MOVE.L	#level6Interrupt,tv_Lev6IntVect
-	MOVE.L	#level7Interrupt,tv_Lev7IntVect
+	move.l	base_vector,a5
+	MOVE.L	#level1Interrupt,tv_Lev1IntVect(a5)
+	MOVE.L	#level2Interrupt,tv_Lev2IntVect(a5)
+	MOVE.L	#level3Interrupt,tv_Lev3IntVect(a5)
+	MOVE.L	#level4Interrupt,tv_Lev4IntVect(a5)
+	MOVE.L	#level5Interrupt,tv_Lev5IntVect(a5)
+	MOVE.L	#level6Interrupt,tv_Lev6IntVect(a5)
+	MOVE.L	#level7Interrupt,tv_Lev7IntVect(a5)
 ;	MOVE.W	#$2000,SR
 	MOVE.L	#lbL05BE94,D0
 	MOVE.L	D0,primaryFrameBuffer
@@ -1177,7 +1181,7 @@ lbB00D194:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00
 
-mainGame1:
+initializeGameMemoryAndState:
 	CLR.L	D1
 	CLR.L	D2
 	MOVE.L	#keyboardState,A0
@@ -1187,10 +1191,10 @@ clearKeyboardStateLoop:
 	SUBQ.B	#$01,D1
 	BPL	clearKeyboardStateLoop
 	MOVE.L	memory_7A01A,A0
-clearSomethingLoop:
+clearGameStateLoop:
 	MOVE.B	#$00,(A0)+
 	CMP.L	memory_7B6FA,A0
-	BLT	clearSomethingLoop
+	BLT	clearGameStateLoop
 	TST.B	checksum
 	BEQ	checksumOk
 	MOVE.W	#$0FF0,D0
@@ -1205,7 +1209,7 @@ checksumNotOk:
 	BMI	checksumNotOk
 checksumOk:
 	JSR	initializeGraphicsData
-	JMP	mainGame2
+	JMP	loadMenuDataToRAM
 
 copyPalette:
 	MOVE.L	#sourcePalette,A0
@@ -7667,7 +7671,7 @@ lbC04D40E:
 	MOVE.B	#$B2,lbB049564
 	JSR	waitForNetworkHandshake
 lbC04D48C:
-	JMP	mainGame6
+	JMP	enterMainGameLoop
 
 startNewGame:
 	TST.B	networkGameMode
@@ -8558,7 +8562,7 @@ lbC04E172:
 	MOVE.B	D0,lbB00D49A
 	RTS
 
-mainGame2:
+loadMenuDataToRAM:
 	MOVE.W	#$0000,imageMenuScreenPalette
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
@@ -8580,11 +8584,10 @@ copyDividerLoop:
 dividerIndexOk:
 	SUBQ.B	#$01,D1
 	BNE	copyDividerLoop
-	JMP	shutdown
-	TST.B	lbB0563F0
+	TST.B	skipSaveSlotScreen
 	BNE	lbC04E826
 	JSR	renderSlotGraphicsAtPosition
-	BRA	mainGame3
+	BRA	installLineEmulatorTrap
 
 lbB04E1F4:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -8596,10 +8599,10 @@ lbB04E1F4:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 	dc.b	$00,$00,$00,$00,$00,$00,$FF,$FF,$FF,$FF
 
-mainGame3:
+installLineEmulatorTrap:
 	MOVE.L	#$9CEDCD02,D0
 	MOVE.L	D0,$24
-	BRA	mainGame4
+	BRA	cleanupInitializationAndStartGame
 
 unusedProtectionCode:
 	dc.b	$2D,$5F,$FF,$F8,$22,$39,$00,$00,$00,$10,$48,$7A,$00,$0A
@@ -8699,9 +8702,9 @@ unusedProtectionCode:
 	dc.b	$FA,$CA,$6B,$04,$4E,$7B,$00,$02,$48,$F9,$00,$FF,$00,$00
 	dc.b	$00,$08,$4C,$FA,$7F,$FF,$FA,$4E,$4E,$73
 
-mainGame4:
+cleanupInitializationAndStartGame:
 	JSR	finalizeGraphicsRendering
-	BRA	mainGame5
+	BRA	validateSaveDataChecksum
 
 finalizeGraphicsRendering:
 	BTST	#DMAB_BLITTER,_custom+dmaconr
@@ -8717,18 +8720,18 @@ lbB04E7E2:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 
-mainGame5:
+validateSaveDataChecksum:
 	MOVE.L	D0,lbL0563EC
 	MOVE.L	$0007A21A,D0
 	ADD.L	$0007A416,D0
 	MOVE.L	lbL04E82C,D3
 	EOR.L	D3,D0
 	MOVE.L	D0,lbL04E82C
-	MOVE.B	#$80,lbB0563F0
+	MOVE.B	#$80,skipSaveSlotScreen
 	CLR.W	D1
 	CLR.W	D2
 lbC04E826:
-	JMP	mainGame6
+	JMP	enterMainGameLoop
 
 lbL04E82C:
 	dc.l	$28195027
@@ -8739,8 +8742,8 @@ divider:
 	dc.b	$00
 	dc.b	$00
 
-mainGame6:
-	MOVE.L	#stackEnd,SP
+enterMainGameLoop:
+;	MOVE.L	#stackEnd,SP
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
 	MOVE.L	memory_7A91A,A1
@@ -8762,7 +8765,7 @@ lbC04E87E:
 	JSR	saveRandomState
 	MOVE.B	#$F3,lbB049564
 	JSR	waitForNetworkHandshake
-mainGame6Loop:
+enterMainGameLoopLoop:
 	BCLR	#$07,raceMode
 	MOVE.B	#$10,gameStateID
 	JSR	handleMainMenu
@@ -8773,7 +8776,7 @@ mainGame6Loop:
 	MOVE.B	#$00,gameStateID
 	JSR	loadMainGameScreen
 	JSR	displayMenuScreen
-	JMP	mainGame6Loop
+	JMP	enterMainGameLoopLoop
 
 lbC04E900:
 	MOVE.B	#$C0,D0
@@ -8872,7 +8875,7 @@ lbC04EA8C:
 	JSR	initializeRaceMode
 lbC04EAD0:
 	JSR	initializeGameTables
-	JMP	mainGame6Loop
+	JMP	enterMainGameLoopLoop
 
 lbC04EADC:
 	JSR	cleanupNetworkRace
@@ -8885,7 +8888,7 @@ lbC04EAF6:
 	ADDQ.B	#$01,lbB049567
 	CMP.B	#$04,lbB049567
 	BCC	lbC04EAD0
-	BRA	mainGame6Loop
+	BRA	enterMainGameLoopLoop
 
 displayImage2:
 	JSR	initializeMessageBuffer
@@ -10451,7 +10454,7 @@ SELECTSingleP.MSG:
 	dc.b	$11
 	dc.b	$0B
 	dc.b	'SELECT�Single Player League�Multiplayer�Enter anothe'
-	dc.b	'r driver�Continue�MARC OF SLIPSTREAM �',0,0
+	dc.b	'r driver�Continue�Tracks in DIVISION �',0,0
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -15014,7 +15017,7 @@ lbC0547DE:
 	MOVE.W	D1,-$0012(A6)
 	SWAP	D1
 	MOVE.W	D1,-$0010(A6)
-	BSR	lbC054E38
+	BSR	startDiskMotorAndWait
 lbC0547EC:
 	MOVE.W	-$0010(A6),D0
 	MOVEQ	#$0B,D1
@@ -15028,8 +15031,8 @@ lbC0547FE:
 	BNE.S	readDiskTrack
 	CMP.W	#$0001,-$001E(A6)
 	BNE.S	lbC05481A
-	BSR	lbC054BFA
-	BSR	lbC05495C
+	BSR	initializeMFMTrackBuffer
+	BSR	writeBufferToDiskTrack
 	BNE.S	readDiskTrack
 lbC05481A:
 	MOVE.W	-$0020(A6),D0
@@ -15129,7 +15132,7 @@ lbC054944:
 	MOVE.L	D0,-(SP)
 	MOVEQ	#$02,D2
 	BSR	positionDiskHead
-	BSR	lbC054EA8
+	BSR	recalibrateDiskHeadToTrack0
 	MOVE.L	(SP)+,D0
 lbC054952:
 	DBRA	D4,lbC05487C
@@ -15137,13 +15140,13 @@ lbC054956:
 	BSR	lbC054DFC
 	RTS
 
-lbC05495C:
+writeBufferToDiskTrack:
 	MOVEQ	#$04,D2
 	CLR.W	-$0006(A6)
 lbC054962:
-	BSR	lbC054F08
+	BSR	applyDriveConfiguration
 	MOVE.L	#$000000C8,D0
-	BSR	lbC054F48
+	BSR	driveDelay
 	MOVEQ	#$1C,D0
 	BTST	#$03,$00BFE001
 	BEQ.S	lbC0549CA
@@ -15166,7 +15169,7 @@ lbC0549A8:
 lbC0549CA:
 	MOVE.L	D0,-(SP)
 	MOVE.L	#$00000002,D0
-	BSR	lbC054F48
+	BSR	driveDelay
 	MOVE.L	(SP)+,D0
 	RTS
 
@@ -15374,7 +15377,7 @@ lbC054BE8:
 	AND.L	#$55555555,D0
 	RTS
 
-lbC054BFA:
+initializeMFMTrackBuffer:
 	MOVE.L	-$0018(A6),A0
 	LEA	$0400(A0),A1
 	MOVE.L	#$AAAAAAAA,D0
@@ -15555,7 +15558,7 @@ lbC054DFC:
 setupDiskHardware:
 	MOVE.W	#$0400,_custom+adkcon
 	MOVEQ	#-$01,D1
-lbC054E1A:
+driveSelect:
 	MOVE.B	D1,_ciab+ciaprb
 	MOVE.W	-$0024(A6),D0
 	ADDQ.L	#$03,D0
@@ -15565,25 +15568,25 @@ lbC054E1A:
 	MOVE.B	D1,_ciab+ciaprb
 	RTS
 
-lbC054E38:
+startDiskMotorAndWait:
 	MOVEQ	#-$01,D1
 	MOVE.B	D1,_ciab+ciaprb
 	BCLR	#$07,D1
-	BSR.S	lbC054E1A
+	BSR.S	driveSelect
 	MOVE.L	#$000000C8,D0
-	BSR	lbC054F48
+	BSR	driveDelay
 	RTS
 
 positionDiskHead:
 	MOVEM.L	D2/D3,-(SP)
 	MOVE.L	D2,D3
-	BSR	lbC054F08
+	BSR	applyDriveConfiguration
 	MOVE.W	-$0024(A6),D0
 	ADD.W	D0,D0
 	LEA	lbW054F84(PC),A0
 	MOVE.W	$00(A0,D0.W),D0
 	BPL.S	lbC054E72
-	BSR	lbC054EA8
+	BSR	recalibrateDiskHeadToTrack0
 	BNE.S	lbC054EA2
 lbC054E72:
 	LSR.W	#$01,D0
@@ -15597,7 +15600,7 @@ lbC054E72:
 lbC054E82:
 	MOVEQ	#$06,D0
 lbC054E84:
-	BSR	lbC054EDE
+	BSR	stepDiskHeadOneTrack
 	MOVEQ	#$06,D0
 	SUBQ.W	#$01,D2
 	BNE.S	lbC054E84
@@ -15606,13 +15609,13 @@ lbC054E8E:
 	ADD.W	D0,D0
 	LEA	lbW054F84(PC),A0
 	MOVE.W	D3,$00(A0,D0.W)
-	BSR	lbC054F08
+	BSR	applyDriveConfiguration
 	MOVEQ	#$00,D0
 lbC054EA2:
 	MOVEM.L	(SP)+,D2/D3
 	RTS
 
-lbC054EA8:
+recalibrateDiskHeadToTrack0:
 	MOVEM.L	D2,-(SP)
 	MOVEQ	#$55,D2
 lbC054EAE:
@@ -15620,7 +15623,7 @@ lbC054EAE:
 	BEQ.S	lbC054EC8
 	MOVEQ	#$06,D0
 	MOVEQ	#-$01,D1
-	BSR	lbC054EDE
+	BSR	stepDiskHeadOneTrack
 	DBRA	D2,lbC054EAE
 	MOVEQ	#$1E,D0
 	BRA.S	lbC054ED8
@@ -15635,9 +15638,9 @@ lbC054ED8:
 	MOVEM.L	(SP)+,D2
 	RTS
 
-lbC054EDE:
+stepDiskHeadOneTrack:
 	MOVE.L	D0,-(SP)
-	BSR	lbC054F14
+	BSR	buildCIABDiskControlByte
 	TST.B	D1
 	BMI.S	lbC054EEC
 	BCLR	#$01,D0
@@ -15647,15 +15650,15 @@ lbC054EEC:
 	BSET	#$00,D0
 	MOVE.B	D0,$00BFD100
 	MOVE.L	(SP)+,D0
-	BSR	lbC054F48
+	BSR	driveDelay
 	RTS
 
-lbC054F08:
-	BSR	lbC054F14
+applyDriveConfiguration:
+	BSR	buildCIABDiskControlByte
 	MOVE.B	D0,$00BFD100
 	RTS
 
-lbC054F14:
+buildCIABDiskControlByte:
 	MOVEM.W	D1/D2,-(SP)
 	MOVE.W	-$0024(A6),D0
 	MOVE.B	$00BFD100,D2
@@ -15673,13 +15676,13 @@ lbC054F40:
 	MOVEM.W	(SP)+,D1/D2
 	RTS
 
-lbC054F48:
+driveDelay:
 	BSR	setDiskTimeout
 lbC054F4C:
 	BTST	#$00,$00BFEE01
 	BNE.S	lbC054F4C
 	SUBQ.L	#$01,D0
-	BNE.S	lbC054F48
+	BNE.S	driveDelay
 	RTS
 
 checkTimeoutExpired:
@@ -17036,7 +17039,7 @@ lbC0563EA:
 
 lbL0563EC:
 	dc.l	$2F76EA80
-lbB0563F0:
+skipSaveSlotScreen:
 	dc.b	$00,$06,$04,$00
 lbL0563F4:
 	dc.l	$0D101316,$1013100F,$14170A0E
