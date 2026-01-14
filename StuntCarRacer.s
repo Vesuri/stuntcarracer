@@ -201,6 +201,7 @@ MEMF_CLEAR		equ	$00010000
 
 	incdir	"scr:"
 startup:
+	move.l	sp,sp_quit
 	move.b	#$80,skipSaveSlotScreen
 
 	; Allocate memory
@@ -382,6 +383,7 @@ GetVBR:	ORI	#$0700,SR
 	move.l	d0,base_vector
 	RTE
 
+sp_quit:	ds.l	1
 memory_chip:	ds.l	1
 memory_0400:	ds.l	1
 memory_3D80:	ds.l	1
@@ -431,12 +433,19 @@ name_graphics:	dc.b	"graphics.library",0
 quit:			ds.b	1
 		even
 
-testQuit:
+setQuitOnRMB:
 	btst	#10,$dff016
 	bne.s	.noQuit
 	move.b	#1,quit
 .noQuit:
 	rts
+
+testQuit:
+	tst.b	quit
+	bne.s	.quit
+	rts
+.quit:	move.l	sp_quit,sp
+	jmp	shutdown
 
 ****************************************************************************
 	MOVE.L	#codeStart,A0
@@ -617,7 +626,7 @@ level2Interrupt:
 	RTE
 
 level3Interrupt:
-;	bsr	testQuit
+	bsr	setQuitOnRMB
 	BTST	#INTB_COPER,_custom+intreqr+1
 	BEQ	noCopperInterrupt
 	JSR	copperInterrupt
@@ -1057,6 +1066,7 @@ lbW00D03E:
 	dc.w	$0000,$0C64,$012C,$0030,$0000,$0000
 
 readJoystickState:
+	jsr	testQuit
 	MOVEM.L	D3/D4/A0,-(SP)
 	CLR.B	D4
 	MOVE.W	_custom+joy1dat,D0
@@ -2465,94 +2475,26 @@ engineCharacteristics:
 	dc.l	$22206220,$3E043014,$4A100800,$652E6209,$64302C64
 	dc.l	$320D096D,$6F766561,$2E6C0923
 levelNames:
-	dc.b	'LITTLE RAMP     STEPPING STONES HUMP BACK       BIG '
-	dc.b	'RAMP        SKI JUMP        DRAW BRIDGE     HIGH JUM'
-	dc.b	'P       ROLLER COASTER  ',0
-	dc.b	$81
-	dc.b	$94
-	dc.b	$00
-	dc.b	'0�',$C
-	dc.b	$80
-	dc.b	$01
-	dc.b	$81
-	dc.b	$0F
-	dc.b	'�d'
-	dc.b	$08
-	dc.b	$1E
-	dc.b	$80
-	dc.b	$01
-	dc.b	$81
-	dc.b	$0F
-	dc.b	'�'
-	dc.b	$14
-	dc.b	$08
-	dc.b	$1E
-	dc.b	$80
-	dc.b	$01
-	dc.b	$81
-	dc.b	$00
-	dc.b	'�'
-	dc.b	$03
-	dc.b	$08
-	dc.b	$03
-	dc.b	$80
-	dc.b	$01
-	dc.b	'A'
-	dc.b	$02
-	dc.b	$00
-	dc.b	'd'
-	dc.b	$98
-	dc.b	$01
-	dc.b	$80
-	dc.b	$02
-	dc.b	$00
-	dc.b	$00
-	dc.b	'�P'
-	dc.b	$07
-	dc.b	'�'
-	dc.b	$80
-	dc.b	$00
-	dc.b	$00
-	dc.b	$00
-	dc.b	'�P'
-	dc.b	$07
-	dc.b	'�'
-	dc.b	$80
-	dc.b	've.b'
-	dc.b	$09
-	dc.b	'd0,DV',$D
-	dc.b	$09
-	dc.b	'jsr'
-	dc.b	$09
-	dc.b	'FETCH',$D
-	dc.b	$09
-	dc.b	'move.b'
-	dc.b	$09
-	dc.b	'd0,DUH',$D
-	dc.b	$09
-	dc.b	'move.b'
-	dc.b	$09
-	dc.b	'd0,DVH'
-	dc.b	$09
-	dc.b	$0D
-	dc.b	$09
-	dc.b	$0D
-	dc.b	$09
-	dc.b	'move.b'
-	dc.b	$09
-	dc.b	'#0,d1',$D
-	dc.b	$09
-	dc.b	'mo���������'
-	dc.b	$8A
-	dc.b	'�����'
-	dc.b	$8A
-	dc.b	'��������'
-	dc.b	$8A
-	dc.b	$9B
-	dc.b	$93
-	dc.b	$92
-	dc.b	$92
-	dc.b	'PDU'
+	dc.b	'LITTLE RAMP     '
+	dc.b	'STEPPING STONES '
+	dc.b	'HUMP BACK       '
+	dc.b	'BIG RAMP        '
+	dc.b	'SKI JUMP        '
+	dc.b	'DRAW BRIDGE     '
+	dc.b	'HIGH JUMP       '
+	dc.b	'ROLLER COASTER  ',0
+	dc.b	$81,$94,$00,$30,$A8,$0C,$80,$01,$81,$0F,$E0
+	dc.b	$64,$08,$1E,$80,$01,$81,$0F,$E0,$14,$08,$1E,$80,$01,$81
+	dc.b	$00,$F0,$03,$08,$03,$80,$01,$41,$02,$00,$64,$98,$01,$80
+	dc.b	$02,$00,$00,$FF,$50,$07,$FF,$80,$00,$00,$00,$CF,$50,$07
+	dc.b	$FF,$80,$76,$65,$2E,$62,$09,$64,$30,$2C,$44,$56,$0D,$09
+	dc.b	$6A,$73,$72,$09,$46,$45,$54,$43,$48,$0D,$09,$6D,$6F,$76
+	dc.b	$65,$2E,$62,$09,$64,$30,$2C,$44,$55,$48,$0D,$09,$6D,$6F
+	dc.b	$76,$65,$2E,$62,$09,$64,$30,$2C,$44,$56,$48,$09,$0D,$09
+	dc.b	$0D,$09,$6D,$6F,$76,$65,$2E,$62,$09,$23,$30,$2C,$64,$31
+	dc.b	$0D,$09,$6D,$6F,$E9,$E5,$FA,$F3,$F8,$E3,$ED,$E2,$FE,$8A
+	dc.b	$ED,$EF,$E5,$EC,$EC,$8A,$E9,$F8,$EB,$E7,$E7,$E5,$E4,$EE
+	dc.b	$8A,$9B,$93,$92,$92,$50,$44,$55
 attenuationTable:
 	dc.w	$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FEFE,$FEFE
 	dc.w	$FDFD,$FDFD,$FCFC,$FBFB,$FBFA,$FAF9,$F9F8,$F8F7,$F7F6
@@ -2787,20 +2729,8 @@ lbW01172C:
 	dc.w	$0303,$0703,$6657,$5759,$5969,$6264,$0703,$0303,$0301
 	dc.w	$0303,$6155,$5356,$585B,$5A62
 H.MSG:
-	dc.b	'H',0
-	dc.b	'�',0
-	dc.b	'�',0
-	dc.b	$10
-	dc.b	'`[',0,0
-	dc.b	'T',$C
-	dc.b	'@'
-	dc.b	$01
-	dc.b	':'
-	dc.b	$01
-	dc.b	$0C
-	dc.b	'ni'
-	dc.b	$01
-	dc.b	$00
+	dc.b	$48,$00,$F0,$00,$EC,$00,$10,$60,$5B,$00,$00,$54,$0C,$40
+	dc.b	$01,$3A,$01,$0C,$6E,$69,$01,$00
 primaryFontBitmapData:
 	dc.w	$0000,$0000,$0000,$0000,$9595,$9595,$AAEA,$EAEA,$1515
 	dc.w	$1515,$156A,$6A6A,$75C3,$0000,$0000,$8080,$4040,$C000
@@ -10450,34 +10380,28 @@ lbB05047D:
 lbB05047E:
 	dc.b	$00
 SELECTSingleP.MSG:
-	dc.b	$1F
-	dc.b	$11
-	dc.b	$0B
-	dc.b	'SELECT�Single Player League�Multiplayer�Enter anothe'
-	dc.b	'r driver�Continue�Tracks in DIVISION �',0,0
-	dc.b	$00
-	dc.b	$00
-	dc.b	$00
-	dc.b	$00
-	dc.b	' S.�        s�Computer Link�ssssssssssssssssssssTrac'
-	dc.b	'k:  The �'
-	dc.b	$1F
-	dc.b	$0A
-	dc.b	$09
-	dc.b	'DRIVERS CHAMPIONSHIP�'
-	dc.b	$1F
-	dc.b	$0E
-	dc.b	$14
-	dc.b	'Track record�',0
+	dc.b	$1F,$11,$0B,$53,$45,$4C,$45,$43,$54,$FF,$53,$69,$6E,$67
+	dc.b	$6C,$65,$20,$50,$6C,$61,$79,$65,$72,$20,$4C,$65,$61,$67
+	dc.b	$75,$65,$FF,$4D,$75,$6C,$74,$69,$70,$6C,$61,$79,$65,$72
+	dc.b	$FF,$45,$6E,$74,$65,$72,$20,$61,$6E,$6F,$74,$68,$65,$72
+	dc.b	$20,$64,$72,$69,$76,$65,$72,$FF,$43,$6F,$6E,$74,$69,$6E
+	dc.b	$75,$65,$FF,$54,$72,$61,$63,$6B,$73,$20,$69,$6E,$20,$44
+	dc.b	$49,$56,$49,$53,$49,$4F,$4E,$20,$FF,$00,$00,$00,$00,$00
+	dc.b	$00,$20,$53,$2E,$FF,$20,$20,$20,$20,$20,$20,$20,$20,$73
+	dc.b	$FF,$43,$6F,$6D,$70,$75,$74,$65,$72,$20,$4C,$69,$6E,$6B
+	dc.b	$FF,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73
+	dc.b	$73,$73,$73,$73,$73,$73,$73,$54,$72,$61,$63,$6B,$3A,$20
+	dc.b	$20,$54,$68,$65,$20,$FF,$1F,$0A,$09,$44,$52,$49,$56,$45
+	dc.b	$52,$53,$20,$43,$48,$41,$4D,$50,$49,$4F,$4E,$53,$48,$49
+	dc.b	$50,$FF,$1F,$0E,$14,$54,$72,$61,$63,$6B,$20,$72,$65,$63
+	dc.b	$6F,$72,$64,$FF,$00
 lbL050548:
 	dc.l	$2D2D2D2D,$2D2D2D2D,$2D2D2D2D
 	dc.b	$FF
 Newtrackrecor.MSG:
-	dc.b	'------------�'
-	dc.b	$1F
-	dc.b	$0C
-	dc.b	$0F
-	dc.b	'New track record�'
+	dc.b	$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$FF,$1F
+	dc.b	$0C,$0F,$4E,$65,$77,$20,$74,$72,$61,$63,$6B,$20,$72,$65
+	dc.b	$63,$6F,$72,$64,$FF
 
 lbC050576:
 	JSR	renderCharacter
@@ -10490,28 +10414,21 @@ renderStatsText:
 	RTS
 
 TRACKBONUSPOI.MSG:
-	dc.b	'TRACK BONUS POINTS�'
-	dc.b	$1F
-	dc.b	$0E
-	dc.b	$0C
-	dc.b	'FINAL SEASON�Race Time: �Best Lap : �'
-	dc.b	$1F
-	dc.b	$10
-	dc.b	$01
-	dc.b	' SLIPSTREAM �'
-	dc.b	$1F
-	dc.b	$10
-	dc.b	$05
-	dc.b	'SUPER LEAGUE�'
-	dc.b	$1F
-	dc.b	$00
-	dc.b	$07
-	dc.b	'TRACK  DRIVER   LAP-TIME    DRIVER  RACE-TIME�'
-	dc.b	$1F
-	dc.b	$06
+	dc.b	$54,$52,$41,$43,$4B,$20,$42,$4F,$4E,$55,$53,$20,$50,$4F
+	dc.b	$49,$4E,$54,$53,$FF,$1F,$0E,$0C,$46,$49,$4E,$41,$4C,$20
+	dc.b	$53,$45,$41,$53,$4F,$4E,$FF,$52,$61,$63,$65,$20,$54,$69
+	dc.b	$6D,$65,$3A,$20,$FF,$42,$65,$73,$74,$20,$4C,$61,$70,$20
+	dc.b	$3A,$20,$FF,$1F,$10,$01,$20,$53,$4C,$49,$50,$53,$54,$52
+	dc.b	$45,$41,$4D,$20,$FF,$1F,$10,$05,$53,$55,$50,$45,$52,$20
+	dc.b	$4C,$45,$41,$47,$55,$45,$FF,$1F,$00,$07,$54,$52,$41,$43
+	dc.b	$4B,$20,$20,$44,$52,$49,$56,$45,$52,$20,$20,$20,$4C,$41
+	dc.b	$50,$2D,$54,$49,$4D,$45,$20,$20,$20,$20,$44,$52,$49,$56
+	dc.b	$45,$52,$20,$20,$52,$41,$43,$45,$2D,$54,$49,$4D,$45,$FF
+	dc.b	$1F,$06
 DRIVERBESTLAP.MSG:
-	dc.b	$0E
-	dc.b	'DRIVER      BEST-LAP RACE-TIME�'
+	dc.b	$0E,$44,$52,$49,$56,$45,$52,$20,$20,$20,$20,$20,$20,$42
+	dc.b	$45,$53,$54,$2D,$4C,$41,$50,$20,$52,$41,$43,$45,$2D,$54
+	dc.b	$49,$4D,$45,$FF
 
 lbC050640:
 	MOVE.L	#playerStatsArray,A1
@@ -11087,138 +11004,35 @@ lbC050E6A:
 lbB050E86:
 	dc.b	$44,$49,$52,$20
 HALL.MSG:
-	dc.b	'HALL'
+	dc.l	$48414C4C
 MP.MSG:
-	dc.b	'MP$',0
-	dc.b	$10
-	dc.b	'9',0
-	dc.b	$01
-	dc.b	'�'
-	dc.b	$94
-	dc.b	'k',0,0
-	dc.b	$0C
-	dc.b	$10
-	dc.b	'9',0
-	dc.b	$01
-	dc.b	'�kk',0,0
-	dc.b	$8A
-	dc.b	'N�',0
-	dc.b	$06
-	dc.b	'E2'
-	dc.b	$10
-	dc.b	'<',0
-	dc.b	$01
-	dc.b	$13
-	dc.b	'�',0
-	dc.b	$01
-	dc.b	'�'
-	dc.b	$16
-	dc.b	'N�',0
-	dc.b	$06
-	dc.b	'K'
-	dc.b	$0E
-	dc.b	$12
-	dc.b	'<',0,$C
-	dc.b	'N�',0
-	dc.b	$06
-	dc.b	'L.'
-	dc.b	$10
-	dc.b	'9',0
-	dc.b	$01
-	dc.b	'�'
-	dc.b	$94
-	dc.b	'j',0,0
-	dc.b	$0C
-	dc.b	$12
-	dc.b	'<',0,0
-	dc.b	'N�',0
-	dc.b	$05
-	dc.b	'��'
-	dc.b	$14
-	dc.b	'9',0
-	dc.b	$01
-	dc.b	'�1$|',0
-	dc.b	$05
-	dc.b	'�6'
-	dc.b	$12
-	dc.b	'2 ',0
-	dc.b	'N�',0
-	dc.b	$05
-	dc.b	'��'
-	dc.b	$10
-	dc.b	'9',0
-	dc.b	$01
-	dc.b	'�'
-	dc.b	$94
-	dc.b	'j',0,0
-	dc.b	'$N�',0
-	dc.b	$06
-	dc.b	'K'
-	dc.b	$0E
-	dc.b	$14
-	dc.b	'9',0
-	dc.b	$01
-	dc.b	'�'
-	dc.b	$94
-	dc.b	'T'
-	dc.b	$02
-	dc.b	$02
-	dc.b	$02
-	dc.b	$00
-	dc.b	$07
-	dc.b	'$|',0
-	dc.b	$05
-	dc.b	'�6'
-	dc.b	$12
-	dc.b	'2 ',0
-	dc.b	'N�',0
-	dc.b	$05
-	dc.b	'��N�',0
-	dc.b	$06
-	dc.b	'DpN�',0
-	dc.b	$06
-	dc.b	'H'
-	dc.b	$8A
-	dc.b	'N�',0
-	dc.b	$06
-	dc.b	'H4'
-	dc.b	$10
-	dc.b	'9',0
-	dc.b	$01
-	dc.b	'�'
-	dc.b	$94
-	dc.b	'Nu'
-	dc.b	$05
-	dc.b	$0D
-	dc.b	'C'
-	dc.b	$14
-	dc.b	'*CCCq'
-	dc.b	$8F
-	dc.b	$94
+	dc.b	$4D,$50,$24,$00,$10,$39,$00,$01,$BB,$94,$6B,$00,$00,$0C
+	dc.b	$10,$39,$00,$01,$BB,$6B,$6B,$00,$00,$8A,$4E,$B9,$00,$06
+	dc.b	$45,$32,$10,$3C,$00,$01,$13,$C0,$00,$01,$BB,$16,$4E,$B9
+	dc.b	$00,$06,$4B,$0E,$12,$3C,$00,$0C,$4E,$B9,$00,$06,$4C,$2E
+	dc.b	$10,$39,$00,$01,$BB,$94,$6A,$00,$00,$0C,$12,$3C,$00,$00
+	dc.b	$4E,$B9,$00,$05,$F6,$F2,$14,$39,$00,$01,$CA,$31,$24,$7C
+	dc.b	$00,$05,$F6,$36,$12,$32,$20,$00,$4E,$B9,$00,$05,$F6,$F2
+	dc.b	$10,$39,$00,$01,$BB,$94,$6A,$00,$00,$24,$4E,$B9,$00,$06
+	dc.b	$4B,$0E,$14,$39,$00,$01,$BB,$94,$54,$02,$02,$02,$00,$07
+	dc.b	$24,$7C,$00,$05,$F6,$36,$12,$32,$20,$00,$4E,$B9,$00,$05
+	dc.b	$F6,$F2,$4E,$B9,$00,$06,$44,$70,$4E,$B9,$00,$06,$48,$8A
+	dc.b	$4E,$B9,$00,$06,$48,$34,$10,$39,$00,$01,$BB,$94,$4E,$75
+	dc.b	$05,$0D,$43,$14,$2A,$43,$43,$43,$71,$8F,$94
 NOTloadedsave.MSG:
-	dc.b	' NOT� loaded� saved�Incorrect data found �File name '
-	dc.b	'already exists�Problem encountered�File name is not '
-	dc.b	'suitable�'
-	dc.b	$1F
-	dc.b	$05
-	dc.b	$13
-	dc.b	'Insert game position save �tape�disc�'
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	$7F
-	dc.b	'�'
+	dc.b	$20,$4E,$4F,$54,$FF,$20,$6C,$6F,$61,$64,$65,$64,$FF,$20
+	dc.b	$73,$61,$76,$65,$64,$FF,$49,$6E,$63,$6F,$72,$72,$65,$63
+	dc.b	$74,$20,$64,$61,$74,$61,$20,$66,$6F,$75,$6E,$64,$20,$FF
+	dc.b	$46,$69,$6C,$65,$20,$6E,$61,$6D,$65,$20,$61,$6C,$72,$65
+	dc.b	$61,$64,$79,$20,$65,$78,$69,$73,$74,$73,$FF,$50,$72,$6F
+	dc.b	$62,$6C,$65,$6D,$20,$65,$6E,$63,$6F,$75,$6E,$74,$65,$72
+	dc.b	$65,$64,$FF,$46,$69,$6C,$65,$20,$6E,$61,$6D,$65,$20,$69
+	dc.b	$73,$20,$6E,$6F,$74,$20,$73,$75,$69,$74,$61,$62,$6C,$65
+	dc.b	$FF,$1F,$05,$13,$49,$6E,$73,$65,$72,$74,$20,$67,$61,$6D
+	dc.b	$65,$20,$70,$6F,$73,$69,$74,$69,$6F,$6E,$20,$73,$61,$76
+	dc.b	$65,$20,$FF,$74,$61,$70,$65,$FF,$64,$69,$73,$63,$FF,$7F
+	dc.b	$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F
+	dc.b	$FF
 
 lbC050FEA:
 	JSR	renderCharacter
@@ -11495,10 +11309,7 @@ lbB0513DD:
 lbB0513DE:
 	dc.b	$00,$01,$04,$03,$02
 t.MSG:
-	dc.b	'��'
-	dc.b	$94
-	dc.b	$84
-	dc.b	't'
+	dc.b	$B4,$A4,$94,$84,$74
 
 setDisplayMode51:
 	MOVE.B	#$33,D0
@@ -11526,7 +11337,9 @@ lbC05142E:
 	JMP	lbC049CE8
 
 DDDDDDDD.MSG:
-	dc.b	'*@!"D*@!"D*@!"D*@!"D*@!"D*@!"D*@!"D*@!"D'
+	dc.b	$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22
+	dc.b	$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21
+	dc.b	$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44
 
 lbC051462:
 	MOVE.B	#$80,D0
@@ -11665,15 +11478,11 @@ lbC0516B4:
 	JMP	displayMenuScreen
 
 LRHBSSBRHJRCS.MSG:
-	dc.b	'L'
+	dc.b	$4C
 RHBSSBRHJRCSJ.MSG:
-	dc.b	'RHBSSBRHJRCSJDBN�',0
-	dc.b	$06
-	dc.b	'w',$A
-	dc.b	'0<'
-	dc.b	$0F
-	dc.b	$9F
-	dc.b	' � �Q���Nu'
+	dc.b	$52,$48,$42,$53,$53,$42,$52,$48,$4A,$52,$43,$53,$4A,$44
+	dc.b	$42,$4E,$B9,$00,$06,$77,$0A,$30,$3C,$0F,$9F,$20,$C6,$20
+	dc.b	$C7,$51,$C8,$FF,$FA,$4E,$75
 
 lookupDataTable:
 	MOVE.B	lbB00D406,D0
@@ -12622,7 +12431,7 @@ lbC05257E:
 lbB052586:
 	dc.b	$11,$11
 D.MSG:
-	dc.b	'*@!"D'
+	dc.b	$2A,$40,$21,$22,$44
 ascii.MSG0:
 	dc.b	$01
 	dc.b	$02
@@ -13677,9 +13486,7 @@ lbC0533C2:
 	RTS
 
 ascii.MSG1:
-	dc.b	',',0,$A,0
-	dc.b	'�',0
-	dc.b	'�',0
+	dc.b	$2C,$00,$0A,$00,$D3,$00,$F5,$00
 
 applyVelocityIntegration:
 	MOVE.W	lbW00D5F6,D0
@@ -14447,48 +14254,33 @@ lbC053EBA:
 	RTS
 
 LOADgameposit.MSG:
-	dc.b	$1F
-	dc.b	$0B
-	dc.b	$09
-	dc.b	'LOAD game position�'
-	dc.b	$1F
-	dc.b	$0B
-	dc.b	$09
-	dc.b	'SAVE game position�Drive not ready�Disc write protec'
-	dc.b	'ted�Insert disc�Disc error�Incorrect data found  �Ty'
-	dc.b	'pe in file name�'
-	dc.b	$1F
-	dc.b	$07
-	dc.b	$16
-	dc.b	'                            '
-	dc.b	$1F
-	dc.b	$07
-	dc.b	$17
-	dc.b	'                            �'
-	dc.b	$1F
-	dc.b	$08
-	dc.b	$17
-	dc.b	'�Disc error: retry or escape�'
-	dc.b	$1F
-	dc.b	$08
-	dc.b	$16
-	dc.b	'Warning: this disc has not'
-	dc.b	$1F
-	dc.b	$08
-	dc.b	$17
-	dc.b	'been used for game saving�'
-	dc.b	$1F
-	dc.b	$05
-	dc.b	$0F
-	dc.b	'Insert formatted game save disc'
-	dc.b	$1F
-	dc.b	$0E
-	dc.b	$11
-	dc.b	'into drive 0.'
-	dc.b	$1F
-	dc.b	$09
-	dc.b	$14
-	dc.b	'Press any key to continue�',0
+	dc.b	$1F,$0B,$09,$4C,$4F,$41,$44,$20,$67,$61,$6D,$65,$20,$70
+	dc.b	$6F,$73,$69,$74,$69,$6F,$6E,$FF,$1F,$0B,$09,$53,$41,$56
+	dc.b	$45,$20,$67,$61,$6D,$65,$20,$70,$6F,$73,$69,$74,$69,$6F
+	dc.b	$6E,$FF,$44,$72,$69,$76,$65,$20,$6E,$6F,$74,$20,$72,$65
+	dc.b	$61,$64,$79,$FF,$44,$69,$73,$63,$20,$77,$72,$69,$74,$65
+	dc.b	$20,$70,$72,$6F,$74,$65,$63,$74,$65,$64,$FF,$49,$6E,$73
+	dc.b	$65,$72,$74,$20,$64,$69,$73,$63,$FF,$44,$69,$73,$63,$20
+	dc.b	$65,$72,$72,$6F,$72,$FF,$49,$6E,$63,$6F,$72,$72,$65,$63
+	dc.b	$74,$20,$64,$61,$74,$61,$20,$66,$6F,$75,$6E,$64,$20,$20
+	dc.b	$FF,$54,$79,$70,$65,$20,$69,$6E,$20,$66,$69,$6C,$65,$20
+	dc.b	$6E,$61,$6D,$65,$FF,$1F,$07,$16,$20,$20,$20,$20,$20,$20
+	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$1F,$07,$17,$20,$20,$20
+	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$FF,$1F,$08
+	dc.b	$17,$FF,$44,$69,$73,$63,$20,$65,$72,$72,$6F,$72,$3A,$20
+	dc.b	$72,$65,$74,$72,$79,$20,$6F,$72,$20,$65,$73,$63,$61,$70
+	dc.b	$65,$FF,$1F,$08,$16,$57,$61,$72,$6E,$69,$6E,$67,$3A,$20
+	dc.b	$74,$68,$69,$73,$20,$64,$69,$73,$63,$20,$68,$61,$73,$20
+	dc.b	$6E,$6F,$74,$1F,$08,$17,$62,$65,$65,$6E,$20,$75,$73,$65
+	dc.b	$64,$20,$66,$6F,$72,$20,$67,$61,$6D,$65,$20,$73,$61,$76
+	dc.b	$69,$6E,$67,$FF,$1F,$05,$0F,$49,$6E,$73,$65,$72,$74,$20
+	dc.b	$66,$6F,$72,$6D,$61,$74,$74,$65,$64,$20,$67,$61,$6D,$65
+	dc.b	$20,$73,$61,$76,$65,$20,$64,$69,$73,$63,$1F,$0E,$11,$69
+	dc.b	$6E,$74,$6F,$20,$64,$72,$69,$76,$65,$20,$30,$2E,$1F,$09
+	dc.b	$14,$50,$72,$65,$73,$73,$20,$61,$6E,$79,$20,$6B,$65,$79
+	dc.b	$20,$74,$6F,$20,$63,$6F,$6E,$74,$69,$6E,$75,$65,$FF,$00
 
 displaySeasonSelection:
 	JSR	drawScreenFrame
