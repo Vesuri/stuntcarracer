@@ -1,5 +1,5 @@
 ; memory_7A21A saveSlots
-; 00007D00 frameBufferSize
+; 00007D00 frameBufferSize 320x200x4
 ; bpl1 $78000
 ; bpl2 $7a000
 ; bpl3 $7c000
@@ -174,8 +174,6 @@ _LVOCloseLibrary	equ	-$19e
 _LVOForbid		equ	-$84
 _LVOPermit		equ	-$8a
 _LVOSuperVisor		equ	-$1e
-_LVOAllocMem		equ	-$c6
-_LVOFreeMem		equ	-$d2
 _LVOCacheControl	equ	-$288
 _LVOLoadView		equ	-$de
 _LVOWaitTOF		equ	-$10e
@@ -194,8 +192,6 @@ CACR_CopyBack		equ	$80000000
 gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
-MEMF_CHIP		equ	$00000002
-MEMF_CLEAR		equ	$00010000
 	
 	section	ChipCode,code_c
 
@@ -204,68 +200,8 @@ startup:
 	move.l	sp,sp_quit
 	move.b	#$80,skipSaveSlotScreen
 
-	; Allocate memory
-	move.l	4.w,a6
-	move.l	#$20000,d0
-	move.l	#MEMF_CHIP|MEMF_CLEAR,d1
-	jsr	_LVOAllocMem(a6)
-	move.l	d0,memory_chip
-	beq	startupFailure
-	move.l	d0,memory_0400
-	move.l	d0,memory_3D80
-	move.l	d0,memory_60A8
-	move.l	d0,memory_6490
-	add.l	#$10000,d0
-	move.l	d0,memory_79360
-	move.l	d0,memory_7A01A
-	move.l	d0,memory_7A035
-	move.l	d0,memory_7A03A
-	move.l	d0,memory_7A03F
-	move.l	d0,memory_7A21A
-	move.l	d0,networkTransferBuffer
-	move.l	d0,memory_7A43A
-	move.l	d0,memory_7A4BA
-	move.l	d0,memory_7A4FA
-	move.l	d0,memory_7A51A
-	move.l	d0,memory_7A61A
-	move.l	d0,memory_7A71A
-	move.l	d0,memory_7A81A
-	move.l	d0,memory_7A91A
-	move.l	d0,memory_7A9FA
-	move.l	d0,memory_7AA1A
-	move.l	d0,memory_7AAE6
-	move.l	d0,memory_7AB5A
-	move.l	d0,memory_7ABDA
-	move.l	d0,memory_7B08A
-	move.l	d0,memory_7B6FA
-	add.l	#$0400,memory_0400
-	add.l	#$3D80,memory_3D80
-	add.l	#$60A8,memory_60A8
-	add.l	#$6490,memory_6490
-	add.l	#$9360,memory_79360
-	add.l	#$A01A,memory_7A01A
-	add.l	#$A035,memory_7A035
-	add.l	#$A03A,memory_7A03A
-	add.l	#$A03F,memory_7A03F
-	add.l	#$A21A,memory_7A21A
-	add.l	#$A41A,networkTransferBuffer
-	add.l	#$A43A,memory_7A43A
-	add.l	#$A4BA,memory_7A4BA
-	add.l	#$A4FA,memory_7A4FA
-	add.l	#$A51A,memory_7A51A
-	add.l	#$A61A,memory_7A61A
-	add.l	#$A71A,memory_7A71A
-	add.l	#$A81A,memory_7A81A
-	add.l	#$A91A,memory_7A91A
-	add.l	#$A9FA,memory_7A9FA
-	add.l	#$AA1A,memory_7AA1A
-	add.l	#$AAE6,memory_7AAE6
-	add.l	#$AB5A,memory_7AB5A
-	add.l	#$ABDA,memory_7ABDA
-	add.l	#$B08A,memory_7B08A
-	add.l	#$B6FA,memory_7B6FA
-
 	; Open libraries
+	move.l	4.w,a6
 	moveq	#0,d0
 	lea	name_graphics,a1
 	jsr	_LVOOpenLibrary(a6)
@@ -368,12 +304,6 @@ shutdown:
 	move.l	#CACR_CopyBack|CACR_EnableE|CACR_DBE|CACR_ClearD|CACR_EnableD|CACR_FreezeD|CACR_IBE|CACR_ClearI|CACR_FreezeI|CACR_EnableI,d1
 	jsr	_LVOCacheControl(a6)
 .no680x0:
-	move.l	memory_chip,d0
-	beq.b	.nochipmem
-	move.l	d0,a1
-	move.l	#$20000,d0
-	jsr	_LVOFreeMem(a6)
-.nochipmem:
 	moveq	#0,d0
 	rts
 
@@ -384,33 +314,6 @@ GetVBR:	ORI	#$0700,SR
 	RTE
 
 sp_quit:	ds.l	1
-memory_chip:	ds.l	1
-memory_0400:	ds.l	1
-memory_3D80:	ds.l	1
-memory_60A8:	ds.l	1
-memory_6490:	ds.l	1
-memory_79360:	ds.l	1
-memory_7A01A:	ds.l	1
-memory_7A035:	ds.l	1
-memory_7A03A:	ds.l	1
-memory_7A03F:	ds.l	1
-memory_7A21A:	ds.l	1
-networkTransferBuffer:	ds.l	1
-memory_7A43A:	ds.l	1
-memory_7A4BA:	ds.l	1
-memory_7A4FA:	ds.l	1
-memory_7A51A:	ds.l	1
-memory_7A61A:	ds.l	1
-memory_7A71A:	ds.l	1
-memory_7A81A:	ds.l	1
-memory_7A91A:	ds.l	1
-memory_7A9FA:	ds.l	1
-memory_7AA1A:	ds.l	1
-memory_7AAE6:	ds.l	1
-memory_7AB5A:	ds.l	1
-memory_7ABDA:	ds.l	1
-memory_7B08A:	ds.l	1
-memory_7B6FA:	ds.l	1
 base_vector:	ds.l	1
 base_graphics:	ds.l	1
 gb_copinit_old:	ds.l	1
@@ -1200,10 +1103,10 @@ clearKeyboardStateLoop:
 	MOVE.B	#$00,$00(A0,D1.W)
 	SUBQ.B	#$01,D1
 	BPL	clearKeyboardStateLoop
-	MOVE.L	memory_7A01A,A0
+	MOVE.L	#memory_7A01A,A0
 clearGameStateLoop:
 	MOVE.B	#$00,(A0)+
-	CMP.L	memory_7B6FA,A0
+	CMP.L	#memory_7B6FA,A0
 	BLT	clearGameStateLoop
 	TST.B	checksum
 	BEQ	checksumOk
@@ -1311,7 +1214,7 @@ lbB00D417:
 	dc.b	$00
 lbB00D418:
 	dc.b	$00
-audioChannelCounter:
+savedViewpointIndex:
 	dc.b	$00
 lbB00D41A:
 	dc.b	$00
@@ -1471,7 +1374,7 @@ playerStateFlag:
 	dc.b	$00
 lbB00D47F:
 	dc.b	$00,$00,$00,$00,$00,$00
-audioParameterIndex:
+viewpointIndex:
 	dc.b	$00
 lbB00D486:
 	dc.b	$00,$00
@@ -1529,7 +1432,7 @@ lbB00D4A5:
 	dc.b	$00
 lbB00D4A6:
 	dc.b	$00
-currentAudioParameter:
+currentDataIndex:
 	dc.b	$00
 lbB00D4A8:
 	dc.b	$00,$00
@@ -1657,7 +1560,7 @@ engineEffectFlag:
 	dc.b	$00
 networkEngineFlag:
 	dc.b	$00
-previousAudioParameter:
+previousDataIndex:
 	dc.b	$00
 lbW00D4EE:
 	dc.w	$0000
@@ -2259,7 +2162,7 @@ lbL00DE88:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-audioDataTable:
+trackSegmentPropertiesTable:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
@@ -2376,7 +2279,7 @@ lbB00E30E:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 lbB00E319:
 	dc.b	$00
-lbB00E31A:
+numViewpoints:
 	dc.b	$00
 lbB00E31B:
 	dc.b	$00
@@ -2509,29 +2412,30 @@ distanceLookupTable:
 	dc.w	$1211,$0F0E,$0B09,$0707,$0707,$0707,$0707,$2331,$362C
 	dc.w	$6430,$0D09,$6265,$7109,$6774,$3131,$0D09,$6D6F,$7665
 	dc.w	$2E62
-lbW010882:
+trackGeometryDatabase:
 	dc.w	$50B2,$A3B2,$A9FF,$FEB2,$59B3,$20DA,$D8B3,$3BB4,$0A46
 	dc.w	$2E20,$9EB4,$A980,$852E,$60A5,$30C9,$8190
-lbW0108A2:
-	dc.w	$0DB5,$1BB5,$24B5,$36B5,$44B5,$52B5,$5CB5,$66B5,$6FB5
-	dc.w	$78B5,$86B5,$94B5,$9DB5,$A6B5,$B2B5,$CAB5,$D3B5,$EBB5
-	dc.w	$F7B5,$01B6,$0AB6,$14B6,$1DB6,$27B6,$31B6,$3AB6,$43B6
-	dc.w	$4DB6,$57B6,$60B6,$69B6,$72B6,$7BB6,$84B6,$90B6,$99B6
-	dc.w	$A2B6,$ABB6,$B7B6,$C0B6,$C9B6,$D5B6,$E1B6,$EDB6,$F9B6
-	dc.w	$02B7,$0BB7,$14B7,$1DB7,$26B7,$32B7,$3EB7,$4CB7,$56B7
-	dc.w	$5FB7,$68B7,$7AB7,$83B7,$8CB7,$95B7,$9EB7,$A7B7,$B0B7
-	dc.w	$B9B7,$C3B7,$CCB7,$D6B7,$E8B7,$F1B7,$FAB7,$03B8,$0CB8
-	dc.w	$16B8,$1FB8,$28B8,$31B8,$3AB8,$46B8,$4FB8,$58B8,$70B8
-	dc.w	$A720,$7EB8,$87B8,$90B8,$9EB8,$ACB8,$B5B8,$BFB8,$C9B8
-	dc.w	$D5B8,$DEB8,$E7B8,$F0B8,$FAB8,$03B9,$15B9,$27B9,$39B9
-	dc.w	$4BB9,$54B9,$60B9,$6AB9,$74B9,$7EB9,$88B9,$91B9,$9AB9
-	dc.w	$A3B9,$ACB9,$B5B9,$BEB9,$CAB9,$D4B9,$E0B9,$F8B9,$04BA
-	dc.w	$0DBA,$1FBA,$28BA,$A320,$7DA3,$31BA,$AA20,$3ABA,$44BA
-	dc.w	$4EBA,$58BA
-lbW0109A2:
-	dc.w	$62BA,$DEBA,$6FBB,$00BC,$8EBC,$1FBD,$F4BD,$82BE,$F5A7
-	dc.w	$4C00,$A54C,$B2A3,$0017,$4163,$6375,$7261
-audioParameterTable:
+segmentGeometryOffsetTable:	; This is a lookup table containing ~130 encoded offset values that map segment type/configuration indices to geometry data locations within trackGeometryDatabase
+	dc.w	$0DB5,$1BB5,$24B5,$36B5,$44B5,$52B5,$5CB5,$66B5
+	dc.w	$6FB5,$78B5,$86B5,$94B5,$9DB5,$A6B5,$B2B5,$CAB5
+	dc.w	$D3B5,$EBB5,$F7B5,$01B6,$0AB6,$14B6,$1DB6,$27B6
+	dc.w	$31B6,$3AB6,$43B6,$4DB6,$57B6,$60B6,$69B6,$72B6
+	dc.w	$7BB6,$84B6,$90B6,$99B6,$A2B6,$ABB6,$B7B6,$C0B6
+	dc.w	$C9B6,$D5B6,$E1B6,$EDB6,$F9B6,$02B7,$0BB7,$14B7
+	dc.w	$1DB7,$26B7,$32B7,$3EB7,$4CB7,$56B7,$5FB7,$68B7
+	dc.w	$7AB7,$83B7,$8CB7,$95B7,$9EB7,$A7B7,$B0B7,$B9B7
+	dc.w	$C3B7,$CCB7,$D6B7,$E8B7,$F1B7,$FAB7,$03B8,$0CB8
+	dc.w	$16B8,$1FB8,$28B8,$31B8,$3AB8,$46B8,$4FB8,$58B8
+	dc.w	$70B8,$A720,$7EB8,$87B8,$90B8,$9EB8,$ACB8,$B5B8
+	dc.w	$BFB8,$C9B8,$D5B8,$DEB8,$E7B8,$F0B8,$FAB8,$03B9
+	dc.w	$15B9,$27B9,$39B9,$4BB9,$54B9,$60B9,$6AB9,$74B9
+	dc.w	$7EB9,$88B9,$91B9,$9AB9,$A3B9,$ACB9,$B5B9,$BEB9
+	dc.w	$CAB9,$D4B9,$E0B9,$F8B9,$04BA,$0DBA,$1FBA,$28BA
+	dc.w	$A320,$7DA3,$31BA,$AA20,$3ABA,$44BA,$4EBA,$58BA
+trackDataOffsetTable:	; Each word is an encoded offset that, when transformed, points to a specific track's compressed data in trackGeometryDatabase
+	dc.w	$62BA,$DEBA,$6FBB,$00BC,$8EBC,$1FBD,$F4BD,$82BE
+	dc.w	$F5A7,$4C00,$A54C,$B2A3,$0017,$4163,$6375,$7261
+geometryParameterTable:
 	dc.w	$0080,$20C0,$0073,$80C0,$A959,$0002,$A95E,$854B,$0400
 	dc.w	$4003,$1200,$AB80,$8001,$2040,$0300,$00C0,$0400,$0040
 	dc.w	$0300,$01C0,$0400,$0140,$0300,$02C0,$0400,$0240,$0300
@@ -3116,7 +3020,7 @@ lbC048C74:
 	TST.B	selectedRaceType
 	BPL	lbC048D2E
 	MOVE.B	gameParameter2,D0
-	CMP.B	lbB00E31A,D0
+	CMP.B	numViewpoints,D0
 	BCC	lbC048D30
 	MOVE.W	#$00FF,D0
 	JSR	calculateDistanceOrAngle
@@ -3785,10 +3689,10 @@ lbC049758:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	JSR	receiveLeagueDataPacket
 	BMI	lbC049758
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.B	(A6)+,D0
 	CMP.B	#$08,D0
 	BLT	lbC04978A
@@ -3822,7 +3726,7 @@ lbC0497E8:
 	TST.B	additionalPlayerCount
 	BEQ	lbC0497B6
 	JSR	displayNetworkWaitMessage
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.B	additionalPlayerCount,(A6)+
 	MOVE.W	#$00BF,D7
 	MOVE.L	#playerNamesWithSpaces,A0
@@ -3833,7 +3737,7 @@ lbC049814:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	JSR	sendLeagueDataPacket
 	BMI	lbC049814
 	JSR	synchronizeNetworkSetup
@@ -4037,7 +3941,7 @@ lbC049BB4:
 	MOVE.B	#$01,D0
 	JSR	lbC050C74
 	MOVE.B	#$00,lbB00E331
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$00FF,D7
 	CMP.B	#$40,lbB00D46B
 	BNE	lbC049BE8
@@ -4086,7 +3990,7 @@ receiveAdditionalSyncData:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049CE6
 	MOVE.W	#$0002,D7
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	TST.B	lbB00D46B
 	BEQ	lbC049CB0
 	MOVE.W	#$00FF,D7
@@ -4099,7 +4003,7 @@ lbC049CB0:
 	TST.B	lbB00D46B
 	BNE	lbC049CDC
 	MOVE.L	#selectedTrack,A0
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$0002,D7
 lbC049CD4:
 	MOVE.B	(A6)+,(A0)+
@@ -4121,14 +4025,14 @@ lbC049CE8:
 lbC049D02:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049D70
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$0004,D7
 	JSR	receiveLeagueDataPacket
 	BMI	lbC049D02
 	JSR	lbC049DDE
 	MOVE.B	opponentID,D0
 	JSR	lbC049D72
-	MOVE.L	networkTransferBuffer,A1
+	MOVE.L	#networkTransferBuffer,A1
 	JSR	lbC049D8A
 	TST.B	networkGameMode
 	BMI	lbC049D70
@@ -4187,7 +4091,7 @@ lbC049DD4:
 	RTS
 
 lbC049DDE:
-	MOVE.L	networkTransferBuffer,A0
+	MOVE.L	#networkTransferBuffer,A0
 	MOVE.L	#lbW049E00,A2
 	CLR.W	D0
 	MOVE.W	#$0004,D3
@@ -4275,12 +4179,12 @@ synchronizeRaceData:
 lbC049F88:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$0063,D7
 	JSR	receiveLeagueDataPacket
 	BMI	lbC049F88
 	MOVE.L	#playerStatsArray,A0
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$0047,D7
 lbC049FB6:
 	MOVE.B	(A6)+,(A0)+
@@ -4299,7 +4203,7 @@ lbC049FE6:
 	RTS
 
 lbC049FF4:
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.L	#playerStatsArray,A0
 	MOVE.W	#$0047,D7
 copyGameStateData:
@@ -4318,7 +4222,7 @@ lbC04A02C:
 lbC04A038:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	networkTransferBuffer,A6
+	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$0063,D7
 	JSR	sendLeagueDataPacket
 	BMI	lbC04A038
@@ -4503,9 +4407,9 @@ renderPlayerGraphicsToScreen:
 	MOVE.L	#lbL04A4BC,A2
 	MOVE.B	$00(A2,D1.W),D0
 	JSR	setupBitplaneMasks
-	MOVE.L	D6,lbL04A4CA
-	MOVE.L	D7,lbL04A4CE
-	MOVE.L	#lbL04A4D6,lbL04A4D2
+	MOVE.L	D6,bitplaneMask1
+	MOVE.L	D7,bitplaneMask2
+	MOVE.L	#playerGraphicsMask,bitplaneMaskPointer
 lbC04A330:
 	MOVE.W	#$0036,D5
 lbC04A334:
@@ -4599,13 +4503,13 @@ lbL04A4BC:
 	dc.l	$0B0B0B0B,$05020E01,$040F090B
 lbB04A4C8:
 	dc.b	$00,$00
-lbL04A4CA:
+bitplaneMask1:
 	dc.l	$00000000
-lbL04A4CE:
+bitplaneMask2:
 	dc.l	$00000000
-lbL04A4D2:
+bitplaneMaskPointer:
 	dc.l	$00000000
-lbL04A4D6:
+playerGraphicsMask:
 	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFE000,$07FFFFFF,$F800001F
 	dc.l	$E0000FFF,$FFFFFC00,$001FE000,$1FFFFFFF,$FE00001F
 	dc.l	$E0003FFF,$FFFFFF00,$001FE000,$3FFFFFFF,$FF00001F
@@ -4637,13 +4541,13 @@ lbL04A4D6:
 	dc.w	$FFFF
 
 applyBitplaneMask1:
-	MOVE.L	lbL04A4D2,A4
+	MOVE.L	bitplaneMaskPointer,A4
 	MOVE.W	(A4),D4
 	SWAP	D4
 	MOVE.W	(A4)+,D4
-	MOVE.L	A4,lbL04A4D2
+	MOVE.L	A4,bitplaneMaskPointer
 	AND.L	D4,D0
-	MOVE.L	lbL04A4CA,D6
+	MOVE.L	bitplaneMask1,D6
 	NOT.L	D4
 	AND.L	D4,D6
 	OR.L	D6,D0
@@ -4652,7 +4556,7 @@ applyBitplaneMask1:
 
 applyBitplaneMask2:
 	AND.L	D4,D0
-	MOVE.L	lbL04A4CE,D6
+	MOVE.L	bitplaneMask2,D6
 	NOT.L	D4
 	AND.L	D4,D6
 	OR.L	D6,D0
@@ -5939,7 +5843,7 @@ processTrackSegmentData:
 	JSR	calculateDistanceOrAngle
 	MOVE.W	D0,trackDistance
 	MOVE.B	D1,trackDirection
-	JSR	loadGameParameters
+	JSR	loadTrackSegmentConfiguration
 	MOVE.W	D1,D0
 	JSR	lookupTableAccess2
 	MOVE.W	lbB00D530,D0
@@ -5949,13 +5853,13 @@ processTrackSegmentData:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	lbW00D590,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.B	trackDistance,D1
 	ASL.W	#$01,D1
@@ -5973,19 +5877,19 @@ processTrackSegmentData:
 	ADDQ.B	#$01,D1
 	CMP.B	trackSegmentLimit,D1
 	BCS	processWithinSegmentBounds
-	JSR	incrementAudioIndex
-	JSR	loadGameParameters
+	JSR	incrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.W	lbW00D58C,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	lbW00D590,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	#$0002,D1
 	JSR	getTrackDataPoint
@@ -5994,19 +5898,19 @@ processTrackSegmentData:
 	JSR	getTrackDataPoint
 	MOVE.W	D0,additionalInterpolationPoints2
 	ADDQ.B	#$01,D1
-	JSR	decrementAudioIndex
-	JSR	loadGameParameters
+	JSR	decrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.W	lbW00D58C,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	lbW00D590,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	BRA	doProcessTrackCharacteristics
 
@@ -6081,14 +5985,14 @@ lbC04BD08:
 	MOVE.W	#$00FF,D0
 calculateDistanceOrAngle:
 	MOVE.B	gameParameter2,D1
-	MOVE.B	D1,audioParameterIndex
+	MOVE.B	D1,viewpointIndex
 	MOVE.W	gameStateCounter,D3
 	SUB.W	D3,D0
 	NEG.W	D0
 	BPL	lbC04BD40
 	MOVE.W	D0,-(SP)
-	JSR	decrementAudioIndex
-	JSR	loadGameParameters
+	JSR	decrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.W	(SP)+,D3
 	MOVE.B	trackModeParameter,D0
 	ASL.W	#$08,D0
@@ -6139,7 +6043,7 @@ lbC04BD68:
 	MOVE.W	additionalInterpolationPoints2,interpolationPointsXY4
 lbC04BE08:
 	MOVE.B	D0,trackProcessingFlag
-	MOVE.B	previousAudioParameter,lbB00D54D
+	MOVE.B	previousDataIndex,lbB00D54D
 	MOVE.W	#$0004,D1
 	BRA	calculateAndStoreBounds
 
@@ -6193,7 +6097,7 @@ processTrackCharacteristics:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A3
 	MOVE.B	(A3),D0
 	ADDQ.B	#$07,D0
@@ -6322,13 +6226,13 @@ lbC04C132:
 	MOVE.W	D0,trackIncrementValue
 	MOVE.B	#$02,D2
 	MOVE.B	#$BE,D1
-	MOVE.L	#lbW0108A2,A1
+	MOVE.L	#segmentGeometryOffsetTable,A1
 	MOVE.W	$00(A1,D1.W),lbW00D5C0
 	MOVE.W	lbW00D5C0,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	#$0F,D1
 lbC04C188:
@@ -6359,7 +6263,7 @@ lbC04C1AC:
 	BNE	lbC04C188
 	TST.B	graphicsUpdateFlag
 	BEQ	lbC04C24A
-	MOVE.L	memory_7AAE6,A1
+	MOVE.L	#memory_7AAE6,A1
 	MOVE.L	(A1),A1
 	MOVE.B	$0010(A0),D0
 	ASL.W	#$08,D0
@@ -6584,7 +6488,7 @@ lbC04C556:
 lbC04C566:
 	TST.B	enginePower
 	BMI	lbC04C58E
-	MOVE.B	D1,audioChannelCounter
+	MOVE.B	D1,savedViewpointIndex
 	BTST	#$06,enginePower
 	BNE	lbC04C5A0
 lbC04C582:
@@ -6592,7 +6496,7 @@ lbC04C582:
 	JMP	lbC04C5A6
 
 lbC04C58E:
-	MOVE.B	D2,audioChannelCounter
+	MOVE.B	D2,savedViewpointIndex
 	BTST	#$06,enginePower
 	BEQ	lbC04C582
 lbC04C5A0:
@@ -6603,7 +6507,7 @@ lbC04C5A6:
 	TST.B	raceMode
 	BMI	lbC04C5FC
 lbC04C5BA:
-	MOVE.B	audioChannelCounter,D1
+	MOVE.B	savedViewpointIndex,D1
 	MOVE.L	#lbL00E2DE,A1
 	ADDQ.B	#$01,$00(A1,D1.W)
 	MOVE.B	lbB00D418,D1
@@ -6613,7 +6517,7 @@ lbC04C5BA:
 	CMP.B	selectedTrack,D0
 	BNE	lbC04C5FC
 	MOVE.B	D1,lbB00E326
-	MOVE.B	audioChannelCounter,D0
+	MOVE.B	savedViewpointIndex,D0
 	MOVE.B	D0,lbB00E325
 lbC04C5FC:
 	RTS
@@ -6639,7 +6543,7 @@ lbC04C610:
 	BLT	lbC04C610
 lbC04C64C:
 	MOVE.B	#$00,D0
-	MOVE.B	D0,audioChannelCounter
+	MOVE.B	D0,savedViewpointIndex
 	MOVE.B	lbB00D55B,D2
 lbC04C65C:
 	MOVE.B	D2,lbB00D418
@@ -6673,7 +6577,7 @@ lbC04C6B8:
 	MOVE.B	D0,$01(A3,D2.W)
 	MOVE.B	lbB00D41A,D0
 	MOVE.B	D0,$00(A3,D2.W)
-	ADDQ.B	#$01,audioChannelCounter
+	ADDQ.B	#$01,savedViewpointIndex
 lbC04C6DA:
 	MOVE.B	lbB00D418,D2
 	ADDQ.B	#$01,D2
@@ -6684,7 +6588,7 @@ lbC04C6DA:
 	BRA	lbC04C65C
 
 lbC04C6F4:
-	MOVE.B	audioChannelCounter,D0
+	MOVE.B	savedViewpointIndex,D0
 	BNE	lbC04C64C
 	RTS
 
@@ -6720,13 +6624,13 @@ processTrackDataBuffer:
 	MOVE.B	D1,D0
 	ASL.B	#$01,D0
 	MOVE.B	D0,D2
-	MOVE.L	#lbW0109A2,A2
+	MOVE.L	#trackDataOffsetTable,A2
 	MOVE.W	$00(A2,D2.W),lbW00D5C0
 	MOVE.W	lbW00D5C0,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	#$0000,D5
 lbC04C778:
@@ -6752,7 +6656,7 @@ lbC04C7D0:
 	SUBQ.B	#$01,lbB00D448
 	MOVE.B	lbB00D555,D0
 	MOVE.B	D0,lbB00D41A
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$10,D0
 	BEQ	lbC04C80E
@@ -6767,7 +6671,7 @@ lbC04C80E:
 lbC04C820:
 	JSR	readTrackDataByte
 	MOVE.B	D0,lbB00D41A
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$0F,D0
 	CMP.B	#$0F,D0
@@ -6778,7 +6682,7 @@ lbC04C820:
 	JMP	lbC04C7D0
 
 lbC04C856:
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,lbB00D555
 	JSR	readTrackDataByte
@@ -6795,10 +6699,10 @@ lbC04C86C:
 	CMP.B	#$0C,D0
 	BLT	lbC04C8DC
 	MOVE.B	D0,D2
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$F0,D0
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.L	#S9.MSG,A2
 	MOVE.B	$00(A2,D2.W),D0
@@ -6834,7 +6738,7 @@ lbC04C910:
 	ASL.W	#$05,D0
 	MOVE.W	D0,$00(A1,D1.W)
 	LSR.B	#$01,D1
-	JSR	loadGameParameters
+	JSR	loadTrackSegmentConfiguration
 	ASL.B	#$01,D1
 	MOVE.B	lbB00D4DC,D0
 	ADD.B	lbB00D498,D0
@@ -6871,14 +6775,14 @@ lbC04C910:
 	MOVE.B	(SP)+,D0
 	MOVE.B	D0,D2
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E31A,D1
+	CMP.B	numViewpoints,D1
 	BEQ	lbC04CA0C
 	JMP	lbC04C7D0
 
 lbC04CA0C:
 	MOVE.B	trackParameter3,D1
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E31A,D1
+	CMP.B	numViewpoints,D1
 	BLT	lbC04CA22
 	MOVE.B	#$00,D1
 lbC04CA22:
@@ -6954,11 +6858,11 @@ lbC04CB2A:
 	MOVE.B	D0,temp
 	BPL	lbC04CBAA
 lbC04CB38:
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
 	MOVE.B	D0,D2
-	MOVE.L	#audioParameterTable,A2
+	MOVE.L	#geometryParameterTable,A2
 	MOVE.B	$00(A2,D2.W),D0
 	BPL	lbC04CB72
 	MOVE.B	lbB0555E1,D0
@@ -6986,7 +6890,7 @@ lbC04CBAA:
 	SUBQ.B	#$01,D1
 	BPL	lbC04CAE0
 lbC04CBB0:
-	MOVE.B	lbB00E31A,D1
+	MOVE.B	numViewpoints,D1
 	SUBQ.B	#$01,D1
 S9.MSG:
 	dc.b	'S9'
@@ -7001,7 +6905,7 @@ lbC04CBD2:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	lbB00D479,D0
 	BPL	lbC04CC14
@@ -7626,7 +7530,7 @@ startGameSession:
 	MOVE.B	D0,D1
 	MOVE.B	#$00,D2
 lbC04D4EC:
-	MOVE.L	memory_7A01A,A2
+	MOVE.L	#memory_7A01A,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.L	#lbL00DB80,A2
 	MOVE.B	D0,$00(A2,D2.W)
@@ -7672,7 +7576,7 @@ restoreGameData:
 	MOVE.B	#$00,D2
 	MOVE.B	lbB00D4D0,lbB00E334
 	MOVE.L	#lbL00DB80,A2
-	MOVE.L	memory_7A01A,A0
+	MOVE.L	#memory_7A01A,A0
 lbC04D5C2:
 	MOVE.B	$00(A2,D2.W),$00(A0,D2.W)
 	SUBQ.B	#$01,D2
@@ -7776,14 +7680,14 @@ lbB04D73E:
 lbC04D740:
 	SUB.L	-(A0),D0
 	CMP.W	-(A0),A0
-processTrackAudioData:
-	MOVE.B	audioParameterIndex,D1
-	JSR	loadGameParameters
+applyTrackSegmentGeometry:
+	MOVE.B	viewpointIndex,D1
+	JSR	loadTrackSegmentConfiguration
 	MOVE.W	lbW00D5BC,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	D1,D0
 	JSR	lookupTableAccess2
@@ -7906,24 +7810,24 @@ lbC04D90C:
 	CMP.B	#$03,D0
 	BNE	lbC04D980
 lbC04D936:
-	MOVE.B	audioParameterIndex,audioChannelCounter
+	MOVE.B	viewpointIndex,savedViewpointIndex
 	TST.B	alternateTrackModeFlag
 	BEQ	lbC04D956
-	JSR	decrementAudioIndex
+	JSR	decrementViewpointIndex
 	JMP	lbC04D95C
 
 lbC04D956:
-	JSR	incrementAudioIndex
+	JSR	incrementViewpointIndex
 lbC04D95C:
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
 	CMP.B	#$04,D0
 	BNE	lbC04D976
-	BRA	processTrackAudioData
+	BRA	applyTrackSegmentGeometry
 
 lbC04D976:
-	MOVE.B	audioChannelCounter,audioParameterIndex
+	MOVE.B	savedViewpointIndex,viewpointIndex
 lbC04D980:
 	JSR	lbC04DF5A
 	MOVE.B	$000A(A5),D3
@@ -8031,20 +7935,20 @@ lbC04DABE:
 	MOVE.W	D3,lbW00D526
 	RTS
 
-updateEngineAudio1:
+calculateSegmentPhysics:
 	MOVE.B	gameParameter1,D1
-	MOVE.B	D1,audioParameterIndex
-	JSR	loadGameParameters
+	MOVE.B	D1,viewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.B	#$00,lbB00D49A
 	MOVE.B	#$04,D1
 lbC04DAEE:
 	MOVE.B	D1,lbB00D4F9
 	MOVE.B	gameParameter1,D0
-	CMP.B	audioParameterIndex,D0
+	CMP.B	viewpointIndex,D0
 	BEQ	lbC04DB18
 	MOVE.B	D0,D1
-	MOVE.B	D1,audioParameterIndex
-	JSR	loadGameParameters
+	MOVE.B	D1,viewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.B	lbB00D4F9,D1
 lbC04DB18:
 	MOVE.B	lbB00D47B,lbB00D41A
@@ -8113,13 +8017,13 @@ lbC04DBFE:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	lbW00D590,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	TST.B	alternateTrackModeFlag
 	BMI	lbC04DC7E
@@ -8208,14 +8112,14 @@ lbC04DD84:
 	MOVE.B	alternateTrackModeFlag,D3
 	EOR.B	D3,D0
 	BPL	lbC04DDB0
-	JSR	decrementAudioIndex
-	JSR	loadGameParameters
+	JSR	decrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.B	alternateTrackModeFlag,D0
 	BPL	lbC04DDDC
 	BMI	lbC04DDC6
 lbC04DDB0:
-	JSR	incrementAudioIndex
-	JSR	loadGameParameters
+	JSR	incrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	TST.B	alternateTrackModeFlag
 	BMI	lbC04DDDC
 lbC04DDC6:
@@ -8240,24 +8144,24 @@ lbC04DE06:
 lbC04DE18:
 	RTS
 
-incrementAudioIndex:
-	MOVE.B	audioParameterIndex,D1
+incrementViewpointIndex:
+	MOVE.B	viewpointIndex,D1
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E31A,D1
+	CMP.B	numViewpoints,D1
 	BLT	lbC04DE30
 	MOVE.B	#$00,D1
 lbC04DE30:
-	MOVE.B	D1,audioParameterIndex
+	MOVE.B	D1,viewpointIndex
 	RTS
 
-decrementAudioIndex:
-	MOVE.B	audioParameterIndex,D1
+decrementViewpointIndex:
+	MOVE.B	viewpointIndex,D1
 	SUBQ.B	#$01,D1
 	BPL	lbC04DE4C
-	MOVE.B	lbB00E31A,D1
+	MOVE.B	numViewpoints,D1
 	SUBQ.B	#$01,D1
 lbC04DE4C:
-	MOVE.B	D1,audioParameterIndex
+	MOVE.B	D1,viewpointIndex
 	RTS
 
 calculateInterpolatedValue:
@@ -8383,7 +8287,7 @@ calculateTrackCoordinatesFromData:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	TST.B	trackHeightDifference
 	BMI	lbC04E070
@@ -8495,13 +8399,13 @@ loadMenuDataToRAM:
 	MOVE.W	#$0000,imageMenuScreenPalette
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
-	MOVE.L	memory_7A91A,A1
+	MOVE.L	#memory_7A91A,A1
 copyPlayerNamesLoop:
 	MOVE.B	(A0)+,(A1)+
 	DBRA	D0,copyPlayerNamesLoop
 	MOVE.L	#divider,A0
-	MOVE.L	memory_7A61A,A1
-	MOVE.L	memory_7A71A,A2
+	MOVE.L	#memory_7A61A,A1
+	MOVE.L	#memory_7A71A,A2
 	CLR.W	D1
 	CLR.W	D2
 copyDividerLoop:
@@ -8675,7 +8579,7 @@ enterMainGameLoop:
 ;	MOVE.L	#stackEnd,SP
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
-	MOVE.L	memory_7A91A,A1
+	MOVE.L	#memory_7A91A,A1
 copyPlayerNamesWithSpacesLoop:
 	MOVE.B	(A1)+,(A0)+
 	DBRA	D0,copyPlayerNamesWithSpacesLoop
@@ -8858,12 +8762,13 @@ lbC04EBA6:
 	MOVE.B	#$03,D0
 	JSR	setBackgroundColor
 	JSR	lbC04F15A
+debug:	; StuntCarRacer.s:10190
 	MOVE.B	gameStateFlag,D1
 	JSR	processTrackDataBuffer
 	JSR	initializeLookupTables
 	JSR	updateDisplayAndGenerateTrackData
 	JSR	loadVisibilityData
-	JSR	generateAudioTrackData
+	JSR	generateTrackPreviewData
 	JSR	executeGameSequence
 	MOVE.B	#$2C,D1
 	JSR	renderLeagueText
@@ -8914,7 +8819,7 @@ lbC04ECA4:
 	MOVE.B	lbB00E31B,D1
 	MOVE.B	D1,gameParameter2
 	MOVE.B	#$04,gameStateCounter
-	MOVE.B	#$4C,previousAudioParameter
+	MOVE.B	#$4C,previousDataIndex
 	JSR	initializeTrackCoordinates
 	MOVE.B	lbB00E31B,D1
 	CMP.B	#$40,networkGameMode
@@ -8924,12 +8829,12 @@ initializeGameSystemsAndMainLoop:
 	JSR	initializeAudioSystem
 	JSR	initializeDisplayBuffers
 	JSR	initializeDataArrays
-	JSR	processNetworkAndAudio
+	JSR	processGameFrame
 	JSR	updateGameTimingAndDirection
 	SUBQ.B	#$01,frameCounter
 	JSR	swapDisplayBuffers
 	JSR	updateGamePhysics
-	JSR	processNetworkAndAudio
+	JSR	processGameFrame
 	JSR	updateGameTimingAndDirection
 	SUBQ.B	#$01,frameCounter
 	JSR	calculateTrackEffects
@@ -8947,7 +8852,7 @@ mainGameLoop:
 	JSR	processPlayerInput
 	JSR	updateGamePhysics
 	JSR	calculateSpeedAndMovement
-	JSR	processNetworkAndAudio
+	JSR	processGameFrame
 	JSR	updateDisplayAndGenerateTrackData
 	JSR	calculateTrackEffects
 	JSR	processGameStatistics
@@ -9147,7 +9052,7 @@ lbC04F108:
 lbC04F130:
 	MOVE.B	#$00,$00(A0,D0.W)
 	DBRA	D0,lbC04F130
-	MOVE.L	memory_3D80,A0
+	MOVE.L	#memory_3D80,A0
 	MOVE.W	#$270F,D3
 	MOVE.B	#$00,D0
 lbC04F148:
@@ -9788,7 +9693,7 @@ lbC04FA86:
 	BGE	lbC04FA80
 	MOVE.B	D0,lbB00D418
 	MOVE.B	D1,lbB00D41A
-	MOVE.B	D2,audioChannelCounter
+	MOVE.B	D2,savedViewpointIndex
 	MOVE.B	D5,lbB00D417
 	MOVE.B	#$01,lbB00D46D
 	MOVE.B	#$04,textYOffset
@@ -9806,7 +9711,7 @@ lbC04FAE6:
 	JSR	renderDigitAndAdvance
 	MOVE.B	lbB00D417,D0
 	JSR	renderDigitAndAdvance
-	MOVE.B	audioChannelCounter,D0
+	MOVE.B	savedViewpointIndex,D0
 	JSR	renderDigitAndAdvance
 	MOVE.B	lbB00D41A,D0
 	JSR	renderDigitAndAdvance
@@ -10542,9 +10447,9 @@ lbC0507B0:
 	MOVE.B	D0,lbB05047E
 lbC0507B6:
 	MOVE.L	#lbL04C442,A0
-	MOVE.L	memory_7A9FA,A1
+	MOVE.L	#memory_7A9FA,A1
 	MOVE.L	#engineCharacteristics,A2
-	MOVE.L	memory_7A91A,A3
+	MOVE.L	#memory_7A91A,A3
 	MOVE.L	#playerNamesWithSpaces,A4
 	MOVE.L	#lbW04AA40,A5
 	ADD.B	$00(A0,D2.W),D0
@@ -10653,8 +10558,8 @@ lbC050946:
 	RTS
 
 lbC05094A:
-	MOVE.L	networkTransferBuffer,A0
-	MOVE.L	memory_7A01A,A1
+	MOVE.L	#networkTransferBuffer,A0
+	MOVE.L	#memory_7A01A,A1
 	MOVE.W	#$00BF,D0
 	TST.B	lbB00E331
 	BNE	lbC05096C
@@ -10804,32 +10709,32 @@ lbC050B7E:
 lbC050B90:
 	MOVE.L	#lbL050548,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.L	memory_7A61A,A1
+	MOVE.L	#memory_7A61A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.L	#Newtrackrecor.MSG,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.L	memory_7A71A,A1
+	MOVE.L	#memory_7A71A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D1
 	ADDQ.B	#$01,D2
 	CMP.B	#$0C,D2
 	BNE	lbC050B90
-	MOVE.L	memory_7A61A,A1
+	MOVE.L	#memory_7A61A,A1
 	MOVE.B	lbB00E216,$00(A1,D1.W)
 	MOVE.B	lbB00E22E,$01(A1,D1.W)
 	MOVE.B	lbB00E246,$02(A1,D1.W)
-	MOVE.L	memory_7A71A,A1
+	MOVE.L	#memory_7A71A,A1
 	MOVE.B	lbB00E217,$00(A1,D1.W)
 	MOVE.B	lbB00E22F,$01(A1,D1.W)
 	MOVE.B	lbB00E247,$02(A1,D1.W)
 	RTS
 
 lbC050C02:
-	MOVE.L	memory_7A61A,A1
+	MOVE.L	#memory_7A61A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lbL050548,A2
 	MOVE.B	D0,$00(A2,D2.W)
-	MOVE.L	memory_7A71A,A1
+	MOVE.L	#memory_7A71A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#Newtrackrecor.MSG,A2
 	MOVE.B	D0,$00(A2,D2.W)
@@ -10837,11 +10742,11 @@ lbC050C02:
 	ADDQ.B	#$01,D2
 	CMP.B	#$0C,D2
 	BNE	lbC050C02
-	MOVE.L	memory_7A61A,A1
+	MOVE.L	#memory_7A61A,A1
 	MOVE.B	$00(A1,D1.W),lbB00E216
 	MOVE.B	$01(A1,D1.W),lbB00E22E
 	MOVE.B	$02(A1,D1.W),lbB00E246
-	MOVE.L	memory_7A71A,A1
+	MOVE.L	#memory_7A71A,A1
 	MOVE.B	$00(A1,D1.W),lbB00E217
 	MOVE.B	$01(A1,D1.W),lbB00E22F
 	MOVE.B	$02(A1,D1.W),lbB00E247
@@ -10865,13 +10770,13 @@ lbC050CA6:
 	BEQ	lbC050CEA
 	MOVE.B	#$00,D1
 lbC050CB4:
-	MOVE.L	memory_7A61A,A1
+	MOVE.L	#memory_7A61A,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	networkTransferBuffer,A1
+	MOVE.L	#networkTransferBuffer,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.L	memory_7A71A,A1
+	MOVE.L	#memory_7A71A,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	memory_7A51A,A1
+	MOVE.L	#memory_7A51A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	SUBQ.B	#$01,D1
 	BNE	lbC050CB4
@@ -10882,8 +10787,8 @@ lbC050CE8:
 lbC050CEA:
 	JSR	lbC051192
 	BCS	lbC050CE8
-	MOVE.L	networkTransferBuffer,A0
-	MOVE.L	memory_7A61A,A1
+	MOVE.L	#networkTransferBuffer,A0
+	MOVE.L	#memory_7A61A,A1
 	MOVE.B	#$00,D1
 lbC050D04:
 	MOVE.B	$0C(A0,D1.W),D0
@@ -10911,8 +10816,8 @@ lbC050D48:
 lbC050D4C:
 	CMP.B	#$00,D1
 	BNE	lbC050D04
-	MOVE.L	memory_7A51A,A0
-	MOVE.L	memory_7A71A,A1
+	MOVE.L	#memory_7A51A,A0
+	MOVE.L	#memory_7A71A,A1
 lbC050D60:
 	MOVE.B	$0C(A0,D1.W),D0
 	CMP.B	$0C(A1,D1.W),D0
@@ -11064,12 +10969,12 @@ lbC05102C:
 	MOVE.B	#$80,D0
 lbC051030:
 	MOVE.B	D0,currentMenuItem
-	MOVE.L	networkTransferBuffer,lbW00D5C0
+	MOVE.L	#networkTransferBuffer,lbW00D5C0
 	MOVE.W	#$683B,lbW051020
 	MOVE.B	#$00,D1
 lbC05104C:
 	JSR	lbC051008
-	MOVE.L	memory_7A81A,A1
+	MOVE.L	#memory_7A81A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D1
 	BNE	lbC05104C
@@ -11088,7 +10993,7 @@ lbC051086:
 lbC051096:
 	MOVE.B	#$00,D2
 	MOVE.L	lbW00D5C0,A0
-	MOVE.L	memory_7A81A,A1
+	MOVE.L	#memory_7A81A,A1
 	TST.B	currentMenuItem
 	BMI	lbC0510CC
 	MOVE.B	D2,D0
@@ -11163,20 +11068,20 @@ lbC0511A8:
 lbC0511B6:
 	MOVE.L	#BigEdMaxBoost.MSG,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	memory_7A43A,A1
+	MOVE.L	#memory_7A43A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	CMP.B	#$3C,D1
 	BCC	lbC0511E6
 	MOVE.L	#lbL00E2DE,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	memory_7A4BA,A1
+	MOVE.L	#memory_7A4BA,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC0511E6:
 	CMP.B	#$0C,D1
 	BCC	lbC051202
 	MOVE.L	#lbL00E336,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	memory_7A4FA,A1
+	MOVE.L	#memory_7A4FA,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC051202:
 	SUBQ.B	#$01,D1
@@ -11191,20 +11096,20 @@ lbC05121C:
 	BCS	lbC051288
 	MOVE.B	#$7F,D1
 lbC05122A:
-	MOVE.L	memory_7A43A,A1
+	MOVE.L	#memory_7A43A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#BigEdMaxBoost.MSG,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	CMP.B	#$3C,D1
 	BCC	lbC05125A
-	MOVE.L	memory_7A4BA,A1
+	MOVE.L	#memory_7A4BA,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lbL00E2DE,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC05125A:
 	CMP.B	#$0C,D1
 	BCC	lbC051276
-	MOVE.L	memory_7A4FA,A1
+	MOVE.L	#memory_7A4FA,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lbL00E336,A1
 	MOVE.B	D0,$00(A1,D1.W)
@@ -11375,11 +11280,11 @@ lbC0514C6:
 	BEQ	lbC051500
 	MOVE.B	#$FF,D2
 lbC051500:
-	MOVE.L	memory_7A61A,A2
+	MOVE.L	#memory_7A61A,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.L	memory_7A71A,A2
+	MOVE.L	#memory_7A71A,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.L	#lbL00DF6C,A1
 	MOVE.B	D0,$00(A1,D1.W)
@@ -11441,7 +11346,7 @@ lbC051616:
 	JSR	setBackgroundColor
 	MOVE.B	#$0C,D2
 lbC051634:
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	JSR	renderCharacter
 	ADDQ.B	#$01,D1
@@ -11451,7 +11356,7 @@ lbC051634:
 	JSR	setBackgroundColor
 	JSR	renderSpace
 	SUBQ.B	#$01,lbB00D46D
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),playerStatsArray
 	MOVE.B	$01(A1,D1.W),lapTimeSeconds
 	MOVE.B	$02(A1,D1.W),lapTimeSubseconds
@@ -11506,12 +11411,12 @@ lbC051750:
 	ORI.B	#$01,CCR
 	RTS
 
-loadGameParameters:
+loadTrackSegmentConfiguration:
 	MOVE.L	#lbL00DDC0,A1
 	MOVE.B	$00(A1,D1.W),D2
 	MOVE.B	D2,lbB00D479
 	ASL.B	#$01,D2
-	MOVE.L	#lbW0108A2,A2
+	MOVE.L	#segmentGeometryOffsetTable,A2
 	MOVE.W	$00(A2,D2.W),lbW00D58C
 	MOVE.L	#lbL00DE24,A1
 	MOVE.B	$00(A1,D1.W),D2
@@ -11520,7 +11425,7 @@ loadGameParameters:
 	ROXL.B	#$01,D0
 	ASL.B	#$01,D0
 	MOVE.B	D0,lbB00D4DC
-	MOVE.L	#lbW0108A2,A2
+	MOVE.L	#segmentGeometryOffsetTable,A2
 	MOVE.W	$00(A2,D2.W),D0
 	MOVE.W	D0,lbW00D590
 	ASL.B	#$01,D1
@@ -11529,7 +11434,7 @@ loadGameParameters:
 	MOVE.L	#lbL00E018,A1
 	MOVE.W	$00(A1,D1.W),lbW00D510
 	LSR.B	#$01,D1
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$C0,D0
 	MOVE.B	D0,lbB00D54A
@@ -11542,13 +11447,13 @@ loadGameParameters:
 	MOVE.B	D0,lbB00D486
 	ASL.B	#$01,D0
 	MOVE.B	D0,D2
-	MOVE.L	#lbW010882,A2
+	MOVE.L	#trackGeometryDatabase,A2
 	MOVE.W	$00(A2,D2.W),lbW00D5BC
 	MOVE.W	lbW00D5BC,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	$0001(A0),lbB00D44D
 	MOVE.B	$0000(A0),D2
@@ -11665,7 +11570,7 @@ lbC0519A0:
 
 processCoordinateData:
 	LSR.W	#$08,D0
-	MOVE.B	D0,audioChannelCounter
+	MOVE.B	D0,savedViewpointIndex
 	MOVE.L	#lbB00D5D8,A0
 	MOVE.L	#lbB00D407,A1
 	MOVE.L	#lbB00D404,A2
@@ -11689,9 +11594,9 @@ lbC0519E4:
 	MOVE.B	D0,$0002(A1)
 	LSR.W	#$08,D0
 	MOVE.B	D0,$0002(A2)
-	TST.B	audioChannelCounter
+	TST.B	savedViewpointIndex
 	BMI	lbC051A40
-	BTST	#$06,audioChannelCounter
+	BTST	#$06,savedViewpointIndex
 	BNE	lbC051A22
 	MOVE.L	lbB00D5D8,lbL00D5CC
 	MOVE.L	lbB00D5E0,lbL00D5D4
@@ -11705,7 +11610,7 @@ lbC051A22:
 	RTS
 
 lbC051A40:
-	BTST	#$06,audioChannelCounter
+	BTST	#$06,savedViewpointIndex
 	BNE	lbC051A72
 	MOVE.L	#$08000000,D0
 	SUB.L	lbB00D5D8,D0
@@ -11863,7 +11768,7 @@ lbC051C8A:
 	BCS	lbC051DA6
 	CMP.B	#$FF,D0
 	BEQ	lbC051DA6
-	MOVE.B	D0,audioParameterIndex
+	MOVE.B	D0,viewpointIndex
 	MOVE.B	#$00,lbB00D4C5
 	MOVE.B	#$80,D0
 	MOVE.B	D0,processedSegmentIndices1
@@ -11903,7 +11808,7 @@ lbC051D4C:
 	MOVE.B	#$00,processedSegmentIndices1
 	MOVE.B	#$00,lbB00D4E4
 	ADD.W	#$0010,renderDataPointer
-	MOVE.L	memory_3D80,lineDrawingBufferPointer
+	MOVE.L	#memory_3D80,lineDrawingBufferPointer
 	JSR	lbC058BCC
 	JSR	processSecondaryRendering
 lbC051DA6:
@@ -11926,7 +11831,7 @@ executeGameSequence:
 	MOVE.B	#$F0,lbB00D5DD
 	MOVE.B	#$00,lbB00D5C8
 	MOVE.W	#$0700,lbW00D542
-	JSR	initializeNetworkAudio
+	JSR	initializeRenderingState
 	JSR	lbC04ACBA
 	JSR	animatePaletteToTarget
 	MOVE.B	#$80,lbB00D48F
@@ -11969,15 +11874,15 @@ lbC051EA6:
 	RTS
 
 lbC051EB0:
-	JSR	decrementAudioIndex
+	JSR	decrementViewpointIndex
 initializeAudioSystem:
-	MOVE.B	D1,audioParameterIndex
+	MOVE.B	D1,viewpointIndex
 	MOVE.B	D1,gameParameter1
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
 	MOVE.B	D0,D2
-	MOVE.L	#audioParameterTable,A2
+	MOVE.L	#geometryParameterTable,A2
 	MOVE.B	$00(A2,D2.W),D0
 	BMI	lbC051EB0
 	MOVE.B	lbB00E32F,D2
@@ -11997,7 +11902,7 @@ lbC051F08:
 	CMP.L	#lbL00D65E,A0
 	BNE	lbC051F08
 	MOVE.B	#$F0,gameActionFlag
-	JSR	loadGameParameters
+	JSR	loadTrackSegmentConfiguration
 	MOVE.L	#lbL00DE88,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
@@ -12034,7 +11939,7 @@ lbC051FA6:
 	ADD.B	D1,D0
 	MOVE.B	D0,lbB00D5E6
 	JSR	calculate3DProjection1
-	JSR	processTrackAudioData
+	JSR	applyTrackSegmentGeometry
 	JSR	checkSpeedCollision
 	JSR	updateGamePhysics
 	MOVE.W	#$0000,lbW00D5DE
@@ -12104,12 +12009,12 @@ validateGameState:
 	MOVE.B	gameParameter1,D0
 	SUB.B	lbB00E332,D0
 	BCC	lbC0520F6
-	ADD.B	lbB00E31A,D0
+	ADD.B	numViewpoints,D0
 lbC0520F6:
 	MOVE.B	gameParameter2,D3
 	SUB.B	lbB00E332,D3
 	BCC	lbC05210C
-	ADD.B	lbB00E31A,D3
+	ADD.B	numViewpoints,D3
 lbC05210C:
 	SUB.B	D0,D3
 	BNE	lbC052122
@@ -12230,7 +12135,7 @@ lbC0522A6:
 saveLoadGameData:
 	MOVE.B	D0,currentMenuItem
 	MOVE.L	#randomSeed1,A0
-	MOVE.L	memory_7A035,A1
+	MOVE.L	#memory_7A035,A1
 	MOVE.B	#$04,D1
 lbC0522C4:
 	TST.B	currentMenuItem
@@ -12265,12 +12170,12 @@ lbC05231E:
 lbC052322:
 	TST.B	currentMenuItem
 	BPL	lbC05234C
-	MOVE.L	memory_7A01A,A1
+	MOVE.L	#memory_7A01A,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,lbB00D418
-	MOVE.L	memory_7A03F,A1
+	MOVE.L	#memory_7A03F,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.B	D0,audioChannelCounter
+	MOVE.B	D0,savedViewpointIndex
 lbC05234C:
 	MOVE.B	#$00,D2
 	MOVE.B	D2,lbB00D41A
@@ -12288,10 +12193,10 @@ lbC052366:
 	CMP.B	$00(A1,D1.W),D0
 	BNE	lbC052356
 	MOVE.B	D2,D0
-	MOVE.L	memory_7A01A,A1
+	MOVE.L	#memory_7A01A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.B	lbB00D41A,D0
-	MOVE.L	memory_7A03F,A1
+	MOVE.L	#memory_7A03F,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	JMP	lbC0523D6
 
@@ -12299,10 +12204,10 @@ lbC0523AC:
 	CMP.B	lbB00D418,D2
 	BNE	lbC052356
 	MOVE.B	lbB00D41A,D0
-	CMP.B	audioChannelCounter,D0
+	CMP.B	savedViewpointIndex,D0
 	BNE	lbC052356
 	MOVE.B	lbB00D417,D0
-	MOVE.L	networkTransferBuffer,A1
+	MOVE.L	#networkTransferBuffer,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC0523D6:
 	SUBQ.B	#$01,D1
@@ -12314,11 +12219,11 @@ lbC0523EA:
 	MOVE.B	(A0)+,D0
 	TST.B	currentMenuItem
 	BMI	lbC052404
-	MOVE.L	memory_7A03A,A1
+	MOVE.L	#memory_7A03A,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	BPL	lbC052412
 lbC052404:
-	MOVE.L	memory_7A03A,A1
+	MOVE.L	#memory_7A03A,A1
 	CMP.B	$00(A1,D1.W),D0
 	BNE	lbC052482
 lbC052412:
@@ -12327,7 +12232,7 @@ lbC052412:
 	TST.B	currentMenuItem
 	BPL	lbC052472
 	MOVE.L	#lbL00E2B6,A3
-	MOVE.L	networkTransferBuffer,A0
+	MOVE.L	#networkTransferBuffer,A0
 	MOVE.B	#$1A,D1
 lbC052432:
 	TST.B	additionalPlayerCount
@@ -12518,14 +12423,14 @@ lbC05268E:
 	MOVE.W	D0,lbW00CFE2
 lbC0526A2:
 	ASL.B	#$01,D1
-	MOVE.B	D1,currentAudioParameter
+	MOVE.B	D1,currentDataIndex
 	MOVE.B	playerStateFlag,D0
 	BEQ	initializeDataArrays
 	MOVE.B	lbB000C60,D0
 	JSR	playAudioSample
 	MOVE.L	#lbL00DC80,A4
 	MOVE.L	#lbL00DD00,A5
-	MOVE.B	currentAudioParameter,D1
+	MOVE.B	currentDataIndex,D1
 lbC0526D2:
 	JSR	lbC052788
 	BNE	lbC0526F0
@@ -12537,7 +12442,7 @@ lbC0526D2:
 lbC0526F0:
 	SUBQ.B	#$02,D1
 	BPL	lbC0526D2
-	MOVE.B	currentAudioParameter,D1
+	MOVE.B	currentDataIndex,D1
 lbC0526FC:
 	MOVE.W	$40(A4,D1.W),D0
 	CMP.W	#$0080,D0
@@ -12702,8 +12607,8 @@ lbC05290A:
 
 updateTrackProgression:
 	MOVE.B	gameParameter1,D1
-	MOVE.B	D1,audioParameterIndex
-	JSR	loadGameParameters
+	MOVE.B	D1,viewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.W	lbW00D65A,D4
 	SUB.W	lbB00D5E6,D4
 	MOVE.W	alternateTrackModeFlag,D3
@@ -12737,8 +12642,8 @@ lbC052986:
 	SUB.B	lbW00D40A,D0
 	CMP.B	#$02,D0
 	BCC	lbC0529AC
-	JSR	incrementAudioIndex
-	JSR	loadGameParameters
+	JSR	incrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 lbC0529AC:
 	MOVE.B	lbB00D544,D0
 	MOVE.B	alternateTrackModeFlag,D3
@@ -12824,7 +12729,7 @@ lbC052AD4:
 	AND.L	#$0000000F,D2
 	LSR.W	D2,D0
 	SUB.W	D0,D4
-	MOVE.L	memory_79360,A0
+	MOVE.L	#memory_79360,A0
 	SUB.L	#$6174,A0
 	MOVE.L	#$667B379F,D3
 	ADD.L	#$36729563,D3
@@ -13320,7 +13225,7 @@ lbC05315A:
 updateGamePhysics:
 	JSR	calculateTransformMatrices
 	JSR	lbC0531CE
-	JSR	updateEngineAudio1
+	JSR	calculateSegmentPhysics
 	JSR	calculateTrackPositions
 	JSR	transformWorldCoordinates
 	JSR	updateVehicleSuspension
@@ -14411,7 +14316,7 @@ lbC05424A:
 	MOVE.W	D0,lbW054632
 lbC05428A:
 	MOVE.W	lbW054632,D0
-	MOVE.L	networkTransferBuffer,A0
+	MOVE.L	#networkTransferBuffer,A0
 	TST.B	lbB00E331
 	BEQ	lbC0542D2
 	JSR	displaySlotRight
@@ -14560,7 +14465,7 @@ lbC054480:
 	MOVE.W	D0,D1
 	MOVE.W	#$0000,D0
 	MOVE.W	#$0001,D2
-	MOVE.L	memory_0400,A1
+	MOVE.L	#memory_0400,A1
 	JSR	renderSlotGraphics
 	CLR.W	D1
 	CLR.W	D2
@@ -14599,14 +14504,14 @@ saveSlotTextAndDisplay:
 	ASL.L	#$04,D0
 	MOVE.W	#$0007,D3
 	MOVE.L	#lbB01066B,A0
-	MOVE.L	memory_7A21A,A1
+	MOVE.L	#memory_7A21A,A1
 	ADD.L	D0,A1
 lbC0544E0:
 	MOVE.B	$00(A0,D3.W),$00(A1,D3.W)
 	DBRA	D3,lbC0544E0
 	MOVE.B	#$00,$000F(A1)
 lbC0544F0:
-	MOVE.L	memory_7A21A,A0
+	MOVE.L	#memory_7A21A,A0
 	MOVE.W	#$0016,D0
 	MOVE.L	#$47826653,$0007A234
 	MOVE.B	lbB0544B6,$0007A224
@@ -14622,7 +14527,7 @@ loadSaveGameFromDisk:
 lbC054530:
 	MOVE.B	#$00,lbB0544BB
 	MOVE.B	#$00,lbB00D492
-	MOVE.L	memory_7A21A,A0
+	MOVE.L	#memory_7A21A,A0
 	MOVE.W	#$0016,D0
 	JSR	displaySlotLeft
 	BEQ	lbC05455C
@@ -14679,8 +14584,8 @@ renderSlotGraphicsAtPosition:
 	MOVE.W	#$0005,D1
 	MOVE.W	#$0001,D2
 	MOVE.W	#$0000,D3
-	MOVE.L	memory_7A21A,A0
-	MOVE.L	memory_0400,A1
+	MOVE.L	#memory_7A21A,A0
+	MOVE.L	#memory_0400,A1
 	JSR	renderSlotGraphics
 	CLR.W	D1
 	CLR.W	D0
@@ -14736,7 +14641,7 @@ lbC0546CA:
 	CLR.W	D0
 	MOVE.B	lbB0544B4,D0
 	ASL.W	#$04,D0
-	MOVE.L	memory_7A21A,A0
+	MOVE.L	#memory_7A21A,A0
 	LEA	$00(A0,D0.W),A0
 	MOVE.W	#$0000,D3
 lbC054700:
@@ -15510,8 +15415,8 @@ updateEngineState:
 	MOVE.B	opponentID,D1
 	MOVE.B	#$00,D2
 	MOVE.B	D2,engineTimer
-	MOVE.B	previousAudioParameter,D0
-	MOVE.B	D0,currentAudioParameter
+	MOVE.B	previousDataIndex,D0
+	MOVE.B	D0,currentDataIndex
 	SUB.B	lbB00D4A1,D0
 	BCC	lbC054FEA
 	NEG.B	D0
@@ -15616,31 +15521,31 @@ lbC055158:
 	BEQ	lbC055164
 	NOT.B	D2
 lbC055164:
-	MOVE.B	D2,currentAudioParameter
+	MOVE.B	D2,currentDataIndex
 lbC05516A:
 	MOVE.B	#$02,D0
-	MOVE.B	D0,audioChannelCounter
+	MOVE.B	D0,savedViewpointIndex
 	MOVE.B	gameParameter2,D1
-	MOVE.B	D1,audioParameterIndex
+	MOVE.B	D1,viewpointIndex
 lbC055180:
-	MOVE.L	#audioDataTable,A1
+	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
 	MOVE.B	D0,D2
-	MOVE.L	#audioParameterTable,A2
+	MOVE.L	#geometryParameterTable,A2
 	MOVE.B	$00(A2,D2.W),D0
 	BPL	lbC0551A6
-	MOVE.B	#$80,currentAudioParameter
+	MOVE.B	#$80,currentDataIndex
 lbC0551A6:
-	JSR	incrementAudioIndex
-	SUBQ.B	#$01,audioChannelCounter
+	JSR	incrementViewpointIndex
+	SUBQ.B	#$01,savedViewpointIndex
 	BNE	lbC055180
 lbC0551B6:
 	MOVE.B	aiDirectionFlag,D0
 	BMI	lbC0551D8
 	BNE	lbC0551E8
-	MOVE.B	currentAudioParameter,D0
-	SUB.B	previousAudioParameter,D0
+	MOVE.B	currentDataIndex,D0
+	SUB.B	previousDataIndex,D0
 	BEQ	lbC055224
 	BCC	lbC0551E8
 lbC0551D8:
@@ -15653,7 +15558,7 @@ lbC0551E8:
 	BCS	lbC055224
 	MOVE.B	#$09,D0
 lbC0551F4:
-	ADD.B	previousAudioParameter,D0
+	ADD.B	previousDataIndex,D0
 	MOVE.B	aiEnabled,D2
 	BEQ	lbC055224
 	CMP.B	#$E1,D0
@@ -15662,7 +15567,7 @@ lbC0551F4:
 	BCS	lbC055224
 	TST.B	networkGameMode
 	BNE	lbC055224
-	MOVE.B	D0,previousAudioParameter
+	MOVE.B	D0,previousDataIndex
 lbC055224:
 	RTS
 
@@ -15684,7 +15589,7 @@ updateEnginePerformanceStandard:
 	BCC	lbC05527C
 lbC055268:
 	MOVE.B	#$E0,D0
-	MOVE.B	D0,currentAudioParameter
+	MOVE.B	D0,currentDataIndex
 	RTS
 
 lbC055274:
@@ -15692,13 +15597,13 @@ lbC055274:
 	BCS	lbC055268
 lbC05527C:
 	MOVE.B	#$20,D0
-	MOVE.B	D0,currentAudioParameter
+	MOVE.B	D0,currentDataIndex
 lbC055286:
 	RTS
 
 setEngineParameters:
 	MOVE.B	lbB00D4A1,D0
-	MOVE.B	D0,currentAudioParameter
+	MOVE.B	D0,currentDataIndex
 	RTS
 
 processOpponentLogic:
@@ -15707,7 +15612,7 @@ processOpponentLogic:
 	MOVE.B	lbB00D474,D0
 	BNE	lbC055356
 	MOVE.B	gameParameter2,D1
-	JSR	loadGameParameters
+	JSR	loadTrackSegmentConfiguration
 	JSR	lbC0557E2
 	JSR	processOpponentAI
 	JSR	lbC055504
@@ -15743,7 +15648,7 @@ lbC055318:
 	MOVE.B	D0,gameStateCounter
 	MOVE.B	gameParameter2,D1
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E31A,D1
+	CMP.B	numViewpoints,D1
 	BCS	lbC055350
 	MOVE.B	#$00,D1
 lbC055350:
@@ -16351,7 +16256,7 @@ lbC055C22:
 	MOVE.B	$00(A1,D1.W),D2
 	MOVE.B	D1,$00(A0,D2.W)
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E31A,D1
+	CMP.B	numViewpoints,D1
 	BNE	lbC055C22
 	RTS
 
@@ -17093,7 +16998,7 @@ lbC056706:
 	ADD.W	D5,D0
 	RTS
 
-initializeNetworkAudio:
+initializeRenderingState:
 	JSR	calculate3DProjection1
 	MOVE.B	#$00,D0
 	MOVE.B	D0,lbB00D4AE
@@ -17104,8 +17009,8 @@ initializeNetworkAudio:
 	JSR	initializeRenderBuffer
 	RTS
 
-processNetworkAndAudio:
-	JSR	initializeNetworkAudio
+processGameFrame:
+	JSR	initializeRenderingState
 	MOVE.B	#$00,D0
 	MOVE.B	D0,currentPlayerNameOffset
 	MOVE.B	D0,selectedMenuItem
@@ -17140,10 +17045,10 @@ lbC0567BC:
 	JMP	lbC0569E2
 
 lbC0567F6:
-	MOVE.B	D0,audioParameterIndex
-	JSR	processTrackAudioData
+	MOVE.B	D0,viewpointIndex
+	JSR	applyTrackSegmentGeometry
 	JSR	checkSpeedCollision
-	MOVE.B	audioParameterIndex,D0
+	MOVE.B	viewpointIndex,D0
 	MOVE.B	D0,gameParameter1
 	BTST	#$06,collisionStateFlags
 	BNE	lbC056826
@@ -17169,42 +17074,42 @@ lbC056880:
 	MOVE.B	#$80,D0
 	MOVE.B	D0,processedSegmentIndices1
 	MOVE.B	D0,processedSegmentIndices2
-	MOVE.B	gameParameter1,audioParameterIndex
+	MOVE.B	gameParameter1,viewpointIndex
 	MOVE.B	#$00,lbB00D4C5
 	MOVE.B	lbB00D40E,D0
 	BPL	lbC0568BA
-	JSR	incrementAudioIndex
+	JSR	incrementViewpointIndex
 	MOVE.B	#$00,lbB00D40E
 lbC0568BA:
 	TST.B	lbB00D40E
 	BNE	lbC0568E2
-	JSR	decrementAudioIndex
+	JSR	decrementViewpointIndex
 	CMP.B	lbB00D4A6,D1
 	BNE	lbC0568DC
 	MOVE.W	#$0000,storedDepth
 lbC0568DC:
-	JSR	incrementAudioIndex
+	JSR	incrementViewpointIndex
 lbC0568E2:
 	JSR	transformTrackSegmentCoordinates
-	JSR	processAudioData
+	JSR	processTrackVisibility
 	JSR	processRenderData
 	JSR	processTrackSegments
 	MOVE.B	#$00,lbB00D4E5
 	MOVE.B	#$00,lbB00D460
 	MOVE.B	#$04,lbB00D4C5
 	JSR	shiftCoordinateArrays
-	JSR	incrementAudioIndex
+	JSR	incrementViewpointIndex
 	JSR	transformTrackSegmentCoordinates
-	JSR	processAudioData
+	JSR	processTrackVisibility
 	JSR	generateTrackEdgeLines
 	JSR	shiftCoordinateArrays
 	MOVE.B	#$01,lbB00D47F
-	JSR	incrementAudioIndex
+	JSR	incrementViewpointIndex
 	JSR	transformTrackSegmentCoordinates
-	JSR	processAudioData
+	JSR	processTrackVisibility
 	JSR	generateTrackEdgeLines
 	JSR	shiftCoordinateArrays
-	JSR	incrementAudioIndex
+	JSR	incrementViewpointIndex
 	MOVE.W	renderDataPointer,lbW05AC2C
 	MOVE.W	transformedCoordinates1,lbW0579FC
 	MOVE.W	transformedCoordinates2,lbW0579FE
@@ -17305,9 +17210,9 @@ lbC056B10:
 
 transformTrackSegmentCoordinates:
 	MOVE.L	#trackSegmentData,A6
-	MOVE.B	audioParameterIndex,D1
-	JSR	loadGameParameters
-	MOVE.B	audioParameterIndex,D0
+	MOVE.B	viewpointIndex,D1
+	JSR	loadTrackSegmentConfiguration
+	MOVE.B	viewpointIndex,D0
 	JSR	lookupTableAccess2
 	MOVE.B	lbB00D530,D0
 	SUB.B	lbB00D54A,D0
@@ -17359,7 +17264,7 @@ lbC056C0E:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
 	ADDQ.B	#$07,D0
@@ -17404,7 +17309,7 @@ lbC056CBC:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
 	ADDQ.B	#$07,D0
@@ -17548,10 +17453,10 @@ lbC056ED8:
 	CMP.W	#$0100,$00(A4,D1.W)
 	RTS
 
-processAudioData:
+processTrackVisibility:
 	CLR.W	D0
-	MOVE.B	audioParameterIndex,D0
-	MOVE.L	memory_7AA1A,A0
+	MOVE.B	viewpointIndex,D0
+	MOVE.L	#memory_7AA1A,A0
 	ASL.W	#$02,D0
 	MOVE.L	$00(A0,D0.W),A0
 	MOVE.W	(A0),lbW057A00
@@ -17657,13 +17562,13 @@ processTrackSegmentData2:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	lbW00D590,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.L	#lbL00D6D0,A3
 	MOVE.W	#$002E,D7
@@ -17677,7 +17582,7 @@ lbC0570A2:
 	MOVE.B	#$00,D0
 	MOVE.B	lbB00D498,D1
 	ASL.W	#$01,D1
-	MOVE.B	audioParameterIndex,D2
+	MOVE.B	viewpointIndex,D2
 	CMP.B	trackParameter3,D2
 	BNE	lbC0570D0
 	MOVE.B	#$01,D0
@@ -17906,7 +17811,7 @@ lbC05739C:
 	RTS
 
 lbC0573CC:
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	RTS
@@ -17988,21 +17893,21 @@ lbC0574E2:
 	MOVE.W	D5,$00(A5,D1.W)
 	RTS
 
-generateAudioTrackData:
-	JSR	initializeAudioBuffers
-	MOVE.L	memory_7ABDA,lbL057A02
+generateTrackPreviewData:
+	JSR	initializeTrackPreviewBuffers
+	MOVE.L	#memory_7ABDA,lbL057A02
 	MOVE.B	#$00,lbB00D4C5
 	MOVE.L	#trackSegmentData,A6
 	MOVE.B	#$00,D1
 lbC05750E:
-	MOVE.B	D1,audioParameterIndex
+	MOVE.B	D1,viewpointIndex
 	MOVE.W	D1,D0
-	MOVE.L	memory_7AA1A,A0
+	MOVE.L	#memory_7AA1A,A0
 	ASL.W	#$02,D0
 	MOVE.L	lbL057A02,$00(A0,D0.W)
 	MOVE.W	#$0000,lbW057A00
-	JSR	incrementAudioIndex
-	JSR	loadGameParameters
+	JSR	incrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	TST.B	lbB00D44D
 	BPL	lbC057566
 	MOVE.B	#$40,lbW057A00
@@ -18012,8 +17917,8 @@ lbC05750E:
 	BPL	lbC057566
 	MOVE.B	#$80,lbW057A00
 lbC057566:
-	JSR	decrementAudioIndex
-	JSR	loadGameParameters
+	JSR	decrementViewpointIndex
+	JSR	loadTrackSegmentConfiguration
 	MOVE.W	#$0000,lbW00D526
 	MOVE.B	lbB00D54A,trackHeightDifference
 	NEG.B	trackHeightDifference
@@ -18025,7 +17930,7 @@ lbC057566:
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
-	ADD.L	#lbW010882,D0
+	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
 	ADDQ.B	#$07,D0
@@ -18055,7 +17960,7 @@ lbC0575DC:
 lbC057614:
 	TST.B	lbB00D44D
 	BMI	lbC05765E
-	MOVE.B	audioParameterIndex,D3
+	MOVE.B	viewpointIndex,D3
 	MOVE.L	#lbL00DDC0,A2
 	CMP.B	#$25,$00(A2,D3.W)
 	BNE	lbC05763C
@@ -18081,7 +17986,7 @@ lbC05765E:
 	BMI	lbC057674
 	OR.W	lbW057A00,D0
 lbC057674:
-	MOVE.B	audioParameterIndex,D0
+	MOVE.B	viewpointIndex,D0
 	MOVE.W	D0,(A4)+
 lbC05767C:
 	TST.B	alternateTrackModeFlag
@@ -18097,7 +18002,6 @@ lbC057696:
 	ASL.B	#$01,D2
 	ADD.B	trackOffsetBase,D2
 lbC0576A0:
-	jmp	doQuit
 	JSR	calculateTrackCoordinatesFromData
 	MOVE.W	trackIncrementValue,(A4)+
 	MOVE.W	lbW00D4F8,(A4)+
@@ -18109,9 +18013,9 @@ lbC0576C0:
 	CMP.B	lbB00D459,D1
 	BNE	lbC0575DC
 	MOVE.L	A4,lbL057A02
-	MOVE.B	audioParameterIndex,D1
+	MOVE.B	viewpointIndex,D1
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E31A,D1
+	CMP.B	numViewpoints,D1
 	BLT	lbC05750E
 	RTS
 
@@ -18119,10 +18023,10 @@ lbC0576E4:
 	ADDQ.B	#$04,D1
 	BRA	lbC0576C0
 
-initializeAudioBuffers:
+initializeTrackPreviewBuffers:
 	CLR.W	D3
 	MOVE.L	#lbL057770,A0
-	MOVE.B	lbB00E31A,D3
+	MOVE.B	numViewpoints,D3
 	BRA	lbC057702
 
 lbC0576FC:
@@ -18160,17 +18064,17 @@ lbB0577C2:
 
 transformCoordinates:
 	CLR.W	D0
-	MOVE.B	audioParameterIndex,D0
-	MOVE.L	memory_7AA1A,A0
+	MOVE.B	viewpointIndex,D0
+	MOVE.L	#memory_7AA1A,A0
 	ASL.W	#$02,D0
 	MOVE.L	$00(A0,D0.W),A6
 	MOVE.W	#$0004,D1
 lbC0577DC:
 	MOVE.W	(A6)+,D0
-	MOVE.L	memory_7AB5A,A0
+	MOVE.L	#memory_7AB5A,A0
 	MOVE.W	D0,$00(A0,D1.W)
 	MOVE.W	D0,lbW057A00
-	MOVE.B	D0,audioParameterIndex
+	MOVE.B	D0,viewpointIndex
 	JSR	lookupTableAccess2
 	MOVE.B	lbB0577C0,D0
 	EXT.W	D0
@@ -18282,12 +18186,12 @@ lbC057974:
 	MOVE.L	(SP)+,A6
 	CMP.L	lbL057A02,A6
 	BLT	lbC05798C
-	MOVE.L	memory_7ABDA,A6
+	MOVE.L	#memory_7ABDA,A6
 lbC05798C:
 	ADDQ.B	#$02,D1
 	BTST	#$01,D1
 	BNE	lbC057842
-	MOVE.B	audioParameterIndex,D2
+	MOVE.B	viewpointIndex,D2
 	MOVE.L	#lbL057770,A0
 	CMP.B	$00(A0,D2.W),D1
 	BGE	lbC0579F2
@@ -18934,12 +18838,12 @@ lbW0581A6:
 	dc.w	$0000
 
 drawClippedLine:
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.W	#$0000,lbW0581A6
 	MOVE.W	#$FFFF,lbW0581A2
 	MOVE.W	renderDataPointer,D0
 	MOVE.L	lineDrawingBufferPointer,A0
-	CMP.L	memory_60A8,A0
+	CMP.L	#memory_60A8,A0
 	BLT	lbC0581EC
 	TST.B	lbB00D477
 	BMI	lbC0581EC
@@ -19665,8 +19569,8 @@ lbC0588A8:
 	RTS
 
 initializeRenderBuffer:
-	MOVE.L	memory_3D80,A0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_3D80,A0
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	A1,A3
 	MOVE.L	#$80000000,D0
 	MOVE.L	D0,(A3)+
@@ -19685,7 +19589,7 @@ manageRenderBounds:
 	MOVE.B	#$FF,lbB00D47C
 	MOVE.W	renderDataPointer,D0
 lbC0588FE:
-	MOVE.L	memory_7B08A,A0
+	MOVE.L	#memory_7B08A,A0
 	SUB.W	#$0020,D0
 	CMP.W	#$FF00,lbW0557DE
 	BLT	lbC058922
@@ -19700,7 +19604,7 @@ lbC058922:
 processTrackSegments:
 	MOVE.B	#$FF,D4
 	MOVE.B	lbB00D4A6,D0
-	CMP.B	audioParameterIndex,D0
+	CMP.B	viewpointIndex,D0
 	BNE	lbC05894A
 	MOVE.B	lbB00D524,D4
 	ASL.B	#$02,D4
@@ -19731,7 +19635,7 @@ generateTrackEdgeLines:
 	BCC	lbC058D5E
 	MOVE.B	#$FF,D4
 	MOVE.B	lbB00D4A6,D0
-	CMP.B	audioParameterIndex,D0
+	CMP.B	viewpointIndex,D0
 	BNE	lbC0589C0
 	MOVE.B	lbB00D524,D4
 	ASL.B	#$02,D4
@@ -19785,7 +19689,7 @@ lbC058A14:
 
 lbC058A84:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058A98:
 	ADD.W	#$0004,renderDataPointer
@@ -19803,7 +19707,7 @@ lbC058A98:
 
 lbC058AD0:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058AE4:
 	ADD.W	#$0004,renderDataPointer
@@ -19821,7 +19725,7 @@ lbC058AE4:
 
 lbC058B1C:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058B30:
 	ADD.W	#$0004,renderDataPointer
@@ -19839,7 +19743,7 @@ lbC058B30:
 
 lbC058B68:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058B7C:
 	ADD.W	#$0004,renderDataPointer
@@ -19851,7 +19755,7 @@ lbC058B84:
 	BTST	#$06,lbB05B3DA
 	BNE	lbC058BCC
 	MOVE.W	renderDataPointer,D3
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	MOVE.L	#$80000000,$04(A1,D3.W)
 	ADD.W	#$0008,renderDataPointer
@@ -19872,7 +19776,7 @@ lbC058BCC:
 
 lbC058BFC:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058C10:
 	ADD.W	#$0004,renderDataPointer
@@ -19890,7 +19794,7 @@ lbC058C10:
 
 lbC058C48:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058C5C:
 	ADD.W	#$0004,renderDataPointer
@@ -19898,7 +19802,7 @@ lbC058C64:
 	TST.B	lbB05B3DA
 	BPL	lbC058C8C
 	MOVE.W	renderDataPointer,D3
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	ADDQ.W	#$04,renderDataPointer
 	BRA	lbC058CD8
@@ -19918,13 +19822,13 @@ lbC058C8C:
 
 lbC058CBC:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058CD0:
 	ADD.W	#$0004,renderDataPointer
 lbC058CD8:
 	MOVE.W	renderDataPointer,D3
-	MOVE.B	audioParameterIndex,$00(A1,D3.W)
+	MOVE.B	viewpointIndex,$00(A1,D3.W)
 	MOVE.B	lbB00D44D,$03(A1,D3.W)
 	MOVE.B	#$09,D0
 	CMP.B	#$26,lbB00D458
@@ -19977,7 +19881,7 @@ lbC058D76:
 
 lbC058DBE:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058DD2:
 	ADD.W	#$0004,renderDataPointer
@@ -19995,7 +19899,7 @@ lbC058DD2:
 
 lbC058E0A:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058E1E:
 	ADD.W	#$0004,renderDataPointer
@@ -20013,7 +19917,7 @@ lbC058E1E:
 
 lbC058E56:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058E6A:
 	ADD.W	#$0004,renderDataPointer
@@ -20031,7 +19935,7 @@ lbC058E6A:
 
 lbC058EA2:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058EB6:
 	ADD.W	#$0004,renderDataPointer
@@ -20049,7 +19953,7 @@ lbC058EB6:
 
 lbC058EEE:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F02:
 	ADD.W	#$0004,renderDataPointer
@@ -20067,7 +19971,7 @@ lbC058F02:
 
 lbC058F3A:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F4E:
 	ADD.W	#$0004,renderDataPointer
@@ -20085,13 +19989,13 @@ lbC058F4E:
 
 lbC058F86:
 	MOVE.W	renderDataPointer,D0
-	MOVE.L	memory_7B08A,A1
+	MOVE.L	#memory_7B08A,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F9A:
 	ADD.W	#$0004,renderDataPointer
-	MOVE.L	memory_7B08A,A0
+	MOVE.L	#memory_7B08A,A0
 	MOVE.W	renderDataPointer,D3
-	MOVE.L	memory_7AB5A,A3
+	MOVE.L	#memory_7AB5A,A3
 	MOVE.W	$00(A3,D1.W),lbB00D41A
 	MOVE.B	temp,D0
 	MOVE.B	D0,$00(A0,D3.W)
@@ -20462,7 +20366,7 @@ renderPlayerCarModel:
 	CMP.W	#$00E4,networkEngineFlag
 	BGT	lbC0594B8
 	ADD.W	#$0080,renderDataPointer
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$00(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20515,7 +20419,7 @@ lbC0594AA:
 lbC0594B0:
 	SUB.W	#$0080,renderDataPointer
 lbC0594B8:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$60(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20566,7 +20470,7 @@ lbC059544:
 lbC05954E:
 	JSR	renderQuadrilateral
 lbC059554:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$70(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20617,7 +20521,7 @@ lbC0595E0:
 lbC0595EA:
 	JSR	renderQuadrilateral
 lbC0595F0:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$20(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20668,7 +20572,7 @@ lbC05967C:
 lbC059686:
 	JSR	renderQuadrilateral
 lbC05968C:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$18(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20719,7 +20623,7 @@ lbC059718:
 lbC059722:
 	JSR	renderQuadrilateral
 lbC059728:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$10(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20770,7 +20674,7 @@ lbC0597B4:
 lbC0597BE:
 	JSR	renderQuadrilateral
 lbC0597C4:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$38(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20821,7 +20725,7 @@ lbC059850:
 lbC05985A:
 	JSR	renderQuadrilateral
 lbC059860:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$30(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20872,7 +20776,7 @@ lbC0598EC:
 lbC0598F6:
 	JSR	renderQuadrilateral
 lbC0598FC:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$40(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20923,7 +20827,7 @@ lbC059988:
 lbC059992:
 	JSR	renderQuadrilateral
 lbC059998:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$50(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -20990,7 +20894,7 @@ lbC059A4A:
 	EXG	D1,D2
 lbC059A52:
 	MOVE.L	lineDrawingBufferPointer,A0
-	CMP.L	memory_60A8,A0
+	CMP.L	#memory_60A8,A0
 	BGT	lbC059AB2
 	CMP.W	#$0081,D2
 	BCC	lbC059AB2
@@ -21645,7 +21549,7 @@ lbC05A1D2:
 	BRA	lbC05A1D2
 
 renderTrackSurfaceEdge:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.B	#$0F,D0
 	JSR	setPixelColor
@@ -21658,7 +21562,7 @@ lbC05A228:
 	RTS
 
 renderRightBarrierEdges:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A270
 
@@ -21682,7 +21586,7 @@ lbC05A270:
 	RTS
 
 renderLeftBarrierEdges:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A2C2
 
@@ -21706,7 +21610,7 @@ lbC05A2C2:
 	RTS
 
 renderLeftRoadEdge:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A306
 
@@ -21727,7 +21631,7 @@ lbC05A306:
 	RTS
 
 renderRightRoadEdge:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	BRA	lbC05A34A
 
@@ -21749,7 +21653,7 @@ lbC05A34A:
 
 renderRightBarrier:
 	MOVE.B	#$80,renderingFlag
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 lbC05A36A:
 	MOVE.W	D3,lbW05B3E8
@@ -21857,7 +21761,7 @@ lbC05A4EA:
 
 renderLeftBarrier:
 	MOVE.B	#$02,renderingFlag
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 lbC05A500:
 	MOVE.W	D3,lbW05B3E8
@@ -21967,7 +21871,7 @@ renderTrackSurface:
 	MOVE.B	#$00,renderingFlag
 	MOVE.B	#$00,lbB00D461
 	MOVE.B	#$80,lbB00D4D2
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.W	D3,lbW05B3E8
 	MOVE.L	$18(A4,D3.W),D0
@@ -22073,7 +21977,7 @@ processSecondaryRendering:
 	CMP.W	#$0040,renderDataPointer
 	BLT	lbC05A9BA
 lbC05A83C:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 lbC05A848:
 	SUB.W	#$0020,D3
@@ -22226,14 +22130,14 @@ hudDisplayMode1:
 	dc.b	$09
 
 renderLeftTrackSidePanel:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.B	#$0F,D7
 	BTST	#$00,$1C(A4,D3.W)
 	BEQ	lbC05AAD4
 	MOVE.B	hudDisplayMode2,D7
 lbC05AAD4:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$0C(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -22287,14 +22191,14 @@ lbC05AB6E:
 	RTS
 
 renderRightTrackSidePanel:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.B	#$0F,D7
 	BTST	#$00,$1C(A4,D3.W)
 	BEQ	lbC05AB90
 	MOVE.B	hudDisplayMode2,D7
 lbC05AB90:
-	MOVE.L	memory_7B08A,A4
+	MOVE.L	#memory_7B08A,A4
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	$08(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -22620,7 +22524,7 @@ lbC05AF20:
 	BNE	lbC05AF20
 	MOVE.B	(A6)+,lbB05B098
 lbC05AF44:
-	MOVE.L	memory_7B08A,A5
+	MOVE.L	#memory_7B08A,A5
 	MOVE.B	(A6)+,D0
 	JSR	setupBitplaneMasks
 	MOVE.B	(A6)+,lbB05B096
@@ -22823,7 +22727,7 @@ lbL05B4FC:
 	dc.l	$00000000,$00000000,$00000000,$00000000
 
 initializeGraphicsData:
-	MOVE.L	memory_6490,A1
+	MOVE.L	#memory_6490,A1
 	MOVE.W	#$0000,D4
 lbC05B606:
 	JSR	loadGraphicsElement
@@ -23306,3 +23210,34 @@ lbL05BE94:
 bitplaneMaskTable:
 	incbin	"bitplaneMaskTable"
 theEnd:
+
+	section	ChipData,bss_c
+memory_00000:	ds.b	$10000
+memory_70000:	ds.b	$10000
+
+memory_0400	equ	(memory_00000+$0400)
+memory_3D80	equ	(memory_00000+$3D80)
+memory_60A8	equ	(memory_00000+$60A8)
+memory_6490	equ	(memory_00000+$6490)
+memory_79360	equ	(memory_70000+$9360)
+memory_7A01A	equ	(memory_70000+$A01A)
+memory_7A035	equ	(memory_70000+$A035)
+memory_7A03A	equ	(memory_70000+$A03A)
+memory_7A03F	equ	(memory_70000+$A03F)
+memory_7A21A	equ	(memory_70000+$A21A)
+networkTransferBuffer	equ	(memory_70000+$A41A)
+memory_7A43A	equ	(memory_70000+$A43A)
+memory_7A4BA	equ	(memory_70000+$A4BA)
+memory_7A4FA	equ	(memory_70000+$A4FA)
+memory_7A51A	equ	(memory_70000+$A51A)
+memory_7A61A	equ	(memory_70000+$A61A)
+memory_7A71A	equ	(memory_70000+$A71A)
+memory_7A81A	equ	(memory_70000+$A81A)
+memory_7A91A	equ	(memory_70000+$A91A)
+memory_7A9FA	equ	(memory_70000+$A9FA)
+memory_7AA1A	equ	(memory_70000+$AA1A)
+memory_7AAE6	equ	(memory_70000+$AAE6)
+memory_7AB5A	equ	(memory_70000+$AB5A)
+memory_7ABDA	equ	(memory_70000+$ABDA)
+memory_7B08A	equ	(memory_70000+$B08A)
+memory_7B6FA	equ	(memory_70000+$B6FA)
