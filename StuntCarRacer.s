@@ -222,7 +222,7 @@ startup:
 	move.l	d0,memory_7A03A
 	move.l	d0,memory_7A03F
 	move.l	d0,memory_7A21A
-	move.l	d0,memory_7A41A
+	move.l	d0,networkTransferBuffer
 	move.l	d0,memory_7A43A
 	move.l	d0,memory_7A4BA
 	move.l	d0,memory_7A4FA
@@ -248,7 +248,7 @@ startup:
 	add.l	#$A03A,memory_7A03A
 	add.l	#$A03F,memory_7A03F
 	add.l	#$A21A,memory_7A21A
-	add.l	#$A41A,memory_7A41A
+	add.l	#$A41A,networkTransferBuffer
 	add.l	#$A43A,memory_7A43A
 	add.l	#$A4BA,memory_7A4BA
 	add.l	#$A4FA,memory_7A4FA
@@ -395,7 +395,7 @@ memory_7A035:	ds.l	1
 memory_7A03A:	ds.l	1
 memory_7A03F:	ds.l	1
 memory_7A21A:	ds.l	1
-memory_7A41A:	ds.l	1
+networkTransferBuffer:	ds.l	1
 memory_7A43A:	ds.l	1
 memory_7A4BA:	ds.l	1
 memory_7A4FA:	ds.l	1
@@ -442,9 +442,9 @@ setQuitOnRMB:
 
 testQuit:
 	tst.b	quit
-	bne.s	.quit
+	bne.s	doQuit
 	rts
-.quit:	move.l	sp_quit,sp
+doQuit:	move.l	sp_quit,sp
 	jmp	shutdown
 
 ****************************************************************************
@@ -1305,7 +1305,7 @@ trackDistance:
 	dc.w	$0000
 lbB00D413:	EQU	*-1
 	dc.b	$00,$00
-animationFrameCounter:
+currentMenuItem:
 	dc.b	$00
 lbB00D417:
 	dc.b	$00
@@ -1315,7 +1315,7 @@ audioChannelCounter:
 	dc.b	$00
 lbB00D41A:
 	dc.b	$00
-randomValue:
+temp:
 	dc.b	$00
 gameParameter1:
 	dc.b	$00
@@ -1405,7 +1405,7 @@ lbB00D45C:
 	dc.b	$00
 lbB00D45D:
 	dc.b	$00
-lbB00D45E:
+displayRowOffset:
 	dc.b	$00
 displayTrackID:
 	dc.b	$00
@@ -1483,7 +1483,7 @@ lbB00D48B:
 	dc.b	$00
 displayModeFlag2:
 	dc.b	$00
-lbB00D48D:
+maxMenuIndex:
 	dc.b	$00
 lbB00D48E:
 	dc.b	$00
@@ -1595,7 +1595,7 @@ gameTimingCounter:
 	dc.b	$00
 lbB00D4CA:
 	dc.b	$00
-lbB00D4CB:
+multiplayerRaceDisplayFlag:
 	dc.b	$00
 eventTimerCountdown:
 	dc.b	$00
@@ -1613,9 +1613,9 @@ lbB00D4D3:
 	dc.b	$00
 lbB00D4D4:
 	dc.b	$00
-lbB00D4D5:
+currentPlayerNameOffset:
 	dc.b	$00
-lbB00D4D6:
+selectedMenuItem:
 	dc.b	$00
 lbB00D4D7:
 	dc.b	$00,$00
@@ -2360,7 +2360,7 @@ selectedTrack:
 	dc.b	$00
 lbB00E2CF:
 	dc.b	$00
-lbB00E2D0:
+currentPlayerContext:
 	dc.b	$00,$00
 lbL00E2D2:
 	dc.l	$00000000,$00000000,$00000000
@@ -2380,7 +2380,7 @@ lbB00E31A:
 	dc.b	$00
 lbB00E31B:
 	dc.b	$00
-lbB00E31C:
+trackParameter3:
 	dc.b	$00
 lbB00E31D:
 	dc.b	$00
@@ -2388,9 +2388,9 @@ lbW00E31E:
 	dc.w	$0000
 lbB00E320:
 	dc.b	$00
-lbB00E321:
+raceConfigValue:
 	dc.b	$00
-lbB00E322:
+selectedRaceType:
 	dc.b	$00
 raceFlag1:
 	dc.b	$00
@@ -2922,7 +2922,7 @@ lbC048A1C:
 	MOVE.B	#$FF,D0
 	RTS
 
-lbC048A22:
+networkTimingSync0:
 	JSR	networkTimingSync1
 networkTimingSync1:
 	JSR	networkDelay
@@ -3113,7 +3113,7 @@ lbC048C74:
 	MOVE.B	D0,gameParameter2
 	JSR	waitForNetworkWord
 	MOVE.W	D0,gameStateCounter
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC048D2E
 	MOVE.B	gameParameter2,D0
 	CMP.B	lbB00E31A,D0
@@ -3244,7 +3244,7 @@ lbC048FBE:
 	BEQ	lbC048FCA
 	MOVE.B	#$80,lbB04956E
 lbC048FCA:
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC048FEC
 	JSR	lbC055AB6
 	JSR	calculatePlayerDistance
@@ -3496,22 +3496,22 @@ lbC0493BA:
 
 lbC0493C0:
 	MOVE.B	D0,inputStateFlags
-	MOVE.B	#$80,lbB04956F
+	MOVE.B	#$80,receivedKey
 	TST.B	gameInitFlag1
 	BPL	lbC04944C
 	TST.B	networkGameMode
 	BPL	lbC049410
 	MOVE.W	#$0003,D2
 lbC0493E6:
-	MOVE.L	#ascii.MSG0,A0
+	MOVE.L	#keycodeTable,A0
 	MOVE.B	$00(A0,D2.W),D1
 	JSR	checkKeyPressed
 	BNE	lbC049400
-	MOVE.B	D2,lbB04956F
+	MOVE.B	D2,receivedKey
 lbC049400:
 	SUBQ.B	#$01,D2
 	BPL	lbC0493E6
-	MOVE.B	lbB04956F,lbB049565
+	MOVE.B	receivedKey,lbB049565
 lbC049410:
 	MOVE.B	inputStateFlags,lbB049566
 	MOVE.B	#$E3,lbB049564
@@ -3520,24 +3520,24 @@ lbC049410:
 	CMP.B	#$40,networkGameMode
 	BNE	lbC04944C
 	MOVE.B	lbB049560,inputStateFlags
-	MOVE.B	receivedPlayerState,lbB04956F
+	MOVE.B	receivedPlayerState,receivedKey
 lbC04944C:
 	MOVE.B	#$00,lbB049564
 	MOVE.B	inputStateFlags,D0
 	RTS
 
-lbC04945C:
-	MOVE.B	lbB04956F,D0
-	BMI	lbC049480
-	MOVE.B	lbB00D48D,D3
-	ADDQ.B	#$01,D3
-	CMP.B	D3,D0
-	BGT	lbC049480
-	MOVE.B	lbB04956F,lbB00D4D6
-	RTS
+validateNetworkMenuSelection:
+	MOVE.B	receivedKey,D0		; Load remote player's key press
+	BMI	lbC049480		; If $80 (no key), return negative
+	MOVE.B	maxMenuIndex,D3		; Load max menu index
+	ADDQ.B	#$01,D3			; Convert to count (max+1)
+	CMP.B	D3,D0			; Check if selection > max
+	BGT	lbC049480		; If out of range, return negative
+	MOVE.B	receivedKey,selectedMenuItem	; Valid: update current menu selection
+	RTS				; Return positive (valid)
 
 lbC049480:
-	MOVE.B	#$80,D0
+	MOVE.B	#$80,D0			; Return $80 with negative flag
 	RTS
 
 lbC049486:
@@ -3653,7 +3653,7 @@ lbB049565:
 	dc.b	$00
 lbB049566:
 	dc.b	$00
-lbB049567:
+raceSeriesCounter:
 	dc.b	$00
 lbB049568:
 	dc.b	$00
@@ -3669,7 +3669,7 @@ lbB04956D:
 	dc.b	$00
 lbB04956E:
 	dc.b	$00
-lbB04956F:
+receivedKey:
 	dc.b	$00
 lbW049570:
 	dc.w	$0000
@@ -3680,12 +3680,12 @@ lbW049574:
 lbW049576:
 	dc.w	$0000
 
-establishMultiplayerConnection:
+establishComputerLink:
 	JSR	initializeNetworking
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
 	JSR	drawScreenFrame
-	MOVE.B	#$01,animationFrameCounter
+	MOVE.B	#$01,currentMenuItem
 	JSR	displayMenuSprite
 	JSR	networkHandshakeLoop
 	JSR	longNetworkDelay
@@ -3723,7 +3723,7 @@ lbC049600:
 	CMP.B	#$40,D0
 	BNE	lbC049600
 lbC04963C:
-	MOVE.B	#$01,animationFrameCounter
+	MOVE.B	#$01,currentMenuItem
 	JSR	displayMenuSprite
 	MOVE.W	#$0012,D3
 	JSR	displayNetworkMessage
@@ -3733,15 +3733,15 @@ lbC04963C:
 	JSR	resetTextYOffset
 	TST.B	networkGameMode
 	BMI	lbC04967E
-	JSR	lbC049B00
+	JSR	displayNetworkWaitMessage
 lbC04967E:
-	JSR	lbC04973E
+	JSR	synchronizeLeagueSetup
 	ANDI.B	#$1E,CCR
 	RTS
 
 lbC04968A:
 	MOVE.B	#$00,networkGameMode
-	MOVE.B	#$01,animationFrameCounter
+	MOVE.B	#$01,currentMenuItem
 	JSR	displayMenuSprite
 	MOVE.W	#$0000,D3
 	JSR	displayNetworkMessage
@@ -3776,7 +3776,7 @@ lbL049700:
 	dc.l	$6E6B696E,$67FF1F0F,$10506C65,$61736520,$77616974
 	dc.w	$FF00
 
-lbC04973E:
+synchronizeLeagueSetup:
 	MOVE.B	#$00,lbB00E331
 	MOVE.B	#$40,lbB00D46B
 	TST.B	networkGameMode
@@ -3785,24 +3785,24 @@ lbC049758:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	memory_7A41A,A6
-	JSR	lbC04989E
+	MOVE.L	networkTransferBuffer,A6
+	JSR	receiveLeagueDataPacket
 	BMI	lbC049758
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.B	(A6)+,D0
 	CMP.B	#$08,D0
 	BLT	lbC04978A
 	MOVE.B	#$01,D0
 lbC04978A:
-	MOVE.B	D0,multiplayerEnabled
+	MOVE.B	D0,additionalPlayerCount
 	MOVE.L	#playerNamesWithSpaces,A0
 	MOVE.W	#$00BF,D7
 lbC04979A:
 	MOVE.B	(A6)+,(A0)+
 	DBRA	D7,lbC04979A
-	JSR	lbC049C7E
-	JSR	lbC048A22
-	JSR	lbC049B92
+	JSR	receiveAdditionalSyncData
+	JSR	networkTimingSync0
+	JSR	synchronizeNetworkSetup
 	BRA	lbC049844
 
 lbC0497B6:
@@ -3812,18 +3812,18 @@ lbC0497B6:
 	JSR	displayMenu
 	CMP.B	#$00,D0
 	BNE	lbC0497E8
-	ADDQ.B	#$01,multiplayerEnabled
+	ADDQ.B	#$01,additionalPlayerCount
 lbC0497D4:
 	JSR	screenUpdate
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	CMP.B	#$07,D0
 	BCS	lbC0497B6
 lbC0497E8:
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC0497B6
-	JSR	lbC049B00
-	MOVE.L	memory_7A41A,A6
-	MOVE.B	multiplayerEnabled,(A6)+
+	JSR	displayNetworkWaitMessage
+	MOVE.L	networkTransferBuffer,A6
+	MOVE.B	additionalPlayerCount,(A6)+
 	MOVE.W	#$00BF,D7
 	MOVE.L	#playerNamesWithSpaces,A0
 lbC04980E:
@@ -3833,17 +3833,17 @@ lbC049814:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	memory_7A41A,A6
-	JSR	lbC04984C
+	MOVE.L	networkTransferBuffer,A6
+	JSR	sendLeagueDataPacket
 	BMI	lbC049814
-	JSR	lbC049B92
-	JSR	lbC048A22
-	JSR	lbC049C7E
+	JSR	synchronizeNetworkSetup
+	JSR	networkTimingSync0
+	JSR	receiveAdditionalSyncData
 lbC049844:
 	JSR	networkTimingSync2
 	RTS
 
-lbC04984C:
+sendLeagueDataPacket:
 	MOVE.W	#$16D9,D0
 	JSR	sendSerialWordWithChecksum
 	MOVE.B	#$A8,D0
@@ -3865,7 +3865,7 @@ lbC049898:
 	MOVE.B	#$80,D0
 	RTS
 
-lbC04989E:
+receiveLeagueDataPacket:
 	MOVE.W	#$0000,networkDataCounter2
 lbC0498A6:
 	CMP.W	#$000A,networkDataCounter2
@@ -3951,7 +3951,7 @@ lbC0499D8:
 	MOVE.L	#lbW049A56,A0
 	MOVE.W	totalRaceCounter,D3
 	CLR.W	D0
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	CLR.W	D5
 	MOVE.B	$00(A1,D0.W),D5
 	CLR.W	D2
@@ -3994,11 +3994,11 @@ lbW049A56:
 	dc.w	$0206,$0005,$0104,$0207,$0306,$0007,$0106,$0205,$0304
 	dc.w	$0006,$0107,$0204,$0305
 
-lbC049B00:
+displayNetworkWaitMessage:
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
 	JSR	drawScreenFrame
-	MOVE.B	#$01,animationFrameCounter
+	MOVE.B	#$01,currentMenuItem
 	JSR	displayMenuSprite
 	MOVE.W	#$002E,D3
 	JSR	displayNetworkMessage
@@ -4008,10 +4008,10 @@ lbC049B00:
 
 synchronizeNetworkGame:
 	CMP.B	#$80,networkGameMode
-	BNE	lbC049B92
+	BNE	synchronizeNetworkSetup
 	MOVE.B	lbB00E331,D0
 	OR.B	#$10,D0
-	TST.B	lbB04D13D
+	TST.B	inputCancelFlag
 	BPL	lbC049B60
 	BSET	#$03,D0
 lbC049B60:
@@ -4021,9 +4021,9 @@ lbC049B60:
 	JSR	waitForNetworkHandshake
 	TST.B	lbB00E331
 	BNE	lbC049BF2
-	TST.B	lbB04D13D
+	TST.B	inputCancelFlag
 	BNE	lbC049BF2
-lbC049B92:
+synchronizeNetworkSetup:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049BF2
 	TST.B	lbB00D46B
@@ -4037,20 +4037,20 @@ lbC049BB4:
 	MOVE.B	#$01,D0
 	JSR	lbC050C74
 	MOVE.B	#$00,lbB00E331
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.W	#$00FF,D7
 	CMP.B	#$40,lbB00D46B
 	BNE	lbC049BE8
 	MOVE.W	#$01FF,D7
 lbC049BE8:
-	JSR	lbC04984C
-	BMI	lbC049B92
+	JSR	sendLeagueDataPacket
+	BMI	synchronizeNetworkSetup
 lbC049BF2:
 	RTS
 
 lbC049BF4:
 	MOVE.B	#$00,lbB00D494
-	JSR	lbC049B00
+	JSR	displayNetworkWaitMessage
 	MOVE.B	#$B2,lbB049564
 	JSR	waitForNetworkHandshake
 	JSR	checkSpaceKeyPressed
@@ -4078,15 +4078,15 @@ lbC049C4A:
 	BTST	#$00,D0
 	BNE	lbC049C78
 	MOVE.B	#$00,lbB00E331
-	JSR	lbC049C7E
+	JSR	receiveAdditionalSyncData
 lbC049C78:
 	JMP	lbC04D590
 
-lbC049C7E:
+receiveAdditionalSyncData:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049CE6
 	MOVE.W	#$0002,D7
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	TST.B	lbB00D46B
 	BEQ	lbC049CB0
 	MOVE.W	#$00FF,D7
@@ -4094,12 +4094,12 @@ lbC049C7E:
 	BNE	lbC049CB0
 	MOVE.W	#$01FF,D7
 lbC049CB0:
-	JSR	lbC04989E
-	BMI	lbC049C7E
+	JSR	receiveLeagueDataPacket
+	BMI	receiveAdditionalSyncData
 	TST.B	lbB00D46B
 	BNE	lbC049CDC
 	MOVE.L	#selectedTrack,A0
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.W	#$0002,D7
 lbC049CD4:
 	MOVE.B	(A6)+,(A0)+
@@ -4121,14 +4121,14 @@ lbC049CE8:
 lbC049D02:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049D70
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.W	#$0004,D7
-	JSR	lbC04989E
+	JSR	receiveLeagueDataPacket
 	BMI	lbC049D02
 	JSR	lbC049DDE
 	MOVE.B	opponentID,D0
 	JSR	lbC049D72
-	MOVE.L	memory_7A41A,A1
+	MOVE.L	networkTransferBuffer,A1
 	JSR	lbC049D8A
 	TST.B	networkGameMode
 	BMI	lbC049D70
@@ -4137,7 +4137,7 @@ lbC049D48:
 	BEQ	lbC049D70
 	MOVE.L	#lbL049D9A,A6
 	MOVE.W	#$0004,D7
-	JSR	lbC04984C
+	JSR	sendLeagueDataPacket
 	BMI	lbC049D48
 	TST.B	networkGameMode
 	BMI	lbC049D02
@@ -4187,7 +4187,7 @@ lbC049DD4:
 	RTS
 
 lbC049DDE:
-	MOVE.L	memory_7A41A,A0
+	MOVE.L	networkTransferBuffer,A0
 	MOVE.L	#lbW049E00,A2
 	CLR.W	D0
 	MOVE.W	#$0004,D3
@@ -4219,7 +4219,7 @@ lbC049E9A:
 lbC049EA2:
 	TST.B	networkGameMode
 	BEQ	lbC049EF8
-	CMP.B	#$02,multiplayerEnabled
+	CMP.B	#$02,additionalPlayerCount
 	BGE	lbC049EC2
 	MOVE.B	#$80,lbB049568
 	RTS
@@ -4275,12 +4275,12 @@ synchronizeRaceData:
 lbC049F88:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.W	#$0063,D7
-	JSR	lbC04989E
+	JSR	receiveLeagueDataPacket
 	BMI	lbC049F88
 	MOVE.L	#playerStatsArray,A0
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.W	#$0047,D7
 lbC049FB6:
 	MOVE.B	(A6)+,(A0)+
@@ -4299,7 +4299,7 @@ lbC049FE6:
 	RTS
 
 lbC049FF4:
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.L	#playerStatsArray,A0
 	MOVE.W	#$0047,D7
 copyGameStateData:
@@ -4318,9 +4318,9 @@ lbC04A02C:
 lbC04A038:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	memory_7A41A,A6
+	MOVE.L	networkTransferBuffer,A6
 	MOVE.W	#$0063,D7
-	JSR	lbC04984C
+	JSR	sendLeagueDataPacket
 	BMI	lbC04A038
 lbC04A056:
 	RTS
@@ -4454,7 +4454,7 @@ renderPlayerDisplay:
 	MOVE.B	D0,lbB04A4BB
 	MOVE.W	D6,-(SP)
 	MOVE.L	A6,-(SP)
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04A27A
 	TST.B	networkGameMode
 	BEQ	setupPlayerGraphics
@@ -4494,7 +4494,7 @@ lbC04A27A:
 
 renderPlayerGraphicsToScreen:
 	MOVE.B	#$00,lbB04A4C8
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04A330
 	CMP.B	#$0B,lbB04A3A2
 	BNE	lbC04A330
@@ -4560,7 +4560,7 @@ lbW04A420:
 applyPlayerGraphicsMasks:
 	MOVE.B	lbB04A4BA,D3
 	AND.L	#$0000000F,D3
-	MOVE.B	#$36,randomValue
+	MOVE.B	#$36,temp
 	MOVE.L	A0,A5
 	MOVE.L	A3,A0
 lbC04A444:
@@ -4582,7 +4582,7 @@ lbC04A44E:
 	BLT	lbC04A44E
 	ADD.L	#$00000078,A5
 	ADD.L	#$0000001E,A0
-	SUBQ.B	#$01,randomValue
+	SUBQ.B	#$01,temp
 	BPL	lbC04A444
 	RTS
 
@@ -4670,7 +4670,7 @@ lbC04A730:
 	MOVE.B	#$F4,D1
 	JSR	renderLeagueText
 	MOVE.B	raceCount,D0
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04A774
 	ASL.B	#$01,D0
 lbC04A774:
@@ -4689,7 +4689,7 @@ lbC04A77A:
 	JSR	setBackgroundColor
 	JSR	resetTextYOffset
 	MOVE.B	#$14,D2
-	JSR	lbC0503E0
+	JSR	renderTrackInfoDisplay
 	MOVE.B	#$80,D0
 	JSR	transferLapRecords
 	JSR	lbC050974
@@ -5456,37 +5456,37 @@ lbC04B222:
 	RTS
 
 processDirectionalInput:
-	MOVE.B	#$00,lbB04D13D
+	MOVE.B	#$00,inputCancelFlag
 	CMP.B	#$00,D0
 	BNE	lbC04B292
 	LSR.W	#$08,D0
 	CMP.B	#$45,D0
 	BNE	lbC04B24C
-	MOVE.B	#$80,lbB04D13D
+	MOVE.B	#$80,inputCancelFlag
 	RTS
 
 lbC04B24C:
 	CMP.B	#$4C,D0
 	BNE	lbC04B25E
-	MOVE.B	#$20,lbB04D13D
+	MOVE.B	#$20,inputCancelFlag
 	RTS
 
 lbC04B25E:
 	CMP.B	#$4D,D0
 	BNE	lbC04B270
-	MOVE.B	#$40,lbB04D13D
+	MOVE.B	#$40,inputCancelFlag
 	RTS
 
 lbC04B270:
 	CMP.B	#$4F,D0
 	BNE	lbC04B282
-	MOVE.B	#$10,lbB04D13D
+	MOVE.B	#$10,inputCancelFlag
 	RTS
 
 lbC04B282:
 	CMP.B	#$4E,D0
 	BNE	lbC04B292
-	MOVE.B	#$08,lbB04D13D
+	MOVE.B	#$08,inputCancelFlag
 lbC04B292:
 	RTS
 
@@ -6346,13 +6346,13 @@ lbC04C1AC:
 	ADDQ.B	#$01,D2
 	MOVE.B	trackDataComponent,$00(A0,D2.W)
 	ADDQ.B	#$01,D2
-	MOVE.B	D2,randomValue
+	MOVE.B	D2,temp
 	MOVE.B	#$48,D2
-	SUB.B	randomValue,D2
+	SUB.B	temp,D2
 	MOVE.B	(SP)+,$00(A0,D2.W)
 	ADDQ.B	#$01,D2
 	MOVE.B	trackDataComponent,$00(A0,D2.W)
-	MOVE.B	randomValue,D2
+	MOVE.B	temp,D2
 	CMP.B	#$12,D2
 	BEQ	lbC04C19A
 	SUBQ.B	#$01,D1
@@ -6436,7 +6436,7 @@ lbC04C2DC:
 initializeGameTables:
 	MOVE.W	#$0000,D0
 	MOVE.B	D0,currentRaceNumber
-	MOVE.B	D0,lbB049567
+	MOVE.B	D0,raceSeriesCounter
 	MOVE.W	D0,totalRaceCounter
 	MOVE.B	#$3B,D1
 lbC04C352:
@@ -6468,7 +6468,7 @@ lbC04C394:
 	MOVE.B	#$00,D0
 lbC04C3B6:
 	MOVE.B	D0,displayTrackID
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04C3D0
 	CMP.B	selectedTrack,D0
 	BNE	lbC04C3E2
@@ -6487,7 +6487,7 @@ lbL04C3F4:
 	dc.l	$786E645A,$50463C32,$281E140A
 
 setupGameConfiguration:
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	BEQ	lbC04C422
 	EOR.B	#$FF,D0
 	ADD.B	#$0C,D0
@@ -6509,7 +6509,7 @@ lbL04C442:
 
 configurePlayersAndCars:
 	JSR	setupGameConfiguration
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04C47C
 	TST.B	networkGameMode
 	BNE	lbC0499D8
@@ -6656,7 +6656,7 @@ lbC04C65C:
 	CMP.B	$00(A1,D2.W),D0
 	BLT	lbC04C6B8
 	BNE	lbC04C6DA
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04C6AC
 	CMP.B	D2,D1
 	BCS	lbC04C6B8
@@ -6789,7 +6789,7 @@ lbC04C86C:
 	MOVE.B	lbB00D4DC,D0
 	LSR.B	#$02,D0
 	ROXR.B	#$01,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	lbB00D41A,D0
 	AND.B	#$0F,D0
 	CMP.B	#$0C,D0
@@ -6823,7 +6823,7 @@ lbC04C90A:
 	JSR	readTrackDataByte
 lbC04C910:
 	AND.B	#$7F,D0
-	OR.B	randomValue,D0
+	OR.B	temp,D0
 	MOVE.L	#lbL00DE24,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.B	D2,D0
@@ -6876,7 +6876,7 @@ lbC04C910:
 	JMP	lbC04C7D0
 
 lbC04CA0C:
-	MOVE.B	lbB00E31C,D1
+	MOVE.B	trackParameter3,D1
 	ADDQ.B	#$01,D1
 	CMP.B	lbB00E31A,D1
 	BLT	lbC04CA22
@@ -6923,7 +6923,7 @@ lbC04CAB8:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,lbB00D448
 	MOVE.B	#$7C,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	#$02,D0
 	MOVE.B	D0,lbB00D490
 	BNE	lbC04CBB0
@@ -6951,7 +6951,7 @@ lbC04CB08:
 	MOVE.B	D2,lbB00D448
 lbC04CB2A:
 	AND.B	#$7F,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	BPL	lbC04CBAA
 lbC04CB38:
 	MOVE.L	#audioDataTable,A1
@@ -6963,17 +6963,17 @@ lbC04CB38:
 	BPL	lbC04CB72
 	MOVE.B	lbB0555E1,D0
 	SUB.B	#$0A,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	lbB0555E1,D0
 	JMP	lbC04CB8C
 
 lbC04CB72:
-	MOVE.B	randomValue,D0
+	MOVE.B	temp,D0
 	ADD.B	#$0A,D0
 	BMI	lbC04CB86
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 lbC04CB86:
-	MOVE.B	randomValue,D0
+	MOVE.B	temp,D0
 lbC04CB8C:
 	MOVE.B	lbB00D448,D2
 	BEQ	lbC04CBA0
@@ -7010,7 +7010,7 @@ lbC04CBD2:
 	MOVE.B	D0,D2
 	ADDQ.B	#$01,D2
 	MOVE.B	$00(A0,D2.W),D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	SUBQ.B	#$01,D2
 	MOVE.B	$00(A0,D2.W),D0
 	AND.B	#$7F,D0
@@ -7020,7 +7020,7 @@ lbC04CC14:
 	MOVE.B	$00(A0,D2.W),D0
 	ASL.B	#$01,D0
 	AND.B	#$E0,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	$00(A0,D2.W),D0
 	AND.B	#$0F,D0
 	RTS
@@ -7069,7 +7069,7 @@ lbC04CC90:
 	BPL	lbC04CCD0
 	MOVE.B	#$3C,D2
 lbC04CCD0:
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BMI	lbC04CCDE
 	MOVE.B	#$8C,D0
 lbC04CCDE:
@@ -7262,9 +7262,7 @@ screenUpdate:
 	MOVE.B	#$E0,D1
 	JSR	renderLeagueText
 	MOVE.B	#$01,D0
-	dc.w	$13C0
-lbB04CF5E:
-	dc.b	$00,$01,$BB,$16
+	MOVE.B	D0,currentMenuItem
 
 lbC04CF62:
 	JSR	displayMenuSprite
@@ -7272,17 +7270,18 @@ lbC04CF62:
 	MOVE.W	#$006A,D4
 	MOVE.W	#$00BE,D6
 	MOVE.W	#$0085,D5
-	JSR	lbC057D2A
+	JSR	drawHorizontalLine
 	JSR	copyGraphicsRegion
+	rts
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
 lbC04CF94:
 	MOVE.B	#$02,D0
 	JSR	setForegroundColor
-	JSR	lbC04CFDE
+	JSR	inputPlayerName
 	JSR	setTextYOffset4
 	MOVE.W	#$000B,D0
-	SUB.B	multiplayerEnabled,D0
+	SUB.B	additionalPlayerCount,D0
 	ASL.W	#$04,D0
 	MOVE.L	#playerNamesWithSpaces,A0
 	CMP.B	#$20,$01(A0,D0.W)
@@ -7293,7 +7292,7 @@ lbC04CF94:
 	MOVE.L	(SP)+,currentFrameBuffer
 	RTS
 
-lbC04CFDE:
+inputPlayerName:
 	MOVE.B	#$0E,D1
 	MOVE.B	#$10,D2
 	JSR	setTextPosition
@@ -7304,15 +7303,15 @@ lbC04CFF6:
 	BCC	lbC04CFF6
 	MOVE.B	#$00,D0
 	MOVE.B	#$0C,D3
-	MOVE.B	#$00,lbB04D13E
+	MOVE.B	#$00,currentInputPosition
 	MOVE.B	#$0B,D0
-	SUB.B	multiplayerEnabled,D0
+	SUB.B	additionalPlayerCount,D0
 	ASL.B	#$04,D0
 inputTextString:
-	MOVE.B	D0,lbB00D4D5
-	MOVE.B	D3,lbB04D13C
-	MOVE.B	#$00,lbB04D13D
-	MOVE.B	lbB04D13E,D1
+	MOVE.B	D0,currentPlayerNameOffset
+	MOVE.B	D3,maxInputLength
+	MOVE.B	#$00,inputCancelFlag
+	MOVE.B	currentInputPosition,D1
 	ADD.B	D1,lbB04B13E
 	BRA	lbC04D044
 
@@ -7320,12 +7319,12 @@ lbC04D040:
 	MOVE.B	#$00,D1
 lbC04D044:
 	MOVE.B	D1,D2
-	ADD.B	lbB00D4D5,D2
+	ADD.B	currentPlayerNameOffset,D2
 	JSR	waitForInputPress
 	TST.B	lbB0544B5
 	BPL	lbC04D06C
 	JSR	processDirectionalInput
-	TST.B	lbB04D13D
+	TST.B	inputCancelFlag
 	BNE	lbC04D12C
 lbC04D06C:
 	CMP.B	#$0D,D0
@@ -7363,11 +7362,11 @@ lbC04D0C4:
 lbC04D0DA:
 	CMP.B	#$60,D0
 	BCS	lbC04D0F2
-	CMP.B	#$C0,lbB00D4D5
+	CMP.B	#$C0,currentPlayerNameOffset
 	BNE	lbC04D0F2
 	SUB.B	#$20,D0
 lbC04D0F2:
-	CMP.B	lbB04D13C,D1
+	CMP.B	maxInputLength,D1
 	BGE	lbC04D044
 	JSR	renderCharacter
 	MOVE.L	#playerNames,A2
@@ -7377,28 +7376,28 @@ lbC04D0F2:
 
 lbC04D114:
 	MOVE.B	D1,D2
-	ADD.B	lbB00D4D5,D2
+	ADD.B	currentPlayerNameOffset,D2
 	MOVE.B	#$20,D0
 	MOVE.L	#playerNames,A2
 	MOVE.B	D0,$00(A2,D2.W)
 	ADDQ.B	#$01,D1
 lbC04D12C:
-	CMP.B	lbB04D13C,D1
+	CMP.B	maxInputLength,D1
 	BLT	lbC04D114
 	JMP	resetTextYOffset
 
-lbB04D13C:
+maxInputLength:
 	dc.b	$00
-lbB04D13D:
+inputCancelFlag:
 	dc.b	$00
-lbB04D13E:
+currentInputPosition:
 	dc.b	$00,$00
 
 displayMenu:
 	SUBQ.B	#$01,D2
-	MOVE.B	D2,lbB00D48D
+	MOVE.B	D2,maxMenuIndex
 	MOVE.B	D1,lbB00D48B
-	MOVE.B	D0,lbB00D4D6
+	MOVE.B	D0,selectedMenuItem
 	JSR	setupDisplayMode
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
@@ -7407,14 +7406,14 @@ displayMenu:
 	JSR	renderTextString
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
-lbC04D17E:
-	MOVE.B	#$00,D0
-	MOVE.B	D0,animationFrameCounter
+renderAllMenuOptions:
+	MOVE.B	#$00,D0				; Reset item counter
+	MOVE.B	D0,currentMenuItem		; Store as 0
 lbC04D188:
-	MOVE.B	animationFrameCounter,D2
-	MOVE.B	D2,lbB00D418
-	CMP.B	lbB00D4D6,D2
-	BNE	lbC04D1B6
+	MOVE.B	currentMenuItem,D2		; Load current item index
+	MOVE.B	D2,lbB00D418			; Store for later use
+	CMP.B	selectedMenuItem,D2		; Is this the selected item?
+	BNE	lbC04D1B6			; Skip highlight logic if not
 	MOVE.B	#$00,D0
 	MOVE.B	lbB00D4CA,D2
 	BNE	lbC04D1B0
@@ -7422,17 +7421,17 @@ lbC04D188:
 lbC04D1B0:
 	MOVE.B	D0,lbB056518
 lbC04D1B6:
-	JSR	displayMenuSprite
+	JSR	displayMenuSprite		; Draw cursor/arrow sprite
 	MOVE.B	lbB00D418,D0
 	ADDQ.B	#$01,D0
-	JSR	renderDigit
+	JSR	renderDigit			; Draw "1", "2", "3", etc.
 	MOVE.B	#$2E,D0
-	JSR	renderCharacter
+	JSR	renderCharacter			; Draw "."
 	MOVE.B	#$20,D0
-	JSR	renderCharacter
+	JSR	renderCharacter			; Draw " "
 	MOVE.B	lbB00D418,D2
 	ADD.B	lbB00D48B,D2
-	MOVE.L	#lbL04D5D0,A2
+	MOVE.L	#menuStringOffsetTable,A2
 	MOVE.B	$00(A2,D2.W),D1
 	JSR	renderTextString
 	CMP.B	#$18,lbB00D48B
@@ -7441,21 +7440,21 @@ lbC04D1B6:
 	ADDQ.B	#$01,D0
 	JSR	renderDigit
 lbC04D214:
-	MOVE.B	lbB00D48D,D0
-	CMP.B	lbB00D418,D0
-	BCS	lbC04D262
+	MOVE.B	maxMenuIndex,D0			; Load max menu index
+	CMP.B	lbB00D418,D0			; Rendered all items?
+	BCS	lbC04D262			; Exit loop if done
 	MOVE.B	lbB00D48B,D0
 	CMP.B	#$1C,D0
 	BNE	lbC04D188
 	MOVE.B	#$23,D1
 	JSR	renderLeagueText
-	MOVE.B	lbB05047C,D0
+	MOVE.B	selectedTrackGroup,D0
 	ASL.B	#$01,D0
 	ADD.B	lbB00D418,D0
 	MOVE.B	D0,D2
-	MOVE.L	#lbW0561C2,A2
+	MOVE.L	#trackIDLookupTable,A2
 	MOVE.B	$00(A2,D2.W),D1
-	JSR	lbC05653E
+	JSR	renderTrackName
 	JMP	lbC04D188
 
 lbC04D262:
@@ -7465,7 +7464,7 @@ lbC04D262:
 	MOVE.B	lbB00D4CA,D0
 	BEQ	lbC04D28A
 	JSR	resetTextYOffset
-	MOVE.B	lbB00D4D6,D0
+	MOVE.B	selectedMenuItem,D0
 	RTS
 
 lbC04D28A:
@@ -7473,51 +7472,51 @@ lbC04D28A:
 	BNE	lbC04D28A
 	MOVE.B	#$02,D2
 	JSR	delayWithParam
-lbC04D29E:
+readInputLoop:
 	JSR	readControllerInput
 	AND.B	#$10,D0
 	MOVE.B	D0,lbB00D4CA
-	BNE	lbC04D17E
+	BNE	renderAllMenuOptions
 	TST.B	networkGameMode
-	BEQ	lbC04D2CA
-	JSR	lbC04945C
+	BEQ	processLocalMenuInput
+	JSR	validateNetworkMenuSelection
 	BMI	lbC04D2F8
-	BRA	lbC04D17E
+	BRA	renderAllMenuOptions
 
-lbC04D2CA:
-	MOVE.B	lbB00D48D,D2
-	ADDQ.B	#$01,D2
+processLocalMenuInput:
+	MOVE.B	maxMenuIndex,D2		; Load max menu index
+	ADDQ.B	#$01,D2			; Convert to item count
 lbC04D2D2:
-	MOVE.L	#ascii.MSG0,A2
-	MOVE.B	$00(A2,D2.W),D1
-	JSR	checkKeyPressed
-	BNE	lbC04D2F2
-	MOVE.B	D2,lbB00D4D6
-	JMP	lbC04D17E
+	MOVE.L	#keycodeTable,A2	; Point to keycode table [1,2,3,4]
+	MOVE.B	$00(A2,D2.W),D1		; Get keycode for this index
+	JSR	checkKeyPressed		; Check if number key pressed
+	BNE	lbC04D2F2		; Not pressed, try next
+	MOVE.B	D2,selectedMenuItem		; Key pressed! Set selection
+	JMP	renderAllMenuOptions	; Re-render menu
 
 lbC04D2F2:
-	SUBQ.B	#$01,D2
-	BPL	lbC04D2D2
+	SUBQ.B	#$01,D2			; Try next lower key
+	BPL	lbC04D2D2		; Loop if >= 0
 lbC04D2F8:
-	MOVE.B	lbB00D4D6,D1
-	MOVE.B	inputStateFlags,D0
-	AND.B	#$03,D0
-	BEQ	lbC04D29E
-	AND.B	#$01,D0
-	BEQ	lbC04D322
-	SUBQ.B	#$01,D1
-	BPL	lbC04D332
-	MOVE.B	#$00,D1
+	MOVE.B	selectedMenuItem,D1	; Load current selection
+	MOVE.B	inputStateFlags,D0	; Get joystick state
+	AND.B	#$03,D0			; Isolate up/down bits
+	BEQ	readInputLoop		; None pressed, loop back to wait
+	AND.B	#$01,D0			; Check bit 0 (up direction)
+	BEQ	lbC04D322		; If not up, handle down
+	SUBQ.B	#$01,D1			; Decrement selection
+	BPL	lbC04D332		; Valid, store it
+	MOVE.B	#$00,D1			; Wrap to top (stay at 0)
 	BEQ	lbC04D332
-lbC04D322:
-	CMP.B	lbB00D48D,D1
-	BEQ	lbC04D330
-	BCC	lbC04D332
+lbC04D322:				; Move selection down:
+	CMP.B	maxMenuIndex,D1		; At max index?
+	BEQ	lbC04D330		; Wrap around
+	BCC	lbC04D332		; Beyond max, store as-is
 lbC04D330:
-	ADDQ.B	#$01,D1
+	ADDQ.B	#$01,D1			; Increment selection
 lbC04D332:
-	MOVE.B	D1,lbB00D4D6
-	JMP	lbC04D17E
+	MOVE.B	D1,selectedMenuItem	; Store new selection
+	JMP	renderAllMenuOptions	; Re-render with new cursor
 
 delayRoutine:
 	MOVE.B	#$14,D2
@@ -7525,7 +7524,7 @@ delayWithParam:
 	MOVE.B	#$14,D0
 	MOVE.B	D0,lbB00D41A
 lbC04D34C:
-	SUBQ.B	#$01,randomValue
+	SUBQ.B	#$01,temp
 	BNE	lbC04D34C
 	SUBQ.B	#$01,lbB00D41A
 	BNE	lbC04D34C
@@ -7533,29 +7532,29 @@ lbC04D34C:
 	BNE	delayWithParam
 	RTS
 
-lbC04D368:
-	TST.B	D0
-	BNE	lbC04D378
-	JSR	lbC0514C6
-	BRA	handleMainMenu
+handleMenuRaceOptions:
+	TST.B	D0		; Test menu selection (0 or 1)
+	BNE	lbC04D378	; If 1, handle race selection
+	JSR	lbC0514C6	; Option 0: View league standings - Display standings screen (image3)
+	BRA	handleMainMenu	; Return to main menu
 
-lbC04D378:
-	JSR	lbC051462
-	CMP.B	#$02,D0
-	BCC	handleMainMenu
-	MOVE.B	D0,lbB00E322
-	MOVE.B	#$01,lbB05047D
-	MOVE.B	lbB05047C,D0
-	ASL.B	#$01,D0
-	ADD.B	lbB00E322,D0
-	JSR	lbC04D5F0
-	JMP	delayRoutine
+lbC04D378:			; Option 1: Select and configure race
+	JSR	lbC051462	; Show track/race type selection menus
+	CMP.B	#$02,D0		; Check if user backed out
+	BCC	handleMainMenu	; If >= 2, return to menu
+	MOVE.B	D0,selectedRaceType	; Store race type (0=practice, 1=competition)
+	MOVE.B	#$01,raceConfiguredFlag	; Set "race configured" flag
+	MOVE.B	selectedTrackGroup,D0	; Load selected track index (0-3)
+	ASL.B	#$01,D0		; Multiply by 2
+	ADD.B	selectedRaceType,D0	; Add race type: index = track*2 + type
+	JSR	configureSelectedRace	; Configure race using combined index
+	JMP	delayRoutine	; Delay and return
 
 lbC04D3AE:
 	MOVE.B	#$00,D0
 	JSR	saveLoadGameData
 	MOVE.B	#$80,D0
-	MOVE.B	D0,lbB00E322
+	MOVE.B	D0,selectedRaceType
 	RTS
 
 lbC04D3C4:
@@ -7567,11 +7566,11 @@ lbC04D3C4:
 lbC04D3E4:
 	JSR	delayRoutine
 handleMainMenu:
-	MOVE.B	#$00,lbB04D13D
-	TST.B	lbB05047D
+	MOVE.B	#$00,inputCancelFlag
+	TST.B	raceConfiguredFlag
 	BNE	lbC04D378
 	MOVE.B	#$01,D0
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC04D40E
 	MOVE.B	#$02,D0
 lbC04D40E:
@@ -7580,7 +7579,7 @@ lbC04D40E:
 	JSR	displayMenu
 	CMP.B	#$02,D0
 	BEQ	lbC04D3AE
-	BLT	lbC04D368
+	BLT	handleMenuRaceOptions
 	JSR	delayRoutine
 	CMP.B	#$40,networkGameMode
 	BEQ	lbC049BF4
@@ -7610,7 +7609,7 @@ startNewGame:
 	MOVE.B	#$B2,lbB049564
 	JSR	waitForNetworkHandshake
 lbC04D4B2:
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BNE	lbC04D4CA
 	MOVE.B	#$80,D0
 	JSR	saveLoadGameData
@@ -7680,20 +7679,20 @@ lbC04D5C2:
 	BNE	lbC04D5C2
 	RTS
 
-lbL04D5D0:
+menuStringOffsetTable:
 	dc.l	$EC0A142C,$44494E55,$5C6B5500,$7A875500,$0A1F7100
 	dc.l	$2B400000,$49494949,$0A0A5500
 
-lbC04D5F0:
-	MOVE.B	D0,D1
-	MOVE.L	#lbW0561C2,A0
-	MOVE.B	$00(A0,D1.W),gameStateFlag
-	TST.B	lbB00E2D0
-	BEQ	lbC04D60E
-	BCHG	#$00,D1
+configureSelectedRace:
+	MOVE.B	D0,D1			; Copy index to D1
+	MOVE.L	#trackIDLookupTable,A0	; Point to track ID lookup table
+	MOVE.B	$00(A0,D1.W),gameStateFlag	; Load track ID (0-7)
+	TST.B	currentPlayerContext	; Check player context
+	BEQ	lbC04D60E		; Skip swap if player 1
+	BCHG	#$00,D1			; Toggle bit 0 (swap even/odd)
 lbC04D60E:
-	MOVE.L	#lbL0561CA,A0
-	MOVE.B	$00(A0,D1.W),lbB00E321
+	MOVE.L	#raceConfigLookupTable,A0	; Point to config value table
+	MOVE.B	$00(A0,D1.W),raceConfigValue	; Store config value
 	RTS
 
 processOpponentAI:
@@ -7748,9 +7747,9 @@ lbC04D6EC:
 	MOVE.B	D2,aiPatternOffset
 	JSR	generateRandomNumber
 	AND.B	#$1F,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	opponentID,D0
-	CMP.B	randomValue,D0
+	CMP.B	temp,D0
 	BLT	lbC04D71C
 	MOVE.B	#$10,D0
 	MOVE.B	D0,aiActionTimer
@@ -8651,12 +8650,12 @@ lbB04E7E2:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 
 validateSaveDataChecksum:
-	MOVE.L	D0,lbL0563EC
-	MOVE.L	$0007A21A,D0
-	ADD.L	$0007A416,D0
-	MOVE.L	lbL04E82C,D3
-	EOR.L	D3,D0
-	MOVE.L	D0,lbL04E82C
+	MOVE.L	D0,lbL0563EC		; Store return value from initializeCIA
+	MOVE.L	$0007A21A,D0		; Load value from save slot data
+	ADD.L	$0007A416,D0		; Add value from offset +508 bytes
+	MOVE.L	lbL04E82C,D3		; Load stored checksum seed
+	EOR.L	D3,D0			; XOR sum with seed
+	MOVE.L	D0,lbL04E82C		; Store new checksum
 	MOVE.B	#$80,skipSaveSlotScreen
 	CLR.W	D1
 	CLR.W	D2
@@ -8690,18 +8689,18 @@ lbC04E87E:
 	MOVE.B	#$80,lbB055E30
 	JSR	displayMenuScreen
 	CLR.B	lbB055E30
-	JSR	selectMultiplayerMode
+	JSR	selectGameMode
 	JSR	initializeRaceMode
 	JSR	saveRandomState
 	MOVE.B	#$F3,lbB049564
 	JSR	waitForNetworkHandshake
 enterMainGameLoopLoop:
-	BCLR	#$07,raceMode
-	MOVE.B	#$10,gameStateID
-	JSR	handleMainMenu
-	TST.B	lbB00E322
-	BMI	gameStateTransition
-	MOVE.B	#$12,gameStateID
+	BCLR	#$07,raceMode		; Clear race active bit
+	MOVE.B	#$10,gameStateID	; Menu state
+	JSR	handleMainMenu		; Display and handle menu input
+	TST.B	selectedRaceType		; Check for game start
+	BMI	gameStateTransition	; Transition to race if set
+	MOVE.B	#$12,gameStateID	; Otherwise, show intermediate screens and loop back
 	JSR	displayImage2
 	MOVE.B	#$00,gameStateID
 	JSR	loadMainGameScreen
@@ -8787,7 +8786,7 @@ lbC04EA60:
 	JSR	setupGameplayDisplayAlt
 	MOVE.B	#$03,gameStateID
 	JSR	configureRaceSetup
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04EA8C
 	JSR	configureMultiplayerRace
 lbC04EA8C:
@@ -8798,7 +8797,7 @@ lbC04EA8C:
 	CMP.B	raceCount,D0
 	BCS	lbC04E968
 	CLR.B	currentRaceNumber
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BNE	lbC04EADC
 	JSR	finalizeRaceDisplay
 	JSR	displayAlternateEndScreen
@@ -8815,8 +8814,8 @@ lbC04EADC:
 	BRA	lbC04E938
 
 lbC04EAF6:
-	ADDQ.B	#$01,lbB049567
-	CMP.B	#$04,lbB049567
+	ADDQ.B	#$01,raceSeriesCounter
+	CMP.B	#$04,raceSeriesCounter
 	BCC	lbC04EAD0
 	BRA	enterMainGameLoopLoop
 
@@ -8848,7 +8847,7 @@ lbC04EB84:
 	BNE	lbC04EB84
 	MOVE.B	#$09,D3
 	MOVE.B	#$0A,D0
-	TST.B	lbB00E2D0
+	TST.B	currentPlayerContext
 	BEQ	lbC04EBA6
 	MOVE.B	#$08,D3
 	MOVE.B	#$04,D0
@@ -8901,7 +8900,7 @@ lbC04EC48:
 	JSR	initializeMultiplayerSettings
 	MOVE.B	#$09,D3
 	MOVE.B	#$0A,D0
-	TST.B	lbB00E2D0
+	TST.B	currentPlayerContext
 	BEQ	lbC04ECA4
 	MOVE.B	#$00,D3
 	MOVE.B	#$08,D0
@@ -9056,9 +9055,9 @@ lbC04EF74:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,displayUpdateFlag
 	JSR	disableAudio
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC04F00A
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04F014
 	MOVE.B	currentPlayerID,D1
 	MOVE.L	#lbL00E336,A0
@@ -9095,7 +9094,7 @@ lbC04F02C:
 	BNE	lbC04F02C
 	MOVE.L	#H.MSG,A0
 	MOVE.L	#lbW00D3F8,A1
-	MOVE.B	lbB00E2D0,D1
+	MOVE.B	currentPlayerContext,D1
 	MOVE.B	#$00,D2
 lbC04F050:
 	MOVE.B	$00(A0,D1.W),$00(A1,D2.W)
@@ -9129,7 +9128,7 @@ lbC04F0B4:
 	JSR	lbC054FA2
 	MOVE.B	#$3B,lbB053EA5
 	MOVE.B	lbB00E32C,D1
-	TST.B	lbB00E2D0
+	TST.B	currentPlayerContext
 	BEQ	lbC04F0FC
 	MOVE.B	lbB00E32D,D1
 lbC04F0FC:
@@ -9168,7 +9167,7 @@ lbC04F16A:
 	RTS
 
 initializeMultiplayerSettings:
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC04F19C
 	MOVE.B	currentPlayerID,D1
 	MOVE.L	#lbL00E336,A0
@@ -9358,7 +9357,7 @@ lbC04F452:
 	BNE	lbC04F472
 	JSR	handleGameStateChange
 lbC04F472:
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC04F4AA
 	MOVE.B	#$01,D1
 	TST.B	networkGameMode
@@ -9547,7 +9546,7 @@ lbC04F758:
 	CMP.W	#$000B,D2
 	BEQ	lbC04F780
 	MOVE.B	#$54,D2
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC04F78E
 	MOVE.B	#$08,D2
 	BNE	lbC04F78E
@@ -10177,56 +10176,56 @@ lbC050174:
 lbC0501AA:
 	RTS
 
-selectMultiplayerMode:
+selectGameMode:
 	MOVE.B	#$80,D0
 	MOVE.B	D0,textRenderingFlag
 	MOVE.B	#$00,D0
-	MOVE.B	D0,multiplayerEnabled
+	MOVE.B	D0,additionalPlayerCount
 	MOVE.B	#$02,D2
 	MOVE.B	#$10,D1
 	JSR	displayMenu
 	CMP.B	#$01,D0
-	BEQ	lbC050206
-	BGT	lbC050230
+	BEQ	gameModeMultiplayer
+	BGT	gameModeComputerLink
 	JSR	screenUpdate
-	JMP	lbC050224
+	JMP	gameModeSelected
 
-lbC0501E6:
-	MOVE.B	#$00,D0
-	MOVE.B	#$01,D2
-	MOVE.B	#$14,D1
-	JSR	displayMenu
-	CMP.B	#$00,D0
-	BNE	lbC05021A
-	ADDQ.B	#$01,multiplayerEnabled
-lbC050206:
-	JSR	screenUpdate
-	MOVE.B	multiplayerEnabled,D0
-	CMP.B	#$07,D0
-	BCS	lbC0501E6
+addMultiplayerPlayers:
+	MOVE.B	#$00,D0			; Initialize menu option
+	MOVE.B	#$01,D2			; Menu parameter 2
+	MOVE.B	#$14,D1			; Menu ID $14 ("Add another player?" prompt)
+	JSR	displayMenu		; Display menu and get user choice
+	CMP.B	#$00,D0			; Check if option 0 selected
+	BNE	lbC05021A		; Exit if other option chosen
+	ADDQ.B	#$01,additionalPlayerCount	; Increment player count
+gameModeMultiplayer:
+	JSR	screenUpdate		; Update display
+	MOVE.B	additionalPlayerCount,D0
+	CMP.B	#$07,D0			; Check if < 7 players
+	BCS	addMultiplayerPlayers	; Loop back to add more
 lbC05021A:
-	MOVE.B	multiplayerEnabled,D0
-	BEQ	lbC0501E6
-lbC050224:
+	MOVE.B	additionalPlayerCount,D0
+	BEQ	addMultiplayerPlayers	; If 0 players, force selection
+gameModeSelected:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,textRenderingFlag
 	RTS
 
-lbC050230:
-	JSR	establishMultiplayerConnection
-	BCS	selectMultiplayerMode
-	BRA	lbC050224
+gameModeComputerLink:
+	JSR	establishComputerLink
+	BCS	selectGameMode
+	BRA	gameModeSelected
 
-lbC05023E:
-	JSR	sortRaceResults
+displayLeagueRaceResults:
+	JSR	sortRaceResults		; Sort race standings
 	MOVE.B	#$10,D0
-	MOVE.B	D0,lbB056402
+	MOVE.B	D0,displayColumnOffset		; Set display offset
 	MOVE.B	#$0E,D0
-	MOVE.B	D0,DRIVERBESTLAP.MSG
-	MOVE.B	lbB00D4CB,D0
-	AND.B	lbB05047A,D0
-	BPL	lbC050324
-	JSR	drawScreenFrame
+	MOVE.B	D0,DRIVERBESTLAP.MSG	; Set column position
+	MOVE.B	multiplayerRaceDisplayFlag,D0		; Load multiplayer race flag
+	AND.B	standingsDisplayModeFlag,D0		; AND with display mode flag
+	BPL	lbC050324		; If either not negative, use simple mode
+	JSR	drawScreenFrame		; === FULL LEAGUE STANDINGS DISPLAY PATH ===
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$0B,D1
@@ -10234,62 +10233,62 @@ lbC05023E:
 	JSR	setTextPosition
 	MOVE.B	#$00,D1
 	JSR	renderStatsText
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	CMP.B	#$05,D0
 	BCS	lbC0502A4
 	JSR	setTextYOffset4
 lbC0502A4:
-	MOVE.B	multiplayerEnabled,D1
-	MOVE.L	#ascii.MSG2,A1
-	MOVE.B	$00(A1,D1.W),D0
+	MOVE.B	additionalPlayerCount,D1	; Calculate position based on division:
+	MOVE.L	#divisionRowPositions,A1
+	MOVE.B	$00(A1,D1.W),D0		; Get row position
 	MOVE.B	D0,D2
 	ADDQ.B	#$02,D0
-	MOVE.B	D0,lbB056402
-	JSR	lbC0503E0
+	MOVE.B	D0,displayColumnOffset
+	JSR	renderTrackInfoDisplay	; Display "Track: The [NAME]"
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
 	JSR	lbC05088E
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	CMP.B	#$06,D0
 	BEQ	lbC0502F0
 	CMP.B	#$05,D0
 	BEQ	lbC0502F0
 	JSR	resetTextYOffset
 lbC0502F0:
-	MOVE.B	multiplayerEnabled,D1
-	MOVE.L	#lbL05046C,A1
+	MOVE.B	additionalPlayerCount,D1
+	MOVE.L	#trackColumnOffsets,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,DRIVERBESTLAP.MSG
 	ADDQ.B	#$02,D0
-	MOVE.B	multiplayerEnabled,D2
+	MOVE.B	additionalPlayerCount,D2
 	CMP.B	#$07,D2
 	BNE	lbC050318
 	SUBQ.B	#$01,D0
 lbC050318:
-	MOVE.B	D0,lbB056402
+	MOVE.B	D0,displayColumnOffset
 	JMP	lbC050384
 
-lbC050324:
+lbC050324:				; === SIMPLE RESULTS DISPLAY PATH ===
 	JSR	setupDisplayMode
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
-	TST.B	lbB00D4CB
+	TST.B	multiplayerRaceDisplayFlag		; Check multiplayer flag
 	BMI	lbC05037A
-	MOVE.B	#$86,D1
-	JSR	renderLeagueText
-	CMP.B	#$03,lbB049567
+	MOVE.B	#$86,D1			; Display league header:
+	JSR	renderLeagueText	; "DRIVERS CHAMPIONSHIP" or similar
+	CMP.B	#$03,raceSeriesCounter		; Check race series counter
 	BCS	lbC050398
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	JSR	setTextYOffset4
 	MOVE.B	#$13,D1
-	JSR	renderStatsText
+	JSR	renderStatsText		; "FINAL SEASON"
 	JSR	resetTextYOffset
 	JMP	lbC050398
 
 lbC05037A:
 	MOVE.B	#$0B,D2
-	JSR	lbC0503E0
+	JSR	renderTrackInfoDisplay
 lbC050384:
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
@@ -10297,56 +10296,56 @@ lbC050384:
 	JSR	renderStatsText
 lbC050398:
 	MOVE.B	#$0E,D0
-	MOVE.B	D0,animationFrameCounter
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	D0,currentMenuItem
+	MOVE.B	additionalPlayerCount,D0
 	ADDQ.B	#$02,D0
 	JSR	lbC056412
 lbC0503B0:
 	JSR	lbC0503C8
-	ADDQ.B	#$01,lbB00D45E
+	ADDQ.B	#$01,displayRowOffset
 	JSR	lbC056018
 	BNE	lbC0503B0
 	RTS
 
 lbC0503C8:
 	MOVE.B	#$05,D1
-	MOVE.B	lbB00D45E,D2
+	MOVE.B	displayRowOffset,D2
 	JSR	setTextPosition
-	ADDQ.B	#$01,animationFrameCounter
+	ADDQ.B	#$01,currentMenuItem
 	RTS
 
-lbC0503E0:
-	MOVE.B	D2,lbB050474
-	MOVE.B	gameStateFlag,D1
-	MOVE.L	#lbL052B9A,A0
-	MOVE.B	$00(A0,D1.W),D1
-	SUBQ.B	#$06,D1
-	TST.B	multiplayerEnabled
-	BEQ	lbC05040E
-	TST.B	lbB00E2D0
-	BEQ	lbC05040E
-	SUBQ.B	#$02,D1
+renderTrackInfoDisplay:
+	MOVE.B	D2,lbB050474		; Save Y coordinate
+	MOVE.B	gameStateFlag,D1	; Get track ID (0-7)
+	MOVE.L	#trackDisplayYOffsets,A0	; Point to Y offset lookup table
+	MOVE.B	$00(A0,D1.W),D1		; Load Y offset for this track
+	SUBQ.B	#$06,D1			; Adjust Y (-6 pixels)
+	TST.B	additionalPlayerCount		; Check if in league mode
+	BEQ	lbC05040E		; Skip adjustment if not
+	TST.B	currentPlayerContext	; Check if player 2 context
+	BEQ	lbC05040E		; Skip if player 1
+	SUBQ.B	#$02,D1			; Further adjust Y (-2 more pixels)
 lbC05040E:
-	JSR	setTextPosition
-	MOVE.B	#$0F,D0
-	JSR	setBackgroundColor
-	MOVE.B	#$93,D1
-	JSR	renderMenuString
-	MOVE.B	gameStateFlag,D1
-	JSR	lbC05653E
-	MOVE.B	multiplayerEnabled,D0
-	BEQ	lbC050462
-	MOVE.B	lbB00E2D0,D0
-	BEQ	lbC050462
-	MOVE.B	#$21,D1
-	MOVE.B	lbB050474,D2
-	JSR	setTextPosition
-	MOVE.B	#$63,D1
-	JSR	renderMenuString
+	JSR	setTextPosition		; Set cursor position (X=D1, Y=D2)
+	MOVE.B	#$0F,D0			; Color $0F (white)
+	JSR	setBackgroundColor	; Set text background
+	MOVE.B	#$93,D1			; String offset $93 = "Track:  The "
+	JSR	renderMenuString	; Render prefix text
+	MOVE.B	gameStateFlag,D1	; Get track ID again
+	JSR	renderTrackName		; Render track name (e.g., "LITTLE RAMP")
+	MOVE.B	additionalPlayerCount,D0	; Check league mode
+	BEQ	lbC050462		; Skip if not in league
+	MOVE.B	currentPlayerContext,D0	; Check player context
+	BEQ	lbC050462		; Skip if player 1
+	MOVE.B	#$21,D1			; X = $21 (33 decimal)
+	MOVE.B	lbB050474,D2		; Restore saved Y coordinate
+	JSR	setTextPosition		; Position cursor
+	MOVE.B	#$63,D1			; String offset $63 = " S."
+	JSR	renderMenuString	; Render opponent indicator
 lbC050462:
 	RTS
 
-ascii.MSG2:
+divisionRowPositions:
 	dc.b	$0C
 	dc.b	$0C
 	dc.b	$0C
@@ -10355,13 +10354,13 @@ ascii.MSG2:
 	dc.b	$0B
 	dc.b	$0A
 	dc.b	$0A
-lbL05046C:
+trackColumnOffsets:
 	dc.l	$13131312,$11100F0F
 lbB050474:
 	dc.b	$00
 textRenderingFlag:
 	dc.b	$00
-multiplayerEnabled:
+additionalPlayerCount:
 	dc.b	$00
 remainingRaces:
 	dc.b	$00
@@ -10369,13 +10368,13 @@ raceCount:
 	dc.b	$06
 currentPlayerID:
 	dc.b	$0B
-lbB05047A:
+standingsDisplayModeFlag:
 	dc.b	$00
 raceSeriesProgress:
 	dc.b	$00
-lbB05047C:
+selectedTrackGroup:
 	dc.b	$00
-lbB05047D:
+raceConfiguredFlag:
 	dc.b	$00
 lbB05047E:
 	dc.b	$00
@@ -10523,7 +10522,7 @@ lbC050754:
 
 randomizeCarAssignments:
 	MOVE.B	#$06,D1
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC050814
 	MOVE.B	#$01,D1
 	MOVE.B	#$01,remainingRaces
@@ -10563,7 +10562,7 @@ lbC0507F2:
 	MOVE.B	lbB00D41A,D1
 	SUBQ.B	#$01,D1
 	BPL	lbC050782
-	MOVE.B	multiplayerEnabled,D1
+	MOVE.B	additionalPlayerCount,D1
 	ADDQ.B	#$01,D1
 lbC050814:
 	MOVE.B	D1,raceCount
@@ -10583,29 +10582,29 @@ renderSpace:
 cleanupNetworkRace:
 	TST.B	networkGameMode
 	BEQ	lbC050858
-	CMP.B	#$02,multiplayerEnabled
+	CMP.B	#$02,additionalPlayerCount
 	BLT	lbC050874
 lbC050858:
 	MOVE.B	#$80,D0
-	MOVE.B	D0,lbB05047A
+	MOVE.B	D0,standingsDisplayModeFlag
 	JSR	configureMultiplayerRace
 	JSR	configureRaceSetup
-	CLR.B	lbB05047A
+	CLR.B	standingsDisplayModeFlag
 lbC050874:
 	RTS
 
 configureMultiplayerRace:
 	MOVE.B	#$80,D0
-	MOVE.B	D0,lbB00D4CB
+	MOVE.B	D0,multiplayerRaceDisplayFlag
 	JSR	configureRaceSetup
-	CLR.B	lbB00D4CB
+	CLR.B	multiplayerRaceDisplayFlag
 	RTS
 
 lbC05088E:
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$0E,D0
-	MOVE.B	D0,animationFrameCounter
+	MOVE.B	D0,currentMenuItem
 	MOVE.B	#$00,lbB056518
 	MOVE.B	#$03,D0
 	JSR	lbC056412
@@ -10620,7 +10619,7 @@ lbC05088E:
 	JSR	renderLeagueText
 lbC0508E2:
 	MOVE.B	#$05,D1
-	MOVE.B	lbB00D45E,D2
+	MOVE.B	displayRowOffset,D2
 	ADDQ.B	#$01,D2
 	JSR	setTextPosition
 	MOVE.B	#$2F,D1
@@ -10654,7 +10653,7 @@ lbC050946:
 	RTS
 
 lbC05094A:
-	MOVE.L	memory_7A41A,A0
+	MOVE.L	networkTransferBuffer,A0
 	MOVE.L	memory_7A01A,A1
 	MOVE.W	#$00BF,D0
 	TST.B	lbB00E331
@@ -10677,14 +10676,14 @@ lbC050974:
 	MOVE.B	#$B8,D1
 	MOVE.B	#$04,lbB056518
 	MOVE.B	#$03,D0
-	MOVE.B	D0,animationFrameCounter
+	MOVE.B	D0,currentMenuItem
 	MOVE.B	displayFlags,D0
 	AND.B	#$01,D0
 	BEQ	lbC0509E6
 	MOVE.B	#$E3,D1
 	MOVE.B	#$01,D2
 	MOVE.B	#$10,D0
-	MOVE.B	D0,animationFrameCounter
+	MOVE.B	D0,currentMenuItem
 	MOVE.B	D2,lbB056518
 	JSR	renderMenuString
 	MOVE.B	displayFlags,D0
@@ -10711,7 +10710,7 @@ lbC050A28:
 	BTST	#$06,displayFlags
 	BEQ	lbC050A6A
 	MOVE.B	#$05,D1
-	MOVE.B	lbB00D45E,D2
+	MOVE.B	displayRowOffset,D2
 	ADDQ.B	#$01,D2
 	JSR	setTextPosition
 	MOVE.B	#$2F,D1
@@ -10775,7 +10774,7 @@ lbC050B1E:
 	ASL.B	#$04,D0
 	MOVE.B	D0,D1
 	MOVE.B	#$0C,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 lbC050B34:
 	MOVE.L	#playerNames,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -10783,24 +10782,24 @@ lbC050B34:
 	MOVE.B	D0,$00(A2,D2.W)
 	ADDQ.B	#$01,D1
 	ADDQ.B	#$01,D2
-	SUBQ.B	#$01,randomValue
+	SUBQ.B	#$01,temp
 	BNE	lbC050B34
 	MOVE.W	(SP)+,D1
 	RTS
 
 transferLapRecords:
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	gameStateFlag,D1
-	MOVE.L	#lbW0561C2,A1
+	MOVE.L	#trackIDLookupTable,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.B	lbB00E2D0,D2
+	MOVE.B	currentPlayerContext,D2
 	BEQ	lbC050B7E
 	ADD.B	#$08,D0
 lbC050B7E:
 	ASL.B	#$04,D0
 	MOVE.B	D0,D1
 	MOVE.B	#$00,D2
-	TST.B	randomValue
+	TST.B	temp
 	BMI	lbC050C02
 lbC050B90:
 	MOVE.L	#lbL050548,A2
@@ -10868,7 +10867,7 @@ lbC050CA6:
 lbC050CB4:
 	MOVE.L	memory_7A61A,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	memory_7A41A,A1
+	MOVE.L	networkTransferBuffer,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.L	memory_7A71A,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -10883,7 +10882,7 @@ lbC050CE8:
 lbC050CEA:
 	JSR	lbC051192
 	BCS	lbC050CE8
-	MOVE.L	memory_7A41A,A0
+	MOVE.L	networkTransferBuffer,A0
 	MOVE.L	memory_7A61A,A1
 	MOVE.B	#$00,D1
 lbC050D04:
@@ -10974,14 +10973,14 @@ lbC050E0A:
 	BEQ	lbC050E38
 	CMP.B	#$01,D2
 	BNE	lbC050E32
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	BEQ	lbC050E42
 lbC050E32:
 	ANDI.B	#$1E,CCR
 	RTS
 
 lbC050E38:
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	BEQ	lbC050E32
 lbC050E42:
 	JSR	setTextYOffset4
@@ -11064,8 +11063,8 @@ lbC051022:
 lbC05102C:
 	MOVE.B	#$80,D0
 lbC051030:
-	MOVE.B	D0,animationFrameCounter
-	MOVE.L	memory_7A41A,lbW00D5C0
+	MOVE.B	D0,currentMenuItem
+	MOVE.L	networkTransferBuffer,lbW00D5C0
 	MOVE.W	#$683B,lbW051020
 	MOVE.B	#$00,D1
 lbC05104C:
@@ -11075,7 +11074,7 @@ lbC05104C:
 	ADDQ.B	#$01,D1
 	BNE	lbC05104C
 	MOVE.B	#$0F,D2
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BMI	lbC051086
 	MOVE.B	lbB052586,D0
 	MOVE.L	lbW00D5C0,A0
@@ -11090,7 +11089,7 @@ lbC051096:
 	MOVE.B	#$00,D2
 	MOVE.L	lbW00D5C0,A0
 	MOVE.L	memory_7A81A,A1
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BMI	lbC0510CC
 	MOVE.B	D2,D0
 	MOVE.B	#$EF,D2
@@ -11111,7 +11110,7 @@ lbC0510D0:
 	ADDQ.B	#$01,lbB052586
 	MOVE.B	lbB00D417,D1
 	ADDQ.B	#$01,D1
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BPL	lbC051110
 	CMP.B	lbB00D418,D1
 	BEQ	lbC05111C
@@ -11132,7 +11131,7 @@ lbC05111C:
 lbC051140:
 	ADDQ.B	#$01,D2
 	BNE	lbC0510CC
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BPL	lbC05117A
 	MOVE.B	#$EF,D2
 	MOVE.B	$00(A0,D2.W),D0
@@ -11182,7 +11181,7 @@ lbC0511E6:
 lbC051202:
 	SUBQ.B	#$01,D1
 	BPL	lbC0511B6
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	additionalPlayerCount,D0
 	MOVE.B	D0,$0007A4F6
 	JSR	lbC051022
 	RTS
@@ -11213,7 +11212,7 @@ lbC051276:
 	SUBQ.B	#$01,D1
 	BPL	lbC05122A
 	MOVE.B	$0007A4F6,D0
-	MOVE.B	D0,multiplayerEnabled
+	MOVE.B	D0,additionalPlayerCount
 lbC051288:
 	RTS
 
@@ -11316,13 +11315,13 @@ setDisplayMode51:
 	JMP	configureDisplayMode
 
 transmitNetworkMessage:
-	MOVE.B	D0,randomValue
-	MOVE.B	multiplayerEnabled,D0
+	MOVE.B	D0,temp
+	MOVE.B	additionalPlayerCount,D0
 	BEQ	lbC05142C
 	MOVE.B	currentPlayerID,D0
 	JSR	lbC049D72
 	MOVE.L	#D.MSG,A1
-	TST.B	randomValue
+	TST.B	temp
 	BPL	lbC05142E
 lbC05141E:
 	MOVE.B	$00(A2,D2.W),$00(A1,D1.W)
@@ -11344,7 +11343,7 @@ DDDDDDDD.MSG:
 lbC051462:
 	MOVE.B	#$80,D0
 	MOVE.B	D0,textRenderingFlag
-	BCLR	#$00,lbB05047D
+	BCLR	#$00,raceConfiguredFlag
 	BNE	lbC05149A
 	MOVE.B	#$03,D2
 	MOVE.B	selectedTrack,D0
@@ -11352,11 +11351,11 @@ lbC051462:
 	MOVE.B	#$18,D1
 	JSR	displayMenu
 	EOR.B	#$03,D0
-	MOVE.B	D0,lbB05047C
+	MOVE.B	D0,selectedTrackGroup
 lbC05149A:
 	MOVE.B	#$40,textRenderingFlag
 	MOVE.B	#$02,D2
-	MOVE.B	lbB00E322,D0
+	MOVE.B	selectedRaceType,D0
 	AND.B	#$01,D0
 	MOVE.B	#$1C,D1
 	JSR	displayMenu
@@ -11372,7 +11371,7 @@ lbC0514C6:
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
 	MOVE.B	#$7F,D1
 	MOVE.B	#$7F,D2
-	MOVE.B	lbB00E2D0,D0
+	MOVE.B	currentPlayerContext,D0
 	BEQ	lbC051500
 	MOVE.B	#$FF,D2
 lbC051500:
@@ -11397,7 +11396,7 @@ lbC051500:
 	JSR	decompressRLEImage
 	MOVE.B	#$02,lbB00D46D
 	MOVE.B	#$3B,D1
-	MOVE.B	lbB00E2D0,D0
+	MOVE.B	currentPlayerContext,D0
 	BEQ	lbC05158A
 	MOVE.B	#$07,D0
 	JSR	setBackgroundColor
@@ -11408,16 +11407,16 @@ lbC05158A:
 	JSR	setBackgroundColor
 	MOVE.B	#$5B,D1
 	JSR	renderStatsText
-	MOVE.B	#$07,animationFrameCounter
+	MOVE.B	#$07,currentMenuItem
 lbC0515A6:
 	MOVE.B	#$07,D0
-	SUB.B	animationFrameCounter,D0
+	SUB.B	currentMenuItem,D0
 	ASL.B	#$01,D0
 	ADD.B	#$09,D0
 	MOVE.B	D0,D2
 	MOVE.B	#$00,D1
 	JSR	setTextPosition
-	MOVE.B	animationFrameCounter,D0
+	MOVE.B	currentMenuItem,D0
 	ASL.B	#$01,D0
 	MOVE.B	D0,D1
 	MOVE.B	#$01,D0
@@ -11434,7 +11433,7 @@ lbC0515A6:
 	MOVE.B	#$04,lbB00D46D
 	MOVE.B	#$00,lbB00D448
 lbC051616:
-	MOVE.B	animationFrameCounter,D0
+	MOVE.B	currentMenuItem,D0
 	ASL.B	#$04,D0
 	OR.B	lbB00D448,D0
 	MOVE.B	D0,D1
@@ -11468,7 +11467,7 @@ lbC051634:
 	JMP	lbC051616
 
 lbC0516B4:
-	SUBQ.B	#$01,animationFrameCounter
+	SUBQ.B	#$01,currentMenuItem
 	BPL	lbC0515A6
 	MOVE.B	#$00,D0
 	MOVE.B	D0,lbB00D46D
@@ -11486,17 +11485,17 @@ RHBSSBRHJRCSJ.MSG:
 
 lookupDataTable:
 	MOVE.B	lbB00D406,D0
-	ADD.B	lbB00D4D6,D0
+	ADD.B	selectedMenuItem,D0
 	CMP.B	#$10,D0
 	BCC	lbC051750
 	ASL.B	#$04,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	lbB00D404,D0
-	ADD.B	lbB00D4D5,D0
+	ADD.B	currentPlayerNameOffset,D0
 	CMP.B	#$10,D0
 	BCC	lbC051750
 	AND.B	#$0F,D0
-	OR.B	randomValue,D0
+	OR.B	temp,D0
 	MOVE.B	D0,D1
 	MOVE.L	#lbL00DB80,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -11620,9 +11619,9 @@ lbC0518F2:
 	RTS
 
 adjustNetworkCoordinates:
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	D2,lbB00D41A
-	CMP.B	randomValue,D2
+	CMP.B	temp,D2
 	BCC	lbC051966
 	ADD.B	lbB00D41A,D0
 	BCC	lbC051952
@@ -11831,12 +11830,12 @@ lbC051C0C:
 
 lbC051C24:
 	MOVE.B	D1,lbB00D48B
-	MOVE.B	D2,lbB00D48D
+	MOVE.B	D2,maxMenuIndex
 	TST.B	lbB00D530
 	BMI	lbC051C5A
 	BTST	#$06,lbB00D530
 	BEQ	lbC051C8A
-	MOVE.B	lbB00D48D,D1
+	MOVE.B	maxMenuIndex,D1
 	MOVE.B	lbB00D48B,D2
 	NEG.B	D2
 	JMP	lbC051C8A
@@ -11846,17 +11845,17 @@ lbC051C5A:
 	BNE	lbC051C7C
 	MOVE.B	lbB00D48B,D1
 	NEG.B	D1
-	MOVE.B	lbB00D48D,D2
+	MOVE.B	maxMenuIndex,D2
 	NEG.B	D2
 	JMP	lbC051C8A
 
 lbC051C7C:
-	MOVE.B	lbB00D48D,D1
+	MOVE.B	maxMenuIndex,D1
 	NEG.B	D1
 	MOVE.B	lbB00D48B,D2
 lbC051C8A:
-	MOVE.B	D1,lbB00D4D5
-	MOVE.B	D2,lbB00D4D6
+	MOVE.B	D1,currentPlayerNameOffset
+	MOVE.B	D2,selectedMenuItem
 	MOVE.W	#$0000,D0
 	MOVE.W	D0,lbW00D526
 	MOVE.B	D0,lbB00D458
@@ -11909,7 +11908,7 @@ lbC051D4C:
 	JSR	processSecondaryRendering
 lbC051DA6:
 	MOVE.B	lbB00D48B,D1
-	MOVE.B	lbB00D48D,D2
+	MOVE.B	maxMenuIndex,D2
 	RTS
 
 executeGameSequence:
@@ -12002,19 +12001,19 @@ lbC051F08:
 	MOVE.L	#lbL00DE88,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
-	MOVE.B	D0,lbB00D4D5
+	MOVE.B	D0,currentPlayerNameOffset
 	MOVE.B	$00(A1,D1.W),D0
 	LSR.B	#$04,D0
-	MOVE.B	D0,lbB00D4D6
+	MOVE.B	D0,selectedMenuItem
 	MOVE.W	#$0000,D0
 	MOVE.W	D0,lbW00D5DA
 	MOVE.W	D0,lbW00D5E2
-	MOVE.B	lbB00D4D5,D0
+	MOVE.B	currentPlayerNameOffset,D0
 	AND.W	#$00FF,D0
 	ASL.W	#$07,D0
 	ADD.W	#$0040,D0
 	MOVE.W	D0,lbB00D5D8
-	MOVE.B	lbB00D4D6,D0
+	MOVE.B	selectedMenuItem,D0
 	AND.W	#$00FF,D0
 	ASL.W	#$07,D0
 	ADD.W	#$0040,D0
@@ -12229,12 +12228,12 @@ lbC0522A6:
 	RTS
 
 saveLoadGameData:
-	MOVE.B	D0,animationFrameCounter
+	MOVE.B	D0,currentMenuItem
 	MOVE.L	#randomSeed1,A0
 	MOVE.L	memory_7A035,A1
 	MOVE.B	#$04,D1
 lbC0522C4:
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BMI	lbC0522DE
 	MOVE.B	(A0)+,$00(A1,D1.W)
 	JMP	lbC0522EC
@@ -12250,7 +12249,7 @@ lbC0522DE:
 lbC0522EC:
 	SUBQ.B	#$01,D1
 	BPL	lbC0522C4
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BMI	lbC05231E
 	MOVE.B	#$0B,D1
 lbC052300:
@@ -12264,7 +12263,7 @@ lbC052300:
 lbC05231E:
 	MOVE.B	#$1A,D1
 lbC052322:
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BPL	lbC05234C
 	MOVE.L	memory_7A01A,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -12283,7 +12282,7 @@ lbC052356:
 lbC052366:
 	JSR	generateRandomNumber
 	MOVE.B	D0,lbB00D417
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BMI	lbC0523AC
 	MOVE.L	#lbL00E2B6,A1
 	CMP.B	$00(A1,D1.W),D0
@@ -12303,7 +12302,7 @@ lbC0523AC:
 	CMP.B	audioChannelCounter,D0
 	BNE	lbC052356
 	MOVE.B	lbB00D417,D0
-	MOVE.L	memory_7A41A,A1
+	MOVE.L	networkTransferBuffer,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC0523D6:
 	SUBQ.B	#$01,D1
@@ -12313,7 +12312,7 @@ lbC0523D6:
 	MOVE.B	#$09,D2
 lbC0523EA:
 	MOVE.B	(A0)+,D0
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BMI	lbC052404
 	MOVE.L	memory_7A03A,A1
 	MOVE.B	D0,$00(A1,D1.W)
@@ -12325,13 +12324,13 @@ lbC052404:
 lbC052412:
 	SUBQ.B	#$01,D1
 	BPL	lbC0523EA
-	TST.B	animationFrameCounter
+	TST.B	currentMenuItem
 	BPL	lbC052472
 	MOVE.L	#lbL00E2B6,A3
-	MOVE.L	memory_7A41A,A0
+	MOVE.L	networkTransferBuffer,A0
 	MOVE.B	#$1A,D1
 lbC052432:
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC052444
 	CMP.B	#$18,D1
 	BCS	lbC05244A
@@ -12357,7 +12356,7 @@ lbC052472:
 
 lbC052482:
 	MOVE.B	#$3B,lbB053EA5
-	MOVE.B	animationFrameCounter,D0
+	MOVE.B	currentMenuItem,D0
 	BPL	saveLoadGameData
 	ORI.B	#$01,CCR
 	RTS
@@ -12432,7 +12431,7 @@ lbB052586:
 	dc.b	$11,$11
 D.MSG:
 	dc.b	$2A,$40,$21,$22,$44
-ascii.MSG0:
+keycodeTable:
 	dc.b	$01
 	dc.b	$02
 	dc.b	$03
@@ -12749,7 +12748,7 @@ lbC0529AC:
 	BEQ	lbC052A3C
 	MOVE.B	trackIncrementValue,D3
 	EOR.B	D3,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	lbB00D44D,D0
 	BPL	lbC052A20
 	MOVE.B	controlResponseValue,D0
@@ -12770,7 +12769,7 @@ lbC052A04:
 lbC052A20:
 	MOVE.B	lbB00D4D4,D0
 lbC052A26:
-	TST.B	randomValue
+	TST.B	temp
 	BMI	lbC052A36
 	ADD.B	lbW00D53C,D0
 lbC052A36:
@@ -12865,17 +12864,17 @@ lbL052B5A:
 lbC052B60:
 	JSR	setTextYOffset4
 	MOVE.B	gameStateFlag,D1
-	MOVE.L	#lbL052B9A,A1
+	MOVE.L	#trackDisplayYOffsets,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,lbB055CAD
 	MOVE.B	#$58,D1
 	JSR	renderLeagueText
 	MOVE.B	gameStateFlag,D1
-	JSR	lbC05653E
+	JSR	renderTrackName
 	JSR	resetTextYOffset
 	RTS
 
-lbL052B9A:
+trackDisplayYOffsets:
 	dc.l	$0F0D1010,$100F100D
 
 multiplyAndRandomize:
@@ -12884,7 +12883,7 @@ multiplyAndRandomize:
 	AND.W	#$00FF,D3
 	MULU	D0,D3
 	MOVE.W	D3,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	LSR.W	#$08,D0
 	RTS
 
@@ -12909,13 +12908,13 @@ lbC052BEE:
 	JSR	multiplyAndRandomize
 	NEG.W	D3
 	MOVE.W	D3,D0
-	MOVE.B	D3,randomValue
+	MOVE.B	D3,temp
 	LSR.W	#$08,D0
 	RTS
 
 	BCLR	#$07,lbB00D4BB
 	ASL.W	#$08,D0
-	OR.B	randomValue,D0
+	OR.B	temp,D0
 	MOVE.B	lbB00D41A,D3
 	AND.W	#$00FF,D3
 	TST.B	lbB00D4BB
@@ -12925,7 +12924,7 @@ lbC052C28:
 	MULS	D0,D3
 	ASR.L	#$08,D3
 	MOVE.W	D3,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	LSR.W	#$08,D0
 	RTS
 
@@ -14343,7 +14342,7 @@ lbC054110:
 lbC05416C:
 	JSR	waitForInputPress
 	JSR	processDirectionalInput
-	TST.B	lbB04D13D
+	TST.B	inputCancelFlag
 	BNE	handleSlotNavigation
 	CMP.B	#$0D,D0
 	BNE	lbC05416C
@@ -14361,24 +14360,24 @@ lbC05419A:
 	JSR	inputTextString
 	MOVE.W	#$0091,D1
 	JSR	displayMessageWithColors
-	TST.B	lbB04D13D
+	TST.B	inputCancelFlag
 	BNE	handleSlotNavigation
 	CMP.B	#$20,lbB01066B
 	BNE	lbC05424A
 	MOVE.B	#$7F,D1
 	MOVE.W	D1,D1
 	JSR	displayMessageWithColors
-	MOVE.B	#$00,lbB04D13E
+	MOVE.B	#$00,currentInputPosition
 	BRA	lbC05419A
 
 handleSlotNavigation:
 	BMI	lbC054366
 	JSR	refreshSaveSlotDisplay
-	BTST	#$06,lbB04D13D
+	BTST	#$06,inputCancelFlag
 	BNE	lbC054240
-	BTST	#$05,lbB04D13D
+	BTST	#$05,inputCancelFlag
 	BNE	lbC054236
-	BTST	#$03,lbB04D13D
+	BTST	#$03,inputCancelFlag
 	BNE	lbC05422C
 	JSR	checkMinimumSlotThreshold
 	BRA	lbC054246
@@ -14412,7 +14411,7 @@ lbC05424A:
 	MOVE.W	D0,lbW054632
 lbC05428A:
 	MOVE.W	lbW054632,D0
-	MOVE.L	memory_7A41A,A0
+	MOVE.L	networkTransferBuffer,A0
 	TST.B	lbB00E331
 	BEQ	lbC0542D2
 	JSR	displaySlotRight
@@ -14713,7 +14712,7 @@ displaySaveSlot:
 	CLR.B	lbB0544BC
 lbC054692:
 	MOVE.L	#lbB01066B,A1
-	MOVE.B	#$00,lbB04D13E
+	MOVE.B	#$00,currentInputPosition
 	MOVE.B	#$06,D4
 	MOVE.B	lbB0544B4,D5
 	CMP.B	#$1E,D5
@@ -14758,7 +14757,7 @@ lbC054718:
 	MOVE.B	D0,$00(A1,D3.W)
 	CMP.B	#$20,D0
 	BLE	lbC054750
-	ADDQ.B	#$01,lbB04D13E
+	ADDQ.B	#$01,currentInputPosition
 	BRA	lbC054766
 
 lbC054750:
@@ -15769,7 +15768,7 @@ lbC05537C:
 	RTS
 
 lbC05538E:
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC0553A2
 	TST.B	currentRaceNumber
 	BNE	lbC055406
@@ -15781,7 +15780,7 @@ lbC0553A6:
 	CLR.W	D1
 	MOVE.B	gameStateFlag,D1
 	MOVE.B	lbB00E32A,D2
-	TST.B	lbB00E2D0
+	TST.B	currentPlayerContext
 	BEQ	lbC0553D2
 	ADD.B	#$20,D1
 	MOVE.B	lbB00E32B,D2
@@ -16517,10 +16516,10 @@ lbC055EF6:
 	RTS
 
 lbC055EF8:
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BNE	lbC055F52
 	MOVE.B	#$09,D2
-	MOVE.B	lbB00E2D0,D0
+	MOVE.B	currentPlayerContext,D0
 	BEQ	lbC055F26
 	MOVE.B	D2,lbB04C057
 	MOVE.B	#$BB,D1
@@ -16554,24 +16553,24 @@ lbC055F68:
 	JSR	setupDisplayMode
 	MOVE.B	displayTrackID,D0
 	ASL.B	#$01,D0
-	MOVE.B	D0,randomValue
+	MOVE.B	D0,temp
 	MOVE.B	currentRaceNumber,D0
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC055F9C
 	MOVE.B	remainingRaces,D0
 	EOR.B	#$01,D0
 lbC055F9C:
 	AND.B	#$01,D0
-	ADD.B	randomValue,D0
+	ADD.B	temp,D0
 	MOVE.B	D0,D1
-	JSR	lbC04D5F0
+	JSR	configureSelectedRace
 	BTST	#$00,displayFlags
 	BNE	lbC055FC0
 	JMP	lbC04A77A
 
 lbC055FC0:
 	MOVE.B	#$0B,D2
-	JSR	lbC0503E0
+	JSR	renderTrackInfoDisplay
 	JSR	lbC050974
 	JMP	lbC056128
 
@@ -16583,9 +16582,9 @@ finalizeRaceDisplay:
 configureRaceSetup:
 	JSR	setupGameConfiguration
 	MOVE.B	lbB00D55B,lbB00D4E8
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BEQ	lbC05600C
-	JSR	lbC05023E
+	JSR	displayLeagueRaceResults
 	BRA	lbC056128
 
 lbC05600C:
@@ -16602,7 +16601,7 @@ lbC056018:
 	JSR	renderPlayerName
 	JSR	renderSpace
 	MOVE.B	lbB00D4E4,D1
-	TST.B	lbB00D4CB
+	TST.B	multiplayerRaceDisplayFlag
 	BPL	lbC05606E
 	JSR	lbC050640
 	JSR	lbC05082E
@@ -16688,17 +16687,17 @@ lbC0561A2:
 	RTS
 
 initializeRaceMode:
-	TST.B	multiplayerEnabled
+	TST.B	additionalPlayerCount
 	BNE	configureRaceSetup
 	JMP	displaySinglePlayerResults
 
-lbW0561C2:
+trackIDLookupTable:
 	dc.w	$0002,$0103,$0607,$0405
-lbL0561CA:
+raceConfigLookupTable:
 	dc.l	$08050C05,$05080C08
 
 lbC0561D2:
-	MOVE.B	D0,animationFrameCounter
+	MOVE.B	D0,currentMenuItem
 	JSR	configurePlayersAndCars
 	JSR	displayMenuSprite
 	MOVE.B	player1ID,D1
@@ -16727,13 +16726,13 @@ lbC05622E:
 	MOVE.B	#$D7,D1
 	JSR	renderLeagueText
 	MOVE.B	#$01,D0
-	MOVE.B	D0,animationFrameCounter
+	MOVE.B	D0,currentMenuItem
 	MOVE.B	lbB00D55B,D2
 	BNE	lbC05629C
 	MOVE.B	lbB00E30E,D0
 	CMP.B	currentPlayerID,D0
 	BNE	lbC0562F2
-	MOVE.B	lbB00E2D0,D0
+	MOVE.B	currentPlayerContext,D0
 	BEQ	lbC05629C
 	JSR	displayMenuSprite
 	MOVE.B	#$CE,D1
@@ -16787,9 +16786,9 @@ lbC056334:
 	MOVE.B	currentPlayerID,D0
 	CMP.B	lbB00E30E,D0
 	BNE	lbC05639A
-	MOVE.B	lbB00E2D0,D1
+	MOVE.B	currentPlayerContext,D1
 	BNE	lbC0563B6
-	MOVE.B	D0,lbB00E2D0
+	MOVE.B	D0,currentPlayerContext
 	MOVE.L	#lbL00E2C2,A0
 	MOVE.B	#$0B,D1
 lbC056388:
@@ -16836,7 +16835,7 @@ skipSaveSlotScreen:
 lbL0563F4:
 	dc.l	$0D101316,$1013100F,$14170A0E
 	dc.w	$1216
-lbB056402:
+displayColumnOffset:
 	dc.b	$0E,$0B,$11,$0C,$13,$FC,$00,$03,$00,$06,$4C,$18
 
 displayMenuSprite:
@@ -16848,10 +16847,10 @@ lbC056412:
 	JSR	renderCharacter
 	MOVE.B	#$05,D0
 	JSR	renderCharacter
-	MOVE.B	animationFrameCounter,D1
+	MOVE.B	currentMenuItem,D1
 	MOVE.L	#lbL0563F4,A0
 	MOVE.B	$00(A0,D1.W),D0
-	MOVE.B	D0,lbB00D45E
+	MOVE.B	D0,displayRowOffset
 	JSR	renderCharacter
 	CLR.W	D4
 	MOVE.B	lbB056518,D4
@@ -16900,7 +16899,7 @@ lbC0564F6:
 	MOVE.B	#$02,lbB056518
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
-	ADDQ.B	#$01,animationFrameCounter
+	ADDQ.B	#$01,currentMenuItem
 setTextYOffset4:
 	MOVE.B	#$04,textYOffset
 	RTS
@@ -16915,20 +16914,20 @@ renderPlayerName:
 	MOVE.B	#$0D,D2
 	JMP	lbC056548
 
-lbC05653E:
-	MOVE.L	#levelNames,A0
-	MOVE.B	#$0F,D2
+renderTrackName:
+	MOVE.L	#levelNames,A0		; Point to track names table
+	MOVE.B	#$0F,D2			; Set length to 15 characters
 lbC056548:
-	MOVE.B	D2,randomValue
-	ASL.B	#$04,D1
-	MOVE.B	#$00,D2
+	MOVE.B	D2,temp			; Store character count
+	ASL.B	#$04,D1			; Multiply track index by 16 (each name is 16 bytes)
+	MOVE.B	#$00,D2			; Initialize character counter
 lbC056554:
-	MOVE.B	$00(A0,D1.W),D0
-	JSR	renderCharacter
-	ADDQ.B	#$01,D1
-	ADDQ.B	#$01,D2
-	CMP.B	randomValue,D2
-	BNE	lbC056554
+	MOVE.B	$00(A0,D1.W),D0		; Load character from track name
+	JSR	renderCharacter		; Render the character
+	ADDQ.B	#$01,D1			; Move to next character
+	ADDQ.B	#$01,D2			; Increment counter
+	CMP.B	temp,D2			; Check if 15 characters rendered
+	BNE	lbC056554		; Loop until done
 	RTS
 
 drawScreenFrame:
@@ -17108,8 +17107,8 @@ initializeNetworkAudio:
 processNetworkAndAudio:
 	JSR	initializeNetworkAudio
 	MOVE.B	#$00,D0
-	MOVE.B	D0,lbB00D4D5
-	MOVE.B	D0,lbB00D4D6
+	MOVE.B	D0,currentPlayerNameOffset
+	MOVE.B	D0,selectedMenuItem
 	JSR	lookupDataTable
 	BCS	lbC05678E
 	CMP.B	#$FF,D0
@@ -17125,7 +17124,7 @@ lbC05678E:
 	BEQ	lbC0567A6
 	JSR	synchronizeNetworkState
 lbC0567A6:
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC0567BC
 	JSR	processOpponentLogic
 	JSR	processTrackSegmentData
@@ -17160,7 +17159,7 @@ lbC056826:
 	BRA	lbC056880
 
 lbC05685E:
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BPL	lbC056880
 	JSR	processOpponentLogic
 	JSR	calculatePlayerDistance
@@ -17211,7 +17210,7 @@ lbC0568E2:
 	MOVE.W	transformedCoordinates2,lbW0579FE
 	JSR	transformCoordinates
 	JSR	drawTrackLines
-	TST.B	lbB00E322
+	TST.B	selectedRaceType
 	BMI	lbC05699E
 	MOVE.W	#$FFFF,storedDepth
 lbC05699E:
@@ -17679,7 +17678,7 @@ lbC0570A2:
 	MOVE.B	lbB00D498,D1
 	ASL.W	#$01,D1
 	MOVE.B	audioParameterIndex,D2
-	CMP.B	lbB00E31C,D2
+	CMP.B	trackParameter3,D2
 	BNE	lbC0570D0
 	MOVE.B	#$01,D0
 lbC0570D0:
@@ -18098,6 +18097,7 @@ lbC057696:
 	ASL.B	#$01,D2
 	ADD.B	trackOffsetBase,D2
 lbC0576A0:
+	jmp	doQuit
 	JSR	calculateTrackCoordinatesFromData
 	MOVE.W	trackIncrementValue,(A4)+
 	MOVE.W	lbW00D4F8,(A4)+
@@ -18556,7 +18556,7 @@ lbB057D21:
 lbB057D25:
 	dc.b	$E8,$5D,$C0,$4E,$75
 
-lbC057D2A:
+drawHorizontalLine:
 	JSR	setPixelColor
 	MOVE.L	currentFrameBuffer,A0
 	MOVE.W	D4,D0
@@ -20093,7 +20093,7 @@ lbC058F9A:
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	memory_7AB5A,A3
 	MOVE.W	$00(A3,D1.W),lbB00D41A
-	MOVE.B	randomValue,D0
+	MOVE.B	temp,D0
 	MOVE.B	D0,$00(A0,D3.W)
 	MOVE.B	lbB00D41A,$02(A0,D3.W)
 	TST.B	lbB00D467
