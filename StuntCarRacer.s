@@ -197,6 +197,8 @@ DMAF_ALL		equ	$01FF
 
 	incdir	"scr:"
 startup:
+	moveq	#0,d2
+	jmp	debug
 	move.l	sp,sp_quit
 	move.b	#$80,skipSaveSlotScreen
 
@@ -1216,7 +1218,7 @@ lbB00D418:
 	dc.b	$00
 savedViewpointIndex:
 	dc.b	$00
-lbB00D41A:
+segmentDirectionFlags:
 	dc.b	$00
 temp:
 	dc.b	$00
@@ -1276,7 +1278,7 @@ lbB00D446:
 	dc.b	$00
 inputStateFlags:
 	dc.b	$00
-lbB00D448:
+segmentRepeatCounter:
 	dc.b	$00,$00
 lbB00D44A:
 	dc.b	$00,$00,$00
@@ -1382,7 +1384,7 @@ lbB00D488:
 	dc.b	$00
 lbB00D489:
 	dc.b	$00,$00
-lbB00D48B:
+currentTrackCoordinate:
 	dc.b	$00
 displayModeFlag2:
 	dc.b	$00
@@ -1392,7 +1394,7 @@ lbB00D48E:
 	dc.b	$00
 lbB00D48F:
 	dc.b	$00
-lbB00D490:
+renderModeFlag:
 	dc.b	$00
 trackOffsetBase:
 	dc.b	$00
@@ -1406,7 +1408,7 @@ lbB00D495:
 	dc.b	$00,$00
 trackSegmentLimit:
 	dc.b	$00
-lbB00D498:
+maxSegmentIndex:
 	dc.b	$00
 lbB00D499:
 	dc.b	$00
@@ -1528,7 +1530,7 @@ lbB00D4DA:
 	dc.b	$00
 lbB00D4DB:
 	dc.b	$00
-lbB00D4DC:
+segmentAlternateFlag:
 	dc.b	$00
 lbB00D4DD:
 	dc.b	$00
@@ -1575,10 +1577,11 @@ lbW00D4F4:
 lbB00D4F5:	EQU	*-1
 trackIncrementValue:
 	dc.w	$0000
-enginePower:	EQU	*-1
+trackBoostThreshold:	EQU	*-1
+raceSetupFlags:  EQU    *-1
 lbW00D4F8:
 	dc.w	$0000
-lbB00D4F9:	EQU	*-1
+trackBoostThresholdCopy:	EQU	*-1
 lbW00D4FA:
 	dc.w	$0000,$0000,$0000
 lbB00D500:
@@ -1662,7 +1665,7 @@ lbB00D54D:	EQU	*-1
 	dc.b	$00,$00,$00,$00,$00,$00
 lbB00D554:
 	dc.b	$00
-lbB00D555:
+previousSegmentProperties:
 	dc.b	$00
 lbW00D556:
 	dc.w	$0000
@@ -1751,7 +1754,7 @@ lbL00D5B8:
 	dc.l	$00000000
 lbW00D5BC:
 	dc.w	$0000,$0000
-lbW00D5C0:
+rawTrackDataOffset:
 	dc.w	$0000,$0000,$0000,$0000
 lbB00D5C8:
 	dc.b	$00,$00,$00,$00
@@ -1943,7 +1946,7 @@ trackCoordinatesY:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 	dc.w	$0024
-lbL00D6D0:
+segmentProcessedFlags:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
@@ -2144,19 +2147,19 @@ lbL00DD00:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-lbL00DDC0:
+segmentGeometryIndices:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-lbL00DE24:
+segmentAlternateGeometryIndices:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-lbL00DE88:
+trackSegmentCoordinates:	; lookup table mapping track segment indices to their 2D grid coordinates, with each coordinate packed into a single byte
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
@@ -2168,7 +2171,7 @@ trackSegmentPropertiesTable:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-lbL00DF50:
+segmentInterpolationPoint1:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000
 lbL00DF6C:
@@ -2186,7 +2189,7 @@ graphicsOffsetY:
 	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
 	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
 	dc.w	$0000,$0000,$0000
-lbL00E018:
+segmentInterpolationPoint2:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
@@ -2197,7 +2200,7 @@ lbL00E018:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-lbL00E0E0:
+segmentWorldPositions:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
@@ -2208,13 +2211,13 @@ lbL00E0E0:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-lbL00E1A8:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-lbL00E1C8:
+obstacleSegmentIndices:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
-lbL00E1E8:
+obstacleTypes:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+trackFeatureData:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000
 playerStatsArray:
@@ -2241,7 +2244,7 @@ lbB00E246:
 	dc.b	$00
 lbB00E247:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-lbL00E252:
+segmentVisibilityData:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 	dc.l	$00000000,$00000000
@@ -2277,8 +2280,8 @@ lbL00E302:
 	dc.l	$00000000,$00000000,$00000000
 lbB00E30E:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-lbB00E319:
-	dc.b	$00
+trackDataBuffer:
+	dc.b	$00		; unused
 numViewpoints:
 	dc.b	$00
 lbB00E31B:
@@ -2287,7 +2290,7 @@ trackParameter3:
 	dc.b	$00
 lbB00E31D:
 	dc.b	$00
-lbW00E31E:
+startWorldPosition:
 	dc.w	$0000
 lbB00E320:
 	dc.b	$00
@@ -2309,7 +2312,7 @@ player2ID:
 	dc.b	$00
 opponentID:
 	dc.b	$00
-lbB00E32A:
+trackMetadataBuffer:
 	dc.b	$00
 lbB00E32B:
 	dc.b	$00
@@ -2317,13 +2320,13 @@ lbB00E32C:
 	dc.b	$00
 lbB00E32D:
 	dc.b	$00
-lbB00E32E:
+obstacleCount:
 	dc.b	$00
-lbB00E32F:
+trackFeatureCount:
 	dc.b	$00,$00
 lbB00E331:
 	dc.b	$00
-lbB00E332:
+startingViewpointIndex:
 	dc.b	$00
 gameStateFlag:
 	dc.b	$00
@@ -2416,25 +2419,24 @@ trackGeometryDatabase:
 	dc.w	$50B2,$A3B2,$A9FF,$FEB2,$59B3,$20DA,$D8B3,$3BB4,$0A46
 	dc.w	$2E20,$9EB4,$A980,$852E,$60A5,$30C9,$8190
 segmentGeometryOffsetTable:	; This is a lookup table containing ~130 encoded offset values that map segment type/configuration indices to geometry data locations within trackGeometryDatabase
-	dc.w	$0DB5,$1BB5,$24B5,$36B5,$44B5,$52B5,$5CB5,$66B5
-	dc.w	$6FB5,$78B5,$86B5,$94B5,$9DB5,$A6B5,$B2B5,$CAB5
-	dc.w	$D3B5,$EBB5,$F7B5,$01B6,$0AB6,$14B6,$1DB6,$27B6
-	dc.w	$31B6,$3AB6,$43B6,$4DB6,$57B6,$60B6,$69B6,$72B6
-	dc.w	$7BB6,$84B6,$90B6,$99B6,$A2B6,$ABB6,$B7B6,$C0B6
-	dc.w	$C9B6,$D5B6,$E1B6,$EDB6,$F9B6,$02B7,$0BB7,$14B7
-	dc.w	$1DB7,$26B7,$32B7,$3EB7,$4CB7,$56B7,$5FB7,$68B7
-	dc.w	$7AB7,$83B7,$8CB7,$95B7,$9EB7,$A7B7,$B0B7,$B9B7
-	dc.w	$C3B7,$CCB7,$D6B7,$E8B7,$F1B7,$FAB7,$03B8,$0CB8
-	dc.w	$16B8,$1FB8,$28B8,$31B8,$3AB8,$46B8,$4FB8,$58B8
-	dc.w	$70B8,$A720,$7EB8,$87B8,$90B8,$9EB8,$ACB8,$B5B8
-	dc.w	$BFB8,$C9B8,$D5B8,$DEB8,$E7B8,$F0B8,$FAB8,$03B9
-	dc.w	$15B9,$27B9,$39B9,$4BB9,$54B9,$60B9,$6AB9,$74B9
-	dc.w	$7EB9,$88B9,$91B9,$9AB9,$A3B9,$ACB9,$B5B9,$BEB9
-	dc.w	$CAB9,$D4B9,$E0B9,$F8B9,$04BA,$0DBA,$1FBA,$28BA
-	dc.w	$A320,$7DA3,$31BA,$AA20,$3ABA,$44BA,$4EBA,$58BA
+	dc.w	$0DB5,$1BB5,$24B5,$36B5,$44B5,$52B5,$5CB5,$66B5,$6FB5
+	dc.w	$78B5,$86B5,$94B5,$9DB5,$A6B5,$B2B5,$CAB5,$D3B5,$EBB5
+	dc.w	$F7B5,$01B6,$0AB6,$14B6,$1DB6,$27B6,$31B6,$3AB6,$43B6
+	dc.w	$4DB6,$57B6,$60B6,$69B6,$72B6,$7BB6,$84B6,$90B6,$99B6
+	dc.w	$A2B6,$ABB6,$B7B6,$C0B6,$C9B6,$D5B6,$E1B6,$EDB6,$F9B6
+	dc.w	$02B7,$0BB7,$14B7,$1DB7,$26B7,$32B7,$3EB7,$4CB7,$56B7
+	dc.w	$5FB7,$68B7,$7AB7,$83B7,$8CB7,$95B7,$9EB7,$A7B7,$B0B7
+	dc.w	$B9B7,$C3B7,$CCB7,$D6B7,$E8B7,$F1B7,$FAB7,$03B8,$0CB8
+	dc.w	$16B8,$1FB8,$28B8,$31B8,$3AB8,$46B8,$4FB8,$58B8,$70B8
+	dc.w	$A720,$7EB8,$87B8,$90B8,$9EB8,$ACB8,$B5B8,$BFB8,$C9B8
+	dc.w	$D5B8,$DEB8,$E7B8,$F0B8,$FAB8,$03B9,$15B9,$27B9,$39B9
+	dc.w	$4BB9,$54B9,$60B9,$6AB9,$74B9,$7EB9,$88B9,$91B9,$9AB9
+	dc.w	$A3B9,$ACB9,$B5B9,$BEB9,$CAB9,$D4B9,$E0B9,$F8B9,$04BA
+	dc.w	$0DBA,$1FBA,$28BA,$A320,$7DA3,$31BA,$AA20,$3ABA,$44BA
+	dc.w	$4EBA,$58BA
 trackDataOffsetTable:	; Each word is an encoded offset that, when transformed, points to a specific track's compressed data in trackGeometryDatabase
-	dc.w	$62BA,$DEBA,$6FBB,$00BC,$8EBC,$1FBD,$F4BD,$82BE
-	dc.w	$F5A7,$4C00,$A54C,$B2A3,$0017,$4163,$6375,$7261
+	dc.w	$62BA,$DEBA,$6FBB,$00BC,$8EBC,$1FBD,$F4BD,$82BE,$F5A7
+	dc.w	$4C00,$A54C,$B2A3,$0017,$4163,$6375,$7261
 geometryParameterTable:
 	dc.w	$0080,$20C0,$0073,$80C0,$A959,$0002,$A95E,$854B,$0400
 	dc.w	$4003,$1200,$AB80,$8001,$2040,$0300,$00C0,$0400,$0040
@@ -6227,8 +6229,8 @@ lbC04C132:
 	MOVE.B	#$02,D2
 	MOVE.B	#$BE,D1
 	MOVE.L	#segmentGeometryOffsetTable,A1
-	MOVE.W	$00(A1,D1.W),lbW00D5C0
-	MOVE.W	lbW00D5C0,D0
+	MOVE.W	$00(A1,D1.W),rawTrackDataOffset
+	MOVE.W	rawTrackDataOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
@@ -6456,7 +6458,7 @@ setupCarPerformance:
 	BCS	lbC04C4EA
 	MOVE.B	#$40,D1
 lbC04C4EA:
-	MOVE.B	D1,enginePower
+	MOVE.B	D1,raceSetupFlags
 	MOVE.B	player1ID,D2
 	MOVE.B	player2ID,D1
 	MOVE.L	#lbL00E2F6,A1
@@ -6469,7 +6471,7 @@ lbC04C4EA:
 	BNE	lbC04C534
 	EOR.B	#$C0,D0
 lbC04C528:
-	MOVE.B	D0,enginePower
+	MOVE.B	D0,raceSetupFlags
 	JMP	lbC04C566
 
 lbC04C534:
@@ -6482,14 +6484,14 @@ lbC04C534:
 	LSR.B	#$01,D0
 	BCS	lbC04C566
 lbC04C556:
-	MOVE.B	enginePower,D0
+	MOVE.B	raceSetupFlags,D0
 	EOR.B	#$C0,D0
-	MOVE.B	D0,enginePower
+	MOVE.B	D0,raceSetupFlags
 lbC04C566:
-	TST.B	enginePower
+	TST.B	raceSetupFlags
 	BMI	lbC04C58E
 	MOVE.B	D1,savedViewpointIndex
-	BTST	#$06,enginePower
+	BTST	#$06,raceSetupFlags
 	BNE	lbC04C5A0
 lbC04C582:
 	MOVE.B	D1,lbB00D418
@@ -6497,7 +6499,7 @@ lbC04C582:
 
 lbC04C58E:
 	MOVE.B	D2,savedViewpointIndex
-	BTST	#$06,enginePower
+	BTST	#$06,raceSetupFlags
 	BEQ	lbC04C582
 lbC04C5A0:
 	MOVE.B	D2,lbB00D418
@@ -6571,11 +6573,11 @@ lbC04C6AC:
 	LSR.B	#$01,D0
 	BCC	lbC04C6DA
 lbC04C6B8:
-	MOVE.B	D2,lbB00D41A
+	MOVE.B	D2,segmentDirectionFlags
 	MOVE.B	lbB00D418,D2
 	MOVE.B	D1,D0
 	MOVE.B	D0,$01(A3,D2.W)
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	MOVE.B	D0,$00(A3,D2.W)
 	ADDQ.B	#$01,savedViewpointIndex
 lbC04C6DA:
@@ -6598,10 +6600,10 @@ readTrackDataByte:
 	AND.B	#$FF,D0
 	RTS
 
-lbC04C70C:
-	TST.B	lbB00D41A
+applyDirectionalOffset:
+	TST.B	segmentDirectionFlags
 	BMI	lbC04C72E
-	BTST	#$06,lbB00D41A
+	BTST	#$06,segmentDirectionFlags
 	BNE	lbC04C728
 	ADD.B	#$10,D0
 	RTS
@@ -6611,7 +6613,7 @@ lbC04C728:
 	RTS
 
 lbC04C72E:
-	BTST	#$06,lbB00D41A
+	BTST	#$06,segmentDirectionFlags
 	BNE	lbC04C740
 	SUB.B	#$10,D0
 	RTS
@@ -6625,8 +6627,8 @@ processTrackDataBuffer:
 	ASL.B	#$01,D0
 	MOVE.B	D0,D2
 	MOVE.L	#trackDataOffsetTable,A2
-	MOVE.W	$00(A2,D2.W),lbW00D5C0
-	MOVE.W	lbW00D5C0,D0
+	MOVE.W	$00(A2,D2.W),rawTrackDataOffset
+	MOVE.W	rawTrackDataOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$18FF,D0
@@ -6635,66 +6637,66 @@ processTrackDataBuffer:
 	MOVE.W	#$0000,D5
 lbC04C778:
 	JSR	readTrackDataByte
-	MOVE.L	#lbB00E319,A2
+	MOVE.L	#trackDataBuffer,A2
 	MOVE.B	D0,$00(A2,D5.W)
 	CMP.B	#$04,D5
 	BNE	lbC04C778
 	JSR	readTrackDataByte
-	MOVE.B	D0,enginePower
-	MOVE.B	D0,lbB00D4F9
+	MOVE.B	D0,trackBoostThreshold
+	MOVE.B	D0,trackBoostThresholdCopy
 	JSR	readTrackDataByte
 	MOVE.B	D0,trackIncrementValue
 	MOVE.B	D0,lbW00D4F8
 	MOVE.B	#$00,D1
-	MOVE.B	D1,lbB00D4DC
+	MOVE.B	D1,segmentAlternateFlag
 	MOVE.B	D1,trackDataComponent
 	MOVE.B	D1,trackProgressionValue
-	MOVE.B	D1,lbB00D448
+	MOVE.B	D1,segmentRepeatCounter
 lbC04C7D0:
-	MOVE.B	lbB00D448,D0
+	MOVE.B	segmentRepeatCounter,D0
 	BEQ	lbC04C820
-	SUBQ.B	#$01,lbB00D448
-	MOVE.B	lbB00D555,D0
-	MOVE.B	D0,lbB00D41A
+	SUBQ.B	#$01,segmentRepeatCounter
+	MOVE.B	previousSegmentProperties,D0
+	MOVE.B	D0,segmentDirectionFlags
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$10,D0
 	BEQ	lbC04C80E
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	EOR.B	#$C0,D0
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 lbC04C80E:
-	MOVE.B	lbB00D48B,D0
-	JSR	lbC04C70C
+	MOVE.B	currentTrackCoordinate,D0
+	JSR	applyDirectionalOffset
 	JMP	lbC04C86C
 
 lbC04C820:
 	JSR	readTrackDataByte
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$0F,D0
 	CMP.B	#$0F,D0
 	BNE	lbC04C856
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	LSR.B	#$04,D0
-	MOVE.B	D0,lbB00D448
+	MOVE.B	D0,segmentRepeatCounter
 	JMP	lbC04C7D0
 
 lbC04C856:
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.B	D0,lbB00D555
+	MOVE.B	D0,previousSegmentProperties
 	JSR	readTrackDataByte
 lbC04C86C:
-	MOVE.L	#lbL00DE88,A1
+	MOVE.L	#trackSegmentCoordinates,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.B	D0,lbB00D48B
-	MOVE.B	lbB00D4DC,D0
+	MOVE.B	D0,currentTrackCoordinate
+	MOVE.B	segmentAlternateFlag,D0
 	LSR.B	#$02,D0
 	ROXR.B	#$01,D0
 	MOVE.B	D0,temp
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	AND.B	#$0F,D0
 	CMP.B	#$0C,D0
 	BLT	lbC04C8DC
@@ -6706,20 +6708,20 @@ lbC04C86C:
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.L	#S9.MSG,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.L	#lbL00DDC0,A1
+	MOVE.L	#segmentGeometryIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.L	#lbL04CBBA,A2
+	MOVE.L	#specialSegmentLookupTable,A2
 	MOVE.B	$00(A2,D2.W),D0
 	JMP	lbC04C910
 
 lbC04C8DC:
 	JSR	readTrackDataByte
-	MOVE.L	#lbL00DDC0,A1
+	MOVE.L	#segmentGeometryIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	AND.B	#$20,D0
 	BEQ	lbC04C90A
-	MOVE.L	#lbL00DDC0,A1
+	MOVE.L	#segmentGeometryIndices,A1
 	MOVE.B	$00(A1,D1.W),D0
 	JMP	lbC04C910
 
@@ -6728,48 +6730,48 @@ lbC04C90A:
 lbC04C910:
 	AND.B	#$7F,D0
 	OR.B	temp,D0
-	MOVE.L	#lbL00DE24,A1
+	MOVE.L	#segmentAlternateGeometryIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.B	D2,D0
 	MOVE.B	D0,-(SP)
 	ASL.B	#$01,D1
-	MOVE.L	#lbL00E0E0,A1
+	MOVE.L	#segmentWorldPositions,A1
 	MOVE.W	trackProgressionValue,D0
 	ASL.W	#$05,D0
 	MOVE.W	D0,$00(A1,D1.W)
 	LSR.B	#$01,D1
 	JSR	loadTrackSegmentConfiguration
 	ASL.B	#$01,D1
-	MOVE.B	lbB00D4DC,D0
-	ADD.B	lbB00D498,D0
+	MOVE.B	segmentAlternateFlag,D0
+	ADD.B	maxSegmentIndex,D0
 	AND.B	#$02,D0
-	MOVE.B	D0,lbB00D4DC
+	MOVE.B	D0,segmentAlternateFlag
 	MOVE.B	trackModeParameter,D0
 	AND.W	#$00FF,D0
 	ADD.W	D0,trackProgressionValue
 	MOVE.B	#$00,D2
 	JSR	lbC04CBD2
-	MOVE.B	D0,lbB00D41A
-	MOVE.L	#lbL00DF50,A3
-	MOVE.L	#lbL00E018,A4
+	MOVE.B	D0,segmentDirectionFlags
+	MOVE.L	#segmentInterpolationPoint1,A3
+	MOVE.L	#segmentInterpolationPoint2,A4
 	MOVE.W	trackIncrementValue,D4
-	SUB.W	lbB00D41A,D4
+	SUB.W	segmentDirectionFlags,D4
 	MOVE.W	D4,$00(A3,D1.W)
 	MOVE.B	trackModeParameter,D2
 	JSR	lbC04CBD2
-	MOVE.B	D0,lbB00D41A
-	ADD.W	lbB00D41A,D4
+	MOVE.B	D0,segmentDirectionFlags
+	ADD.W	segmentDirectionFlags,D4
 	MOVE.W	D4,trackIncrementValue
 	MOVE.B	#$00,D2
 	JSR	lbC04CBC8
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 	MOVE.W	lbW00D4F8,D4
-	SUB.W	lbB00D41A,D4
+	SUB.W	segmentDirectionFlags,D4
 	MOVE.W	D4,$00(A4,D1.W)
 	MOVE.B	trackModeParameter,D2
 	JSR	lbC04CBC8
-	MOVE.B	D0,lbB00D41A
-	ADD.W	lbB00D41A,D4
+	MOVE.B	D0,segmentDirectionFlags
+	ADD.W	segmentDirectionFlags,D4
 	MOVE.W	D4,lbW00D4F8
 	LSR.B	#$01,D1
 	MOVE.B	(SP)+,D0
@@ -6786,58 +6788,58 @@ lbC04CA0C:
 	BLT	lbC04CA22
 	MOVE.B	#$00,D1
 lbC04CA22:
-	MOVE.B	D1,lbB00E332
+	MOVE.B	D1,startingViewpointIndex
 	MOVE.W	trackProgressionValue,D0
 	ASL.W	#$05,D0
-	MOVE.W	D0,lbW00E31E
+	MOVE.W	D0,startWorldPosition
 	MOVE.B	#$00,D1
 lbC04CA3A:
 	JSR	readTrackDataByte
-	MOVE.L	#lbB00E32A,A1
+	MOVE.L	#trackMetadataBuffer,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D1
 	CMP.B	#$06,D1
 	BNE	lbC04CA3A
-	MOVE.B	lbB00E32E,D0
+	MOVE.B	obstacleCount,D0
 	BEQ	lbC04CA8E
 	MOVE.B	#$00,D1
 lbC04CA62:
 	JSR	readTrackDataByte
-	MOVE.L	#lbL00E1A8,A1
+	MOVE.L	#obstacleSegmentIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	JSR	readTrackDataByte
-	MOVE.L	#lbL00E1C8,A1
+	MOVE.L	#obstacleTypes,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E32E,D1
+	CMP.B	obstacleCount,D1
 	BNE	lbC04CA62
 lbC04CA8E:
-	MOVE.B	lbB00E32F,D0
+	MOVE.B	trackFeatureCount,D0
 	BEQ	lbC04CAB8
 	MOVE.B	#$00,D1
 lbC04CA9C:
 	JSR	readTrackDataByte
-	MOVE.L	#lbL00E1E8,A1
+	MOVE.L	#trackFeatureData,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D1
-	CMP.B	lbB00E32F,D1
+	CMP.B	trackFeatureCount,D1
 	BNE	lbC04CA9C
 lbC04CAB8:
 	JSR	lbC05538E
 	MOVE.B	#$00,D0
-	MOVE.B	D0,lbB00D448
+	MOVE.B	D0,segmentRepeatCounter
 	MOVE.B	#$7C,D0
 	MOVE.B	D0,temp
 	MOVE.B	#$02,D0
-	MOVE.B	D0,lbB00D490
+	MOVE.B	D0,renderModeFlag
 	BNE	lbC04CBB0
 lbC04CAE0:
-	MOVE.B	lbB00E32E,D2
+	MOVE.B	obstacleCount,D2
 	JMP	lbC04CAFC
 
 lbC04CAEC:
 	MOVE.B	D1,D0
-	MOVE.L	#lbL00E1A8,A2
+	MOVE.L	#obstacleSegmentIndices,A2
 	CMP.B	$00(A2,D2.W),D0
 	BEQ	lbC04CB08
 lbC04CAFC:
@@ -6846,13 +6848,13 @@ lbC04CAFC:
 	JMP	lbC04CB38
 
 lbC04CB08:
-	MOVE.L	#lbL00E1C8,A2
+	MOVE.L	#obstacleTypes,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.L	#lbL00E252,A1
+	MOVE.L	#segmentVisibilityData,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	BPL	lbC04CB2A
 	MOVE.B	#$03,D2
-	MOVE.B	D2,lbB00D448
+	MOVE.B	D2,segmentRepeatCounter
 lbC04CB2A:
 	AND.B	#$7F,D0
 	MOVE.B	D0,temp
@@ -6879,12 +6881,12 @@ lbC04CB72:
 lbC04CB86:
 	MOVE.B	temp,D0
 lbC04CB8C:
-	MOVE.B	lbB00D448,D2
+	MOVE.B	segmentRepeatCounter,D2
 	BEQ	lbC04CBA0
-	SUBQ.B	#$01,lbB00D448
+	SUBQ.B	#$01,segmentRepeatCounter
 	OR.B	#$80,D0
 lbC04CBA0:
-	MOVE.L	#lbL00E252,A1
+	MOVE.L	#segmentVisibilityData,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC04CBAA:
 	SUBQ.B	#$01,D1
@@ -6894,8 +6896,8 @@ lbC04CBB0:
 	SUBQ.B	#$01,D1
 S9.MSG:
 	dc.b	'S9'
-lbL04CBBA:
-	dc.l	lbB00D490,$6600FF20,$4E750304
+specialSegmentLookupTable:
+	dc.l	renderModeFlag,$6600FF20,$4E750304
 	dc.w	$0403
 
 lbC04CBC8:
@@ -7078,8 +7080,8 @@ lbC04CE14:
 	NEG.W	D0
 lbC04CE28:
 	MOVE.B	lbB00D4E1,lbB00D4BB
-	MOVE.B	#$A0,lbB00D41A
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	#$A0,segmentDirectionFlags
+	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
 	TST.B	lbB00D4BB
 	BPL	lbC04CE50
@@ -7300,7 +7302,7 @@ currentInputPosition:
 displayMenu:
 	SUBQ.B	#$01,D2
 	MOVE.B	D2,maxMenuIndex
-	MOVE.B	D1,lbB00D48B
+	MOVE.B	D1,currentTrackCoordinate
 	MOVE.B	D0,selectedMenuItem
 	JSR	setupDisplayMode
 	MOVE.B	#$01,D0
@@ -7334,11 +7336,11 @@ lbC04D1B6:
 	MOVE.B	#$20,D0
 	JSR	renderCharacter			; Draw " "
 	MOVE.B	lbB00D418,D2
-	ADD.B	lbB00D48B,D2
+	ADD.B	currentTrackCoordinate,D2
 	MOVE.L	#menuStringOffsetTable,A2
 	MOVE.B	$00(A2,D2.W),D1
 	JSR	renderTextString
-	CMP.B	#$18,lbB00D48B
+	CMP.B	#$18,currentTrackCoordinate
 	BNE	lbC04D214
 	MOVE.B	lbB00D418,D0
 	ADDQ.B	#$01,D0
@@ -7347,7 +7349,7 @@ lbC04D214:
 	MOVE.B	maxMenuIndex,D0			; Load max menu index
 	CMP.B	lbB00D418,D0			; Rendered all items?
 	BCS	lbC04D262			; Exit loop if done
-	MOVE.B	lbB00D48B,D0
+	MOVE.B	currentTrackCoordinate,D0
 	CMP.B	#$1C,D0
 	BNE	lbC04D188
 	MOVE.B	#$23,D1
@@ -7426,11 +7428,11 @@ delayRoutine:
 	MOVE.B	#$14,D2
 delayWithParam:
 	MOVE.B	#$14,D0
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 lbC04D34C:
 	SUBQ.B	#$01,temp
 	BNE	lbC04D34C
-	SUBQ.B	#$01,lbB00D41A
+	SUBQ.B	#$01,segmentDirectionFlags
 	BNE	lbC04D34C
 	SUBQ.B	#$01,D2
 	BNE	delayWithParam
@@ -7634,7 +7636,7 @@ lbC04D680:
 
 lbC04D6A6:
 	MOVE.B	gameParameter2,D2
-	MOVE.L	#lbL00E252,A0
+	MOVE.L	#segmentVisibilityData,A0
 	TST.B	$00(A0,D2.W)
 	BMI	lbC04D71C
 	TST.B	carCrashedFlag
@@ -7714,10 +7716,10 @@ lbC04D7B0:
 
 lbC04D7CE:
 	JSR	lbC04DCDA
-	MOVE.B	#$B5,lbB00D41A
+	MOVE.B	#$B5,segmentDirectionFlags
 	MOVE.W	trackIncrementValue,D0
 	SUB.W	lbW00D4F8,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -7728,10 +7730,10 @@ lbC04D7CE:
 	MOVE.B	$0002(A5),D3
 	SUB.W	D3,D0
 	MOVE.W	D0,speedMajor
-	MOVE.B	$0007(A5),lbB00D41A
+	MOVE.B	$0007(A5),segmentDirectionFlags
 	MOVE.W	trackIncrementValue,D0
 	ADD.W	lbW00D4F8,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -7781,8 +7783,8 @@ lbC04D892:
 	BPL	lbC04D8D6
 	NEG.W	D0
 lbC04D8D6:
-	MOVE.B	$0008(A5),lbB00D41A
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	$0008(A5),segmentDirectionFlags
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -7942,16 +7944,16 @@ calculateSegmentPhysics:
 	MOVE.B	#$00,lbB00D49A
 	MOVE.B	#$04,D1
 lbC04DAEE:
-	MOVE.B	D1,lbB00D4F9
+	MOVE.B	D1,trackBoostThresholdCopy
 	MOVE.B	gameParameter1,D0
 	CMP.B	viewpointIndex,D0
 	BEQ	lbC04DB18
 	MOVE.B	D0,D1
 	MOVE.B	D1,viewpointIndex
 	JSR	loadTrackSegmentConfiguration
-	MOVE.B	lbB00D4F9,D1
+	MOVE.B	trackBoostThresholdCopy,D1
 lbC04DB18:
-	MOVE.B	lbB00D47B,lbB00D41A
+	MOVE.B	lbB00D47B,segmentDirectionFlags
 	MOVE.L	#lbW00D602,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$04,D0
@@ -7973,7 +7975,7 @@ lbC04DB5E:
 	BPL	lbC04DB66
 	NEG.W	D0
 lbC04DB66:
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -7992,11 +7994,11 @@ lbC04DB9A:
 	BNE	lbC04DBA8
 	MOVE.B	D0,lbB00D4A1
 lbC04DBA8:
-	MOVE.B	lbB00D4D9,lbB00D41A
+	MOVE.B	lbB00D4D9,segmentDirectionFlags
 	MOVE.L	#lbW00D608,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$03,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -8008,7 +8010,7 @@ lbC04DBA8:
 	ASL.B	#$01,D0
 	MOVE.B	D0,lbB00D4A3
 	BMI	lbC04DBF8
-	CMP.B	lbB00D498,D0
+	CMP.B	maxSegmentIndex,D0
 	BLT	lbC04DBFE
 lbC04DBF8:
 	JSR	lbC04DD84
@@ -8059,7 +8061,7 @@ lbC04DC7E:
 	MOVE.W	D0,interpolationPointsXY1
 	ADDQ.B	#$01,D1
 lbC04DCC6:
-	MOVE.B	lbB00D4F9,D1
+	MOVE.B	trackBoostThresholdCopy,D1
 	JSR	lbC04DEF2
 	SUBQ.B	#$02,D1
 	BPL	lbC04DAEE
@@ -8265,11 +8267,11 @@ lbC04DF5A:
 	JSR	lbC052C5A
 	MOVE.B	lbB00D486,D2
 	MOVE.L	#lbL04DFB8,A0
-	MOVE.B	$00(A0,D2.W),lbB00D41A
+	MOVE.B	$00(A0,D2.W),segmentDirectionFlags
 	SUB.L	D0,D4
 	LSR.L	#$08,D4
 	MOVE.W	D4,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -8758,11 +8760,11 @@ lbC04EB84:
 lbC04EBA6:
 	MOVE.B	D3,hudDisplayMode1
 	MOVE.B	D0,hudDisplayMode2
-	JSR	lbC052B60
+	JSR	displayTrackHeader
 	MOVE.B	#$03,D0
 	JSR	setBackgroundColor
-	JSR	lbC04F15A
-debug:	; StuntCarRacer.s:10190
+debug:
+	JSR	initializeSegmentFlags
 	MOVE.B	gameStateFlag,D1
 	JSR	processTrackDataBuffer
 	JSR	initializeLookupTables
@@ -8995,7 +8997,7 @@ initializeMessageBuffer:
 	MOVE.L	#lbW00D3F8,A0
 lbC04F02C:
 	MOVE.B	#$00,(A0)+
-	CMP.L	#lbL00D6D0,A0
+	CMP.L	#segmentProcessedFlags,A0
 	BNE	lbC04F02C
 	MOVE.L	#H.MSG,A0
 	MOVE.L	#lbW00D3F8,A1
@@ -9060,10 +9062,10 @@ lbC04F148:
 	DBRA	D3,lbC04F148
 	JSR	loadPaletteColors
 	JSR	initializeCIA
-lbC04F15A:
+initializeSegmentFlags:
 	MOVE.B	#$3E,D1
 	MOVE.L	#trackSegmentData,A1
-	MOVE.L	#lbL00D6D0,A2
+	MOVE.L	#segmentProcessedFlags,A2
 lbC04F16A:
 	MOVE.W	#$8000,$78(A1,D1.W)
 	MOVE.B	#$80,$00(A2,D1.W)
@@ -9369,7 +9371,7 @@ lbC04F602:
 	RTS
 
 lbC04F604:
-	CMP.B	lbB00E332,D0
+	CMP.B	startingViewpointIndex,D0
 	BNE	lbC04F602
 	MOVE.B	#$80,$00(A1,D1.W)
 	MOVE.L	#lbB00D420,A1
@@ -9692,7 +9694,7 @@ lbC04FA86:
 	CMP.B	#$0A,D0
 	BGE	lbC04FA80
 	MOVE.B	D0,lbB00D418
-	MOVE.B	D1,lbB00D41A
+	MOVE.B	D1,segmentDirectionFlags
 	MOVE.B	D2,savedViewpointIndex
 	MOVE.B	D5,lbB00D417
 	MOVE.B	#$01,lbB00D46D
@@ -9713,7 +9715,7 @@ lbC04FAE6:
 	JSR	renderDigitAndAdvance
 	MOVE.B	savedViewpointIndex,D0
 	JSR	renderDigitAndAdvance
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	JSR	renderDigitAndAdvance
 	MOVE.B	lbB00D418,D0
 	JSR	renderDigitAndAdvance
@@ -9910,7 +9912,7 @@ lbC04FE36:
 	MOVE.B	#$0F,D0
 lbC04FE62:
 	JSR	setBackgroundColor
-	MOVE.B	lbB04FF5A,lbB00D490
+	MOVE.B	lbB04FF5A,renderModeFlag
 	MOVE.B	lbB04FF5B,D2
 	MOVE.B	D1,-(SP)
 	MOVE.B	#$04,lbB04B13F
@@ -9932,7 +9934,7 @@ lbC04FEAE:
 lbC04FEE0:
 	ADDQ.B	#$01,D2
 	MOVE.B	#$03,D0
-	MOVE.B	D0,lbB00D448
+	MOVE.B	D0,segmentRepeatCounter
 lbC04FEEC:
 	MOVE.L	#gameMessageTable,A2
 	MOVE.B	$00(A2,D2.W),D0
@@ -9947,9 +9949,9 @@ lbC04FF08:
 lbC04FF14:
 	ADDQ.B	#$01,D2
 	ADDQ.B	#$01,D1
-	SUBQ.B	#$01,lbB00D448
+	SUBQ.B	#$01,segmentRepeatCounter
 	BNE	lbC04FEEC
-	SUBQ.B	#$01,lbB00D490
+	SUBQ.B	#$01,renderModeFlag
 	BNE	lbC04FEAE
 	MOVE.B	(SP)+,D1
 	MOVE.B	#$00,lbB00D4D3
@@ -10432,7 +10434,7 @@ randomizeCarAssignments:
 	MOVE.B	#$01,D1
 	MOVE.B	#$01,remainingRaces
 lbC050782:
-	MOVE.B	D1,lbB00D41A
+	MOVE.B	D1,segmentDirectionFlags
 	MOVE.B	D1,D0
 	MOVE.B	selectedTrack,D2
 	BEQ	lbC0507B6
@@ -10464,7 +10466,7 @@ lbC0507F2:
 	ADDQ.B	#$01,D1
 	ADDQ.B	#$01,D2
 	DBRA	D3,lbC0507F2
-	MOVE.B	lbB00D41A,D1
+	MOVE.B	segmentDirectionFlags,D1
 	SUBQ.B	#$01,D1
 	BPL	lbC050782
 	MOVE.B	additionalPlayerCount,D1
@@ -10969,7 +10971,7 @@ lbC05102C:
 	MOVE.B	#$80,D0
 lbC051030:
 	MOVE.B	D0,currentMenuItem
-	MOVE.L	#networkTransferBuffer,lbW00D5C0
+	MOVE.L	#networkTransferBuffer,rawTrackDataOffset
 	MOVE.W	#$683B,lbW051020
 	MOVE.B	#$00,D1
 lbC05104C:
@@ -10982,17 +10984,17 @@ lbC05104C:
 	TST.B	currentMenuItem
 	BMI	lbC051086
 	MOVE.B	lbB052586,D0
-	MOVE.L	lbW00D5C0,A0
+	MOVE.L	rawTrackDataOffset,A0
 	MOVE.B	D0,$00(A0,D2.W)
 	JMP	lbC051096
 
 lbC051086:
-	MOVE.L	lbW00D5C0,A0
+	MOVE.L	rawTrackDataOffset,A0
 	MOVE.B	$00(A0,D2.W),D0
 	MOVE.B	D0,lbB052586
 lbC051096:
 	MOVE.B	#$00,D2
-	MOVE.L	lbW00D5C0,A0
+	MOVE.L	rawTrackDataOffset,A0
 	MOVE.L	#memory_7A81A,A1
 	TST.B	currentMenuItem
 	BMI	lbC0510CC
@@ -11025,7 +11027,7 @@ lbC051110:
 	BNE	lbC0510D0
 	MOVE.B	D1,D0
 lbC05111C:
-	MOVE.L	lbW00D5C0,A0
+	MOVE.L	rawTrackDataOffset,A0
 	MOVE.B	D0,$00(A0,D2.W)
 	MOVE.B	lbB052586,D0
 	ADD.B	$00(A1,D1.W),D0
@@ -11053,12 +11055,12 @@ lbC05117A:
 
 lbC05117C:
 	JSR	lbC051022
-	ADD.L	#$00000100,lbW00D5C0
+	ADD.L	#$00000100,rawTrackDataOffset
 	JMP	lbC051096
 
 lbC051192:
 	JSR	lbC05102C
-	ADD.L	#$00000100,lbW00D5C0
+	ADD.L	#$00000100,rawTrackDataOffset
 	JMP	lbC051096
 
 lbC0511A8:
@@ -11336,11 +11338,11 @@ lbC0515A6:
 	JSR	renderCharacter
 	JSR	renderSpace
 	MOVE.B	#$04,lbB00D46D
-	MOVE.B	#$00,lbB00D448
+	MOVE.B	#$00,segmentRepeatCounter
 lbC051616:
 	MOVE.B	currentMenuItem,D0
 	ASL.B	#$04,D0
-	OR.B	lbB00D448,D0
+	OR.B	segmentRepeatCounter,D0
 	MOVE.B	D0,D1
 	MOVE.B	#$07,D0
 	JSR	setBackgroundColor
@@ -11362,9 +11364,9 @@ lbC051634:
 	MOVE.B	$02(A1,D1.W),lapTimeSubseconds
 	MOVE.B	#$00,D1
 	JSR	lbC050640
-	MOVE.B	lbB00D448,D0
+	MOVE.B	segmentRepeatCounter,D0
 	EOR.B	#$80,D0
-	MOVE.B	D0,lbB00D448
+	MOVE.B	D0,segmentRepeatCounter
 	BPL	lbC0516B4
 	JSR	lbC05082E
 	MOVE.B	#$02,D0
@@ -11412,26 +11414,26 @@ lbC051750:
 	RTS
 
 loadTrackSegmentConfiguration:
-	MOVE.L	#lbL00DDC0,A1
+	MOVE.L	#segmentGeometryIndices,A1
 	MOVE.B	$00(A1,D1.W),D2
 	MOVE.B	D2,lbB00D479
 	ASL.B	#$01,D2
 	MOVE.L	#segmentGeometryOffsetTable,A2
 	MOVE.W	$00(A2,D2.W),lbW00D58C
-	MOVE.L	#lbL00DE24,A1
+	MOVE.L	#segmentAlternateGeometryIndices,A1
 	MOVE.B	$00(A1,D1.W),D2
 	ASL.B	#$01,D2
 	MOVE.B	#$00,D0
 	ROXL.B	#$01,D0
 	ASL.B	#$01,D0
-	MOVE.B	D0,lbB00D4DC
+	MOVE.B	D0,segmentAlternateFlag
 	MOVE.L	#segmentGeometryOffsetTable,A2
 	MOVE.W	$00(A2,D2.W),D0
 	MOVE.W	D0,lbW00D590
 	ASL.B	#$01,D1
-	MOVE.L	#lbL00DF50,A1
+	MOVE.L	#segmentInterpolationPoint1,A1
 	MOVE.W	$00(A1,D1.W),lbW00D50E
-	MOVE.L	#lbL00E018,A1
+	MOVE.L	#segmentInterpolationPoint2,A1
 	MOVE.W	$00(A1,D1.W),lbW00D510
 	LSR.B	#$01,D1
 	MOVE.L	#trackSegmentPropertiesTable,A1
@@ -11464,7 +11466,7 @@ loadTrackSegmentConfiguration:
 	ASL.B	#$01,D3
 	MOVE.B	D3,lbB00D459
 	SUBQ.B	#$02,D0
-	MOVE.B	D0,lbB00D498
+	MOVE.B	D0,maxSegmentIndex
 	ASL.B	#$01,D0
 	MOVE.B	D0,lbB00D45A
 	MOVE.B	trackSegmentLimit,D0
@@ -11486,7 +11488,7 @@ loadTrackSegmentConfiguration:
 	RTS
 
 lookupTableAccess2:
-	MOVE.L	#lbL00DE88,A1
+	MOVE.L	#trackSegmentCoordinates,A1
 	AND.W	#$00FF,D0
 	MOVE.B	$00(A1,D0.W),D3
 	LSR.B	#$04,D3
@@ -11525,10 +11527,10 @@ lbC0518F2:
 
 adjustNetworkCoordinates:
 	MOVE.B	D0,temp
-	MOVE.B	D2,lbB00D41A
+	MOVE.B	D2,segmentDirectionFlags
 	CMP.B	temp,D2
 	BCC	lbC051966
-	ADD.B	lbB00D41A,D0
+	ADD.B	segmentDirectionFlags,D0
 	BCC	lbC051952
 	MOVE.B	D1,D0
 	AND.B	#$0F,D0
@@ -11545,7 +11547,7 @@ lbC051952:
 	JMP	lbC051994
 
 lbC051966:
-	ADD.B	lbB00D41A,D0
+	ADD.B	segmentDirectionFlags,D0
 	BCC	lbC051988
 	MOVE.B	D1,D0
 	AND.B	#$F0,D0
@@ -11734,21 +11736,21 @@ lbC051C0C:
 	RTS
 
 lbC051C24:
-	MOVE.B	D1,lbB00D48B
+	MOVE.B	D1,currentTrackCoordinate
 	MOVE.B	D2,maxMenuIndex
 	TST.B	lbB00D530
 	BMI	lbC051C5A
 	BTST	#$06,lbB00D530
 	BEQ	lbC051C8A
 	MOVE.B	maxMenuIndex,D1
-	MOVE.B	lbB00D48B,D2
+	MOVE.B	currentTrackCoordinate,D2
 	NEG.B	D2
 	JMP	lbC051C8A
 
 lbC051C5A:
 	BTST	#$06,lbB00D530
 	BNE	lbC051C7C
-	MOVE.B	lbB00D48B,D1
+	MOVE.B	currentTrackCoordinate,D1
 	NEG.B	D1
 	MOVE.B	maxMenuIndex,D2
 	NEG.B	D2
@@ -11757,7 +11759,7 @@ lbC051C5A:
 lbC051C7C:
 	MOVE.B	maxMenuIndex,D1
 	NEG.B	D1
-	MOVE.B	lbB00D48B,D2
+	MOVE.B	currentTrackCoordinate,D2
 lbC051C8A:
 	MOVE.B	D1,currentPlayerNameOffset
 	MOVE.B	D2,selectedMenuItem
@@ -11799,7 +11801,7 @@ lbC051D22:
 	MOVE.B	#$80,lbB00D466
 lbC051D4C:
 	MOVE.B	lbB00D45A,D1
-	MOVE.L	#lbL00D6D0,A0
+	MOVE.L	#segmentProcessedFlags,A0
 	MOVE.B	#$00,(A0)
 	MOVE.B	#$00,$00(A0,D1.W)
 	MOVE.W	lbW00D51E,renderDataPointer
@@ -11812,7 +11814,7 @@ lbC051D4C:
 	JSR	lbC058BCC
 	JSR	processSecondaryRendering
 lbC051DA6:
-	MOVE.B	lbB00D48B,D1
+	MOVE.B	currentTrackCoordinate,D1
 	MOVE.B	maxMenuIndex,D2
 	RTS
 
@@ -11850,7 +11852,7 @@ lbL051E5A:
 
 lbC051E5E:
 	MOVE.L	#trackSegmentData,A6
-	MOVE.L	#lbL00D6D0,A0
+	MOVE.L	#segmentProcessedFlags,A0
 	MOVE.B	trackSegmentLimit,D4
 	LSR.B	#$01,D4
 	MOVE.W	#$0000,D1
@@ -11885,12 +11887,12 @@ initializeAudioSystem:
 	MOVE.L	#geometryParameterTable,A2
 	MOVE.B	$00(A2,D2.W),D0
 	BMI	lbC051EB0
-	MOVE.B	lbB00E32F,D2
+	MOVE.B	trackFeatureCount,D2
 	BEQ	lbC051F02
 	SUBQ.B	#$01,D2
 lbC051EEC:
 	MOVE.B	D1,D0
-	MOVE.L	#lbL00E1E8,A2
+	MOVE.L	#trackFeatureData,A2
 	CMP.B	$00(A2,D2.W),D0
 	BEQ	lbC051EB0
 	SUBQ.B	#$01,D2
@@ -11903,7 +11905,7 @@ lbC051F08:
 	BNE	lbC051F08
 	MOVE.B	#$F0,gameActionFlag
 	JSR	loadTrackSegmentConfiguration
-	MOVE.L	#lbL00DE88,A1
+	MOVE.L	#trackSegmentCoordinates,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
 	MOVE.B	D0,currentPlayerNameOffset
@@ -11978,7 +11980,7 @@ calculatePlayerDistance:
 	ASR.W	#$03,D0
 	MOVE.B	gameParameter2,D1
 	MOVE.B	gameParameter1,D2
-	MOVE.L	#lbL00E0E0,A0
+	MOVE.L	#segmentWorldPositions,A0
 	ASL.B	#$01,D1
 	ASL.B	#$01,D2
 	MOVE.W	$00(A0,D1.W),D3
@@ -11989,7 +11991,7 @@ calculatePlayerDistance:
 	BPL	lbC0520A8
 	NEG.W	D0
 lbC0520A8:
-	MOVE.W	lbW00E31E,D4
+	MOVE.W	startWorldPosition,D4
 	SUB.W	D0,D4
 	CMP.W	D0,D4
 	BCS	lbC0520BC
@@ -12007,12 +12009,12 @@ validateGameState:
 	SUB.B	lbB00D420,D0
 	BNE	lbC052122
 	MOVE.B	gameParameter1,D0
-	SUB.B	lbB00E332,D0
+	SUB.B	startingViewpointIndex,D0
 	BCC	lbC0520F6
 	ADD.B	numViewpoints,D0
 lbC0520F6:
 	MOVE.B	gameParameter2,D3
-	SUB.B	lbB00E332,D3
+	SUB.B	startingViewpointIndex,D3
 	BCC	lbC05210C
 	ADD.B	numViewpoints,D3
 lbC05210C:
@@ -12178,9 +12180,9 @@ lbC052322:
 	MOVE.B	D0,savedViewpointIndex
 lbC05234C:
 	MOVE.B	#$00,D2
-	MOVE.B	D2,lbB00D41A
+	MOVE.B	D2,segmentDirectionFlags
 lbC052356:
-	ADDQ.B	#$01,lbB00D41A
+	ADDQ.B	#$01,segmentDirectionFlags
 	BNE	lbC052366
 	ADDQ.B	#$01,D2
 	BMI	lbC052482
@@ -12195,7 +12197,7 @@ lbC052366:
 	MOVE.B	D2,D0
 	MOVE.L	#memory_7A01A,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	MOVE.L	#memory_7A03F,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	JMP	lbC0523D6
@@ -12203,7 +12205,7 @@ lbC052366:
 lbC0523AC:
 	CMP.B	lbB00D418,D2
 	BNE	lbC052356
-	MOVE.B	lbB00D41A,D0
+	MOVE.B	segmentDirectionFlags,D0
 	CMP.B	savedViewpointIndex,D0
 	BNE	lbC052356
 	MOVE.B	lbB00D417,D0
@@ -12698,7 +12700,7 @@ lbC052A60:
 	BPL	lbC052AC2
 	MOVE.B	#$FF,D2
 lbC052A88:
-	MOVE.B	D2,lbB00D41A
+	MOVE.B	D2,segmentDirectionFlags
 	MOVE.W	lbB00D630,D0
 	BPL	lbC052A9A
 	NEG.W	D0
@@ -12707,7 +12709,7 @@ lbC052A9A:
 	BPL	lbC052AA6
 	MOVE.W	#$7F00,D0
 lbC052AA6:
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -12744,9 +12746,9 @@ lbC052B14:
 	RTS
 
 lbC052B1C:
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 	MOVE.W	lbB00D630,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -12766,12 +12768,12 @@ lbL052B5A:
 	dc.l	$000000D9
 	dc.w	$FF27
 
-lbC052B60:
+displayTrackHeader:
 	JSR	setTextYOffset4
 	MOVE.B	gameStateFlag,D1
 	MOVE.L	#trackDisplayYOffsets,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.B	D0,lbB055CAD
+	MOVE.B	D0,trackSpecificYOffset
 	MOVE.B	#$58,D1
 	JSR	renderLeagueText
 	MOVE.B	gameStateFlag,D1
@@ -12784,7 +12786,7 @@ trackDisplayYOffsets:
 
 multiplyAndRandomize:
 	AND.W	#$00FF,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
 	MULU	D0,D3
 	MOVE.W	D3,D0
@@ -12820,7 +12822,7 @@ lbC052BEE:
 	BCLR	#$07,lbB00D4BB
 	ASL.W	#$08,D0
 	OR.B	temp,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
 	TST.B	lbB00D4BB
 	BPL	lbC052C28
@@ -13211,7 +13213,7 @@ lbC05311E:
 	BNE	lbC05315A
 	MOVE.B	$01(A0,D3.W),D0
 	EOR.B	#$FF,D0
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 	MOVE.B	#$0D,D0
 	JSR	multiplyAndRandomize
 	CMP.B	#$0A,D0
@@ -13964,17 +13966,17 @@ calculateSpatialDistortion:
 	ASR.L	#$03,D0
 	MOVE.W	D0,lbW00D648
 	JSR	lbC053D24
-	MOVE.B	lbB00D42C,lbB00D41A
+	MOVE.B	lbB00D42C,segmentDirectionFlags
 	MOVE.B	lbB00D42D,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,lbB00D650
 	MOVE.B	lbB00D42B,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,lbB00D64E
-	MOVE.B	lbB00D64E,lbB00D41A
+	MOVE.B	lbB00D64E,segmentDirectionFlags
 	MOVE.B	lbW00D648,lbB00D4BB
 	MOVE.W	lbW00D638,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
 	TST.B	lbB00D4BB
 	BPL	lbC053C98
@@ -13985,10 +13987,10 @@ lbC053C98:
 	ASL.L	#$01,D0
 	SWAP	D0
 	MOVE.W	D0,lbW00D640
-	MOVE.B	lbB00D650,lbB00D41A
+	MOVE.B	lbB00D650,segmentDirectionFlags
 	MOVE.B	lbW00D64A,lbB00D4BB
 	MOVE.W	lbW00D638,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
 	TST.B	lbB00D4BB
 	BPL	lbC053CD6
@@ -13999,10 +14001,10 @@ lbC053CD6:
 	ASL.L	#$01,D0
 	SWAP	D0
 	MOVE.W	D0,lbW00D642
-	MOVE.B	lbB00D652,lbB00D41A
+	MOVE.B	lbB00D652,segmentDirectionFlags
 	MOVE.B	lbW00D64C,lbB00D4BB
 	MOVE.W	lbW00D638,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
 	TST.B	lbB00D4BB
 	BPL	lbC053D14
@@ -15422,7 +15424,7 @@ updateEngineState:
 	NEG.B	D0
 	SUBQ.B	#$01,D2
 lbC054FEA:
-	MOVE.B	D0,enginePower
+	MOVE.B	D0,trackBoostThreshold
 	MOVE.B	D2,trackIncrementValue
 	MOVE.B	carRenderDistance,D0
 	BEQ	updateEngineAndSound
@@ -15434,7 +15436,7 @@ updateEngineAndSound:
 	BCC	lbC055030
 	TST.B	carCrashedFlag
 	BMI	lbC05502A
-	CMP.B	#$32,enginePower
+	CMP.B	#$32,trackBoostThreshold
 	BCC	lbC055030
 lbC05502A:
 	SUBQ.B	#$01,engineTimer
@@ -15446,7 +15448,7 @@ lbC055030:
 	TST.B	networkEngineFlag
 	BNE	processEngineSoundAndEffects
 lbC05504C:
-	MOVE.B	enginePower,D0
+	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$32,D0
 	BCC	processEngineSoundAndEffects
 	MOVE.B	speedMajor,D0
@@ -15572,14 +15574,14 @@ lbC055224:
 	RTS
 
 updateEnginePerformanceHigh:
-	MOVE.B	enginePower,D0
+	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$38,D0
 	BCC	lbC055286
 	TST.B	trackIncrementValue
 	BMI	lbC05527C
 	BPL	lbC055268
 updateEnginePerformanceStandard:
-	MOVE.B	enginePower,D0
+	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$38,D0
 	BCC	lbC055286
 	MOVE.B	lbB00D4A1,D0
@@ -15619,9 +15621,9 @@ processOpponentLogic:
 	JSR	lbC05553C
 	JSR	lbC055408
 	MOVE.B	lbB00D4D9,D0
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 	MOVE.W	lbW00D4EE,D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -15684,7 +15686,7 @@ lbC0553A6:
 	DBRA	D4,lbC0553A6
 	CLR.W	D1
 	MOVE.B	gameStateFlag,D1
-	MOVE.B	lbB00E32A,D2
+	MOVE.B	trackMetadataBuffer,D2
 	TST.B	currentPlayerContext
 	BEQ	lbC0553D2
 	ADD.B	#$20,D1
@@ -15718,7 +15720,7 @@ lbC055408:
 	BCC	lbC055444
 	MOVE.B	#$00,D0
 lbC055444:
-	MOVE.B	D0,lbB00D41A
+	MOVE.B	D0,segmentDirectionFlags
 	MOVE.B	lbW00D4EE,D0
 	JSR	multiplyAndRandomize
 	ASR.W	#$06,D3
@@ -15782,7 +15784,7 @@ lbC05553C:
 
 lbC055548:
 	MOVE.B	gameParameter2,D1
-	MOVE.L	#lbL00E252,A0
+	MOVE.L	#segmentVisibilityData,A0
 	MOVE.B	$00(A0,D1.W),D0
 	BMI	lbC05556C
 	CMP.B	lbB0555E0,D0
@@ -15800,7 +15802,7 @@ lbC05556C:
 	CMP.B	#$0E,D0
 	BCS	lbC0555D4
 lbC0555A0:
-	MOVE.L	#lbL00E252,A1
+	MOVE.L	#segmentVisibilityData,A1
 	TST.B	$00(A1,D1.W)
 	BMI	lbC0555CE
 	TST.B	D0
@@ -15862,7 +15864,7 @@ lbC05564C:
 	ASL.W	#$04,D3
 	MOVE.W	D3,lbW00D656
 lbC055654:
-	MOVE.B	enginePower,D0
+	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$2D,D0
 	BCC	lbC055688
 	MOVE.B	engineState,D0
@@ -16182,7 +16184,7 @@ lbC055B30:
 
 lbC055B32:
 	MOVE.L	#lbW00D676,A4
-	MOVE.B	D1,lbB00D4F9
+	MOVE.B	D1,trackBoostThresholdCopy
 	JSR	lbC055B18
 	MOVE.W	trackIncrementValue,D3
 	SUB.W	D0,D3
@@ -16207,7 +16209,7 @@ lbC055B74:
 	MOVE.B	#$00,D1
 	JSR	lbC055BF0
 	MOVE.B	#$04,D2
-	MOVE.B	lbB00D4F9,D1
+	MOVE.B	trackBoostThresholdCopy,D1
 lbC055BA0:
 	CMP.B	#$04,D2
 	BNE	lbC055BE8
@@ -16251,7 +16253,7 @@ lbC055C12:
 	MOVE.B	D0,$00(A0,D1.W)
 	SUBQ.B	#$01,D1
 	BNE	lbC055C12
-	MOVE.L	#lbL00DE88,A1
+	MOVE.L	#trackSegmentCoordinates,A1
 lbC055C22:
 	MOVE.B	$00(A1,D1.W),D2
 	MOVE.B	D1,$00(A0,D2.W)
@@ -16282,7 +16284,7 @@ lbB055C63:
 	dc.b	$51,$55,$41,$52,$54,$45,$58,$20,$20,$20,$48,$69,$74,$20
 	dc.b	$66,$69,$72,$65,$20,$74,$6F,$20,$63,$6F,$6E,$74,$69,$6E
 	dc.b	$75,$65,$FF,$1F
-lbB055CAD:
+trackSpecificYOffset:
 	dc.b	$0F,$15,$54,$68,$65,$20,$FF,$1F,$11,$0F,$52,$45,$53,$55
 	dc.b	$4C,$54,$FF,$52,$61,$63,$65,$20,$57,$69,$6E,$6E,$65,$72
 	dc.b	$3A,$20,$FF,$46,$61,$73,$74,$65,$73,$74,$20,$4C,$61,$70
@@ -17246,10 +17248,10 @@ lbC056BB8:
 	MOVE.B	D0,lbB00D4AE
 	MOVE.B	#$00,lbB00D4C5
 	JSR	lbC051E5E
-	MOVE.B	lbB00D4DC,D0
-	ADD.B	lbB00D498,D0
+	MOVE.B	segmentAlternateFlag,D0
+	ADD.B	maxSegmentIndex,D0
 	AND.B	#$02,D0
-	MOVE.B	D0,lbB00D4DC
+	MOVE.B	D0,segmentAlternateFlag
 	TST.B	alternateTrackModeFlag
 	BNE	lbC056C0E
 	JMP	lbC056CBC
@@ -17460,7 +17462,7 @@ processTrackVisibility:
 	ASL.W	#$02,D0
 	MOVE.L	$00(A0,D0.W),A0
 	MOVE.W	(A0),lbW057A00
-	MOVE.L	#lbL00D6D0,A3
+	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.L	#trackSegmentData,A6
 	MOVE.B	lbB00D459,D1
 	JSR	lbC056F24
@@ -17570,7 +17572,7 @@ processTrackSegmentData2:
 	AND.L	#$18FF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
-	MOVE.L	#lbL00D6D0,A3
+	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.W	#$002E,D7
 	SUB.W	lbW00D526,D7
 	BPL	lbC0570A2
@@ -17580,7 +17582,7 @@ lbC0570A2:
 	MOVE.B	trackModeParameter,D0
 	ADD.W	D0,lbW00D526
 	MOVE.B	#$00,D0
-	MOVE.B	lbB00D498,D1
+	MOVE.B	maxSegmentIndex,D1
 	ASL.W	#$01,D1
 	MOVE.B	viewpointIndex,D2
 	CMP.B	trackParameter3,D2
@@ -17842,10 +17844,10 @@ lbC057414:
 	CMP.W	#$0078,D1
 	BGE	lbC057474
 	MOVE.B	#$00,D0
-	MOVE.B	lbB00D40F,lbB00D41A
+	MOVE.B	lbB00D40F,segmentDirectionFlags
 	MOVE.W	$00(A6,D1.W),D0
 	SUB.W	-$04(A6,D1.W),D0
-	MOVE.B	lbB00D41A,D3
+	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -17924,7 +17926,7 @@ lbC057566:
 	NEG.B	trackHeightDifference
 	JSR	processTrackSegmentData2
 	MOVE.B	lbB00D4C5,D1
-	MOVE.L	#lbL00D6D0,A3
+	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.L	lbL057A02,A4
 	MOVE.W	lbW00D5BC,D0
 	ROL.W	#$08,D0
@@ -17961,7 +17963,7 @@ lbC057614:
 	TST.B	lbB00D44D
 	BMI	lbC05765E
 	MOVE.B	viewpointIndex,D3
-	MOVE.L	#lbL00DDC0,A2
+	MOVE.L	#segmentGeometryIndices,A2
 	CMP.B	#$25,$00(A2,D3.W)
 	BNE	lbC05763C
 	CMP.B	#$18,D1
@@ -19614,7 +19616,7 @@ lbC05894A:
 	MOVE.W	#$0030,renderDataPointer
 	MOVE.B	lbB00D460,D1
 	BEQ	lbC058A14
-	MOVE.L	#lbL00D6D0,A3
+	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.W	D1,D0
 	BRA	lbC05897C
 
@@ -19630,7 +19632,7 @@ lbC05897C:
 	BRA	lbC058A14
 
 generateTrackEdgeLines:
-	MOVE.L	#lbL00D6D0,A3
+	MOVE.L	#segmentProcessedFlags,A3
 	CMP.W	#$05E0,renderDataPointer
 	BCC	lbC058D5E
 	MOVE.B	#$FF,D4
@@ -19665,12 +19667,12 @@ lbC058A00:
 lbC058A14:
 	MOVE.B	processedSegmentIndices1,D2
 	MOVE.B	D1,lbB00D4E4
-	MOVE.B	lbB00D4DC,D0
+	MOVE.B	segmentAlternateFlag,D0
 	ASL.B	#$01,D0
 	EOR.B	D1,D0
 	AND.B	#$04,D0
 	MOVE.B	D0,lbB05B3D8
-	MOVE.L	#lbL00D6D0,A3
+	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.B	$00(A3,D1.W),lbB05B3DA
 	JSR	lbC0530D0
 	CMP.W	#$0030,renderDataPointer
@@ -19850,7 +19852,7 @@ lbC058D34:
 	MOVE.B	D0,$01(A1,D3.W)
 	MOVE.B	lbB05B3DA,$02(A1,D3.W)
 	ADDQ.W	#$04,renderDataPointer
-	MOVE.L	#lbL00D6D0,A3
+	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.B	D1,processedSegmentIndices1
 	CMP.W	#$05E0,renderDataPointer
 	BCS	lbC0589EA
@@ -19996,10 +19998,10 @@ lbC058F9A:
 	MOVE.L	#memory_7B08A,A0
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	#memory_7AB5A,A3
-	MOVE.W	$00(A3,D1.W),lbB00D41A
+	MOVE.W	$00(A3,D1.W),segmentDirectionFlags
 	MOVE.B	temp,D0
 	MOVE.B	D0,$00(A0,D3.W)
-	MOVE.B	lbB00D41A,$02(A0,D3.W)
+	MOVE.B	segmentDirectionFlags,$02(A0,D3.W)
 	TST.B	lbB00D467
 	BNE	lbC058FF4
 	CMP.B	lbB00D4A6,D0
