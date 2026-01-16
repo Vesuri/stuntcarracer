@@ -192,12 +192,14 @@ CACR_CopyBack		equ	$80000000
 gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
-	
+
+TRACK_DATA_MASK		equ	$FFFF
+
 	section	Code,code
 
 	incdir	"scr:"
 startup:
-	moveq	#0,d2
+;	moveq	#0,d2
 ;	jmp	debug
 	move.l	sp,sp_quit
 	move.b	#$80,skipSaveSlotScreen
@@ -315,29 +317,6 @@ GetVBR:	ORI	#$0700,SR
 	move.l	d0,base_vector
 	RTE
 
-sp_quit:	ds.l	1
-base_vector:	ds.l	1
-base_graphics:	ds.l	1
-gb_copinit_old:	ds.l	1
-gb_ActiView_old:	ds.l	1
-tv_Lev1IntVect_old:	ds.l	1
-tv_Lev2IntVect_old:	ds.l	1
-tv_Lev3IntVect_old:	ds.l	1
-tv_Lev4IntVect_old:	ds.l	1
-tv_Lev5IntVect_old:	ds.l	1
-tv_Lev6IntVect_old:	ds.l	1
-tv_Lev7IntVect_old:	ds.l	1
-cachebits_old:	ds.l	1
-dmaconr_old:	ds.w	1
-intenar_old:	ds.w	1
-ciaacra_old:	ds.b	1
-ciaacrb_old:	ds.b	1
-ciabcra_old:	ds.b	1
-ciabcrb_old:	ds.b	1
-name_graphics:	dc.b	"graphics.library",0
-quit:			ds.b	1
-		even
-
 setQuitOnRMB:
 	btst	#10,$dff016
 	bne.s	.noQuit
@@ -378,25 +357,6 @@ begin:
 	JSR	initialize
 	JMP	initializeGameMemoryAndState
 
-copperlist:
-	dc.w	bpl1pth,$0007,bpl1ptl,$8000,bpl2pth,$0007,bpl2ptl,$A000,bpl3pth
-	dc.w	$0007,bpl3ptl,$C000,bpl4pth,$0007,bpl4ptl,$E000,color00
-copperlistColor0:
-	dc.w	$0000,color01,$0000,color02,$0000,color03,$0000,color04,$0000
-	dc.w	$018A,$0000,$018C,$0000,$018E,$0000,$0190,$0000,$0192
-	dc.w	$0000,$0194,$0000,$0196,$0000,$0198,$0000,$019A,$0000
-	dc.w	$019C,$0000,$019E,$0000,$01A0
-copperlistColor16:
-	dc.w	$0000,$01A2,$0000,$01A4,$0000,$01A6,$0000,$01A8,$0000
-	dc.w	$01AA,$0000,$01AC,$0000,$01AE,$0000,$01B0,$0000,$01B2
-	dc.w	$0000,$01B4,$0000,$01B6,$0000,$01B8,$0000,$01BA,$0000
-	dc.w	$01BC,$0000,color31,$0000,spr0pth
-copperlistSprite0:
-	dc.w	$0000,spr0ptl,$0000,$0124,$0000,$0126,$0000,$0128,$0000
-	dc.w	$012A,$0000,$012C,$0000,$012E,$0000,$0130,$0000,$0132
-	dc.w	$0000,$0134,$0000,$0136,$0000,$0138,$0000,$013A,$0000
-	dc.w	$013C,$0000,$013E,$0000,$FA01,$FF00,intreq,$8010,$FFFF
-	dc.w	$FFFE
 palette:
 	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
 	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -5813,13 +5773,13 @@ processTrackSegmentData:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.B	trackDistance,D1
@@ -5843,13 +5803,13 @@ processTrackSegmentData:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	#$0002,D1
@@ -5864,13 +5824,13 @@ processTrackSegmentData:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	BRA	doProcessTrackCharacteristics
@@ -6057,7 +6017,7 @@ processTrackCharacteristics:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A3
 	MOVE.B	(A3),D0
@@ -6192,7 +6152,7 @@ lbC04C132:
 	MOVE.W	rawTrackDataOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0	; $FFFF in StuntCarRacer.s
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	#$0F,D1
@@ -6590,7 +6550,7 @@ processTrackDataBuffer:
 	MOVE.W	rawTrackDataOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0	; StuntCarRacer.s: $FFFF
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	#$0000,D5
@@ -6865,7 +6825,7 @@ readSegmentInterpolationValue:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	geometryFormatFlag,D0
@@ -7647,7 +7607,7 @@ applyTrackSegmentGeometry:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	D1,D0
@@ -7977,13 +7937,13 @@ lbC04DBFE:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	TST.B	alternateTrackModeFlag
@@ -8247,7 +8207,7 @@ calculateTrackCoordinatesFromData:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	TST.B	trackHeightDifference
@@ -11413,7 +11373,7 @@ loadTrackSegmentConfiguration:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	$0001(A0),lbB00D44D
@@ -17224,7 +17184,7 @@ lbC056C0E:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
@@ -17269,7 +17229,7 @@ lbC056CBC:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
@@ -17522,13 +17482,13 @@ processTrackSegmentData2:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.L	#segmentProcessedFlags,A3
@@ -17890,7 +17850,7 @@ lbC057566:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#$18FF,D0	; $FFFF in StuntCarRacer.s
+	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
@@ -23165,15 +23125,62 @@ currentFrameBuffer:
 	dc.l	$00000000
 lbL05BE90:
 	dc.l	$00000000
+
+	section Data,data
+name_graphics:	dc.b	"graphics.library",0
+	
+	section	ChipData,data_c
+copperlist:
+	dc.w	bpl1pth,$0007,bpl1ptl,$8000,bpl2pth,$0007,bpl2ptl,$A000,bpl3pth
+	dc.w	$0007,bpl3ptl,$C000,bpl4pth,$0007,bpl4ptl,$E000,color00
+copperlistColor0:
+	dc.w	$0000,color01,$0000,color02,$0000,color03,$0000,color04,$0000
+	dc.w	$018A,$0000,$018C,$0000,$018E,$0000,$0190,$0000,$0192
+	dc.w	$0000,$0194,$0000,$0196,$0000,$0198,$0000,$019A,$0000
+	dc.w	$019C,$0000,$019E,$0000,$01A0
+copperlistColor16:
+	dc.w	$0000,$01A2,$0000,$01A4,$0000,$01A6,$0000,$01A8,$0000
+	dc.w	$01AA,$0000,$01AC,$0000,$01AE,$0000,$01B0,$0000,$01B2
+	dc.w	$0000,$01B4,$0000,$01B6,$0000,$01B8,$0000,$01BA,$0000
+	dc.w	$01BC,$0000,color31,$0000,spr0pth
+copperlistSprite0:
+	dc.w	$0000,spr0ptl,$0000,$0124,$0000,$0126,$0000,$0128,$0000
+	dc.w	$012A,$0000,$012C,$0000,$012E,$0000,$0130,$0000,$0132
+	dc.w	$0000,$0134,$0000,$0136,$0000,$0138,$0000,$013A,$0000
+	dc.w	$013C,$0000,$013E,$0000,$FA01,$FF00,intreq,$8010,$FFFF
+	dc.w	$FFFE
+
 lbL05BE94:
 	dc.l	$00000000,$04430554,$07700451,$02330257,$02470123
 	dc.l	$02000311,$04220644,$03320555
 	dc.w	$0777
 bitplaneMaskTable:
 	incbin	"bitplaneMaskTable"
-theEnd:
+	ds.b	40*200*4
 
-	section	ChipData,bss_c
+	section BSS,bss
+sp_quit:	ds.l	1
+base_vector:	ds.l	1
+base_graphics:	ds.l	1
+gb_copinit_old:	ds.l	1
+gb_ActiView_old:	ds.l	1
+tv_Lev1IntVect_old:	ds.l	1
+tv_Lev2IntVect_old:	ds.l	1
+tv_Lev3IntVect_old:	ds.l	1
+tv_Lev4IntVect_old:	ds.l	1
+tv_Lev5IntVect_old:	ds.l	1
+tv_Lev6IntVect_old:	ds.l	1
+tv_Lev7IntVect_old:	ds.l	1
+cachebits_old:	ds.l	1
+dmaconr_old:	ds.w	1
+intenar_old:	ds.w	1
+ciaacra_old:	ds.b	1
+ciaacrb_old:	ds.b	1
+ciabcra_old:	ds.b	1
+ciabcrb_old:	ds.b	1
+quit:			ds.b	1
+	
+	section	ChipBSS,bss_c
 memory_00000:	ds.b	$10000
 memory_70000:	ds.b	$10000
 
