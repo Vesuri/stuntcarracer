@@ -851,7 +851,7 @@ lbW00CFE2:
 	dc.w	$00B4,$0040,$0001,$0000,$0001,$2184,$0000,$1F4E,$00EE
 	dc.w	$0038,$0001,$0000,$0001,$40D2,$0000,$0C24,$0190
 	dc.b	$00
-lbB00D005:
+crashSoundVolume:
 	dc.b	$32,$00,$01,$00,$00,$00,$01,$4C,$F6,$00,$00,$14,$32,$00
 	dc.b	$EE,$00
 lbB00D015:
@@ -1068,7 +1068,7 @@ lbB00D3FD:
 	dc.b	$00
 lbB00D3FE:
 	dc.b	$00,$00,$00
-lbB00D401:
+trackWidthMultiplier:
 	dc.b	$00,$00,$00
 trackViewOffsetX:
 	dc.b	$00,$00
@@ -1166,17 +1166,17 @@ lbB00D44A:
 	dc.b	$00,$00,$00
 lbB00D44D:
 	dc.b	$00,$00
-lbB00D44F:
+accumulatedOffTrackForceX:
 	dc.b	$00
-lbB00D450:
+accumulatedOffTrackForceY:
 	dc.b	$00
-lbB00D451:
+accumulatedOffTrackForceZ:
 	dc.b	$00,$00,$00
-lbB00D454:
+offTrackAccumulationFlag:
 	dc.b	$00
 lbB00D455:
 	dc.b	$00
-lbB00D456:
+offTrackFrameCounter:
 	dc.b	$00
 cameraAngleIndex:
 	dc.b	$00
@@ -1220,7 +1220,7 @@ trackModeParameter:
 	dc.b	$00
 lbB00D46B:
 	dc.b	$00
-lbB00D46C:
+wreckCountdownTimer:
 	dc.b	$00
 lbB00D46D:
 	dc.b	$00
@@ -1228,7 +1228,7 @@ textYOffset:
 	dc.b	$00
 currentTrackIDs:
 	dc.b	$00
-lbB00D470:
+raceActiveFlag:
 	dc.b	$00
 graphicsUpdateFlag:
 	dc.b	$00
@@ -1236,7 +1236,7 @@ frameProcessingFlag:
 	dc.b	$00
 gameTimerCountdown:
 	dc.b	$00
-lbB00D474:
+crashRecoveryTimer:
 	dc.b	$00
 lbB00D475:
 	dc.b	$00
@@ -1252,7 +1252,7 @@ segmentOrientationPrimary:
 	dc.b	$00
 lbB00D47C:
 	dc.b	$00
-lbB00D47D:
+offTrackCollisionFlag:
 	dc.b	$00
 playerStateFlag:
 	dc.b	$00
@@ -1350,7 +1350,7 @@ lbB00D4B9:
 	dc.b	$00
 lbB00D4BA:
 	dc.b	$00
-lbB00D4BB:
+trackSideIndicatorCopy:
 	dc.b	$00
 lbB00D4BC:
 	dc.b	$00
@@ -1368,7 +1368,7 @@ aiPatternOffset:
 	dc.b	$00
 engineSoundType:
 	dc.b	$00
-dropStartDone:
+raceStartComplete:
 	dc.b	$00
 segmentDataStartIndex:
 	dc.b	$00
@@ -1414,17 +1414,17 @@ lbB00D4DB:
 	dc.b	$00
 segmentAlternateFlag:
 	dc.b	$00
-lbB00D4DD:
+visualEffectBaseValue:
 	dc.b	$00
 displayModeFlag1:
 	dc.b	$00
-liftCarTimer:
+raceStartTimer:
 	dc.b	$00
-lbB00D4E0:
+multiplayerSyncFlag:
 	dc.b	$00
-lbB00D4E1:
+trackSideIndicator:
 	dc.b	$00
-lbB00D4E2:
+gameModeStateFlags:
 	dc.b	$00
 lbB00D4E3:
 	dc.b	$00
@@ -1466,9 +1466,9 @@ lbW00D4F8:
 trackBoostThresholdCopy:	EQU	*-1
 lbW00D4FA:
 	dc.w	$0000,$0000,$0000
-lbB00D500:
+carStartRotation:
 	dc.b	$00
-lbB00D501:
+carStartRotationLow:
 	dc.b	$00
 interpolationPointsXY1:
 	dc.w	$0000
@@ -1525,7 +1525,7 @@ lbW00D536:
 carRenderDistance:
 	dc.w	$0000
 engineState:	EQU	*-1
-lbW00D53A:
+maxDistanceFromTrack:
 	dc.w	$0000
 lbW00D53C:
 	dc.w	$0000
@@ -1549,7 +1549,7 @@ lbB00D554:
 	dc.b	$00
 previousSegmentProperties:
 	dc.b	$00
-lbW00D556:
+visualEffectFlags:
 	dc.w	$0000
 lbB00D558:
 	dc.b	$00
@@ -1564,7 +1564,7 @@ segmentVisibilityFlag:
 speedMajor:
 	dc.w	$0000
 speedMinor:	EQU	*-1
-lbW00D560:
+trackSurfaceHeight:
 	dc.w	$0000
 lbB00D562:
 	dc.b	$00,$00
@@ -1612,27 +1612,27 @@ primaryGeometryOffset:
 	dc.w	$0000,$0000
 alternateGeometryOffset:
 	dc.w	$0000,$0000
-lbL00D594:
+trackCenterX:
 	dc.l	$00000000
-lbL00D598:
+trackCenterY:
 	dc.l	$00000000
-lbL00D59C:
+trackCenterZ:
 	dc.l	$00000000
-lbB00D5A0:
+trackOffsetAdjustment:
 	dc.b	$00,$00
 lbB00D5A2:
 	dc.b	$00,$00
-lbL00D5A4:
+carWorldX:
 	dc.l	$00000000
-lbL00D5A8:
+carWorldY:
 	dc.l	$00000000
-lbL00D5AC:
+carWorldZ:
 	dc.l	$00000000
-lbL00D5B0:
+distanceFromTrackX:
 	dc.l	$00000000
-lbL00D5B4:
+distanceFromTrackY:
 	dc.l	$00000000
-lbL00D5B8:
+distanceFromTrackZ:
 	dc.l	$00000000
 geometryDatabaseOffset:
 	dc.w	$0000,$0000
@@ -1642,7 +1642,7 @@ lbB00D5C8:
 	dc.b	$00,$00,$00,$00
 lbL00D5CC:
 	dc.l	$00000000
-lbB00D5D0:
+carHeightPosition:
 	dc.b	$00,$00,$00,$00
 lbL00D5D4:
 	dc.l	$00000000
@@ -1666,7 +1666,7 @@ cameraAngleParameter:
 	dc.b	$00
 lbB00D5E7:
 	dc.b	$00
-lbW00D5E8:
+carVisualHeight:
 	dc.w	$0000
 lbW00D5EA:
 	dc.w	$0000
@@ -1710,27 +1710,27 @@ lbW00D610:
 	dc.w	$0000
 lbW00D612:
 	dc.w	$0000
-lbW00D614:
+clampedDistanceX:
 	dc.w	$0000
-lbW00D616:
+clampedDistanceY:
 	dc.w	$0000
-lbW00D618:
+clampedDistanceZ:
 	dc.w	$0000
-lbW00D61A:
+previousDistanceX:
 	dc.w	$0000
-lbW00D61C:
+previousDistanceY:
 	dc.w	$0000
-lbW00D61E:
+previousDistanceZ:
 	dc.w	$0000
-lbW00D620:
+lateralVelocityX:
 	dc.w	$0000
-lbW00D622:
+lateralVelocityY:
 	dc.w	$0000
-lbW00D624:
+lateralVelocityZ:
 	dc.w	$0000
-lbW00D626:
+verticalMotion:
 	dc.w	$0000
-lbW00D628:
+lateralMotion:
 	dc.w	$0000
 lbB00D62A:
 	dc.b	$00
@@ -1748,9 +1748,9 @@ lbW00D634:
 	dc.w	$0000
 lbW00D636:
 	dc.w	$0000
-lbW00D638:
+collisionStateFlags1:
 	dc.w	$0000
-lbB00D639:	EQU	*-1
+collisionStateFlags2:	EQU	*-1
 lbW00D63A:
 	dc.w	$0000
 lbW00D63C:
@@ -1759,7 +1759,7 @@ lbW00D63E:
 	dc.w	$0000
 lbW00D640:
 	dc.w	$0000
-lbW00D642:
+carPitchAdjustment:
 	dc.w	$0000
 lbW00D644:
 	dc.w	$0000
@@ -2740,25 +2740,25 @@ synchronizeNetworkState:
 	JSR	sendSerialWordWithChecksum
 	MOVE.W	lbW00D5EC,D0
 	ASR.W	#$01,D0
-	ADD.W	lbW00D638,D0
+	ADD.W	collisionStateFlags1,D0
 	ASR.W	#$03,D0
 	BPL	lbC048B0A
 	CLR.W	D0
 lbC048B0A:
 	MOVE.W	D0,lbW049570
-	MOVE.L	lbL00D594,D0
+	MOVE.L	trackCenterX,D0
 	ASR.L	#$03,D0
 	ADD.W	lbW049570,D0
 	BPL	lbC048B24
 	CLR.W	D0
 lbC048B24:
-	MOVE.L	lbL00D598,D3
+	MOVE.L	trackCenterY,D3
 	ASR.L	#$03,D3
 	ADD.W	lbW049570,D3
 	BPL	lbC048B38
 	CLR.W	D3
 lbC048B38:
-	MOVE.L	lbL00D59C,D4
+	MOVE.L	trackCenterZ,D4
 	ASR.L	#$03,D4
 	ADD.W	lbW049570,D4
 	BPL	lbC048B4C
@@ -2819,18 +2819,18 @@ lbC048C1C:
 lbC048C22:
 	MOVE.B	playerInputState,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	lbB00D46C,D0
+	MOVE.B	wreckCountdownTimer,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	lbB00D4E2,D0
+	MOVE.B	gameModeStateFlags,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	liftCarTimer,D0
+	MOVE.B	raceStartTimer,D0
 	JSR	sendSerialByteWithChecksum
 	MOVE.B	objectDisplayThreshold,D0
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BEQ	lbC048C66
 	BSET	#$07,D0
 lbC048C66:
-	TST.B	lbB00D4E1
+	TST.B	trackSideIndicator
 	BPL	lbC048C74
 	BSET	#$06,D0
 lbC048C74:
@@ -2879,9 +2879,9 @@ handleNetworkProtocol:
 	BNE	lbC048FEE
 	MOVE.B	lbB00D4A5,lbB049550
 	MOVE.B	playerInputState,lbB049551
-	MOVE.B	lbB00D4E2,lbB049552
-	MOVE.B	lbB00D46C,lbB049553
-	MOVE.B	liftCarTimer,lbB049554
+	MOVE.B	gameModeStateFlags,lbB049552
+	MOVE.B	wreckCountdownTimer,lbB049553
+	MOVE.B	raceStartTimer,lbB049554
 	JSR	waitForNetworkWord
 	MOVE.W	D0,D0
 	CMP.W	#$8765,D0
@@ -2933,7 +2933,7 @@ lbC048E46:
 	MOVE.B	D3,lbB049552
 	JSR	waitForNetworkByte
 	MOVE.B	D0,D0
-	TST.B	dropStartDone
+	TST.B	raceStartComplete
 	BMI	lbC048E96
 	TST.B	networkGameMode
 	BMI	lbC048E96
@@ -2967,11 +2967,11 @@ lbC048E96:
 	MOVE.W	lbW04954E,networkEngineFlag
 	MOVE.B	lbB049550,lbB00D4A5
 	MOVE.B	lbB049551,playerInputState
-	MOVE.B	lbB049552,lbB00D4E2
-	MOVE.B	lbB049553,lbB00D46C
-	MOVE.B	lbB049554,liftCarTimer
+	MOVE.B	lbB049552,gameModeStateFlags
+	MOVE.B	lbB049553,wreckCountdownTimer
+	MOVE.B	lbB049554,raceStartTimer
 	MOVE.B	lbB049555,D0
-	MOVE.B	D0,lbB00D4E0
+	MOVE.B	D0,multiplayerSyncFlag
 	AND.B	#$0F,D0
 	MOVE.B	D0,lbB049561
 	MOVE.B	lbB049556,lbB00E209
@@ -3040,7 +3040,7 @@ lbC04906E:
 	MOVE.B	D0,displayModeParameter
 	MOVE.B	#$80,currentTrackIDs
 	MOVE.B	#$05,gameEndModeFlag
-	MOVE.B	#$00,lbB00D4E2
+	MOVE.B	#$00,gameModeStateFlags
 	MOVE.B	#$00,playerInputState
 	MOVE.B	#$00,lbB00D4A5
 	RTS
@@ -3058,7 +3058,7 @@ lbC0490D6:
 	BEQ	lbC0490F8
 	MOVE.B	networkGameMode,D0
 	EOR.B	#$C0,D0
-	MOVE.B	D0,lbB00D4E2
+	MOVE.B	D0,gameModeStateFlags
 	MOVE.B	#$80,currentTrackIDs
 	RTS
 
@@ -3163,7 +3163,7 @@ lbC049286:
 	BEQ	lbC049294
 	OR.B	#$10,D0
 lbC049294:
-	MOVE.B	lbB00D4E2,D3
+	MOVE.B	gameModeStateFlags,D3
 	CMP.B	networkGameMode,D3
 	BNE	lbC0492A8
 	OR.B	#$08,D0
@@ -4071,21 +4071,21 @@ lbC04A038:
 lbC04A056:
 	RTS
 
-lbC04A058:
+checkMultiplayerTrackSwap:
 	TST.B	networkGameMode
 	BEQ	lbC04A09C
-	TST.B	dropStartDone
+	TST.B	raceStartComplete
 	BPL	lbC04A09C
-	MOVE.B	lbB00D4E0,D0
+	MOVE.B	multiplayerSyncFlag,D0
 	BPL	lbC04A09C
 	ASL.B	#$01,D0
 	MOVE.B	gameParameter1,D3
 	CMP.B	gameParameter2,D3
 	BNE	lbC04A09C
-	MOVE.B	lbB00D4E1,D3
+	MOVE.B	trackSideIndicator,D3
 	EOR.B	D3,D0
 	BMI	lbC04A09C
-	EOR.B	#$80,lbB00D4E1
+	EOR.B	#$80,trackSideIndicator
 lbC04A09C:
 	RTS
 
@@ -6543,11 +6543,11 @@ lbC04C86C:
 	AND.B	#$F0,D0
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.L	#S9.MSG,A2
+	MOVE.L	#specialSegmentLookupTable-12,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.L	#segmentGeometryIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.L	#specialSegmentLookupTable,A2
+	MOVE.L	#specialSegmentLookupTable-10,A2
 	MOVE.B	$00(A2,D2.W),D0
 	JMP	lbC04C910
 
@@ -6731,11 +6731,12 @@ lbC04CBAA:
 lbC04CBB0:
 	MOVE.B	numTrackSegments,D1
 	SUBQ.B	#$01,D1
-S9.MSG:
-	dc.b	'S9'
+	SUBQ.B	#$01,renderModeFlag
+	BNE	lbC04CAE0
+	RTS
+
 specialSegmentLookupTable:
-	dc.l	renderModeFlag,$6600FF20,$4E750304
-	dc.w	$0403
+	dc.b	$03,$04,$04,$03
 
 switchToAlternateGeometryAndReadSegmentInterpolationValue:
 	MOVE.W	alternateGeometryOffset,primaryGeometryOffset
@@ -6768,30 +6769,30 @@ lbC04CC14:
 	AND.B	#$0F,D0
 	RTS
 
-liftCarToTrack:
-	MOVE.B	liftCarTimer,D1
+handleRaceStartCountdown:
+	MOVE.B	raceStartTimer,D1
 	BEQ	lbC04CC8E
 	CMP.B	#$E6,D1
 	BCS	lbC04CC6E
-	JSR	lbC04A058
+	JSR	checkMultiplayerTrackSwap
 	MOVE.B	#$2C,D0
-	TST.B	lbB00D4E1
+	TST.B	trackSideIndicator
 	BPL	lbC04CC58
 	MOVE.B	#$D4,D0
 lbC04CC58:
-	MOVE.B	D0,lbB00D500
-	MOVE.B	#$00,lbB00D501
+	MOVE.B	D0,carStartRotation
+	MOVE.B	#$00,carStartRotationLow
 lbC04CC66:
-	SUBQ.B	#$01,liftCarTimer
+	SUBQ.B	#$01,raceStartTimer
 	RTS
 
 lbC04CC6E:
 	CMP.B	#$E5,D1
 	BNE	lbC04CC90
 	MOVE.B	#$00,D0
-	JSR	lbC04CDA8
+	JSR	updateCarStartRotation
 	MOVE.B	#$03,D0
-	JSR	lbC04CD72
+	JSR	adjustCarHeightToTrack
 	BPL	lbC04CC66
 lbC04CC8E:
 	RTS
@@ -6800,15 +6801,15 @@ lbC04CC90:
 	CMP.B	#$E4,D1
 	BNE	lbC04CD02
 	MOVE.B	#$04,D0
-	JSR	lbC04CD72
+	JSR	adjustCarHeightToTrack
 	MOVE.B	#$FF,D0
-	JSR	lbC04CDA8
+	JSR	updateCarStartRotation
 	BNE	lbC04CD00
 	JSR	generateRandomNumber
 	AND.B	#$1F,D0
 	ADD.B	#$A0,D0
 	MOVE.B	#$2C,D2				; DROP START
-	TST.B	dropStartDone
+	TST.B	raceStartComplete
 	BPL	lbC04CCD0
 	MOVE.B	#$3C,D2				; PRESS FIRE
 lbC04CCD0:
@@ -6816,10 +6817,10 @@ lbC04CCD0:
 	BMI	lbC04CCDE
 	MOVE.B	#$8C,D0
 lbC04CCDE:
-	MOVE.B	D0,liftCarTimer
-	TST.B	lbB00D474
+	MOVE.B	D0,raceStartTimer
+	TST.B	crashRecoveryTimer
 	BEQ	lbC04CCF6
-	MOVE.B	#$32,lbB00D474
+	MOVE.B	#$32,crashRecoveryTimer
 lbC04CCF6:
 	MOVE.B	#$04,D0
 	JMP	setMessageParameters
@@ -6829,38 +6830,38 @@ lbC04CD00:
 
 lbC04CD02:
 	MOVE.B	#$00,D0
-	JSR	lbC04CDA8
+	JSR	updateCarStartRotation
 	MOVE.B	#$02,D0
-	JSR	lbC04CD72
+	JSR	adjustCarHeightToTrack
 	TST.B	trackDirectionFlag
 	BMI	lbC04CD30
-	SUBQ.B	#$01,liftCarTimer
+	SUBQ.B	#$01,raceStartTimer
 	BNE	lbC04CD30
-	ADDQ.B	#$01,liftCarTimer
+	ADDQ.B	#$01,raceStartTimer
 lbC04CD30:
-	MOVE.B	dropStartDone,D0
+	MOVE.B	raceStartComplete,D0
 	BNE	lbC04CD46
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BPL	lbC04CD50
 	RTS
 
 lbC04CD46:
-	MOVE.B	lbB00D470,D0
+	MOVE.B	raceActiveFlag,D0
 	BNE	lbC04CD70
 lbC04CD50:
 	MOVE.B	#$00,D0
-	MOVE.B	D0,liftCarTimer
+	MOVE.B	D0,raceStartTimer
 	MOVE.B	D0,collisionStateFlags
 	MOVE.B	D0,lbB00D48E
 	MOVE.B	#$80,D0
-	MOVE.B	D0,dropStartDone
+	MOVE.B	D0,raceStartComplete
 lbC04CD70:
 	RTS
 
-lbC04CD72:
+adjustCarHeightToTrack:
 	ASL.W	#$08,D0
-	MOVE.W	lbB00D5D0,D3
-	SUB.W	lbW00D560,D3
+	MOVE.W	carHeightPosition,D3
+	SUB.W	trackSurfaceHeight,D3
 	SUB.W	D0,D3
 	MOVE.W	D3,D0
 	ASR.W	#$03,D0
@@ -6870,15 +6871,15 @@ lbC04CD72:
 	BCC	lbC04CD9A
 	MOVE.W	#$FE00,D0
 lbC04CD9A:
-	SUB.W	D0,lbW00D642
+	SUB.W	D0,carPitchAdjustment
 	LSR.W	#$08,D3
 	MOVE.B	D3,D0
 	ADDQ.B	#$02,D0
 	RTS
 
-lbC04CDA8:
+updateCarStartRotation:
 	MOVE.B	#$10,D4
-	TST.B	lbB00D4E1
+	TST.B	trackSideIndicator
 	BPL	lbC04CDBC
 	NEG.B	D0
 	MOVE.B	#$F0,D4
@@ -6891,17 +6892,17 @@ lbC04CDBC:
 lbC04CDCA:
 	MOVE.W	segmentVisibilityFlag,D3
 	ASL.W	#$05,D3
-	MOVE.B	lbB00D500,D7
+	MOVE.B	carStartRotation,D7
 	CMP.B	D4,D7
 	BEQ	lbC04CDE4
-	ADD.W	D0,lbB00D500
+	ADD.W	D0,carStartRotation
 lbC04CDE4:
-	MOVE.W	lbB00D500,D0
+	MOVE.W	carStartRotation,D0
 	SUB.W	D3,D0
-	MOVE.W	D0,lbW00D5E8
+	MOVE.W	D0,carVisualHeight
 	MOVE.W	#$0000,D0
-	MOVE.W	D0,lbW00D626
-	MOVE.B	lbB00D500,D0
+	MOVE.W	D0,verticalMotion
+	MOVE.B	carStartRotation,D0
 	CMP.B	D4,D0
 	RTS
 
@@ -6916,11 +6917,11 @@ lbC04CE14:
 	BNE	lbC04CE28
 	NEG.W	D0
 lbC04CE28:
-	MOVE.B	lbB00D4E1,lbB00D4BB
+	MOVE.B	trackSideIndicator,trackSideIndicatorCopy
 	MOVE.B	#$A0,segmentDirectionFlags
 	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
-	TST.B	lbB00D4BB
+	TST.B	trackSideIndicatorCopy
 	BPL	lbC04CE50
 	NEG.W	D3
 lbC04CE50:
@@ -8065,7 +8066,7 @@ lbC04DEE6:
 lbC04DEF2:
 	JSR	calculateInterpolatedValue
 	ASL.B	#$01,D1
-	MOVE.L	#lbL00D5A4,A3
+	MOVE.L	#carWorldX,A3
 	BCLR	#$07,lbB00D465
 	BEQ	lbC04DF12
 	JSR	lbC04E108
@@ -8074,7 +8075,7 @@ lbC04DF12:
 	CMP.B	#$0A,D0
 	BLT	lbC04DF32
 lbC04DF20:
-	MOVE.L	#lbL00D5A4,A0
+	MOVE.L	#carWorldX,A0
 	MOVE.L	lbB00D418,$00(A3,D1.W)
 	LSR.B	#$01,D1
 	RTS
@@ -8662,7 +8663,7 @@ lbC04ECA4:
 	MOVE.B	lbB00E31B,D1
 	CMP.B	#$40,networkGameMode
 	BNE	initializeGameSystemsAndMainLoop
-	MOVE.B	#$80,lbB00D4E1
+	MOVE.B	#$80,trackSideIndicator
 initializeGameSystemsAndMainLoop:
 	JSR	initializeAudioSystem
 	JSR	initializeDisplayBuffers
@@ -8706,7 +8707,7 @@ mainGameLoop:
 	TST.B	networkConnectionState
 	BNE	continueGameLoop
 checkGameEndConditions:
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BNE	lbC04EDFC
 	MOVE.B	playerStateFlag,D0
 	BEQ	continueGameLoop
@@ -8716,7 +8717,7 @@ lbC04EDFC:
 	MOVE.B	networkGameMode,D0
 	BEQ	lbC04EE22
 	MOVE.B	#$00,displayModeParameter
-	CMP.B	lbB00D4E2,D0
+	CMP.B	gameModeStateFlags,D0
 	BNE	lbC04EE34
 lbC04EE22:
 	MOVE.B	#$0B,D2
@@ -8746,13 +8747,13 @@ lbC04EE74:
 continueGameLoop:
 	JSR	swapDisplayBuffers
 	JSR	checkNetworkTimeout
-	MOVE.B	liftCarTimer,D0
+	MOVE.B	raceStartTimer,D0
 	BNE	lbC04EF0E
 	MOVE.B	collisionStateFlags,D2
 	BPL	lbC04EF0E
 	MOVE.B	playerStateFlag,D0
 	BEQ	lbC04EF0E
-	MOVE.B	lbB00D5D0,D0
+	MOVE.B	carHeightPosition,D0
 	BMI	lbC04EEDC
 	CMP.B	#$02,D0
 	BGE	lbC04EEE2
@@ -8762,14 +8763,14 @@ lbC04EEE2:
 	SUBQ.B	#$01,restartTimerCountdown
 	BPL	lbC04EF0E
 	ADDQ.B	#$01,restartTimerCountdown
-	MOVE.B	lbB00D46C,D0
+	MOVE.B	wreckCountdownTimer,D0
 	BNE	lbC04EF0E
 	JSR	disableAudio
 	MOVE.B	lbB00D49B,D1
 	JMP	initializeGameSystemsAndMainLoop
 
 lbC04EF0E:
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BNE	lbC04EF2C
 	TST.B	collisionStateFlags
 	BMI	mainGameLoop
@@ -8846,7 +8847,7 @@ lbC04F050:
 	CMP.B	#$0B,D2
 	BNE	lbC04F050
 	MOVE.W	#$007F,previousEffectParameter
-	MOVE.B	#$BA,lbB00D4DD
+	MOVE.B	#$BA,visualEffectBaseValue
 	MOVE.B	#$02,D1
 lbC04F076:
 	MOVE.B	#$09,D0
@@ -8865,7 +8866,7 @@ lbC04F076:
 lbC04F0B4:
 	JSR	calculateTransformMatrices
 	MOVE.W	#$0400,lbW00D542
-	MOVE.W	#$FF00,lbW00D556
+	MOVE.W	#$FF00,visualEffectFlags
 	JSR	disableAudio
 	MOVE.B	#$04,lbB00D499
 	JSR	lbC054FA2
@@ -8922,7 +8923,7 @@ processPlayerInput:
 	JSR	readControllerInput
 	MOVE.B	playerStateFlag,D0
 	BEQ	lbC04F1DE
-	MOVE.B	liftCarTimer,D0
+	MOVE.B	raceStartTimer,D0
 	BNE	lbC04F1DE
 	MOVE.B	inputStateFlags,D0
 	AND.B	#$0C,D0
@@ -8938,7 +8939,7 @@ lbC04F1DE:
 	MOVE.B	inputStateFlags,D0
 	AND.B	#$10,D0
 	EOR.B	#$10,D0
-	MOVE.B	D0,lbB00D470
+	MOVE.B	D0,raceActiveFlag
 	MOVE.B	#$00,D2
 	MOVE.B	#$00,D1
 	MOVE.B	lbB00D630,D0
@@ -8946,7 +8947,7 @@ lbC04F1DE:
 	CMP.B	#$78,D0
 	BCC	lbC04F26C
 lbC04F212:
-	MOVE.B	liftCarTimer,D0
+	MOVE.B	raceStartTimer,D0
 	BNE	lbC04F26C
 	MOVE.B	lbB00D5A2,D0
 	BNE	lbC04F26C
@@ -9123,28 +9124,28 @@ lbC04F4AA:
 	BPL	lbC04F4D6
 	JSR	lbC04F4D6
 lbC04F4D6:
-	MOVE.B	lbB00D46C,D0
+	MOVE.B	wreckCountdownTimer,D0
 	BEQ	lbC04F536
 	BMI	lbC04F526
 	LSR.B	#$02,D0
 	AND.B	#$01,D0
 	MOVE.B	D0,lbB00D488
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BNE	lbC04F512
 	MOVE.B	playerStateFlag,D0
 	BNE	lbC04F512
-	MOVE.B	lbB00D46C,D0
+	MOVE.B	wreckCountdownTimer,D0
 	CMP.B	#$06,D0
 	BCS	lbC04F536
 lbC04F512:
 	TST.B	trackDirectionFlag
 	BMI	lbC04F536
-	SUBQ.B	#$01,lbB00D46C
+	SUBQ.B	#$01,wreckCountdownTimer
 	BNE	lbC04F536
 lbC04F526:
 	MOVE.B	#$80,D0
 	MOVE.B	D0,currentTrackIDs
-	MOVE.B	D0,lbB00D46C
+	MOVE.B	D0,wreckCountdownTimer
 lbC04F536:
 	RTS
 
@@ -9278,10 +9279,10 @@ lbC04F720:
 	CMP.B	lbB00D499,D0
 	BNE	lbC04F798
 	MOVE.B	D0,gameEndModeFlag
-	MOVE.B	lbB00D46C,D0
+	MOVE.B	wreckCountdownTimer,D0
 	BNE	lbC04F758
 	MOVE.B	#$2C,D0
-	MOVE.B	D0,lbB00D46C
+	MOVE.B	D0,wreckCountdownTimer
 lbC04F758:
 	MOVE.W	D1,-(SP)
 	JSR	lbC04F9C4
@@ -9390,12 +9391,12 @@ lbC04F8AE:
 	RTS
 
 processGameStatistics:
-	MOVE.B	lbB00D454,D0
+	MOVE.B	offTrackAccumulationFlag,D0
 	BEQ	lbC04F8E0
-	MOVE.B	lbB00D44F,D0
-	ADD.B	lbB00D450,D0
+	MOVE.B	accumulatedOffTrackForceX,D0
+	ADD.B	accumulatedOffTrackForceY,D0
 	ROXR.B	#$01,D0
-	ADD.B	lbB00D451,D0
+	ADD.B	accumulatedOffTrackForceZ,D0
 	ROXR.B	#$01,D0
 	MOVE.B	D0,lbB00D4B6
 	JSR	updatePerformanceMetrics
@@ -9405,7 +9406,7 @@ lbC04F8E0:
 	SUBQ.B	#$01,gameTimerCountdown
 	CMP.B	#$45,D0
 	BEQ	triggerLapCompletion
-	MOVE.B	lbB00D454,D0
+	MOVE.B	offTrackAccumulationFlag,D0
 	BNE	lbC04F95C
 	RTS
 
@@ -9415,9 +9416,9 @@ triggerLapCompletion:
 	JMP	lbC04F95C
 
 lbC04F916:
-	MOVE.B	lbB00D454,D0
+	MOVE.B	offTrackAccumulationFlag,D0
 	BEQ	lbC04F996
-	MOVE.W	lbW00D53A,D0
+	MOVE.W	maxDistanceFromTrack,D0
 	CMP.W	#$1400,D0
 	BCS	lbC04F95C
 	MOVE.B	objectDisplayThreshold,D2
@@ -9431,7 +9432,7 @@ lbC04F916:
 	MOVE.B	#$05,D0
 	BNE	lbC04F986
 lbC04F95C:
-	MOVE.B	lbW00D53A,D0
+	MOVE.B	maxDistanceFromTrack,D0
 	CMP.B	#$07,D0
 	BCC	lbC04F96E
 	MOVE.B	#$07,D0
@@ -9446,7 +9447,7 @@ lbC04F97C:
 lbC04F986:
 	JSR	playAudioSample
 	MOVE.B	#$00,D0
-	MOVE.B	D0,lbB00D454
+	MOVE.B	D0,offTrackAccumulationFlag
 lbC04F996:
 	RTS
 
@@ -9729,7 +9730,7 @@ lbC04FE12:
 	RTS
 
 lbC04FE14:
-	MOVE.B	lbB00D46C,D0
+	MOVE.B	wreckCountdownTimer,D0
 	BEQ	lbC04FE36
 	BMI	lbC04FE2A
 	CMP.B	#$03,D0
@@ -9832,7 +9833,7 @@ initializeDisplayBuffers:
 	MOVE.W	#$0030,D3
 	MOVE.L	#lbW05BA6C,A2
 lbC050086:
-	MOVE.L	#lbW00D614,A0
+	MOVE.L	#clampedDistanceX,A0
 	MOVE.W	$00(A0,D1.W),D0
 	ADD.W	#$0100,D0
 	BPL	lbC05009C
@@ -9850,7 +9851,7 @@ lbC0500A8:
 	ROL.W	#$05,D0
 	AND.B	#$1F,D0
 	NOT.B	D0
-	ADD.B	lbB00D4DD,D0
+	ADD.B	visualEffectBaseValue,D0
 	MOVE.B	lbB00D4DA,D4
 	ASL.W	#$01,D4
 	MOVE.B	D4,lbB00D4DA
@@ -9889,23 +9890,23 @@ lbC05011C:
 	MOVE.B	#$80,lbB05B841
 	RTS
 
-lbC050148:
-	MOVE.B	lbB00D46C,D0
+initiateCarWreck:
+	MOVE.B	wreckCountdownTimer,D0
 	BNE	lbC0501AA
-	CMP.B	#$40,lbB00D4E2
+	CMP.B	#$40,gameModeStateFlags
 	BEQ	lbC050174
-	CMP.B	#$80,lbB00D4E2
+	CMP.B	#$80,gameModeStateFlags
 	BEQ	lbC050174
-	MOVE.B	networkGameMode,lbB00D4E2
+	MOVE.B	networkGameMode,gameModeStateFlags
 lbC050174:
 	MOVE.B	#$02,D0
 	MOVE.B	D0,lbB00D5A2
 	MOVE.B	#$92,D0
-	MOVE.B	D0,lbB00D4DD
+	MOVE.B	D0,visualEffectBaseValue
 	MOVE.B	#$82,D0
-	MOVE.B	D0,lbW00D556
+	MOVE.B	D0,visualEffectFlags
 	MOVE.B	#$3C,D0
-	MOVE.B	D0,lbB00D46C
+	MOVE.B	D0,wreckCountdownTimer
 	MOVE.B	#$02,D0
 	MOVE.B	#$00,D2
 	JSR	setMessageParameters
@@ -11435,9 +11436,9 @@ calculate3DProjection1:
 	MOVE.L	lbB00D5DC,D0
 	LSR.L	#$08,D0
 	LSR.L	#$03,D0
-	MOVE.W	D0,lbB00D5D0
+	MOVE.W	D0,carHeightPosition
 	MOVE.W	#$0780,D3
-	MOVE.W	lbW00D638,D0
+	MOVE.W	collisionStateFlags1,D0
 	CMP.W	#$0500,D0
 	BCS	lbC051AD2
 	ASL.W	#$01,D0
@@ -11450,7 +11451,7 @@ lbC051AD2:
 	SUB.W	D3,D0
 lbC051AE2:
 	ASR.W	#$04,D0
-	ADD.W	lbB00D5D0,D0
+	ADD.W	carHeightPosition,D0
 	MOVE.W	D0,lbW00D4FA
 	MOVE.L	lbL00D5CC,D0
 	LSR.L	#$08,D0
@@ -11499,7 +11500,7 @@ lbC051B92:
 	TST.B	collisionStateFlags
 	BMI	lbC051BC4
 	MOVE.B	#$80,collisionStateFlags
-	MOVE.B	segmentVisibilityFlag,lbB00D4E1
+	MOVE.B	segmentVisibilityFlag,trackSideIndicator
 	MOVE.B	#$10,restartTimerCountdown
 	JSR	initializeDebrisParticlePositions
 lbC051BC4:
@@ -11700,7 +11701,7 @@ lbC051F08:
 	MOVE.B	#$00,(A0)+
 	CMP.L	#lbL00D65E,A0
 	BNE	lbC051F08
-	MOVE.B	#$F0,liftCarTimer
+	MOVE.B	#$F0,raceStartTimer
 	JSR	loadTrackSegmentConfiguration
 	MOVE.L	#trackSegmentCoordinates,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -11743,29 +11744,29 @@ lbC051FA6:
 	JSR	updateGamePhysics
 	MOVE.W	#$0000,lbW00D5DE
 	MOVE.W	#$0010,lbB00D5DC
-	MOVE.L	lbL00D5AC,D0
+	MOVE.L	carWorldZ,D0
 	MOVE.L	D0,D3
-	MOVE.B	dropStartDone,D2
+	MOVE.B	raceStartComplete,D2
 	BEQ	lbC05200E
 	ASL.L	#$08,D0
 	ASL.L	#$01,D0
 	ADD.L	#$00180000,D0
 	MOVE.L	D0,lbB00D5DC
-	MOVE.B	#$E6,liftCarTimer
+	MOVE.B	#$E6,raceStartTimer
 lbC05200E:
 	LSR.L	#$02,D3
-	MOVE.W	D3,lbW00D560
+	MOVE.W	D3,trackSurfaceHeight
 	JSR	lbC04CE06
 	MOVE.B	#$08,D1
-	MOVE.L	#lbL00D5A4,A1
-	MOVE.L	#lbL00D594,A2
+	MOVE.L	#carWorldX,A1
+	MOVE.L	#trackCenterX,A2
 lbC05202C:
 	MOVE.L	#$00001000,$00(A1,D1.W)
 	MOVE.L	#$00001000,$00(A2,D1.W)
 	SUBQ.B	#$04,D1
 	BPL	lbC05202C
-	MOVE.L	#$00000000,lbW00D61A
-	MOVE.W	#$0000,lbW00D61E
+	MOVE.L	#$00000000,previousDistanceX
+	MOVE.W	#$0000,previousDistanceZ
 	JSR	calculate3DProjection1
 	MOVE.B	#$B0,lbB00D4EA
 	MOVE.B	#$08,lbB00D4E9
@@ -11851,7 +11852,7 @@ lbC052140:
 	RTS
 
 lbC0521A4:
-	MOVE.B	lbB00D470,D0
+	MOVE.B	raceActiveFlag,D0
 	OR.B	lbB00D5A2,D0
 	BNE	lbC052210
 	MOVE.B	lbB00D4A8,D0
@@ -12599,14 +12600,14 @@ checkKeyPressed:
 
 	TST.B	D0
 	BMI	lbC052BE2
-	TST.B	lbB00D4BB
+	TST.B	trackSideIndicatorCopy
 	BMI	lbC052BEE
 lbC052BDE:
 	BRA	multiplyAndRandomize
 
 lbC052BE2:
 	NEG.B	D0
-	TST.B	lbB00D4BB
+	TST.B	trackSideIndicatorCopy
 	BMI	lbC052BDE
 lbC052BEE:
 	JSR	multiplyAndRandomize
@@ -12616,12 +12617,12 @@ lbC052BEE:
 	LSR.W	#$08,D0
 	RTS
 
-	BCLR	#$07,lbB00D4BB
+	BCLR	#$07,trackSideIndicatorCopy
 	ASL.W	#$08,D0
 	OR.B	temp,D0
 	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
-	TST.B	lbB00D4BB
+	TST.B	trackSideIndicatorCopy
 	BPL	lbC052C28
 	NEG.W	D3
 lbC052C28:
@@ -12693,10 +12694,10 @@ calculateTransformMatrices:
 	MOVE.W	D0,$000A(A5)
 	MOVE.W	D0,$001C(A5)
 	MOVE.W	D0,$001E(A5)
-	MOVE.W	lbW00D5E8,D0
+	MOVE.W	carVisualHeight,D0
 	JSR	calculateCosine
 	MOVE.W	D0,$0022(A5)
-	MOVE.W	lbW00D5E8,D0
+	MOVE.W	carVisualHeight,D0
 	JSR	calculateSine
 	MOVE.W	D0,$0020(A5)
 	MOVE.W	$0008(A5),D5
@@ -13029,7 +13030,7 @@ updateGamePhysics:
 	JSR	transformWorldCoordinates
 	JSR	updateVehicleSuspension
 	JSR	calculateViewAngles
-	JSR	updateTrackPosition
+	JSR	detectTrackBoundaryCollisions
 	MOVE.B	frameProcessingFlag,D0
 	BEQ	lbC0531C0
 	JSR	updateCarSteering
@@ -13128,7 +13129,7 @@ lbC0532E4:
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC0532FC:
-	ADD.W	D0,lbW00D5E8
+	ADD.W	D0,carVisualHeight
 	MOVE.W	#$0000,D2
 	TST.B	lbB00D475
 	BPL	lbC053320
@@ -13156,7 +13157,7 @@ lbC053348:
 	BMI	lbC053362
 	MOVE.W	#$0000,lbW00D5F0
 lbC053362:
-	MOVE.W	lbW00D5E8,D3
+	MOVE.W	carVisualHeight,D3
 	BMI	lbC05337A
 	MOVE.W	$00(A0,D2.W),D0
 	CMP.W	D3,D0
@@ -13168,7 +13169,7 @@ lbC05337A:
 	CMP.W	D3,D0
 	BCS	lbC05339E
 lbC053384:
-	MOVE.W	D0,lbW00D5E8
+	MOVE.W	D0,carVisualHeight
 	MOVE.W	lbW00D5F4,D3
 	EOR.W	D3,D0
 	BMI	lbC05339E
@@ -13243,7 +13244,7 @@ calculateTrackPositions:
 	MOVE.W	lbW00D5E4,D0
 	JSR	calculateSine
 	MOVE.W	D0,trackIncrementValue
-	MOVE.W	lbW00D5E8,D0
+	MOVE.W	carVisualHeight,D0
 	JSR	calculateSine
 	EXT.L	D0
 	ASL.L	#$03,D0
@@ -13253,25 +13254,25 @@ calculateTrackPositions:
 	MOVE.L	lbB00D5DC,D4
 	SUB.L	D3,D4
 	ASR.L	#$08,D4
-	MOVE.L	D4,lbL00D59C
+	MOVE.L	D4,trackCenterZ
 	MOVE.L	lbB00D5DC,D4
 	ADD.L	D3,D4
 	MOVE.L	D4,D5
 	SUB.L	D0,D5
 	ASR.L	#$08,D5
-	MOVE.L	D5,lbL00D598
+	MOVE.L	D5,trackCenterY
 	ADD.L	D0,D4
 	ASR.L	#$08,D4
-	MOVE.L	D4,lbL00D594
+	MOVE.L	D4,trackCenterX
 	RTS
 
-updateTrackPosition:
-	MOVE.B	#$00,lbB00D47D
-	MOVE.B	#$00,lbW00D53A
-	MOVE.L	lbL00D5A4,D0
-	SUB.L	lbL00D594,D0
-	SUB.L	lbB00D5A0,D0
-	MOVE.L	D0,lbL00D5B0
+detectTrackBoundaryCollisions:
+	MOVE.B	#$00,offTrackCollisionFlag
+	MOVE.B	#$00,maxDistanceFromTrack
+	MOVE.L	carWorldX,D0
+	SUB.L	trackCenterX,D0
+	SUB.L	trackOffsetAdjustment,D0
+	MOVE.L	D0,distanceFromTrackX
 	BMI	negativeDistanceClamp
 	CMP.L	#$00001400,D0
 	BCS	applyDistanceClamps
@@ -13286,66 +13287,66 @@ negativeDistanceClamp:
 positiveDistanceClamp:
 	MOVE.L	#$00001400,D0
 applyDistanceClamps:
-	MOVE.W	D0,lbW00D614
+	MOVE.W	D0,clampedDistanceX
 	MOVE.W	D0,D6
-	MOVE.W	lbW00D61A,D3
+	MOVE.W	previousDistanceX,D3
 	SUB.W	D3,D0
 	JSR	applyMomentumAmplification
 	BMI	resetTrackPosition
-	MOVE.W	lbW00D620,D4
-	MOVE.W	D0,lbW00D620
+	MOVE.W	lateralVelocityX,D4
+	MOVE.W	D0,lateralVelocityX
 	CMP.W	#$0400,D0
 	BLT	checkTrackThreshold
 	CMP.W	#$0200,D4
 	BGE	checkTrackThreshold
-	ADDQ.B	#$01,lbB00D47D
+	ADDQ.B	#$01,offTrackCollisionFlag
 checkTrackThreshold:
-	MOVE.W	lbW00D620,D0
-	MOVE.B	lbB00D401,D3
+	MOVE.W	lateralVelocityX,D0
+	MOVE.B	trackWidthMultiplier,D3
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	clearTrackCounters
 	CMP.W	#$0700,D0
 	BLT	clearTrackCounters
-	CMP.W	lbW00D53A,D0
+	CMP.W	maxDistanceFromTrack,D0
 	BCS	updateMaxTrackPosition
-	MOVE.W	D0,lbW00D53A
+	MOVE.W	D0,maxDistanceFromTrack
 updateMaxTrackPosition:
 	SUB.W	#$0600,D0
 	TST.B	trackDirectionFlag
 	BMI	processTrackDirection
-	ADDQ.B	#$01,lbB00D456
-	MOVE.B	lbB00D456,D3
-	CMP.B	lbB0555E2,D3
+	ADDQ.B	#$01,offTrackFrameCounter
+	MOVE.B	offTrackFrameCounter,D3
+	CMP.B	offTrackFrameThreshold,D3
 	BGE	processTrackDirection
 	LSR.W	#$08,D0
 	MOVE.B	D0,D3
 	LSR.B	#$01,D3
 	ADD.B	D3,D0
-	ADD.B	lbB00D44F,D0
+	ADD.B	accumulatedOffTrackForceX,D0
 	BCC	preventSpeedOverflow
 	MOVE.B	#$FF,D0
 preventSpeedOverflow:
-	MOVE.B	D0,lbB00D44F
-	MOVE.B	#$80,lbB00D454
+	MOVE.B	D0,accumulatedOffTrackForceX
+	MOVE.B	#$80,offTrackAccumulationFlag
 processTrackDirection:
-	MOVE.W	lbW00D620,D0
+	MOVE.W	lateralVelocityX,D0
 	CMP.W	#$1200,D0
 	BCS	enforceTrackBounds
-	MOVE.W	#$11FF,lbW00D620
+	MOVE.W	#$11FF,lateralVelocityX
 enforceTrackBounds:
 	BRA	finalizeTrackUpdate
 
 resetTrackPosition:
-	MOVE.W	#$0000,lbW00D620
+	MOVE.W	#$0000,lateralVelocityX
 clearTrackCounters:
-	MOVE.B	#$00,lbB00D456
+	MOVE.B	#$00,offTrackFrameCounter
 finalizeTrackUpdate:
-	MOVE.W	lbW00D614,lbW00D61A
-	MOVE.L	lbL00D5A8,D0
-	SUB.L	lbL00D598,D0
-	SUB.L	lbB00D5A0,D0
-	MOVE.L	D0,lbL00D5B4
+	MOVE.W	clampedDistanceX,previousDistanceX
+	MOVE.L	carWorldY,D0
+	SUB.L	trackCenterY,D0
+	SUB.L	trackOffsetAdjustment,D0
+	MOVE.L	D0,distanceFromTrackY
 	BMI	negativeYDistanceClamp
 	CMP.L	#$00001400,D0
 	BCS	applyYDistanceClamps
@@ -13360,66 +13361,66 @@ negativeYDistanceClamp:
 positiveYDistanceClamp:
 	MOVE.L	#$00001400,D0
 applyYDistanceClamps:
-	MOVE.W	D0,lbW00D616
+	MOVE.W	D0,clampedDistanceY
 	MOVE.W	D0,D6
-	MOVE.W	lbW00D61C,D3
+	MOVE.W	previousDistanceY,D3
 	SUB.W	D3,D0
 	JSR	applyMomentumAmplification
 	BMI	resetYTrackPosition
-	MOVE.W	lbW00D622,D4
-	MOVE.W	D0,lbW00D622
+	MOVE.W	lateralVelocityY,D4
+	MOVE.W	D0,lateralVelocityY
 	CMP.W	#$0400,D0
 	BLT	checkYTrackThreshold
 	CMP.W	#$0200,D4
 	BGE	checkYTrackThreshold
-	ADDQ.B	#$01,lbB00D47D
+	ADDQ.B	#$01,offTrackCollisionFlag
 checkYTrackThreshold:
-	MOVE.W	lbW00D622,D0
-	MOVE.B	lbB00D401,D3
+	MOVE.W	lateralVelocityY,D0
+	MOVE.B	trackWidthMultiplier,D3
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	lbC05371A
 	CMP.W	#$0700,D0
 	BLT	lbC05371A
-	CMP.W	lbW00D53A,D0
+	CMP.W	maxDistanceFromTrack,D0
 	BCS	lbC0536B0
-	MOVE.W	D0,lbW00D53A
+	MOVE.W	D0,maxDistanceFromTrack
 lbC0536B0:
 	SUB.W	#$0600,D0
 	TST.B	trackDirectionFlag
 	BMI	lbC0536F8
-	ADDQ.B	#$01,lbB00D456
-	MOVE.B	lbB00D456,D3
-	CMP.B	lbB0555E2,D3
+	ADDQ.B	#$01,offTrackFrameCounter
+	MOVE.B	offTrackFrameCounter,D3
+	CMP.B	offTrackFrameThreshold,D3
 	BGE	lbC0536F8
 	LSR.W	#$08,D0
 	MOVE.B	D0,D3
 	LSR.B	#$01,D3
 	ADD.B	D3,D0
-	ADD.B	lbB00D450,D0
+	ADD.B	accumulatedOffTrackForceY,D0
 	BCC	lbC0536EA
 	MOVE.B	#$FF,D0
 lbC0536EA:
-	MOVE.B	D0,lbB00D450
-	MOVE.B	#$80,lbB00D454
+	MOVE.B	D0,accumulatedOffTrackForceY
+	MOVE.B	#$80,offTrackAccumulationFlag
 lbC0536F8:
-	MOVE.W	lbW00D622,D0
+	MOVE.W	lateralVelocityY,D0
 	CMP.W	#$1200,D0
 	BCS	lbC05370E
-	MOVE.W	#$11FF,lbW00D622
+	MOVE.W	#$11FF,lateralVelocityY
 lbC05370E:
 	BRA	lbC053722
 
 resetYTrackPosition:
-	MOVE.W	#$0000,lbW00D622
+	MOVE.W	#$0000,lateralVelocityY
 lbC05371A:
-	MOVE.B	#$00,lbB00D456
+	MOVE.B	#$00,offTrackFrameCounter
 lbC053722:
-	MOVE.W	lbW00D616,lbW00D61C
-	MOVE.L	lbL00D5AC,D0
-	SUB.L	lbL00D59C,D0
-	SUB.L	lbB00D5A0,D0
-	MOVE.L	D0,lbL00D5B8
+	MOVE.W	clampedDistanceY,previousDistanceY
+	MOVE.L	carWorldZ,D0
+	SUB.L	trackCenterZ,D0
+	SUB.L	trackOffsetAdjustment,D0
+	MOVE.L	D0,distanceFromTrackZ
 	BMI	lbC053756
 	CMP.L	#$00001400,D0
 	BCS	lbC053770
@@ -13434,72 +13435,72 @@ lbC053756:
 lbC05376A:
 	MOVE.L	#$00001400,D0
 lbC053770:
-	MOVE.W	D0,lbW00D618
+	MOVE.W	D0,clampedDistanceZ
 	MOVE.W	D0,D6
-	MOVE.W	lbW00D61E,D3
+	MOVE.W	previousDistanceZ,D3
 	SUB.W	D3,D0
 	JSR	applyMomentumAmplification
 	BMI	lbC05383A
-	MOVE.W	lbW00D624,D4
-	MOVE.W	D0,lbW00D624
+	MOVE.W	lateralVelocityZ,D4
+	MOVE.W	D0,lateralVelocityZ
 	CMP.W	#$0400,D0
 	BLT	lbC0537AC
 	CMP.W	#$0200,D4
 	BGE	lbC0537AC
-	ADDQ.B	#$01,lbB00D47D
+	ADDQ.B	#$01,offTrackCollisionFlag
 lbC0537AC:
-	MOVE.W	lbW00D624,D0
-	MOVE.B	lbB00D401,D3
+	MOVE.W	lateralVelocityZ,D0
+	MOVE.B	trackWidthMultiplier,D3
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	lbC053842
 	CMP.W	#$0700,D0
 	BLT	lbC053842
-	CMP.W	lbW00D53A,D0
+	CMP.W	maxDistanceFromTrack,D0
 	BCS	lbC0537D8
-	MOVE.W	D0,lbW00D53A
+	MOVE.W	D0,maxDistanceFromTrack
 lbC0537D8:
 	SUB.W	#$0600,D0
 	TST.B	trackDirectionFlag
 	BMI	lbC053820
-	ADDQ.B	#$01,lbB00D456
-	MOVE.B	lbB00D456,D3
-	CMP.B	lbB0555E2,D3
+	ADDQ.B	#$01,offTrackFrameCounter
+	MOVE.B	offTrackFrameCounter,D3
+	CMP.B	offTrackFrameThreshold,D3
 	BGE	lbC053820
 	LSR.W	#$08,D0
 	MOVE.B	D0,D3
 	LSR.B	#$01,D3
 	ADD.B	D3,D0
-	ADD.B	lbB00D451,D0
+	ADD.B	accumulatedOffTrackForceZ,D0
 	BCC	lbC053812
 	MOVE.B	#$FF,D0
 lbC053812:
-	MOVE.B	D0,lbB00D451
-	MOVE.B	#$80,lbB00D454
+	MOVE.B	D0,accumulatedOffTrackForceZ
+	MOVE.B	#$80,offTrackAccumulationFlag
 lbC053820:
-	MOVE.W	lbW00D624,D0
+	MOVE.W	lateralVelocityZ,D0
 	CMP.W	#$1200,D0
 	BCS	lbC053836
-	MOVE.W	#$11FF,lbW00D624
+	MOVE.W	#$11FF,lateralVelocityZ
 lbC053836:
 	BRA	lbC05384A
 
 lbC05383A:
-	MOVE.W	#$0000,lbW00D624
+	MOVE.W	#$0000,lateralVelocityZ
 lbC053842:
-	MOVE.B	#$00,lbB00D456
+	MOVE.B	#$00,offTrackFrameCounter
 lbC05384A:
-	MOVE.W	lbW00D618,lbW00D61E
-	MOVE.W	lbW00D620,D0
-	ADD.W	lbW00D622,D0
+	MOVE.W	clampedDistanceZ,previousDistanceZ
+	MOVE.W	lateralVelocityX,D0
+	ADD.W	lateralVelocityY,D0
 	ASR.W	#$01,D0
 	MOVE.W	D0,trackIncrementValue
-	ADD.W	lbW00D624,D0
+	ADD.W	lateralVelocityZ,D0
 	ASR.W	#$01,D0
-	MOVE.W	D0,lbW00D638
+	MOVE.W	D0,collisionStateFlags1
 	JSR	calculateSpatialDistortion
-	MOVE.W	lbW00D620,D0
-	SUB.W	lbW00D622,D0
+	MOVE.W	lateralVelocityX,D0
+	SUB.W	lateralVelocityY,D0
 	MOVE.W	D0,D3
 	ASL.W	#$01,D0
 	ADD.W	D3,D0
@@ -13514,15 +13515,15 @@ lbC0538A0:
 	BPL	lbC0538A8
 	NEG.W	D0
 lbC0538A8:
-	MOVE.W	D0,lbW00D628
+	MOVE.W	D0,lateralMotion
 	MOVE.W	trackIncrementValue,D0
-	SUB.W	lbW00D624,D0
-	MOVE.W	D0,lbW00D626
-	MOVE.B	lbW00D638,D0
-	OR.B	lbB00D639,D0
+	SUB.W	lateralVelocityZ,D0
+	MOVE.W	D0,verticalMotion
+	MOVE.B	collisionStateFlags1,D0
+	OR.B	collisionStateFlags2,D0
 	MOVE.B	D0,playerStateFlag
 	BNE	lbC053942
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BNE	lbC053942
 	MOVE.W	#$FF80,D3
 	MOVE.W	lbW00D5E4,D0
@@ -13544,25 +13545,25 @@ lbC053914:
 	BLT	lbC053920
 	MOVE.W	#$FF00,D3
 lbC053920:
-	SUB.W	lbW00D626,D3
+	SUB.W	verticalMotion,D3
 	BPL	lbC053942
 	MOVE.B	lbW00D5F0,D0
 	BPL	lbC05393C
 	CMP.B	#$FF,D0
 	BNE	lbC053942
 lbC05393C:
-	MOVE.W	D3,lbW00D626
+	MOVE.W	D3,verticalMotion
 lbC053942:
-	JSR	liftCarToTrack
+	JSR	handleRaceStartCountdown
 	MOVE.W	lbW00D644,lbW00D646
-	JSR	lbC05572E
-	TST.B	lbB0539B6
+	JSR	handleCollisionBetweenCars
+	TST.B	crashSoundCooldownTimer
 	BEQ	lbC053968
-	SUBQ.B	#$01,lbB0539B6
+	SUBQ.B	#$01,crashSoundCooldownTimer
 lbC053968:
-	TST.B	lbB00D47D
+	TST.B	offTrackCollisionFlag
 	BEQ	lbC0539B4
-	MOVE.B	lbW00D53A,D0
+	MOVE.B	maxDistanceFromTrack,D0
 	CMP.B	#$07,D0
 	BCC	lbC053984
 	MOVE.B	#$07,D0
@@ -13572,21 +13573,21 @@ lbC053984:
 	BCS	lbC053992
 	MOVE.B	#$40,D0
 lbC053992:
-	MOVE.B	D0,lbB00D005
-	TST.B	lbB0539B6
+	MOVE.B	D0,crashSoundVolume
+	TST.B	crashSoundCooldownTimer
 	BNE	lbC0539B4
 	MOVE.B	#$03,D0
 	JSR	playAudioSample
-	MOVE.B	#$05,lbB0539B6
+	MOVE.B	#$05,crashSoundCooldownTimer
 lbC0539B4:
 	RTS
 
-lbB0539B6:
+crashSoundCooldownTimer:
 	dc.b	$00,$00
 
 updateCarSteering:
 	MOVE.W	lbW00D610,D0
-	ADD.W	lbW00D642,D0
+	ADD.W	carPitchAdjustment,D0
 	MOVE.W	D0,lbW00D634
 	MOVE.B	lbB00D62A,D0
 	OR.B	lbB00D630,D0
@@ -13619,7 +13620,7 @@ lbC053A18:
 updateVelocityDamping:
 	MOVE.W	lbW00D5F0,D3
 	ASR.W	#$04,D3
-	MOVE.W	lbW00D626,D0
+	MOVE.W	verticalMotion,D0
 	SUB.W	D3,D0
 	TST.B	playerStateFlag
 	BEQ	lbC053A5C
@@ -13630,7 +13631,7 @@ lbC053A5C:
 	MOVE.W	D0,lbW00D5FC
 	MOVE.W	lbW00D5F4,D3
 	ASR.W	#$04,D3
-	MOVE.W	lbW00D628,D0
+	MOVE.W	lateralMotion,D0
 	SUB.W	D3,D0
 	MOVE.W	D0,lbW00D600
 	RTS
@@ -13665,7 +13666,7 @@ lbC053ABE:
 getSteeringMultiplier:
 	TST.B	playerStateFlag
 	BEQ	lbC053AEE
-	MOVE.W	lbW00D642,D0
+	MOVE.W	carPitchAdjustment,D0
 	ASL.W	#$01,D0
 	RTS
 
@@ -13688,7 +13689,7 @@ lbC053B12:
 	TST.B	lbB00D5A2
 	BNE	lbC053B38
 lbC053B2E:
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BEQ	lbC053B46
 lbC053B38:
 	MOVE.L	#$00000003,D7
@@ -13747,10 +13748,10 @@ lbC053BA4:
 
 calculateSpatialDistortion:
 	MOVE.W	#$0000,lbW00D64A
-	MOVE.L	lbL00D5B0,D0
-	ADD.L	lbL00D5B4,D0
+	MOVE.L	distanceFromTrackX,D0
+	ADD.L	distanceFromTrackY,D0
 	ASR.L	#$01,D0
-	SUB.L	lbL00D5B8,D0
+	SUB.L	distanceFromTrackZ,D0
 	ASR.L	#$04,D0
 	MOVE.W	D0,D3
 	EOR.W	#$8000,D3
@@ -13758,8 +13759,8 @@ calculateSpatialDistortion:
 	JSR	lbC053D24
 	MOVE.B	lbB00D42D,lbB00D42C
 	MOVE.B	lbB00D42B,lbB00D652
-	MOVE.L	lbL00D5B0,D0
-	SUB.L	lbL00D5B4,D0
+	MOVE.L	distanceFromTrackX,D0
+	SUB.L	distanceFromTrackY,D0
 	ASR.L	#$03,D0
 	MOVE.W	D0,lbW00D648
 	JSR	lbC053D24
@@ -13771,11 +13772,11 @@ calculateSpatialDistortion:
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,lbB00D64E
 	MOVE.B	lbB00D64E,segmentDirectionFlags
-	MOVE.B	lbW00D648,lbB00D4BB
-	MOVE.W	lbW00D638,D0
+	MOVE.B	lbW00D648,trackSideIndicatorCopy
+	MOVE.W	collisionStateFlags1,D0
 	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
-	TST.B	lbB00D4BB
+	TST.B	trackSideIndicatorCopy
 	BPL	lbC053C98
 	NEG.W	D3
 lbC053C98:
@@ -13785,11 +13786,11 @@ lbC053C98:
 	SWAP	D0
 	MOVE.W	D0,lbW00D640
 	MOVE.B	lbB00D650,segmentDirectionFlags
-	MOVE.B	lbW00D64A,lbB00D4BB
-	MOVE.W	lbW00D638,D0
+	MOVE.B	lbW00D64A,trackSideIndicatorCopy
+	MOVE.W	collisionStateFlags1,D0
 	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
-	TST.B	lbB00D4BB
+	TST.B	trackSideIndicatorCopy
 	BPL	lbC053CD6
 	NEG.W	D3
 lbC053CD6:
@@ -13797,13 +13798,13 @@ lbC053CD6:
 	MULS	D3,D0
 	ASL.L	#$01,D0
 	SWAP	D0
-	MOVE.W	D0,lbW00D642
+	MOVE.W	D0,carPitchAdjustment
 	MOVE.B	lbB00D652,segmentDirectionFlags
-	MOVE.B	lbW00D64C,lbB00D4BB
-	MOVE.W	lbW00D638,D0
+	MOVE.B	lbW00D64C,trackSideIndicatorCopy
+	MOVE.W	collisionStateFlags1,D0
 	MOVE.B	segmentDirectionFlags,D3
 	AND.W	#$00FF,D3
-	TST.B	lbB00D4BB
+	TST.B	trackSideIndicatorCopy
 	BPL	lbC053D14
 	NEG.W	D3
 lbC053D14:
@@ -15387,9 +15388,9 @@ setEngineParameters:
 	RTS
 
 processOpponentLogic:
-	MOVE.B	dropStartDone,D0
+	MOVE.B	raceStartComplete,D0
 	BEQ	lbC055356
-	MOVE.B	lbB00D474,D0
+	MOVE.B	crashRecoveryTimer,D0
 	BNE	lbC055356
 	MOVE.B	gameParameter2,D1
 	JSR	loadTrackSegmentConfiguration
@@ -15470,7 +15471,7 @@ lbC0553A6:
 	ADD.B	#$20,D1
 	MOVE.B	lbB00E32B,D2
 lbC0553D2:
-	MOVE.B	D2,lbB0555E2
+	MOVE.B	D2,offTrackFrameThreshold
 	JSR	generateRandomNumber
 	MOVE.L	#lbW01172C,A0
 	AND.B	$00(A0,D1.W),D0
@@ -15618,11 +15619,11 @@ lbB0555E0:
 	dc.b	$00
 lbB0555E1:
 	dc.b	$00
-lbB0555E2:
+offTrackFrameThreshold:
 	dc.b	$00,$00
 
 processEngineSound:
-	MOVE.B	dropStartDone,D0
+	MOVE.B	raceStartComplete,D0
 	BNE	lbC0555FA
 	RTS
 
@@ -15636,7 +15637,7 @@ lbC0555FA:
 	MOVE.B	playerStateFlag,D0
 	BNE	lbC055654
 lbC05560E:
-	MOVE.W	lbB00D5D0,D0
+	MOVE.W	carHeightPosition,D0
 	SUB.W	lbL00D666,D0
 	MOVE.W	D0,D4
 	ADD.W	#$0028,D0
@@ -15674,7 +15675,7 @@ lbC055688:
 	BMI	lbC0556C2
 	MOVE.W	#$0003,D3
 	MOVE.W	#$0000,D0
-	TST.B	lbB00D474
+	TST.B	crashRecoveryTimer
 	BNE	lbC0556AA
 	MOVE.W	lbW00D4EE,D0
 lbC0556AA:
@@ -15705,7 +15706,7 @@ lbC0556F0:
 lbC0556FE:
 	ADD.W	D0,D3
 	LSR.W	#$08,D3
-	MOVE.L	#lbB00D44F,A0
+	MOVE.L	#accumulatedOffTrackForceX,A0
 	MOVE.W	#$0002,D2
 lbC05570C:
 	MOVE.B	$00(A0,D2.W),D0
@@ -15716,10 +15717,10 @@ lbC05571A:
 	MOVE.B	D0,$00(A0,D2.W)
 	SUBQ.B	#$01,D2
 	BPL	lbC05570C
-	MOVE.B	#$80,lbB00D454
+	MOVE.B	#$80,offTrackAccumulationFlag
 	RTS
 
-lbC05572E:
+handleCollisionBetweenCars:
 	TST.B	lbB0557E0
 	BEQ	lbC05573E
 	SUBQ.B	#$01,lbB0557E0
@@ -15741,7 +15742,7 @@ lbC055764:
 	MOVE.W	lbW00D654,D0
 	ADD.W	D0,lbW00D640
 	MOVE.W	lbW00D656,D0
-	ADD.W	D0,lbW00D642
+	ADD.W	D0,carPitchAdjustment
 	MOVE.W	lbW00D658,D0
 	ADD.W	D0,lbW00D644
 	MOVE.W	#$0000,lbW00D654
@@ -16914,7 +16915,7 @@ lbC0569AE:
 	MOVE.W	lbW05AC2C,renderDataPointer
 	JSR	processSecondaryRendering
 lbC0569E2:
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BNE	lbC0569FC
 	TST.B	collisionStateFlags
 	BPL	lbC0569FC
@@ -18057,7 +18058,7 @@ lbC057A8A:
 	BCS	lbC057AAA
 	SUBQ.B	#$01,lbB00D455
 lbC057AA4:
-	JMP	lbC050148
+	JMP	initiateCarWreck
 
 lbC057AAA:
 	MOVE.L	primaryFrameBuffer,A0
@@ -18108,7 +18109,7 @@ lbC057B6A:
 	MOVE.B	#$02,D2
 lbC057B6E:
 	MOVE.B	lbB00D4B6,D0
-	MOVE.L	#lbB00D44F,A2
+	MOVE.L	#accumulatedOffTrackForceX,A2
 	MOVE.B	D0,$00(A2,D2.W)
 	SUBQ.B	#$01,D2
 	BPL	lbC057B6E
@@ -18133,7 +18134,7 @@ lbB057BAB:
 	dc.b	$0B,$FC,$F3,$CF,$3F,$03,$0C,$30,$C0
 
 updateScrollingDisplay:
-	MOVE.B	liftCarTimer,D0
+	MOVE.B	raceStartTimer,D0
 	BNE	lbC057BE0
 	MOVE.B	lbB00D4EA,D0
 	CMP.B	#$60,D0
@@ -21799,7 +21800,7 @@ lbC05A8B2:
 	MOVE.W	renderDataPointer,D3
 	CMP.W	lbW05B3E8,D3
 	BEQ	lbC05A926
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BNE	lbC05A926
 	MOVE.W	renderDataPointer,-(SP)
 	MOVE.W	lbW05B3E8,renderDataPointer
@@ -21825,7 +21826,7 @@ lbC05A936:
 	MOVE.W	renderDataPointer,D3
 	CMP.W	lbW05B3E8,D3
 	BEQ	lbC05A9A0
-	TST.B	liftCarTimer
+	TST.B	raceStartTimer
 	BNE	lbC05A9A0
 	MOVE.W	renderDataPointer,-(SP)
 	MOVE.W	lbW05B3E8,renderDataPointer
