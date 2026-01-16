@@ -193,7 +193,7 @@ gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
 
-TRACK_DATA_MASK		equ	$FFFF
+TRACK_DATA_MASK		equ	$FFFF	; This was incorrectly set to $18FF in the original disassembly
 
 	section	Code,code
 
@@ -332,73 +332,14 @@ doQuit:	move.l	sp_quit,sp
 	jmp	shutdown
 
 ****************************************************************************
-	MOVE.L	#codeStart,A0
-	MOVE.L	#codeEnd,D3
-	CLR.L	D0
-checksumLoop:
-	ADD.W	(A0)+,D0
-	SUBQ.L	#$02,D3
-	BNE	checksumLoop
-	MOVE.W	#$5834,D0
-	BRA	checksumDone
-
-	MOVE.B	#$80,checksum
-checksumDone:
-	BRA	codeStart
-
-checksum:
-	dc.b	$00,$00,$07,$A1,$00,$00
-
-codeStart:
-	MOVE.L	#begin,$00000080
-	TRAP	#$00
-begin:
-;	MOVE.L	#stackEnd,SP
-	JSR	initialize
+begin:	JSR	initialize
 	JMP	initializeGameMemoryAndState
 
 palette:
 	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
 	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000
 sourcePalette:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000
-stackEnd:
-	dc.w	$0000,$0000
+	ds.w	16
 keyboardState:
 	ds.b	128
 serialReceiveBuffer:
@@ -903,12 +844,6 @@ lbL000D78:
 	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
 lbL000DB4:
 	dc.l	$00000000
-rawAudioSampleData:
-	incbin	"rawAudioSampleData"
-sample0:
-	incbin	"sample0"
-sampleData:
-	ds.b	3200
 lbW00CFCA:
 	dc.w	$0000,$F4B8,$0000,$0984,$0096,$001E,$0001,$0000,$0000
 	dc.w	$FE3C,$0000,$2348
@@ -968,7 +903,7 @@ lbC00D0A6:
 setupFrameBufferAddresses:
 	MOVE.L	currentFrameBuffer,D3
 	ADD.L	#$00000284,D3
-	MOVE.L	D3,lbL05BE90
+	MOVE.L	D3,viewportTopAddress
 	MOVE.L	secondaryFrameBuffer,lbL00D112
 	MOVE.B	#$80,lbB00D116
 	RTS
@@ -1070,19 +1005,6 @@ clearGameStateLoop:
 	MOVE.B	#$00,(A0)+
 	CMP.L	#memory_7B6FA,A0
 	BLT	clearGameStateLoop
-	TST.B	checksum
-	BEQ	checksumOk
-	MOVE.W	#$0FF0,D0
-	MOVE.L	#copperlistColor0,A0
-	MOVE.W	#$001F,D3
-setYellowColorsLoop:
-	MOVE.W	D0,(A0)
-	ADD.L	#$00000004,A0
-	DBRA	D3,setYellowColorsLoop
-checksumNotOk:
-	TST.B	checksum
-	BMI	checksumNotOk
-checksumOk:
 	JSR	initializeGraphicsData
 	JMP	loadMenuDataToRAM
 
@@ -1446,7 +1368,7 @@ aiPatternOffset:
 	dc.b	$00
 engineSoundType:
 	dc.b	$00
-lbB00D4C4:
+dropStartDone:
 	dc.b	$00
 segmentDataStartIndex:
 	dc.b	$00
@@ -1496,7 +1418,7 @@ lbB00D4DD:
 	dc.b	$00
 displayModeFlag1:
 	dc.b	$00
-gameActionFlag:
+liftCarTimer:
 	dc.b	$00
 lbB00D4E0:
 	dc.b	$00
@@ -2293,12 +2215,11 @@ ascii.MSG3:
 	dc.b	$0D
 	dc.b	$09
 lbB01066B:
-	dc.b	$0D,$09,$0D,$47,$54,$52,$41,$43,$4B,$0D,$09,$0D,$09,$6D
-	dc.b	$6F,$76,$65,$2E,$62,$09,$64,$31,$2C,$64,$30,$0D,$09,$61
-	dc.b	$73,$6C,$2E
+	dc.b	$0D,$09,$0D,"GTRACK",$0D,$09,$0D,$09,"move.b",$09,"d1,d0",$0D,$09,"asl."
 engineCharacteristics:
-	dc.l	$22206220,$3E043014,$4A100800,$652E6209,$64302C64
-	dc.l	$320D096D,$6F766561,$2E6C0923
+	dc.l	$22206220,$3E043014,$4A100800
+	dc.b	"e.b",$09,"d0,d"
+	dc.b	"2",$0D,$09,"movea.l",$09,"#"
 levelNames:
 	dc.b	'LITTLE RAMP     '
 	dc.b	'STEPPING STONES '
@@ -2312,14 +2233,14 @@ levelNames:
 	dc.b	$64,$08,$1E,$80,$01,$81,$0F,$E0,$14,$08,$1E,$80,$01,$81
 	dc.b	$00,$F0,$03,$08,$03,$80,$01,$41,$02,$00,$64,$98,$01,$80
 	dc.b	$02,$00,$00,$FF,$50,$07,$FF,$80,$00,$00,$00,$CF,$50,$07
-	dc.b	$FF,$80,$76,$65,$2E,$62,$09,$64,$30,$2C,$44,$56,$0D,$09
-	dc.b	$6A,$73,$72,$09,$46,$45,$54,$43,$48,$0D,$09,$6D,$6F,$76
-	dc.b	$65,$2E,$62,$09,$64,$30,$2C,$44,$55,$48,$0D,$09,$6D,$6F
-	dc.b	$76,$65,$2E,$62,$09,$64,$30,$2C,$44,$56,$48,$09,$0D,$09
-	dc.b	$0D,$09,$6D,$6F,$76,$65,$2E,$62,$09,$23,$30,$2C,$64,$31
-	dc.b	$0D,$09,$6D,$6F,$E9,$E5,$FA,$F3,$F8,$E3,$ED,$E2,$FE,$8A
+	dc.b	$FF,$80,"ve.b",$09,"d0,DV",$0D,$09
+	dc.b	"jsr",$09,"FETCH",$0D,$09,"mov"
+	dc.b	"e.b",$09,"d0,DUH",$0D,$09,"mo"
+	dc.b	"ve.b",$09,"d0,DVH",$09,$0D,$09
+	dc.b	$0D,$09,"move.b",$09,"#0,d1"
+	dc.b	$0D,$09,"mo",$E9,$E5,$FA,$F3,$F8,$E3,$ED,$E2,$FE,$8A
 	dc.b	$ED,$EF,$E5,$EC,$EC,$8A,$E9,$F8,$EB,$E7,$E7,$E5,$E4,$EE
-	dc.b	$8A,$9B,$93,$92,$92,$50,$44,$55
+	dc.b	$8A,$9B,$93,$92,$92,"PDU"
 attenuationTable:
 	dc.w	$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FEFE,$FEFE
 	dc.w	$FDFD,$FDFD,$FCFC,$FBFB,$FBFA,$FAF9,$F9F8,$F8F7,$F7F6
@@ -2332,8 +2253,8 @@ attenuationTable:
 distanceLookupTable:
 	dc.w	$1B1B,$1B1B,$1B1A,$1A1A,$1919,$1918,$1717,$1615,$1413
 	dc.w	$1211,$0F0E,$0B09,$0707,$0707,$0707,$0707,$2331,$362C
-	dc.w	$6430,$0D09,$6265,$7109,$6774,$3131,$0D09,$6D6F,$7665
-	dc.w	$2E62
+	dc.b	"d0",$0D,$09,"beq",$09,"gt11",$0D,$09,"move"
+	dc.b	".b"
 trackGeometryDatabase:
 	dc.w	$50B2,$A3B2,$A9FF,$FEB2,$59B3,$20DA,$D8B3,$3BB4,$0A46
 	dc.w	$2E20,$9EB4,$A980,$852E,$60A5,$30C9,$8190
@@ -2902,10 +2823,10 @@ lbC048C22:
 	JSR	sendSerialByteWithChecksum
 	MOVE.B	lbB00D4E2,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	gameActionFlag,D0
+	MOVE.B	liftCarTimer,D0
 	JSR	sendSerialByteWithChecksum
 	MOVE.B	objectDisplayThreshold,D0
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BEQ	lbC048C66
 	BSET	#$07,D0
 lbC048C66:
@@ -2960,7 +2881,7 @@ handleNetworkProtocol:
 	MOVE.B	playerInputState,lbB049551
 	MOVE.B	lbB00D4E2,lbB049552
 	MOVE.B	lbB00D46C,lbB049553
-	MOVE.B	gameActionFlag,lbB049554
+	MOVE.B	liftCarTimer,lbB049554
 	JSR	waitForNetworkWord
 	MOVE.W	D0,D0
 	CMP.W	#$8765,D0
@@ -3012,7 +2933,7 @@ lbC048E46:
 	MOVE.B	D3,lbB049552
 	JSR	waitForNetworkByte
 	MOVE.B	D0,D0
-	TST.B	lbB00D4C4
+	TST.B	dropStartDone
 	BMI	lbC048E96
 	TST.B	networkGameMode
 	BMI	lbC048E96
@@ -3048,7 +2969,7 @@ lbC048E96:
 	MOVE.B	lbB049551,playerInputState
 	MOVE.B	lbB049552,lbB00D4E2
 	MOVE.B	lbB049553,lbB00D46C
-	MOVE.B	lbB049554,gameActionFlag
+	MOVE.B	lbB049554,liftCarTimer
 	MOVE.B	lbB049555,D0
 	MOVE.B	D0,lbB00D4E0
 	AND.B	#$0F,D0
@@ -3860,7 +3781,7 @@ synchronizeNetworkSetup:
 lbC049BB4:
 	MOVE.B	#$01,lbB00E331
 	MOVE.B	#$01,D0
-	JSR	lbC050C74
+	JSR	syncMultiplayerRecords
 	MOVE.B	#$00,lbB00E331
 	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$00FF,D7
@@ -3933,7 +3854,7 @@ lbC049CD4:
 
 lbC049CDC:
 	MOVE.B	#$00,D0
-	JSR	lbC050C74
+	JSR	syncMultiplayerRecords
 lbC049CE6:
 	RTS
 
@@ -4153,7 +4074,7 @@ lbC04A056:
 lbC04A058:
 	TST.B	networkGameMode
 	BEQ	lbC04A09C
-	TST.B	lbB00D4C4
+	TST.B	dropStartDone
 	BPL	lbC04A09C
 	MOVE.B	lbB00D4E0,D0
 	BPL	lbC04A09C
@@ -4657,12 +4578,9 @@ renderTextFromTable:
 	RTS
 
 leagueStatisticsTextTable:
-	dc.l	$1F140F56,$FF1F0710,$57696E6E,$65722032,$70747320
-	dc.l	$20202020,$42657374,$204C6170,$20317074,$FF205261
-	dc.l	$63656420,$20FF2057,$696E7320,$2020FF20,$4C617073
-	dc.l	$202020FF,$20506F69,$6E747320,$FF1F070A,$46697273
-	dc.l	$74202020,$20205365,$636F6E64,$20202020,$20546869
-	dc.l	$7264FF00
+	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced "
+	dc.b	$FF," Wins  ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First      Se"
+	dc.b	"cond        Third",$FF,$00
 
 calculateAlternateFontOffset:
 	AND.W	#$007F,D0
@@ -6099,7 +6017,7 @@ lbB04C057:
 	dc.b	$44,$4F,$4E,$45,$FF,$48,$61,$6C,$6C,$20,$6F,$66,$20,$46
 	dc.b	$61,$6D,$65,$FF,$00
 
-updateDisplayAndGenerateTrackData:
+generateDrawBridge:
 	MOVE.B	currentTrackID,D0
 	CMP.B	#$05,D0
 	BEQ	generateTrackSegment
@@ -6850,8 +6768,8 @@ lbC04CC14:
 	AND.B	#$0F,D0
 	RTS
 
-lbC04CC2E:
-	MOVE.B	gameActionFlag,D1
+liftCarToTrack:
+	MOVE.B	liftCarTimer,D1
 	BEQ	lbC04CC8E
 	CMP.B	#$E6,D1
 	BCS	lbC04CC6E
@@ -6864,7 +6782,7 @@ lbC04CC58:
 	MOVE.B	D0,lbB00D500
 	MOVE.B	#$00,lbB00D501
 lbC04CC66:
-	SUBQ.B	#$01,gameActionFlag
+	SUBQ.B	#$01,liftCarTimer
 	RTS
 
 lbC04CC6E:
@@ -6889,16 +6807,16 @@ lbC04CC90:
 	JSR	generateRandomNumber
 	AND.B	#$1F,D0
 	ADD.B	#$A0,D0
-	MOVE.B	#$2C,D2
-	TST.B	lbB00D4C4
+	MOVE.B	#$2C,D2				; DROP START
+	TST.B	dropStartDone
 	BPL	lbC04CCD0
-	MOVE.B	#$3C,D2
+	MOVE.B	#$3C,D2				; PRESS FIRE
 lbC04CCD0:
 	TST.B	selectedRaceType
 	BMI	lbC04CCDE
 	MOVE.B	#$8C,D0
 lbC04CCDE:
-	MOVE.B	D0,gameActionFlag
+	MOVE.B	D0,liftCarTimer
 	TST.B	lbB00D474
 	BEQ	lbC04CCF6
 	MOVE.B	#$32,lbB00D474
@@ -6916,13 +6834,13 @@ lbC04CD02:
 	JSR	lbC04CD72
 	TST.B	trackDirectionFlag
 	BMI	lbC04CD30
-	SUBQ.B	#$01,gameActionFlag
+	SUBQ.B	#$01,liftCarTimer
 	BNE	lbC04CD30
-	ADDQ.B	#$01,gameActionFlag
+	ADDQ.B	#$01,liftCarTimer
 lbC04CD30:
-	MOVE.B	lbB00D4C4,D0
+	MOVE.B	dropStartDone,D0
 	BNE	lbC04CD46
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BPL	lbC04CD50
 	RTS
 
@@ -6931,11 +6849,11 @@ lbC04CD46:
 	BNE	lbC04CD70
 lbC04CD50:
 	MOVE.B	#$00,D0
-	MOVE.B	D0,gameActionFlag
+	MOVE.B	D0,liftCarTimer
 	MOVE.B	D0,collisionStateFlags
 	MOVE.B	D0,lbB00D48E
 	MOVE.B	#$80,D0
-	MOVE.B	D0,lbB00D4C4
+	MOVE.B	D0,dropStartDone
 lbC04CD70:
 	RTS
 
@@ -8476,8 +8394,8 @@ lbB04E7E2:
 
 validateSaveDataChecksum:
 	MOVE.L	D0,lbL0563EC		; Store return value from initializeCIA
-	MOVE.L	$0007A21A,D0		; Load value from save slot data
-	ADD.L	$0007A416,D0		; Add value from offset +508 bytes
+	MOVE.L	memory_7A21A,D0		; Load value from save slot data
+	ADD.L	memory_7A416,D0		; Add value from offset +508 bytes
 	MOVE.L	lbL04E82C,D3		; Load stored checksum seed
 	EOR.L	D3,D0			; XOR sum with seed
 	MOVE.L	D0,lbL04E82C		; Store new checksum
@@ -8497,7 +8415,6 @@ divider:
 	dc.b	$00
 
 enterMainGameLoop:
-;	MOVE.L	#stackEnd,SP
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
 	MOVE.L	#memory_7A91A,A1
@@ -8663,7 +8580,7 @@ displayImage2:
 	MOVE.L	A0,currentFrameBuffer
 	MOVE.L	currentFrameBuffer,D3
 	ADD.L	#$00000284,D3
-	MOVE.L	D3,lbL05BE90
+	MOVE.L	D3,viewportTopAddress
 	MOVE.L	A0,A3
 	ADD.L	#$00007D00,A3
 lbC04EB84:
@@ -8687,8 +8604,8 @@ debug:	; StuntCarRacer.s:10188
 	MOVE.B	currentTrackID,D1
 	JSR	processTrackDataBuffer
 	JSR	initializeLookupTables
-	JSR	updateDisplayAndGenerateTrackData
-	JSR	loadVisibilityData
+	JSR	generateDrawBridge
+	JSR	loadMountainData
 	JSR	generateTrackPreviewData
 	JSR	renderTrackPreview
 	MOVE.B	#$2C,D1
@@ -8774,7 +8691,7 @@ mainGameLoop:
 	JSR	updateGamePhysics
 	JSR	calculateSpeedAndMovement
 	JSR	processGameFrame
-	JSR	updateDisplayAndGenerateTrackData
+	JSR	generateDrawBridge
 	JSR	calculateTrackEffects
 	JSR	processGameStatistics
 	JSR	updateGameTimingAndDirection
@@ -8789,7 +8706,7 @@ mainGameLoop:
 	TST.B	networkConnectionState
 	BNE	continueGameLoop
 checkGameEndConditions:
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BNE	lbC04EDFC
 	MOVE.B	playerStateFlag,D0
 	BEQ	continueGameLoop
@@ -8829,7 +8746,7 @@ lbC04EE74:
 continueGameLoop:
 	JSR	swapDisplayBuffers
 	JSR	checkNetworkTimeout
-	MOVE.B	gameActionFlag,D0
+	MOVE.B	liftCarTimer,D0
 	BNE	lbC04EF0E
 	MOVE.B	collisionStateFlags,D2
 	BPL	lbC04EF0E
@@ -8852,7 +8769,7 @@ lbC04EEE2:
 	JMP	initializeGameSystemsAndMainLoop
 
 lbC04EF0E:
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BNE	lbC04EF2C
 	TST.B	collisionStateFlags
 	BMI	mainGameLoop
@@ -9005,7 +8922,7 @@ processPlayerInput:
 	JSR	readControllerInput
 	MOVE.B	playerStateFlag,D0
 	BEQ	lbC04F1DE
-	MOVE.B	gameActionFlag,D0
+	MOVE.B	liftCarTimer,D0
 	BNE	lbC04F1DE
 	MOVE.B	inputStateFlags,D0
 	AND.B	#$0C,D0
@@ -9029,7 +8946,7 @@ lbC04F1DE:
 	CMP.B	#$78,D0
 	BCC	lbC04F26C
 lbC04F212:
-	MOVE.B	gameActionFlag,D0
+	MOVE.B	liftCarTimer,D0
 	BNE	lbC04F26C
 	MOVE.B	lbB00D5A2,D0
 	BNE	lbC04F26C
@@ -9112,9 +9029,9 @@ lbC04F310:
 	MOVE.W	#$0000,lbW00D4F4
 	MOVE.B	lbB00D48E,D0
 	MOVE.W	D0,-(SP)
-	MOVE.B	lbB04FF5B,D0
+	MOVE.B	gameMessageIndex,D0
 	MOVE.W	D0,-(SP)
-	MOVE.B	lbB04FF5A,D0
+	MOVE.B	gameMessageMode,D0
 	MOVE.W	D0,-(SP)
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
@@ -9126,9 +9043,9 @@ lbC04F310:
 	MOVE.L	(SP)+,currentFrameBuffer
 	JSR	lbC049486
 	MOVE.W	(SP)+,D0
-	MOVE.B	D0,lbB04FF5A
+	MOVE.B	D0,gameMessageMode
 	MOVE.W	(SP)+,D0
-	MOVE.B	D0,lbB04FF5B
+	MOVE.B	D0,gameMessageIndex
 	MOVE.W	(SP)+,D0
 	MOVE.B	D0,lbB00D48E
 	MOVE.B	#$00,gameInitFlag1
@@ -9212,7 +9129,7 @@ lbC04F4D6:
 	LSR.B	#$02,D0
 	AND.B	#$01,D0
 	MOVE.B	D0,lbB00D488
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BNE	lbC04F512
 	MOVE.B	playerStateFlag,D0
 	BNE	lbC04F512
@@ -9799,8 +9716,8 @@ displayHUDText:
 
 setMessageParameters:
 	MOVE.B	#$80,lbB00D48E
-	MOVE.B	D2,lbB04FF5B
-	MOVE.B	D0,lbB04FF5A
+	MOVE.B	D2,gameMessageIndex
+	MOVE.B	D0,gameMessageMode
 	RTS
 
 displayGameMessage:
@@ -9818,7 +9735,7 @@ lbC04FE14:
 	CMP.B	#$03,D0
 	BGE	lbC04FE36
 lbC04FE2A:
-	CMP.B	#$3C,lbB04FF5B
+	CMP.B	#$3C,gameMessageIndex
 	BNE	lbC04FE12
 lbC04FE36:
 	TST.B	networkTimeoutFlag
@@ -9831,14 +9748,14 @@ lbC04FE36:
 	MOVE.B	#$0F,D0
 lbC04FE62:
 	JSR	setBackgroundColor
-	MOVE.B	lbB04FF5A,renderModeFlag
-	MOVE.B	lbB04FF5B,D2
+	MOVE.B	gameMessageMode,renderModeFlag
+	MOVE.B	gameMessageIndex,D2
 	MOVE.B	D1,-(SP)
 	MOVE.B	#$04,lbB04B13F
 	MOVE.B	#$13,lbB04B13E
 	MOVE.B	#$03,lbB00D46D
 	MOVE.B	#$00,textYOffset
-	CMP.B	#$02,lbB04FF5A
+	CMP.B	#$02,gameMessageMode
 	BNE	lbC04FEAE
 	MOVE.B	#$05,textYOffset
 lbC04FEAE:
@@ -9881,23 +9798,16 @@ lbC04FF14:
 	JSR	setBackgroundColor
 	RTS
 
-lbB04FF5A:
+gameMessageMode:
 	dc.b	$00
-lbB04FF5B:
+gameMessageIndex:
 	dc.b	$00
 gameMessageTable:
-	dc.l	$033C5752,$4345434B,$03205241,$43434520,$213C2057
-	dc.l	$614F4E20,$61542020,$03205241,$43434520,$21204C4F
-	dc.l	$61535420,$03204452,$434F5020,$213C5354,$61415254
-	dc.l	$033C5052,$43455353,$21204649,$61524520,$03504155
-	dc.l	$43534544,$03204C41,$43505320,$21204F56,$61455220
-	dc.l	$03444546,$43494E45,$21204B45,$61595320,$033C5354
-	dc.l	$43454552,$21204C45,$61465420,$033C5354,$43454552
-	dc.l	$213C5249,$61474854,$033C4148,$43454144,$212B424F
-	dc.l	$614F5354,$03204241,$43434B20,$212B424F,$614F5354
-	dc.l	$03204241,$43434B20,$21202020,$61202020,$03564552
-	dc.l	$43494659,$21204B45,$61595320,$033C4641,$43554C54
-	dc.l	$213C464F,$61554E44,$3C54061A
+	dc.b	$03,"<WRCECK",$03," RACCE ",$21,"< WaON aT  ",$03," RACCE ! LOaST "
+	dc.b	$03," DRCOP ",$21,"<STaART",$03,"<PRCESS! FIaRE ",$03,"PAUSCED"
+	dc.b	$03," LACPS ! OVaER ",$03,"DECFINE! KEaYS ",$03,"<STCEER! LEaFT "
+	dc.b	$03,"<STCEER",$21,"<RIaGHT",$03,"<AHCEAD!+BOaOST",$03," BACCK !+BOaOST"
+	dc.b	$03," BACCK !   a   ",$03,"VECRIFY! KEaYS ",$03,"<FACULT",$21,"<FOaUND<T",$06,$1A
 
 updateCarDirection:
 	MOVE.B	lbB00D4DB,D0
@@ -10205,28 +10115,15 @@ raceConfiguredFlag:
 lbB05047E:
 	dc.b	$00
 SELECTSingleP.MSG:
-	dc.b	$1F,$11,$0B,$53,$45,$4C,$45,$43,$54,$FF,$53,$69,$6E,$67
-	dc.b	$6C,$65,$20,$50,$6C,$61,$79,$65,$72,$20,$4C,$65,$61,$67
-	dc.b	$75,$65,$FF,$4D,$75,$6C,$74,$69,$70,$6C,$61,$79,$65,$72
-	dc.b	$FF,$45,$6E,$74,$65,$72,$20,$61,$6E,$6F,$74,$68,$65,$72
-	dc.b	$20,$64,$72,$69,$76,$65,$72,$FF,$43,$6F,$6E,$74,$69,$6E
-	dc.b	$75,$65,$FF,$54,$72,$61,$63,$6B,$73,$20,$69,$6E,$20,$44
-	dc.b	$49,$56,$49,$53,$49,$4F,$4E,$20,$FF,$00,$00,$00,$00,$00
-	dc.b	$00,$20,$53,$2E,$FF,$20,$20,$20,$20,$20,$20,$20,$20,$73
-	dc.b	$FF,$43,$6F,$6D,$70,$75,$74,$65,$72,$20,$4C,$69,$6E,$6B
-	dc.b	$FF,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73,$73
-	dc.b	$73,$73,$73,$73,$73,$73,$73,$54,$72,$61,$63,$6B,$3A,$20
-	dc.b	$20,$54,$68,$65,$20,$FF,$1F,$0A,$09,$44,$52,$49,$56,$45
-	dc.b	$52,$53,$20,$43,$48,$41,$4D,$50,$49,$4F,$4E,$53,$48,$49
-	dc.b	$50,$FF,$1F,$0E,$14,$54,$72,$61,$63,$6B,$20,$72,$65,$63
-	dc.b	$6F,$72,$64,$FF,$00
+	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
+	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
+	dc.b	" S.",$FF,"        s",$FF,"Computer Link",$FF,"sssssssssssssssssssssTrack:  The ",$FF
+	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
 lbL050548:
-	dc.l	$2D2D2D2D,$2D2D2D2D,$2D2D2D2D
-	dc.b	$FF
+	dc.b	"------------",$FF
 Newtrackrecor.MSG:
-	dc.b	$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$2D,$FF,$1F
-	dc.b	$0C,$0F,$4E,$65,$77,$20,$74,$72,$61,$63,$6B,$20,$72,$65
-	dc.b	$63,$6F,$72,$64,$FF
+	dc.b	"------------",$FF,$1F,$0C,$0F,"New track record",$FF
+	even
 
 lbC050576:
 	JSR	renderCharacter
@@ -10239,21 +10136,11 @@ renderStatsText:
 	RTS
 
 TRACKBONUSPOI.MSG:
-	dc.b	$54,$52,$41,$43,$4B,$20,$42,$4F,$4E,$55,$53,$20,$50,$4F
-	dc.b	$49,$4E,$54,$53,$FF,$1F,$0E,$0C,$46,$49,$4E,$41,$4C,$20
-	dc.b	$53,$45,$41,$53,$4F,$4E,$FF,$52,$61,$63,$65,$20,$54,$69
-	dc.b	$6D,$65,$3A,$20,$FF,$42,$65,$73,$74,$20,$4C,$61,$70,$20
-	dc.b	$3A,$20,$FF,$1F,$10,$01,$20,$53,$4C,$49,$50,$53,$54,$52
-	dc.b	$45,$41,$4D,$20,$FF,$1F,$10,$05,$53,$55,$50,$45,$52,$20
-	dc.b	$4C,$45,$41,$47,$55,$45,$FF,$1F,$00,$07,$54,$52,$41,$43
-	dc.b	$4B,$20,$20,$44,$52,$49,$56,$45,$52,$20,$20,$20,$4C,$41
-	dc.b	$50,$2D,$54,$49,$4D,$45,$20,$20,$20,$20,$44,$52,$49,$56
-	dc.b	$45,$52,$20,$20,$52,$41,$43,$45,$2D,$54,$49,$4D,$45,$FF
-	dc.b	$1F,$06
+	dc.b	"TRACK BONUS POINTS",$FF,$1F,$0E,$0C,"FINAL SEASON",$FF,"Race Time: ",$FF
+	dc.b	"Best Lap : ",$FF,$1F,$10,$01," SLIPSTREAM ",$FF,$1F,$10,$05,"SUPER LEAGUE",$FF
+	dc.b	$1F,$00,$07,"TRACK  DRIVER   LAP-TIME    DRIVER  RACE-TIME",$FF,$1F,$06
 DRIVERBESTLAP.MSG:
-	dc.b	$0E,$44,$52,$49,$56,$45,$52,$20,$20,$20,$20,$20,$20,$42
-	dc.b	$45,$53,$54,$2D,$4C,$41,$50,$20,$52,$41,$43,$45,$2D,$54
-	dc.b	$49,$4D,$45,$FF
+	dc.b	$0E,"DRIVER      BEST-LAP RACE-TIME",$FF
 
 lbC050640:
 	MOVE.L	#playerStatsArray,A1
@@ -10673,7 +10560,7 @@ lbC050C02:
 	MOVE.B	$02(A1,D1.W),lbB00E247
 	RTS
 
-lbC050C74:
+syncMultiplayerRecords:
 	MOVE.B	lbB00E331,D3
 	EOR.B	D3,D0
 	BNE	lbC050CE8
@@ -10827,11 +10714,11 @@ lbC050E6A:
 	RTS
 
 lbB050E86:
-	dc.b	$44,$49,$52,$20
+	dc.b	"DIR "
 HALL.MSG:
-	dc.l	$48414C4C
+	dc.b	"HALL"
 MP.MSG:
-	dc.b	$4D,$50,$24,$00,$10,$39,$00,$01,$BB,$94,$6B,$00,$00,$0C
+	dc.b	"MP$",$00,$10,$39,$00,$01,$BB,$94,$6B,$00,$00,$0C
 	dc.b	$10,$39,$00,$01,$BB,$6B,$6B,$00,$00,$8A,$4E,$B9,$00,$06
 	dc.b	$45,$32,$10,$3C,$00,$01,$13,$C0,$00,$01,$BB,$16,$4E,$B9
 	dc.b	$00,$06,$4B,$0E,$12,$3C,$00,$0C,$4E,$B9,$00,$06,$4C,$2E
@@ -10845,18 +10732,10 @@ MP.MSG:
 	dc.b	$4E,$B9,$00,$06,$48,$34,$10,$39,$00,$01,$BB,$94,$4E,$75
 	dc.b	$05,$0D,$43,$14,$2A,$43,$43,$43,$71,$8F,$94
 NOTloadedsave.MSG:
-	dc.b	$20,$4E,$4F,$54,$FF,$20,$6C,$6F,$61,$64,$65,$64,$FF,$20
-	dc.b	$73,$61,$76,$65,$64,$FF,$49,$6E,$63,$6F,$72,$72,$65,$63
-	dc.b	$74,$20,$64,$61,$74,$61,$20,$66,$6F,$75,$6E,$64,$20,$FF
-	dc.b	$46,$69,$6C,$65,$20,$6E,$61,$6D,$65,$20,$61,$6C,$72,$65
-	dc.b	$61,$64,$79,$20,$65,$78,$69,$73,$74,$73,$FF,$50,$72,$6F
-	dc.b	$62,$6C,$65,$6D,$20,$65,$6E,$63,$6F,$75,$6E,$74,$65,$72
-	dc.b	$65,$64,$FF,$46,$69,$6C,$65,$20,$6E,$61,$6D,$65,$20,$69
-	dc.b	$73,$20,$6E,$6F,$74,$20,$73,$75,$69,$74,$61,$62,$6C,$65
-	dc.b	$FF,$1F,$05,$13,$49,$6E,$73,$65,$72,$74,$20,$67,$61,$6D
-	dc.b	$65,$20,$70,$6F,$73,$69,$74,$69,$6F,$6E,$20,$73,$61,$76
-	dc.b	$65,$20,$FF,$74,$61,$70,$65,$FF,$64,$69,$73,$63,$FF,$7F
-	dc.b	$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F
+	dc.b	" NOT",$FF," loaded",$FF," saved",$FF,"Incorrect data found ",$FF
+	dc.b	"File name already exists",$FF,"Problem encountered",$FF
+	dc.b	"File name is not suitable",$FF,$1F,$05,$13,"Insert game position save ",$FF
+	dc.b	"tape",$FF,"disc",$FF,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F
 	dc.b	$FF
 
 lbC050FEA:
@@ -11008,7 +10887,7 @@ lbC051202:
 	SUBQ.B	#$01,D1
 	BPL	lbC0511B6
 	MOVE.B	additionalPlayerCount,D0
-	MOVE.B	D0,$0007A4F6
+	MOVE.B	D0,memory_7A4F6
 	JSR	lbC051022
 	RTS
 
@@ -11037,7 +10916,7 @@ lbC05125A:
 lbC051276:
 	SUBQ.B	#$01,D1
 	BPL	lbC05122A
-	MOVE.B	$0007A4F6,D0
+	MOVE.B	memory_7A4F6,D0
 	MOVE.B	D0,additionalPlayerCount
 lbC051288:
 	RTS
@@ -11303,10 +11182,9 @@ lbC0516B4:
 	JMP	displayMenuScreen
 
 LRHBSSBRHJRCS.MSG:
-	dc.b	$4C
+	dc.b	"L"
 RHBSSBRHJRCSJ.MSG:
-	dc.b	$52,$48,$42,$53,$53,$42,$52,$48,$4A,$52,$43,$53,$4A,$44
-	dc.b	$42,$4E,$B9,$00,$06,$77,$0A,$30,$3C,$0F,$9F,$20,$C6,$20
+	dc.b	"RHBSSBRHJRCSJDB",$4E,$B9,$00,$06,$77,$0A,$30,$3C,$0F,$9F,$20,$C6,$20
 	dc.b	$C7,$51,$C8,$FF,$FA,$4E,$75
 
 lookupDataTable:
@@ -11822,7 +11700,7 @@ lbC051F08:
 	MOVE.B	#$00,(A0)+
 	CMP.L	#lbL00D65E,A0
 	BNE	lbC051F08
-	MOVE.B	#$F0,gameActionFlag
+	MOVE.B	#$F0,liftCarTimer
 	JSR	loadTrackSegmentConfiguration
 	MOVE.L	#trackSegmentCoordinates,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -11867,13 +11745,13 @@ lbC051FA6:
 	MOVE.W	#$0010,lbB00D5DC
 	MOVE.L	lbL00D5AC,D0
 	MOVE.L	D0,D3
-	MOVE.B	lbB00D4C4,D2
+	MOVE.B	dropStartDone,D2
 	BEQ	lbC05200E
 	ASL.L	#$08,D0
 	ASL.L	#$01,D0
 	ADD.L	#$00180000,D0
 	MOVE.L	D0,lbB00D5DC
-	MOVE.B	#$E6,gameActionFlag
+	MOVE.B	#$E6,liftCarTimer
 lbC05200E:
 	LSR.L	#$02,D3
 	MOVE.W	D3,lbW00D560
@@ -12431,7 +12309,7 @@ lbC0527CC:
 	MOVE.W	D0,D4
 	CMP.W	#$00FE,D0
 	BCC	lbC0527AE
-	MOVE.L	lbL05BE90,A0
+	MOVE.L	viewportTopAddress,A0
 	EXT.L	D0
 	EXT.L	D5
 	LSR.L	#$03,D0
@@ -13644,7 +13522,7 @@ lbC0538A8:
 	OR.B	lbB00D639,D0
 	MOVE.B	D0,playerStateFlag
 	BNE	lbC053942
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BNE	lbC053942
 	MOVE.W	#$FF80,D3
 	MOVE.W	lbW00D5E4,D0
@@ -13675,7 +13553,7 @@ lbC053920:
 lbC05393C:
 	MOVE.W	D3,lbW00D626
 lbC053942:
-	JSR	lbC04CC2E
+	JSR	liftCarToTrack
 	MOVE.W	lbW00D644,lbW00D646
 	JSR	lbC05572E
 	TST.B	lbB0539B6
@@ -13810,7 +13688,7 @@ lbC053B12:
 	TST.B	lbB00D5A2
 	BNE	lbC053B38
 lbC053B2E:
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BEQ	lbC053B46
 lbC053B38:
 	MOVE.L	#$00000003,D7
@@ -14079,33 +13957,14 @@ lbC053EBA:
 	RTS
 
 LOADgameposit.MSG:
-	dc.b	$1F,$0B,$09,$4C,$4F,$41,$44,$20,$67,$61,$6D,$65,$20,$70
-	dc.b	$6F,$73,$69,$74,$69,$6F,$6E,$FF,$1F,$0B,$09,$53,$41,$56
-	dc.b	$45,$20,$67,$61,$6D,$65,$20,$70,$6F,$73,$69,$74,$69,$6F
-	dc.b	$6E,$FF,$44,$72,$69,$76,$65,$20,$6E,$6F,$74,$20,$72,$65
-	dc.b	$61,$64,$79,$FF,$44,$69,$73,$63,$20,$77,$72,$69,$74,$65
-	dc.b	$20,$70,$72,$6F,$74,$65,$63,$74,$65,$64,$FF,$49,$6E,$73
-	dc.b	$65,$72,$74,$20,$64,$69,$73,$63,$FF,$44,$69,$73,$63,$20
-	dc.b	$65,$72,$72,$6F,$72,$FF,$49,$6E,$63,$6F,$72,$72,$65,$63
-	dc.b	$74,$20,$64,$61,$74,$61,$20,$66,$6F,$75,$6E,$64,$20,$20
-	dc.b	$FF,$54,$79,$70,$65,$20,$69,$6E,$20,$66,$69,$6C,$65,$20
-	dc.b	$6E,$61,$6D,$65,$FF,$1F,$07,$16,$20,$20,$20,$20,$20,$20
-	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$1F,$07,$17,$20,$20,$20
-	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-	dc.b	$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$FF,$1F,$08
-	dc.b	$17,$FF,$44,$69,$73,$63,$20,$65,$72,$72,$6F,$72,$3A,$20
-	dc.b	$72,$65,$74,$72,$79,$20,$6F,$72,$20,$65,$73,$63,$61,$70
-	dc.b	$65,$FF,$1F,$08,$16,$57,$61,$72,$6E,$69,$6E,$67,$3A,$20
-	dc.b	$74,$68,$69,$73,$20,$64,$69,$73,$63,$20,$68,$61,$73,$20
-	dc.b	$6E,$6F,$74,$1F,$08,$17,$62,$65,$65,$6E,$20,$75,$73,$65
-	dc.b	$64,$20,$66,$6F,$72,$20,$67,$61,$6D,$65,$20,$73,$61,$76
-	dc.b	$69,$6E,$67,$FF,$1F,$05,$0F,$49,$6E,$73,$65,$72,$74,$20
-	dc.b	$66,$6F,$72,$6D,$61,$74,$74,$65,$64,$20,$67,$61,$6D,$65
-	dc.b	$20,$73,$61,$76,$65,$20,$64,$69,$73,$63,$1F,$0E,$11,$69
-	dc.b	$6E,$74,$6F,$20,$64,$72,$69,$76,$65,$20,$30,$2E,$1F,$09
-	dc.b	$14,$50,$72,$65,$73,$73,$20,$61,$6E,$79,$20,$6B,$65,$79
-	dc.b	$20,$74,$6F,$20,$63,$6F,$6E,$74,$69,$6E,$75,$65,$FF,$00
+	dc.b	$1F,$0B,$09,"LOAD game position",$FF,$1F,$0B,$09,"SAVE game position",$FF
+	dc.b	"Drive not ready",$FF,"Disc write protected",$FF,"Insert disc",$FF,"Disc error",$FF
+	dc.b	"Incorrect data found  ",$FF,"Type in file name",$FF,$1F,$07,$16,"                            "
+	dc.b	$1F,$07,$17,"                             ",$FF,$1F,$08,$17,$FF,"Disc error: retry or escape"
+	dc.b	$FF,$1F,$08,$16,"Warning: this disc has not",$1F,$08,$17,"been used for game saving",$FF
+	dc.b	$1F,$05,$0F,"Insert formatted game save disc",$1F,$0E,$11,"into drive 0.",$1F,$09,$14
+	dc.b	"Press any key to continue",$FF,$00
+	even
 
 displaySeasonSelection:
 	JSR	drawScreenFrame
@@ -14230,7 +14089,7 @@ lbC05424A:
 	JSR	setBackgroundColor
 	JSR	initializeSlotDisplay
 	MOVE.B	#$01,D0
-	JSR	lbC050C74
+	JSR	syncMultiplayerRecords
 	CLR.W	D0
 	MOVE.B	lbB0544B4,D0
 	ADD.W	#$0017,D0
@@ -14266,7 +14125,7 @@ lbC0542E2:
 	MOVE.B	lbB0544B4,lbB0544B6
 	JSR	saveSlotTextAndDisplay
 	MOVE.B	#$00,D0
-	JSR	lbC050C74
+	JSR	syncMultiplayerRecords
 	RTS
 
 displayConfirmationDialog:
@@ -14434,9 +14293,9 @@ lbC0544E0:
 lbC0544F0:
 	MOVE.L	#memory_7A21A,A0
 	MOVE.W	#$0016,D0
-	MOVE.L	#$47826653,$0007A234
-	MOVE.B	lbB0544B6,$0007A224
-	MOVE.B	lbB0544B7,$0007A225
+	MOVE.L	#$47826653,memory_7A234
+	MOVE.B	lbB0544B6,memory_7A224
+	MOVE.B	lbB0544B7,memory_7A225
 	JSR	displaySlotRight
 	BEQ	lbC054526
 	BPL	lbC0544F0
@@ -14456,9 +14315,9 @@ lbC054530:
 	BRA	loadSaveGameFromDisk
 
 lbC05455C:
-	MOVE.B	$0007A224,D0
-	MOVE.B	$0007A225,D3
-	CMP.L	#$47826653,$0007A234
+	MOVE.B	memory_7A224,D0
+	MOVE.B	memory_7A225,D3
+	CMP.L	#$47826653,memory_7A234
 	BEQ	lbC0545FA
 	MOVE.B	#$80,lbB0544BB
 	TST.B	lbB00E331
@@ -14798,13 +14657,13 @@ lbC0549DC:
 	BSR	validateTrackData
 	BSR	checkDiskReadStatus
 	BNE.S	lbC054A24
-	BSR	lbC054BC8
+	BSR	validateSectorHeaderChecksum
 	BEQ.S	lbC0549FA
 	DBRA	D2,lbC0549DC
 	BRA.S	lbC054A26
 
 lbC0549FA:
-	BSR	lbC054B90
+	BSR	decodeSectorHeader
 	BNE.S	lbC054A2A
 	CMP.W	-$0012(A6),D1
 	BNE.S	lbC054A2A
@@ -14847,22 +14706,22 @@ lbC054A4E:
 	BEQ	lbC054B5A
 	TST.L	$0440(A5)
 	BEQ.S	lbC054A4E
-	BSR	lbC054BC8
+	BSR	validateSectorHeaderChecksum
 	BNE.S	lbC054A26
-	BSR	lbC054B90
+	BSR	decodeSectorHeader
 	BNE.S	lbC054A2A
 	CMP.W	-$0012(A6),D1
 	BNE.S	lbC054A2A
 	MOVE.W	D2,D3
 	LEA	$0008(A5),A0
-	BSR	lbC054BB2
+	BSR	decodeMFMLongwords
 	MOVE.B	#$0B,D0
 	SUB.B	-$0007(A6),D0
 	LEA	$0008(A5),A0
-	BSR	lbC054D42
-	BSR	lbC054BDA
+	BSR	writeMFMEncodedLongword
+	BSR	calculateMFMChecksum
 	LEA	$0030(A5),A0
-	BSR	lbC054D42
+	BSR	writeMFMEncodedLongword
 	CMP.W	-$0010(A6),D3
 	BLT	lbC054B48
 	MOVE.W	-$000E(A6),D0
@@ -14876,7 +14735,7 @@ lbC054A4E:
 	BNE	lbC054B48
 	CMP.W	#$0001,-$001E(A6)
 	BNE.S	lbC054B06
-	BSR	lbC054B5E
+	BSR	calculateSectorOffset
 	MOVE.L	-$001C(A6),A0
 	ADD.L	D1,A0
 	LEA	$0040(A5),A1
@@ -14887,8 +14746,8 @@ lbC054A4E:
 	MOVE.W	#$0400,D1
 	BSR	lbC054BE0
 	LEA	$0038(A5),A0
-	BSR	lbC054D42
-	BSR	lbC054B6E
+	BSR	writeMFMEncodedLongword
+	BSR	markSectorAsRead
 	BRA.S	lbC054B48
 
 lbC054B06:
@@ -14897,17 +14756,17 @@ lbC054B06:
 	BSR	lbC054BE0
 	MOVE.L	D0,-(SP)
 	LEA	$0038(A5),A0
-	BSR	lbC054BB2
+	BSR	decodeMFMLongwords
 	CMP.L	(SP)+,D0
 	BNE	lbC054A2E
 	BTST	#$01,$0001(A4)
 	BNE.S	lbC054B56
-	BSR.S	lbC054B5E
+	BSR.S	calculateSectorOffset
 	LEA	$0040(A5),A0
 	MOVE.L	-$001C(A6),A1
 	ADD.L	D1,A1
 	BSR	copyDataWithBlitter
-	BSR	lbC054B6E
+	BSR	markSectorAsRead
 	MOVE.W	-$0006(A6),D0
 	CMP.W	-$000E(A6),D0
 	BEQ.S	lbC054B56
@@ -14923,14 +14782,14 @@ lbC054B5A:
 	MOVEQ	#-$01,D0
 	RTS
 
-lbC054B5E:
+calculateSectorOffset:
 	MOVE.L	D3,D1
 	SUB.W	-$0010(A6),D1
 	MOVE.L	#$00000200,D0
 	MULU	D0,D1
 	RTS
 
-lbC054B6E:
+markSectorAsRead:
 	MOVE.W	-$0004(A6),D0
 	BSET	D3,D0
 	MOVE.W	D0,-$0004(A6)
@@ -14947,9 +14806,9 @@ lbC054B84:
 	DBRA	D1,lbC054B84
 	RTS
 
-lbC054B90:
+decodeSectorHeader:
 	LEA	$0008(A5),A0
-	BSR	lbC054BB2
+	BSR	decodeMFMLongwords
 	MOVE.W	D0,D3
 	AND.W	#$00FF,D3
 	MOVE.W	D0,D2
@@ -14961,7 +14820,7 @@ lbC054B90:
 	CMP.B	#$FF,D0
 	RTS
 
-lbC054BB2:
+decodeMFMLongwords:
 	MOVE.L	(A0)+,D0
 	MOVE.L	(A0)+,D1
 	AND.L	#$55555555,D0
@@ -14970,15 +14829,15 @@ lbC054BB2:
 	OR.L	D1,D0
 	RTS
 
-lbC054BC8:
-	BSR	lbC054BDA
+validateSectorHeaderChecksum:
+	BSR	calculateMFMChecksum
 	MOVE.L	D0,-(SP)
 	LEA	$0030(A5),A0
-	BSR	lbC054BB2
+	BSR	decodeMFMLongwords
 	CMP.L	(SP)+,D0
 	RTS
 
-lbC054BDA:
+calculateMFMChecksum:
 	LEA	$0008(A5),A0
 	MOVEQ	#$28,D1
 lbC054BE0:
@@ -15098,7 +14957,7 @@ initializeBlitter:
 	CLR.W	bltdmod(A2)
 	RTS
 
-lbC054D42:
+writeMFMEncodedLongword:
 	MOVE.L	D0,-(SP)
 	LSR.L	#$01,D0
 	BSR	convertToMFMEncoding
@@ -15528,7 +15387,7 @@ setEngineParameters:
 	RTS
 
 processOpponentLogic:
-	MOVE.B	lbB00D4C4,D0
+	MOVE.B	dropStartDone,D0
 	BEQ	lbC055356
 	MOVE.B	lbB00D474,D0
 	BNE	lbC055356
@@ -15661,13 +15520,28 @@ lbC055494:
 	MOVE.W	lbW00D4F0,D0
 	SUB.W	lbB00D418,D0
 	TST.B	aiEnabled
-	dc.w	$6700
-codeEnd:
-	dc.w	$003C,$3639,$0001,$BD86,$D679,$0001,$BD88,$E24B,$9679
-	dc.w	$0001,$BD8A,$3803,$6A00,$0004,$4444,$0C44,$0200,$6500
-	dc.w	$0006,$383C,$01FE,$E24C,$3A04,$E445,$DA44,$4A43,$6A00
-	dc.w	$0004,$4445,$D045
-
+	BEQ.L	lbC0554E4
+	MOVE.W	boundsMinX,D3
+	ADD.W	boundsMaxX,D3
+	LSR.W	#$01,D3
+	SUB.W	boundsMinY,D3
+	MOVE.W	D3,D4
+	BPL.L	lbC0554C6
+	NEG.W	D4
+lbC0554C6:
+	CMPI.W	#$0200,D4
+	BCS.L	lbC0554D2
+	MOVE.W	#$01FE,D4
+lbC0554D2:
+	LSR.W	#$01,D4
+	MOVE.W	D4,D5
+	ASR.W	#$02,D5
+	ADD.W	D4,D5
+	TST.W	D3
+	BPL.L	lbC0554E2
+	NEG.W	D5
+lbC0554E2:
+	ADD.W	D5,D0
 lbC0554E4:
 	MOVE.B	#$EE,D2
 	BEQ	lbC0554F0
@@ -15748,7 +15622,7 @@ lbB0555E2:
 	dc.b	$00,$00
 
 processEngineSound:
-	MOVE.B	lbB00D4C4,D0
+	MOVE.B	dropStartDone,D0
 	BNE	lbC0555FA
 	RTS
 
@@ -16195,27 +16069,14 @@ leagueTextTable:
 	dc.w	$1F0F
 	; These are strings
 lbB055C56:
-	dc.b	$09,$44,$49,$56,$49,$53,$49,$4F,$4E,$20,$FF,$1F,$0E
+	dc.b	$09,"DIVISION ",$FF,$1F,$0E
 lbB055C63:
-	dc.b	$0D,$52,$41,$43,$45,$20,$20,$FF,$1F,$06,$0B,$54,$72,$61
-	dc.b	$63,$6B,$3A,$20,$20,$FF,$54,$68,$65,$20,$FF,$20,$56,$20
-	dc.b	$FF,$1F,$03,$18,$42,$72,$6F,$6B,$65,$6E,$20,$62,$79,$20
-	dc.b	$51,$55,$41,$52,$54,$45,$58,$20,$20,$20,$48,$69,$74,$20
-	dc.b	$66,$69,$72,$65,$20,$74,$6F,$20,$63,$6F,$6E,$74,$69,$6E
-	dc.b	$75,$65,$FF,$1F
+	dc.b	$0D,"RACE  ",$FF,$1F,$06,$0B,"Track:  ",$FF,"The ",$FF," V ",$FF,$1F,$03,$18
+  	dc.b    "steer to rotate view or fire to continue",$FF,$1F
 trackSpecificYOffset:
-	dc.b	$0F,$15,$54,$68,$65,$20,$FF,$1F,$11,$0F,$52,$45,$53,$55
-	dc.b	$4C,$54,$FF,$52,$61,$63,$65,$20,$57,$69,$6E,$6E,$65,$72
-	dc.b	$3A,$20,$FF,$46,$61,$73,$74,$65,$73,$74,$20,$4C,$61,$70
-	dc.b	$3A,$20,$FF,$1F,$0E,$0B,$52,$45,$53,$55,$4C,$54,$53,$20
-	dc.b	$54,$41,$42,$4C,$45,$1F,$06,$0E,$44,$52,$49,$56,$45,$52
-	dc.b	$20,$20,$20,$20,$20,$52,$41,$43,$45,$44,$20,$57,$49,$4E
-	dc.b	$20,$4C,$41,$50,$20,$20,$50,$54,$53,$FF,$50,$72,$6F,$6D
-	dc.b	$6F,$74,$69,$6F,$6E,$20,$66,$6F,$72,$20,$20,$FF,$52,$65
-	dc.b	$6C,$65,$67,$61,$74,$69,$6F,$6E,$20,$66,$6F,$72,$20,$FF
-	dc.b	$20,$43,$48,$41,$4E,$47,$45,$53,$FF,$1F,$12,$0E,$4E,$41
-	dc.b	$4D,$45,$3F,$FF,$20,$32,$70,$74,$73,$FF,$20,$31,$70,$74
-	dc.b	$FF,$20,$6F,$66,$20,$FF,$00
+	dc.b	$0F,$15,"The ",$FF,$1F,$11,$0F,"RESULT",$FF,"Race Winner: ",$FF,"Fastest Lap: ",$FF,$1F,$0E,$0B
+	dc.b	"RESULTS TABLE",$1F,$06,$0E,"DRIVER     RACED WIN LAP  PTS",$FF,"Promotion for  ",$FF
+	dc.b	"Relegation for ",$FF," CHANGES",$FF,$1F,$12,$0E,"NAME?",$FF," 2pts",$FF," 1pt",$FF," of ",$FF,$00
 
 fadeToColor:
 	MOVE.W	D0,palette
@@ -16962,7 +16823,7 @@ lbC0567BC:
 
 	JSR	busyWaitDelay
 	JSR	initializeViewport
-	JSR	renderVisibleObjects
+	JSR	renderMountainHorizon
 	JMP	lbC0569E2
 
 lbC0567F6:
@@ -17046,14 +16907,14 @@ lbC05699E:
 lbC0569AE:
 	MOVE.W	renderDataPointer,-(SP)
 	JSR	initializeViewport
-	JSR	renderVisibleObjects
+	JSR	renderMountainHorizon
 	MOVE.W	(SP)+,renderDataPointer
 	JSR	updateNetworkTiming
 	JSR	processRenderingPipeline
 	MOVE.W	lbW05AC2C,renderDataPointer
 	JSR	processSecondaryRendering
 lbC0569E2:
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BNE	lbC0569FC
 	TST.B	collisionStateFlags
 	BPL	lbC0569FC
@@ -17691,23 +17552,23 @@ processRenderData:
 
 lbC057324:
 	MOVE.W	#$0008,D3
-	JSR	lbC057372
+	JSR	renderBarrierPost
 	MOVE.B	lbB00D460,D1
 	ADDQ.B	#$02,D1
 	MOVE.W	#$0009,D3
-	JSR	lbC057372
+	JSR	renderBarrierPost
 	MOVE.B	lbB00D460,D1
 	ADD.B	#$78,D1
 	MOVE.W	#$000A,D3
-	JSR	lbC057372
+	JSR	renderBarrierPost
 	MOVE.B	lbB00D460,D1
 	ADD.B	#$7A,D1
 	MOVE.W	#$000B,D3
-	JSR	lbC057372
+	JSR	renderBarrierPost
 	MOVE.W	#$0020,renderDataPointer
 	RTS
 
-lbC057372:
+renderBarrierPost:
 	ASL.W	#$02,D3
 	MOVE.W	D3,renderDataPointer
 	MOVE.L	#coordinateLookupTable,A4
@@ -18272,7 +18133,7 @@ lbB057BAB:
 	dc.b	$0B,$FC,$F3,$CF,$3F,$03,$0C,$30,$C0
 
 updateScrollingDisplay:
-	MOVE.B	gameActionFlag,D0
+	MOVE.B	liftCarTimer,D0
 	BNE	lbC057BE0
 	MOVE.B	lbB00D4EA,D0
 	CMP.B	#$60,D0
@@ -18620,7 +18481,7 @@ scanlinePolygonFill:
 	MOVE.W	D1,lbB00D55A
 	SUBQ.W	#$01,D1
 	BMI	lbC0580DA
-	MOVE.L	lbL05BE90,A6
+	MOVE.L	viewportTopAddress,A6
 	CLR.L	D0
 	MOVE.W	D1,D0
 	ASL.W	#$02,D0
@@ -18729,7 +18590,7 @@ lbC0580B0:
 lbC0580C4:
 	SUBQ.W	#$01,lbB00D55A
 	SUB.L	#$00000028,A6
-	CMP.L	lbL05BE90,A6
+	CMP.L	viewportTopAddress,A6
 	BGE	lbC057F98
 lbC0580DA:
 	CLR.L	D1
@@ -20145,7 +20006,7 @@ lbC059256:
 lbC05925C:
 	MOVE.W	#$8000,(A4)+
 	MOVEM.L	A0-A2,-(SP)
-	MOVE.L	lbL05BE90,A4
+	MOVE.L	viewportTopAddress,A4
 	MOVE.W	lbB00D558,D0
 	ASL.W	#$02,D0
 	ADD.W	lbB00D558,D0
@@ -20202,7 +20063,7 @@ lbC0592F2:
 	MOVE.W	lbB00D558,D4
 	SUBQ.B	#$01,D4
 	BMI	lbC05936A
-	MOVE.L	lbL05BE90,A4
+	MOVE.L	viewportTopAddress,A4
 fillLoop2:
 	LEA	$1F40(A4),A0
 	LEA	$3E80(A4),A1
@@ -20810,7 +20671,7 @@ lineDrawingBufferPointer:
 renderDataPointer:
 	dc.w	$0000
 
-lbC059A4A:
+renderLapTime:
 	CMP.W	D2,D1
 	BGE	lbC059A52
 	EXG	D1,D2
@@ -20966,7 +20827,7 @@ lbC059C1C:
 	MOVE.W	#$0100,D0
 	MOVE.W	D5,D1
 	MOVE.W	#$0080,D2
-	JSR	lbC059A4A
+	JSR	renderLapTime
 	BNE	lbC059C0A
 	MOVE.W	#$0080,D5
 	ORI.B	#$01,CCR
@@ -20978,7 +20839,7 @@ lbC059C3A:
 	MOVE.W	#$0100,D0
 	MOVE.W	D5,D1
 	MOVE.W	D7,D2
-	JSR	lbC059A4A
+	JSR	renderLapTime
 	BNE	lbC059C0A
 	ANDI.B	#$1E,CCR
 	RTS
@@ -20990,7 +20851,7 @@ lbC059C60:
 	MOVE.W	#$0000,D0
 	MOVE.W	D5,D1
 	MOVE.W	#$0000,D2
-	JSR	lbC059A4A
+	JSR	renderLapTime
 	BNE	lbC059C0A
 	MOVE.W	#$0000,D5
 	ORI.B	#$01,CCR
@@ -21002,7 +20863,7 @@ lbC059C7E:
 	MOVE.W	#$0000,D0
 	MOVE.W	D5,D1
 	MOVE.W	D7,D2
-	JSR	lbC059A4A
+	JSR	renderLapTime
 	BNE	lbC059C0A
 	ANDI.B	#$1E,CCR
 	RTS
@@ -21310,7 +21171,7 @@ lbC059FDA:
 	SUBQ.W	#$01,D1
 	CMP.W	#$0080,D1
 	BCC	lbC05A1D2
-	MOVE.L	lbL05BE90,A6
+	MOVE.L	viewportTopAddress,A6
 	CLR.L	D0
 	MOVE.W	D1,D0
 	ASL.W	#$02,D0
@@ -21431,7 +21292,7 @@ lbC05A158:
 lbC05A16C:
 	SUBQ.W	#$01,lbB00D55A
 	SUB.L	#$00000028,A6
-	CMP.L	lbL05BE90,A6
+	CMP.L	viewportTopAddress,A6
 	BGE	lbC05A010
 lbC05A182:
 	TST.B	lbB05B3CA
@@ -21938,7 +21799,7 @@ lbC05A8B2:
 	MOVE.W	renderDataPointer,D3
 	CMP.W	lbW05B3E8,D3
 	BEQ	lbC05A926
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BNE	lbC05A926
 	MOVE.W	renderDataPointer,-(SP)
 	MOVE.W	lbW05B3E8,renderDataPointer
@@ -21964,7 +21825,7 @@ lbC05A936:
 	MOVE.W	renderDataPointer,D3
 	CMP.W	lbW05B3E8,D3
 	BEQ	lbC05A9A0
-	TST.B	gameActionFlag
+	TST.B	liftCarTimer
 	BNE	lbC05A9A0
 	MOVE.W	renderDataPointer,-(SP)
 	MOVE.W	lbW05B3E8,renderDataPointer
@@ -22227,7 +22088,7 @@ lbC05ACA2:
 	MOVE.W	$0004(A2),D0
 	SUB.W	$0006(A2),D0
 	BMI	lbC05AD66
-	MOVE.L	lbL05BE90,A0
+	MOVE.L	viewportTopAddress,A0
 	MOVE.W	D4,D0
 	EXT.L	D0
 	EXT.L	D5
@@ -22285,7 +22146,7 @@ lbC05AD64:
 	RTS
 
 lbC05AD66:
-	MOVE.L	lbL05BE90,A0
+	MOVE.L	viewportTopAddress,A0
 	MOVE.W	D4,D0
 	EXT.L	D0
 	EXT.L	D5
@@ -22369,16 +22230,16 @@ lbC05AE32:
 	MOVE.B	#$01,lbB0581A0
 	BRA	scanlinePolygonFill
 
-renderVisibleObjects:
+renderMountainHorizon:
 	MOVE.W	lbW00D542,D0
 	ASR.W	#$03,D0
 	NEG.W	D0
-	MOVE.W	D0,lbW05B09C
-	MOVE.L	#lbL05B036,A0
+	MOVE.W	D0,mountainShapeData
+	MOVE.L	#mountainHorizontalAngles,A0
 	MOVE.B	cameraAngleParameter,D6
 	SUB.B	#$1C,D6
 	MOVE.B	#$2C,D7
-	MOVE.B	lbB05B099,D1
+	MOVE.B	mountainSegmentCount,D1
 	SUBQ.B	#$01,D1
 lbC05AE6A:
 	MOVE.B	$00(A0,D1.W),D0
@@ -22393,12 +22254,12 @@ lbC05AE6A:
 	AND.B	#$FE,D3
 	SUB.W	D3,D0
 	ASR.W	#$03,D0
-	MOVE.W	D0,lbW05B09A
+	MOVE.W	D0,mountainScreenX
 	CLR.W	D0
-	MOVE.L	#lbL05B066,A0
+	MOVE.L	#mountainShapeIndices,A0
 	MOVE.B	$00(A0,D1.W),D0
 	ASL.W	#$03,D0
-	MOVE.L	#lbW05B2B8,A0
+	MOVE.L	#mountainSilhouetteTable,A0
 	MOVE.L	$00(A0,D0.W),A6
 	MOVE.L	$04(A0,D0.W),A2
 	MOVE.W	(A6)+,D6
@@ -22407,8 +22268,8 @@ lbC05AE6A:
 	ASL.B	#$01,D1
 	MOVE.L	#coordinateLookupTable,A4
 	MOVE.L	#transformedVertexBounds,A5
-	MOVE.W	lbW05B09A,D4
-	MOVE.W	lbW05B09C,D5
+	MOVE.W	mountainScreenX,D4
+	MOVE.W	mountainShapeData,D5
 lbC05AED2:
 	MOVE.W	(A6)+,D0
 	BPL	lbC05AEDA
@@ -22499,16 +22360,16 @@ lbC05AFF4:
 	BPL	lbC05AE6A
 	RTS
 
-loadVisibilityData:
+loadMountainData:
 	MOVE.B	currentTrackID,D1
 	MOVE.B	#$00,D1
-	MOVE.L	#lbW05B380,A1
+	MOVE.L	#trackMountainDataTable,A1
 	ASL.B	#$02,D1
 	MOVE.L	$00(A1,D1.W),A2
 	MOVE.B	(A2)+,D3
-	MOVE.B	D3,lbB05B099
-	MOVE.L	#lbL05B036,A0
-	MOVE.L	#lbL05B066,A1
+	MOVE.B	D3,mountainSegmentCount
+	MOVE.L	#mountainHorizontalAngles,A0
+	MOVE.L	#mountainShapeIndices,A1
 	MOVE.W	#$0000,D1
 lbC05B02A:
 	MOVE.B	(A2)+,(A0)+
@@ -22517,25 +22378,21 @@ lbC05B02A:
 	BNE	lbC05B02A
 	RTS
 
-lbL05B036:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
-lbL05B066:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
+mountainHorizontalAngles:
+	ds.l	12
+mountainShapeIndices:
+	ds.l	12
 lbB05B096:
 	dc.b	$00
 lbB05B097:
 	dc.b	$00
 lbB05B098:
 	dc.b	$00
-lbB05B099:
+mountainSegmentCount:
 	dc.b	$00
-lbW05B09A:
+mountainScreenX:
 	dc.w	$0000
-lbW05B09C:
+mountainShapeData:
 	dc.w	$0000,$0004,$0000,$0000,$80C8,$0000,$804B,$8019,$8078
 	dc.w	$801E,$0400,$0200,$0404,$0602,$0601,$0504,$0004,$080C
 	dc.w	$0004,$0000,$0000,$80C8,$0000,$80FA,$0000,$8050,$801E
@@ -22566,7 +22423,7 @@ lbW05B09C:
 	dc.w	$0050,$0010,$0050,$0018,$0050,$0010,$0018,$003C,$0010
 	dc.w	$003C,$0018,$003C,$0028,$003C,$0039,$0028,$0039,$003C
 	dc.w	$0039,$0069,$007D,$002A,$0069,$002A,$007D,$002A,$0000
-lbW05B2B8:
+mountainSilhouetteTable:
 	dc.w	$0006,$979E,$0006,$988A,$0006,$979E,$0006,$9894,$0006
 	dc.w	$979E,$0006,$989E,$0006,$979E,$0006,$98A8,$0006,$979E
 	dc.w	$0006,$98B2,$0006,$979E,$0006,$98BC,$0006,$979E,$0006
@@ -22579,7 +22436,7 @@ lbW05B2B8:
 	dc.w	$9832,$0006,$997E,$0006,$9832,$0006,$998C,$0006,$9832
 	dc.w	$0006,$999A,$0006,$9832,$0006,$99A8,$0006,$9868,$0006
 	dc.w	$99B6
-lbW05B380:
+trackMountainDataTable:
 	dc.w	$0006,$9A88,$0006,$9A88,$2005,$000F,$0D15,$0A1F,$0B25
 	dc.w	$0C2F,$0535,$023F,$0345,$004F,$0155,$045F,$0565,$026F
 	dc.w	$0175,$007F,$0585,$028F,$0395,$049F,$05A5,$00AF,$09B5
@@ -23118,13 +22975,13 @@ dynamicSpriteConfigBuffer:
 audioSpriteTable:
 	ds.b	216
 primaryFrameBuffer:
-	dc.l	$00000000
+	ds.l	1
 secondaryFrameBuffer:
-	dc.l	$00000000
+	ds.l	1
 currentFrameBuffer:
-	dc.l	$00000000
-lbL05BE90:
-	dc.l	$00000000
+	ds.l	1
+viewportTopAddress:
+	ds.l	1
 
 	section Data,data
 name_graphics:	dc.b	"graphics.library",0
@@ -23157,6 +23014,13 @@ lbL05BE94:
 bitplaneMaskTable:
 	incbin	"bitplaneMaskTable"
 	ds.b	40*200*4
+
+rawAudioSampleData:
+	incbin	"rawAudioSampleData"
+sample0:
+	incbin	"sample0"
+sampleData:
+	ds.b	3200
 
 	section BSS,bss
 sp_quit:	ds.l	1
@@ -23194,9 +23058,14 @@ memory_7A035	equ	(memory_70000+$A035)
 memory_7A03A	equ	(memory_70000+$A03A)
 memory_7A03F	equ	(memory_70000+$A03F)
 memory_7A21A	equ	(memory_70000+$A21A)
+memory_7A224	equ	(memory_70000+$A224)
+memory_7A225	equ	(memory_70000+$A225)
+memory_7A234	equ	(memory_70000+$A234)
+memory_7A416	equ	(memory_70000+$A416)
 networkTransferBuffer	equ	(memory_70000+$A41A)
 memory_7A43A	equ	(memory_70000+$A43A)
 memory_7A4BA	equ	(memory_70000+$A4BA)
+memory_7A4F6	equ	(memory_70000+$A4F6)
 memory_7A4FA	equ	(memory_70000+$A4FA)
 memory_7A51A	equ	(memory_70000+$A51A)
 memory_7A61A	equ	(memory_70000+$A61A)
