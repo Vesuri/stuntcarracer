@@ -1062,9 +1062,9 @@ copySomeImageLoop:
 
 lbW00D3F8:
 	dc.w	$0000
-lbB00D3FA:
+gasInputIntensityValue:
 	dc.b	$00
-lbB00D3FB:
+gasInputAccumulatorValue:
 	dc.b	$00
 lbB00D3FC:
 	dc.b	$00
@@ -1082,7 +1082,7 @@ lbB00D407:
 	dc.b	$00,$00
 lbB00D409:
 	dc.b	$00
-lbW00D40A:
+trackProgressionByte:
 	dc.w	$0000
 gameStateCounter:
 	dc.b	$00,$00
@@ -1168,7 +1168,7 @@ segmentRepeatCounter:
 	dc.b	$00,$00
 lbB00D44A:
 	dc.b	$00,$00,$00
-lbB00D44D:
+segmentSteeringFlags:
 	dc.b	$00,$00
 accumulatedOffTrackForceX:
 	dc.b	$00
@@ -1194,7 +1194,7 @@ raceMode:
 	dc.b	$00
 lbB00D45C:
 	dc.b	$00
-lbB00D45D:
+trackDirectionSign:
 	dc.b	$00
 displayRowOffset:
 	dc.b	$00
@@ -1322,7 +1322,7 @@ lbB00D4A6:
 	dc.b	$00
 currentDataIndex:
 	dc.b	$00
-lbB00D4A8:
+accelerationStateFlag:
 	dc.b	$00,$00
 lbB00D4AA:
 	dc.b	$00
@@ -1366,7 +1366,7 @@ aiBehaviorFlag2:
 	dc.b	$00
 aiActionTimer:
 	dc.b	$00
-lbB00D4C1:
+rollTransitionFlag:
 	dc.b	$00
 aiPatternOffset:
 	dc.b	$00
@@ -1531,7 +1531,7 @@ carRenderDistance:
 engineState:	EQU	*-1
 maxDistanceFromTrack:
 	dc.w	$0000
-lbW00D53C:
+steeringScaleFactor:
 	dc.w	$0000
 lbW00D53E:
 	dc.w	$0000
@@ -1624,7 +1624,7 @@ trackCenterZ:
 	dc.l	$00000000
 trackOffsetAdjustment:
 	dc.b	$00,$00
-lbB00D5A2:
+postWreckStateFlag:
 	dc.b	$00,$00
 carWorldX:
 	dc.l	$00000000
@@ -1692,7 +1692,7 @@ lbW00D5FA:
 	dc.w	$0000
 lbW00D5FC:
 	dc.w	$0000
-lbW00D5FE:
+steeringYawRate:
 	dc.w	$0000
 lbW00D600:
 	dc.w	$0000
@@ -1708,11 +1708,11 @@ lbW00D60A:
 	dc.w	$0000
 lbW00D60C:
 	dc.w	$0000
-lbW00D60E:
+baseTargetRoll:
 	dc.w	$0000
-lbW00D610:
+baseRollAngle:
 	dc.w	$0000
-lbW00D612:
+additionalYawOffset:
 	dc.w	$0000
 clampedDistanceX:
 	dc.w	$0000
@@ -1736,21 +1736,21 @@ verticalMotion:
 	dc.w	$0000
 lateralMotion:
 	dc.w	$0000
-lbB00D62A:
+gasOutputAccumulatorValue:
 	dc.b	$00
-lbB00D62B:
+gasOutputIntensityValue:
 	dc.b	$00
-lbW00D62C:
+targetRollAngle:
 	dc.w	$0000
 lbW00D62E:
 	dc.w	$0000
-lbB00D630:
+carVelocity:
 	dc.b	$00,$00
-lbW00D632:
+adjustedRollAngle:
 	dc.w	$0000
-lbW00D634:
+adjustedPitchAngle:
 	dc.w	$0000
-lbW00D636:
+adjustedYawAngle:
 	dc.w	$0000
 collisionStateFlags1:
 	dc.w	$0000
@@ -1761,11 +1761,11 @@ lbW00D63C:
 	dc.w	$0000
 lbW00D63E:
 	dc.w	$0000
-lbW00D640:
+rollAngleModifier:
 	dc.w	$0000
 carPitchAdjustment:
 	dc.w	$0000
-lbW00D644:
+yawAngleOffset:
 	dc.w	$0000
 lbW00D646:
 	dc.w	$0000
@@ -1787,7 +1787,7 @@ lbW00D656:
 	dc.w	$0000
 lbW00D658:
 	dc.w	$0000
-lbW00D65A:
+segmentTargetAngle:
 	dc.w	$0000
 impactSeverity:
 	dc.b	$00,$00
@@ -2740,7 +2740,7 @@ synchronizeNetworkState:
 	CLR.W	checksumAccumulator
 	MOVE.B	gameParameter1,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.W	lbW00D40A,D0
+	MOVE.W	trackProgressionByte,D0
 	JSR	sendSerialWordWithChecksum
 	MOVE.W	worldYSpeed,D0
 	ASR.W	#$01,D0
@@ -2785,7 +2785,7 @@ lbC048B4C:
 	JSR	sendSerialWordWithChecksum
 	MOVE.W	D7,D0
 	JSR	sendSerialWordWithChecksum
-	MOVE.W	lbB00D630,D0
+	MOVE.W	carVelocity,D0
 	JSR	sendSerialWordWithChecksum
 	MOVE.W	lateralRoadPosition,D0
 	TST.B	reverseDirectionFlag
@@ -4691,7 +4691,7 @@ displayRaceEndScreen:
 	TST.B	displayModeParameter
 	BPL	lbC04AC32
 	MOVE.L	#$00000002,D0
-	TST.B	lbB00D5A2
+	TST.B	postWreckStateFlag
 	BEQ	lbC04AC32
 	CLR.L	D0
 	MOVE.B	#$03,D0
@@ -6003,23 +6003,13 @@ renderMenuString:
 
 	dc.b	$17,$13,$19,$08,$15,$0A,$08,$15,$09,$1F
 textStringTable:
-	dc.l	$1F110B53,$454C4543,$54FF5072,$61637469,$736520FF
-	dc.l	$53746172,$74207468,$65205261,$63696E67,$20536561
-	dc.l	$736F6EFF,$4C6F6164,$2F536176,$652F5265,$706C6179
-	dc.l	$20202020,$202020FF,$4C6F6164,$FF536176,$65FF5265
-	dc.l	$706C6179,$FF43616E,$63656CFF,$4C4F4144,$2066726F
-	dc.l	$6D205461,$7065FF4C,$4F414420,$66726F6D,$20446973
-	dc.l	$63FF5341,$56452074,$6F205461,$7065FF53,$41564520
-	dc.l	$746F2044,$697363FF,$1F071420,$20204669,$6C656E61
-	dc.l	$6D653F20,$203EFF74,$6F207468,$65205355,$50455220
-	dc.l	$4C454147,$5545FF1F
-	dc.b	$0C
+	dc.b	$1F,$11,$0B,"SELECT",$FF,"Practice ",$FF,"Start the Racing Season",$FF
+	dc.b	"Load/Save/Replay        ",$FF,"Load",$FF,"Save",$FF,"Replay",$FF,"Cancel",$FF
+	dc.b	"LOAD from Tape",$FF,"LOAD from Disc",$FF,"SAVE to Tape",$FF,"SAVE to Disc",$FF
+	dc.b	$1F,$07,$14,"    Filename?  >",$FF,"to the SUPER LEAGUE",$FF,$1F,$0C
 lbB04C057:
-	dc.b	$09,$53,$55,$50,$45,$52,$20,$44,$49,$56,$49,$53,$49,$4F
-	dc.b	$4E,$20,$FF,$45,$58,$43,$45,$4C,$4C,$45,$4E,$54,$20,$44
-	dc.b	$52,$49,$56,$49,$4E,$47,$20,$2D,$20,$57,$45,$4C,$4C,$20
-	dc.b	$44,$4F,$4E,$45,$FF,$48,$61,$6C,$6C,$20,$6F,$66,$20,$46
-	dc.b	$61,$6D,$65,$FF,$00
+	dc.b	$09,"SUPER DIVISION ",$FF,"EXCELLENT DRIVING - WELL DONE",$FF
+	dc.b	"Hall of Fame",$FF,$00
 
 generateDrawBridge:
 	MOVE.B	currentTrackID,D0
@@ -6951,7 +6941,7 @@ calculateSpeedAndMovement:
 	MOVE.W	#$9000,D0
 	BNE	lbC04CEA0
 lbC04CE90:
-	MOVE.W	lbB00D630,D0
+	MOVE.W	carVelocity,D0
 	AND.W	#$FFF0,D0
 	BPL	lbC04CEA0
 	NEG.W	D0
@@ -7045,9 +7035,8 @@ inputPlayerName:
 	JSR	setTextPosition
 	MOVE.B	#$3E,D0
 	JSR	renderCharacter
-lbC04CFF6:
-	JSR	scanForInput
-	BCC	lbC04CFF6
+.loop:	JSR	scanForInput
+	BCC	.loop
 	MOVE.B	#$00,D0
 	MOVE.B	#$0C,D3
 	MOVE.B	#$00,currentInputPosition
@@ -7072,12 +7061,12 @@ lbC04D044:
 	BPL	lbC04D06C
 	JSR	processDirectionalInput
 	TST.B	inputCancelFlag
-	BNE	lbC04D12C
+	BNE	padNameWithSpaces
 lbC04D06C:
 	CMP.B	#$0D,D0
-	BEQ	lbC04D12C
+	BEQ	padNameWithSpaces
 	CMP.B	#$08,D0
-	BEQ	lbC04D0C4
+	BEQ	backspace
 	CMP.B	#$20,D0
 	BNE	lbC04D090
 	CMP.B	#$00,D1
@@ -7099,7 +7088,7 @@ lbC04D090:
 	BCS	lbC04D0DA
 	BRA	lbC04D044
 
-lbC04D0C4:
+backspace:
 	SUBQ.B	#$01,D1
 	BMI	lbC04D040
 	MOVE.B	#$7F,D0
@@ -7121,16 +7110,16 @@ lbC04D0F2:
 	ADDQ.B	#$01,D1
 	JMP	lbC04D044
 
-lbC04D114:
+padNameLoop:
 	MOVE.B	D1,D2
 	ADD.B	currentPlayerNameOffset,D2
 	MOVE.B	#$20,D0
 	MOVE.L	#playerNames,A2
 	MOVE.B	D0,$00(A2,D2.W)
 	ADDQ.B	#$01,D1
-lbC04D12C:
+padNameWithSpaces:
 	CMP.B	maxInputLength,D1
-	BLT	lbC04D114
+	BLT	padNameLoop
 	JMP	resetTextYOffset
 
 maxInputLength:
@@ -7482,7 +7471,7 @@ lbC04D6A6:
 	BMI	lbC04D71C
 	TST.B	carCrashedFlag
 	BMI	lbC04D71C
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BMI	lbC04D71C
 	MOVE.B	#$08,D2
 	TST.B	lbB00D49D
@@ -7503,7 +7492,7 @@ lbC04D6EC:
 lbC04D71C:
 	MOVE.B	reverseDirectionFlag,D0
 	LSR.B	#$01,D0
-	MOVE.B	lbB00D44D,D3
+	MOVE.B	segmentSteeringFlags,D3
 	EOR.B	D3,D0
 	MOVE.B	D0,lbB00D49D
 lbC04D732:
@@ -7532,9 +7521,9 @@ applyTrackSegmentGeometry:
 	MOVE.W	cameraRotationFlags,D0
 	SUB.W	segmentSlopeFlags,D0
 	MOVE.W	D0,trackHeightDifference
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BMI	lbC04D850
-	BTST	#$06,lbB00D44D
+	BTST	#$06,segmentSteeringFlags
 	BNE	lbC04D7CE
 	JSR	lbC04DCDA
 	MOVE.B	$0003(A5),D3
@@ -7545,7 +7534,7 @@ lbC04D7B0:
 	SUB.W	D3,D0
 	MOVE.W	D0,lateralRoadPosition
 	MOVE.W	lbW00D4F8,lbW00D410
-	MOVE.W	segmentSlopeFlags,lbW00D65A
+	MOVE.W	segmentSlopeFlags,segmentTargetAngle
 	RTS
 
 lbC04D7CE:
@@ -7578,7 +7567,7 @@ lbC04D7CE:
 	ASL.W	#$08,D3
 	MOVE.B	$0004(A5),D3
 	ADD.W	segmentSlopeFlags,D3
-	MOVE.W	D3,lbW00D65A
+	MOVE.W	D3,segmentTargetAngle
 	RTS
 
 lbC04D850:
@@ -7602,8 +7591,8 @@ lbC04D892:
 	MOVE.W	D0,lbW00D51C
 	ADD.W	#$4000,D0
 	SUB.W	trackDirectionInversionFlag,D0
-	MOVE.W	D0,lbW00D65A
-	MOVE.B	lbB00D44D,D4
+	MOVE.W	D0,segmentTargetAngle
+	MOVE.B	segmentSteeringFlags,D4
 	AND.B	#$03,D4
 	NEG.B	D4
 	ADDQ.B	#$01,D4
@@ -7736,7 +7725,7 @@ calculateTrackPosition:
 	SUB.W	D4,D0
 	NEG.W	D0
 lbC04DA54:
-	MOVE.W	D0,lbW00D40A
+	MOVE.W	D0,trackProgressionByte
 	ADD.W	#$0040,D0
 	MOVE.W	D0,lbB00D40E
 	CMP.W	D4,D0
@@ -8938,25 +8927,25 @@ lbC04F1DE:
 	MOVE.B	D0,raceActiveFlag
 	MOVE.B	#$00,D2
 	MOVE.B	#$00,D1
-	MOVE.B	lbB00D630,D0
+	MOVE.B	carVelocity,D0
 	BMI	lbC04F212
 	CMP.B	#$78,D0
 	BCC	lbC04F26C
 lbC04F212:
 	MOVE.B	raceStartTimer,D0
 	BNE	lbC04F26C
-	MOVE.B	lbB00D5A2,D0
+	MOVE.B	postWreckStateFlag,D0
 	BNE	lbC04F26C
 	MOVE.B	inputStateFlags,D0
 	AND.B	#$03,D0
 	CMP.B	#$01,D0
 	BEQ	lbC04F246
 	BGT	lbC04F25A
-	MOVE.B	lbB00D4A8,D0
+	MOVE.B	accelerationStateFlag,D0
 	BPL	lbC04F26C
 lbC04F246:
-	MOVE.B	lbB00D3FA,D1
-	MOVE.B	lbB00D3FB,D2
+	MOVE.B	gasInputIntensityValue,D1
+	MOVE.B	gasInputAccumulatorValue,D2
 	MOVE.B	#$80,D0
 	BNE	lbC04F266
 lbC04F25A:
@@ -8964,11 +8953,11 @@ lbC04F25A:
 	MOVE.B	#$FF,D2
 	MOVE.B	#$00,D0
 lbC04F266:
-	MOVE.B	D0,lbB00D4A8
+	MOVE.B	D0,accelerationStateFlag
 lbC04F26C:
-	MOVE.B	D1,lbB00D62B
-	MOVE.B	D2,lbB00D62A
-	JSR	lbC0521A4
+	MOVE.B	D1,gasOutputIntensityValue
+	MOVE.B	D2,gasOutputAccumulatorValue
+	JSR	processEngineAudio
 	RTS
 
 waitForTrackPreviewInput:
@@ -9561,7 +9550,7 @@ lbC04FB3C:
 	RTS
 
 calculateTrackEffects:
-	MOVE.W	lbB00D630,D0
+	MOVE.W	carVelocity,D0
 	SUB.W	#$1100,D0
 	BPL	lbC04FB50
 	MOVE.W	#$0000,D0
@@ -9808,7 +9797,7 @@ gameMessageTable:
 
 updateCarDirection:
 	MOVE.B	lbB00D4DB,D0
-	TST.W	lbB00D630
+	TST.W	carVelocity
 	BPL	lbC050062
 	SUBQ.B	#$01,D0
 	BPL	lbC050070
@@ -9896,7 +9885,7 @@ initiateCarWreck:
 	MOVE.B	networkGameMode,gameModeStateFlags
 lbC050174:
 	MOVE.B	#$02,D0
-	MOVE.B	D0,lbB00D5A2
+	MOVE.B	D0,postWreckStateFlag
 	MOVE.B	#$92,D0
 	MOVE.B	D0,visualEffectBaseValue
 	MOVE.B	#$82,D0
@@ -11251,7 +11240,7 @@ loadTrackSegmentConfiguration:
 	AND.L	#TRACK_DATA_MASK,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
-	MOVE.B	$0001(A0),lbB00D44D
+	MOVE.B	$0001(A0),segmentSteeringFlags
 	MOVE.B	$0000(A0),D2
 	MOVE.B	$00(A0,D2.W),D0
 	ADDQ.B	#$01,D2
@@ -11587,7 +11576,7 @@ lbC051D1A:
 	MOVE.B	#$00,offsetFromRoadCenter
 lbC051D22:
 	MOVE.B	#$00,segmentRenderingFlag
-	MOVE.B	lbB00D44D,D0
+	MOVE.B	segmentSteeringFlags,D0
 	AND.B	#$C0,D0
 	BNE	lbC051D4C
 	BTST	#$06,trackHeightDifference
@@ -11770,7 +11759,7 @@ lbC05202C:
 
 calculatePlayerDistance:
 	MOVE.W	gameStateCounter,D0
-	SUB.W	lbW00D40A,D0
+	SUB.W	trackProgressionByte,D0
 	ASR.W	#$03,D0
 	MOVE.B	gameParameter2,D1
 	MOVE.B	gameParameter1,D2
@@ -11847,11 +11836,11 @@ lbC052140:
 	MOVE.B	#$00,textYOffset
 	RTS
 
-lbC0521A4:
+processEngineAudio:
 	MOVE.B	raceActiveFlag,D0
-	OR.B	lbB00D5A2,D0
+	OR.B	postWreckStateFlag,D0
 	BNE	lbC052210
-	MOVE.B	lbB00D4A8,D0
+	MOVE.B	accelerationStateFlag,D0
 	BMI	lbC0521CC
 	MOVE.B	inputStateFlags,D0
 	AND.B	#$03,D0
@@ -11869,7 +11858,7 @@ lbC0521CC:
 	JSR	lbC052124
 lbC052200:
 	MOVE.B	#$80,lbB00D462
-	ASL.W	lbB00D62A
+	ASL.W	gasOutputAccumulatorValue
 	RTS
 
 lbC052210:
@@ -12175,7 +12164,7 @@ processCollisionState:
 	MOVE.B	#$01,lbB000C60
 	MOVE.B	lbB00D4DA,D0
 	BNE	lbC052614
-	MOVE.B	lbB00D5A2,D0
+	MOVE.B	postWreckStateFlag,D0
 	BEQ	lbC0525DC
 lbC052614:
 	TST.B	collisionStateFlags
@@ -12373,7 +12362,7 @@ lbB0528BC:
 	dc.b	$00,$00
 
 updateWheelSpeed:
-	MOVE.W	lbB00D630,D0
+	MOVE.W	carVelocity,D0
 	BPL	lbC0528CA
 	NEG.W	D0
 lbC0528CA:
@@ -12401,16 +12390,16 @@ lbC05290A:
 	MOVE.W	D0,wheelSpeed
 	RTS
 
-updateTrackProgression:
+calculateSteeringResponse:
 	MOVE.B	gameParameter1,D1
 	MOVE.B	D1,currentSegmentIndex
 	JSR	loadTrackSegmentConfiguration
-	MOVE.W	lbW00D65A,D4
+	MOVE.W	segmentTargetAngle,D4
 	SUB.W	cameraAngleY,D4
 	MOVE.W	reverseDirectionFlag,D3
 	EOR.W	D3,D4
 	MOVE.B	#$00,D2
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BPL	lbC052956
 	ADDQ.B	#$02,D2
 	MOVE.W	trackDirectionInversionFlag,D0
@@ -12418,7 +12407,7 @@ updateTrackProgression:
 	BPL	lbC052956
 	ADDQ.B	#$02,D2
 lbC052956:
-	MOVE.L	#lbL052B5A,A0
+	MOVE.L	#steeringOffsetTable,A0
 	ADD.W	$00(A0,D2.W),D4
 	MOVE.W	D4,D0
 	BPL	lbC052968
@@ -12433,9 +12422,9 @@ lbC052968:
 lbC052984:
 	ASL.W	#$04,D0
 lbC052986:
-	MOVE.W	D0,lbW00D53C
+	MOVE.W	D0,steeringScaleFactor
 	MOVE.B	trackModeParameter,D0
-	SUB.B	lbW00D40A,D0
+	SUB.B	trackProgressionByte,D0
 	CMP.B	#$02,D0
 	BCC	lbC0529AC
 	JSR	advanceToNextSegment
@@ -12444,16 +12433,16 @@ lbC0529AC:
 	MOVE.B	trackDirectionInversionFlag,D0
 	MOVE.B	reverseDirectionFlag,D3
 	EOR.B	D3,D0
-	MOVE.B	D0,lbB00D45D
+	MOVE.B	D0,trackDirectionSign
 	MOVE.B	controlResponseValue,D0
 	BEQ	lbC052A3C
 	MOVE.B	trackIncrementValue,D3
 	EOR.B	D3,D0
 	MOVE.B	D0,temp
-	MOVE.B	lbB00D44D,D0
+	MOVE.B	segmentSteeringFlags,D0
 	BPL	lbC052A20
 	MOVE.B	controlResponseValue,D0
-	MOVE.B	lbB00D45D,D3
+	MOVE.B	trackDirectionSign,D3
 	EOR.B	D3,D0
 	BMI	lbC052A04
 	MOVE.B	trackControlParameter,D0
@@ -12461,7 +12450,7 @@ lbC0529AC:
 	JMP	lbC052A26
 
 lbC052A04:
-	MOVE.B	lbB00D45D,D0
+	MOVE.B	trackDirectionSign,D0
 	MOVE.B	D0,controlResponseValue
 	MOVE.B	trackControlParameter,D0
 	SUB.B	#$23,D0
@@ -12472,15 +12461,15 @@ lbC052A20:
 lbC052A26:
 	TST.B	temp
 	BMI	lbC052A36
-	ADD.B	lbW00D53C,D0
+	ADD.B	steeringScaleFactor,D0
 lbC052A36:
 	JMP	lbC052B1C
 
 lbC052A3C:
 	MOVE.W	#$0000,D4
-	MOVE.B	lbB00D44D,D0
+	MOVE.B	segmentSteeringFlags,D0
 	BPL	lbC052A60
-	MOVE.B	lbB00D45D,controlResponseValue
+	MOVE.B	trackDirectionSign,controlResponseValue
 	MOVE.B	trackControlParameter,D0
 	JMP	lbC052B1C
 
@@ -12495,7 +12484,7 @@ lbC052A60:
 	MOVE.B	#$FF,D2
 lbC052A88:
 	MOVE.B	D2,segmentDirectionFlags
-	MOVE.W	lbB00D630,D0
+	MOVE.W	carVelocity,D0
 	BPL	lbC052A9A
 	NEG.W	D0
 lbC052A9A:
@@ -12525,23 +12514,23 @@ lbC052AD4:
 	AND.L	#$0000000F,D2
 	LSR.W	D2,D0
 	SUB.W	D0,D4
-	MOVE.L	#memory_79360,A0
-	SUB.L	#$6174,A0
-	MOVE.L	#$667B379F,D3
-	ADD.L	#$36729563,D3
-	CMP.L	(A0),D3
-	BNE	lbC052B10
+;	MOVE.L	#memory_79360,A0
+;	SUB.L	#$6174,A0
+;	MOVE.L	#$667B379F,D3
+;	ADD.L	#$36729563,D3
+;	CMP.L	(A0),D3			; This is the magic value at installLineEmulatorTrap
+;	BNE	lbC052B10
 	TST.B	playerStateFlag
 	BNE	lbC052B14
 lbC052B10:
 	MOVE.W	#$0000,D4
 lbC052B14:
-	MOVE.W	D4,lbW00D5FE
+	MOVE.W	D4,steeringYawRate
 	RTS
 
 lbC052B1C:
 	MOVE.B	D0,segmentDirectionFlags
-	MOVE.W	lbB00D630,D0
+	MOVE.W	carVelocity,D0
 	MOVE.B	segmentDirectionFlags,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
@@ -12558,7 +12547,7 @@ lbC052B46:
 	BCS	lbC052AD4
 	BRA	lbC052A60
 
-lbL052B5A:
+steeringOffsetTable:
 	dc.l	$000000D9
 	dc.w	$FF27
 
@@ -12671,7 +12660,7 @@ calculateTransformMatrices:
 	MOVE.W	D0,$0018(A5)
 	MOVE.W	D0,$001A(A5)
 	MOVE.W	cameraAngleY,D0
-	SUB.W	lbW00D65A,D0
+	SUB.W	segmentTargetAngle,D0
 	MOVE.W	D0,-(SP)
 	JSR	calculateSine
 	MOVE.W	D0,$0034(A5)
@@ -12809,7 +12798,7 @@ lbC052E2A:
 transformWorldCoordinates:
 	MOVE.W	#$0002,D2
 	MOVE.L	#transformationMatrix,A5
-	MOVE.L	#lbW00D62C,A4
+	MOVE.L	#targetRollAngle,A4
 lbC052E9C:
 	MOVE.W	#$0000,D5
 	MOVE.W	worldXSpeed,D0
@@ -12834,13 +12823,13 @@ lbC052E9C:
 calculateViewAngles:
 	MOVE.W	#$000F,D1
 	JSR	getNegativeTrigValue
-	MOVE.W	D0,lbW00D610
+	MOVE.W	D0,baseRollAngle
 	MOVE.W	#$0004,D1
 	JSR	getNegativeTrigValue
-	MOVE.W	D0,lbW00D612
+	MOVE.W	D0,additionalYawOffset
 	MOVE.W	#$000E,D1
 	JSR	getPositiveTrigValue
-	MOVE.W	D0,lbW00D60E
+	MOVE.W	D0,baseTargetRoll
 	RTS
 
 calculateSecondaryCoordinates:
@@ -12849,15 +12838,15 @@ calculateSecondaryCoordinates:
 	MOVE.L	#lbW00D5F6,A4
 lbC052F28:
 	MOVE.W	#$0000,D5
-	MOVE.W	lbW00D632,D0
+	MOVE.W	adjustedRollAngle,D0
 	MOVE.B	$09(A5,D2.W),D1
 	JSR	matrixMultiply
 	ADD.W	D0,D5
-	MOVE.W	lbW00D634,D0
+	MOVE.W	adjustedPitchAngle,D0
 	MOVE.B	$0C(A5,D2.W),D1
 	JSR	matrixMultiply
 	ADD.W	D0,D5
-	MOVE.W	lbW00D636,D0
+	MOVE.W	adjustedYawAngle,D0
 	MOVE.B	$0F(A5,D2.W),D1
 	JSR	matrixMultiply
 	ADD.W	D0,D5
@@ -13001,7 +12990,7 @@ lbC05311A:
 
 lbC05311E:
 	MOVE.W	D1,D3
-	MOVE.L	#lbW00D40A,A0
+	MOVE.L	#trackProgressionByte,A0
 	ASL.B	#$01,D3
 	TST.B	$00(A0,D3.W)
 	BNE	lbC05315A
@@ -13029,8 +13018,8 @@ updateGamePhysics:
 	JSR	detectTrackBoundaryCollisions
 	MOVE.B	frameProcessingFlag,D0
 	BEQ	lbC0531C0
-	JSR	updateCarSteering
-	JSR	updateTrackProgression
+	JSR	updateCarOrientation
+	JSR	calculateSteeringResponse
 	JSR	calculateSecondaryCoordinates
 	JSR	updateCollisionState
 	JSR	updateVelocityDamping
@@ -13220,7 +13209,7 @@ integrateVelocityComponents:
 	ASR.L	#$08,D0
 lbC053438:
 	ADD.W	D0,rotationSpeedX
-	MOVE.W	lbW00D5FE,D0
+	MOVE.W	steeringYawRate,D0
 	MOVE.B	#$EE,D2
 	BEQ	lbC053450
 	MULS	D2,D0
@@ -13551,7 +13540,7 @@ lbC05393C:
 	MOVE.W	D3,verticalMotion
 lbC053942:
 	JSR	handleRaceStartCountdown
-	MOVE.W	lbW00D644,lbW00D646
+	MOVE.W	yawAngleOffset,lbW00D646
 	JSR	handleCollisionBetweenCars
 	TST.B	crashSoundCooldownTimer
 	BEQ	lbC053968
@@ -13581,36 +13570,36 @@ lbC0539B4:
 crashSoundCooldownTimer:
 	dc.b	$00,$00
 
-updateCarSteering:
-	MOVE.W	lbW00D610,D0
+updateCarOrientation:
+	MOVE.W	baseRollAngle,D0
 	ADD.W	carPitchAdjustment,D0
-	MOVE.W	D0,lbW00D634
-	MOVE.B	lbB00D62A,D0
-	OR.B	lbB00D630,D0
+	MOVE.W	D0,adjustedPitchAngle
+	MOVE.B	gasOutputAccumulatorValue,D0
+	OR.B	carVelocity,D0
 	BMI	lbC0539EE
-	TST.B	lbB00D62B
+	TST.B	gasOutputIntensityValue
 	BEQ	lbC0539EE
 	AND.W	#$00FF,D0
-	SUB.W	D0,lbB00D62A
+	SUB.W	D0,gasOutputAccumulatorValue
 lbC0539EE:
-	MOVE.W	lbB00D62A,D3
+	MOVE.W	gasOutputAccumulatorValue,D3
 	BPL	lbC0539FA
 	NEG.W	D3
 lbC0539FA:
 	JSR	getSteeringMultiplier
 	SUB.W	D0,D3
 	BCS	lbC053A18
-	TST.B	lbB00D62A
+	TST.B	gasOutputAccumulatorValue
 	BPL	lbC053A12
 	NEG.W	D0
 lbC053A12:
-	MOVE.W	D0,lbB00D62A
+	MOVE.W	D0,gasOutputAccumulatorValue
 lbC053A18:
-	MOVE.W	lbB00D62A,D0
-	ADD.W	lbW00D644,D0
-	ADD.W	lbW00D612,D0
-	MOVE.W	D0,lbW00D636
-	JSR	lbC053A7A
+	MOVE.W	gasOutputAccumulatorValue,D0
+	ADD.W	yawAngleOffset,D0
+	ADD.W	additionalYawOffset,D0
+	MOVE.W	D0,adjustedYawAngle
+	JSR	calculateRollAngleTransition
 	RTS
 
 updateVelocityDamping:
@@ -13620,7 +13609,7 @@ updateVelocityDamping:
 	SUB.W	D3,D0
 	TST.B	playerStateFlag
 	BEQ	lbC053A5C
-	MOVE.W	lbW00D636,D3
+	MOVE.W	adjustedYawAngle,D3
 	ASR.W	#$02,D3
 	ADD.W	D3,D0
 lbC053A5C:
@@ -13632,31 +13621,31 @@ lbC053A5C:
 	MOVE.W	D0,lbW00D600
 	RTS
 
-lbC053A7A:
-	MOVE.W	lbW00D60E,D4
-	ADD.W	lbW00D640,D4
+calculateRollAngleTransition:
+	MOVE.W	baseTargetRoll,D4
+	ADD.W	rollAngleModifier,D4
 	MOVE.W	D4,D3
-	SUB.W	lbW00D62C,D3
+	SUB.W	targetRollAngle,D3
 	BPL	lbC053A94
 	NEG.W	D3
 lbC053A94:
 	JSR	getSteeringMultiplier
 	CMP.W	D0,D3
 	BCS	lbC053ABE
-	TST.B	lbW00D62C
+	TST.B	targetRollAngle
 	BPL	lbC053AAC
 	NEG.W	D0
 lbC053AAC:
 	SUB.W	D0,D4
-	MOVE.W	D4,lbW00D632
-	MOVE.B	#$80,lbB00D4C1
+	MOVE.W	D4,adjustedRollAngle
+	MOVE.B	#$80,rollTransitionFlag
 	RTS
 
 lbC053ABE:
-	MOVE.W	lbW00D640,D0
-	SUB.W	lbW00D62C,D0
-	MOVE.W	D0,lbW00D632
-	MOVE.B	#$00,lbB00D4C1
+	MOVE.W	rollAngleModifier,D0
+	SUB.W	targetRollAngle,D0
+	MOVE.W	D0,adjustedRollAngle
+	MOVE.B	#$00,rollTransitionFlag
 	RTS
 
 getSteeringMultiplier:
@@ -13682,7 +13671,7 @@ lbC053B12:
 	BGE	lbC053B3E
 	TST.B	collisionStateFlags
 	BMI	lbC053B3E
-	TST.B	lbB00D5A2
+	TST.B	postWreckStateFlag
 	BNE	lbC053B38
 lbC053B2E:
 	TST.B	raceStartTimer
@@ -13694,7 +13683,7 @@ lbC053B3E:
 	BRA	lbC053BA4
 
 lbC053B46:
-	MOVE.W	lbW00D62C,D0
+	MOVE.W	targetRollAngle,D0
 	BPL	lbC053B52
 	NEG.W	D0
 lbC053B52:
@@ -13706,7 +13695,7 @@ lbC053B5E:
 	BGE	lbC053B66
 	MOVE.W	D3,D0
 lbC053B66:
-	MOVE.W	lbB00D630,D3
+	MOVE.W	carVelocity,D3
 	BPL	lbC053B72
 	NEG.W	D3
 lbC053B72:
@@ -13780,7 +13769,7 @@ lbC053C98:
 	MULS	D3,D0
 	ASL.L	#$01,D0
 	SWAP	D0
-	MOVE.W	D0,lbW00D640
+	MOVE.W	D0,rollAngleModifier
 	MOVE.B	lbB00D650,segmentDirectionFlags
 	MOVE.B	lbW00D64A,trackSideIndicatorCopy
 	MOVE.W	collisionStateFlags1,D0
@@ -13808,7 +13797,7 @@ lbC053D14:
 	MULS	D3,D0
 	ASL.L	#$01,D0
 	SWAP	D0
-	MOVE.W	D0,lbW00D644
+	MOVE.W	D0,yawAngleOffset
 	RTS
 
 lbC053D24:
@@ -15507,7 +15496,7 @@ lbC055444:
 	MOVE.W	#$0000,D3
 	MOVE.B	lbW00D4EE,D3
 	SUB.W	D3,D0
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BPL	lbC05548E
 	SUB.W	D3,D0
 	SUB.W	#$0023,D0
@@ -15675,7 +15664,7 @@ lbC055688:
 	BNE	lbC0556AA
 	MOVE.W	lbW00D4EE,D0
 lbC0556AA:
-	SUB.W	lbB00D630,D0
+	SUB.W	carVelocity,D0
 	BPL	lbC0556B8
 	MOVE.W	#$FFFD,D3
 lbC0556B8:
@@ -15736,11 +15725,11 @@ lbC055764:
 	SUB.W	D0,lbW00D678
 	SUB.W	D0,lbW00D67A
 	MOVE.W	lbW00D654,D0
-	ADD.W	D0,lbW00D640
+	ADD.W	D0,rollAngleModifier
 	MOVE.W	lbW00D656,D0
 	ADD.W	D0,carPitchAdjustment
 	MOVE.W	lbW00D658,D0
-	ADD.W	D0,lbW00D644
+	ADD.W	D0,yawAngleOffset
 	MOVE.W	#$0000,lbW00D654
 	MOVE.W	#$0000,lbW00D656
 	MOVE.W	#$0000,lbW00D658
@@ -15760,7 +15749,7 @@ lbB0557E0:
 lbC0557E2:
 	MOVE.W	#$8000,lbW0557DE
 	MOVE.W	#$0028,D0
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BPL	lbC0557FC
 	MOVE.W	#$007C,D0
 lbC0557FC:
@@ -17010,9 +16999,9 @@ lbC056B72:
 	EOR.B	D3,D0
 	TST.B	gridSweepDirection
 	BPL	lbC056BAA
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BMI	lbC056BB4
-	BTST	#$06,lbB00D44D
+	BTST	#$06,segmentSteeringFlags
 	BEQ	lbC056BB4
 lbC056BAA:
 	TST.B	trackDirectionInversionFlag
@@ -17687,7 +17676,7 @@ lbC05750E:
 	MOVE.W	#$0000,previewSegmentFlags
 	JSR	advanceToNextSegment
 	JSR	loadTrackSegmentConfiguration
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BPL	lbC057566
 	MOVE.B	#$40,previewSegmentFlags
 	MOVE.B	trackDirectionInversionFlag,D3
@@ -17737,7 +17726,7 @@ lbC0575DC:
 	CMP.B	D3,D1
 	BEQ	lbC05765E
 lbC057614:
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BMI	lbC05765E
 	MOVE.B	currentSegmentIndex,D3
 	MOVE.L	#segmentGeometryIndices,A2
@@ -17761,7 +17750,7 @@ lbC057656:
 lbC05765E:
 	AND.B	#$3F,D0
 	ASL.W	#$08,D0
-	TST.B	lbB00D44D
+	TST.B	segmentSteeringFlags
 	BMI	lbC057674
 	OR.W	previewSegmentFlags,D0
 lbC057674:
@@ -19609,7 +19598,7 @@ lbC058CD0:
 lbC058CD8:
 	MOVE.W	renderDataPointer,D3
 	MOVE.B	currentSegmentIndex,$00(A1,D3.W)
-	MOVE.B	lbB00D44D,$03(A1,D3.W)
+	MOVE.B	segmentSteeringFlags,$03(A1,D3.W)
 	MOVE.B	#$09,D0
 	CMP.B	#$26,segmentDepthCounter
 	BLT	lbC058D26
