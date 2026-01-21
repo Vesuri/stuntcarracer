@@ -12187,7 +12187,7 @@ renderSlotGraphics:
 	JSR	setupSlotRenderingParams
 	JMP	finalizeGraphicsRendering
 
-;	dc.w	$0000
+;	ds.w	1
 
 setupSlotRenderingParams:
 	MOVEM.L	D1-D7/A0-A5,-(SP)
@@ -15906,7 +15906,7 @@ applyBitplaneMask:
 	NOT.W	D2
 	; FIXME Self modifying code here!
 	dc.w	$6000
-	dc.b	$00
+	ds.b	1
 lbB057D75:
 	dc.b	$02
 
@@ -20362,13 +20362,11 @@ audioChannelMasks:
 audioChannel0Period:
 	dc.l	$07000000
 sampleParameters:	EQU	*-2
-	dc.w	$0000
+	ds.w	1
 downsampledSampleTable:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	ds.l	15
 lbL000DB4:
-	dc.l	$00000000
+	ds.l	1
 sampleParameterTable:
 	; sample 0: $0000F4B8, 2436 bytes, period 150, volume 30, channel 1, Short sound effect
 	dc.l	$0000F4B8,$00000984
@@ -20383,14 +20381,14 @@ sampleEnginePeriod:
 	; sample 3: $000140D2, 3108 bytes, period 400, volume 50, channel 1, Impact sound
 	dc.l	$000140D2,$00000C24
 	dc.w	$0190
-	dc.b	$00
+	ds.b	1
 sampleCrashVolume:
 	dc.b	$32
 	dc.w	$0001,$0000
 	; sample 4: $00014CF6, 5170 bytes, period 238, volume 64, channel 2, Secondary sound 
 	dc.l	$00014CF6,$00001432
 	dc.w	$00EE
-	dc.b	$00
+	ds.b	1
 audioSample4Volume:
 	dc.b	$40
 	dc.w	$0002,$0000
@@ -20406,9 +20404,9 @@ baseSamplePointer:
 sampleSizeTable:
 	dc.w	$0000,$0C64,$012C,$0030,$0000,$0000
 lbL00D112:
-	dc.l	$00000000
+	ds.l	1
 lbB00D116:
-	dc.b	$00,$00
+	ds.b	2
 joystickState:
 	dc.w	$FFFF
 lbW00D190:
@@ -20422,14 +20420,14 @@ uppercaseTable:
 	dc.b	$4A,$4B,$4C,$3A,$00,$00,$00,$34,$35,$36,$00,$5A,$58,$43
 	dc.b	$56,$42,$4E,$4D,$2C,$2E,$2F,$00,$2E,$37,$38,$39,$20,$08
 	dc.b	$00,$0D,$0D,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	6
 lowercaseTable:
 	dc.b	$00,$31,$32,$33,$34,$35,$36,$37
 	dc.b	$38,$39,$30,$00,$00,$00,$00,$30,$71,$77,$65,$72,$74,$79
@@ -20437,952 +20435,900 @@ lowercaseTable:
 	dc.b	$67,$68,$6A,$6B,$6C,$3A,$00,$00,$00,$34,$35,$36,$00,$7A
 	dc.b	$78,$63,$76,$62,$6E,$6D,$2C,$2E,$2F,$00,$2E,$37,$38,$39
 	dc.b	$20,$08,$00,$0D,$0D,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	14
+	ds.b	8
 lbW00D3F8:
-	dc.w	$0000
+	ds.w	1
 gasInputIntensityValue:
-	dc.b	$00
+	ds.b	1
 gasInputAccumulatorValue:
-	dc.b	$00
+	ds.b	1
 lbB00D3FC:
-	dc.b	$00
+	ds.b	1
 lbB00D3FD:
-	dc.b	$00
+	ds.b	1
 lbB00D3FE:
-	dc.b	$00,$00,$00
+	ds.b	3
 trackWidthMultiplier:
-	dc.b	$00,$00,$00
+	ds.b	3
 trackViewOffsetX:
-	dc.b	$00,$00
+	ds.b	2
 trackViewOffsetY:
-	dc.b	$00
+	ds.b	1
 lbB00D407:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D409:
-	dc.b	$00
+	ds.b	1
 trackProgressionByte:
-	dc.w	$0000
+	ds.w	1
 gameStateCounter:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D40E:
-	dc.b	$00
+	ds.b	1
 lbB00D40F:
-	dc.b	$00
+	ds.b	1
 lbW00D410:
-	dc.w	$0000
+	ds.w	1
 trackDistance:
-	dc.w	$0000
+	ds.w	1
 lbB00D413:	EQU	*-1
-	dc.b	$00,$00
+	ds.b	2
 currentMenuItem:
-	dc.b	$00
+	ds.b	1
 speedDisplayThousands:
-	dc.b	$00
+	ds.b	1
 currentMenuItemCopy:
-	dc.b	$00
+	ds.b	1
 savedSegmentIndex:
-	dc.b	$00
+	ds.b	1
 segmentDirectionFlags:
-	dc.b	$00
+	ds.b	1
 temp:
-	dc.b	$00
+	ds.b	1
 gameParameter1:
-	dc.b	$00
+	ds.b	1
 gameParameter2:
-	dc.b	$00
+	ds.b	1
 lapCrossingDetectionFlag:
-	dc.w	$0000
+	ds.w	1
 player1LapCounter:
-	dc.b	$00
+	ds.b	1
 player2LapCounter:
-	dc.b	$00
+	ds.b	1
 baseCoordinateX:
-	dc.b	$00
+	ds.b	1
 lbB00D423:
-	dc.b	$00,$00,$00
+	ds.b	3
 baseCoordinateY:
-	dc.b	$00
+	ds.b	1
 lbB00D427:
-	dc.b	$00,$00,$00
+	ds.b	3
 lbB00D42A:
-	dc.b	$00
+	ds.b	1
 lbB00D42B:
-	dc.b	$00
+	ds.b	1
 lbB00D42C:
-	dc.b	$00
+	ds.b	1
 lbB00D42D:
-	dc.b	$00
+	ds.b	1
 lbB00D42E:
-	dc.b	$00,$00,$00,$00
+	ds.b	4
 lbB00D432:
-	dc.b	$00,$00
+	ds.b	2
 lbW00D434:
-	dc.w	$0000
+	ds.w	1
 lbW00D436:
-	dc.w	$0000
+	ds.w	1
 lbB00D438:
-	dc.b	$00,$00,$00,$00
+	ds.b	4
 lbB00D43C:
-	dc.b	$00
+	ds.b	1
 lbB00D43D:
-	dc.b	$00,$00
+	ds.b	2
 trackEffectFlag:
-	dc.b	$00
+	ds.b	1
 trackDirection:
-	dc.b	$00
+	ds.b	1
 restartTimerCountdown:
-	dc.b	$00,$00
+	ds.b	2
 distanceCharacteristic:
-	dc.b	$00
+	ds.b	1
 aiEnabled:
-	dc.b	$00
+	ds.b	1
 lbB00D445:
-	dc.b	$00
+	ds.b	1
 lbB00D446:
-	dc.b	$00
+	ds.b	1
 inputStateFlags:
-	dc.b	$00
+	ds.b	1
 segmentRepeatCounter:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D44A:
-	dc.b	$00,$00,$00
+	ds.b	3
 segmentSteeringFlags:
-	dc.b	$00,$00
+	ds.b	2
 accumulatedOffTrackForceX:
-	dc.b	$00
+	ds.b	1
 accumulatedOffTrackForceY:
-	dc.b	$00
+	ds.b	1
 accumulatedOffTrackForceZ:
-	dc.b	$00,$00,$00
+	ds.b	3
 offTrackAccumulationFlag:
-	dc.b	$00
+	ds.b	1
 lbB00D455:
-	dc.b	$00
+	ds.b	1
 offTrackFrameCounter:
-	dc.b	$00
+	ds.b	1
 cameraAngleIndex:
-	dc.b	$00
+	ds.b	1
 segmentDepthCounter:
-	dc.b	$00
+	ds.b	1
 trackSegmentLimitDoubled:
-	dc.b	$00
+	ds.b	1
 maxSegmentIndexDoubled:
-	dc.b	$00
+	ds.b	1
 raceMode:
-	dc.b	$00
+	ds.b	1
 lbB00D45C:
-	dc.b	$00
+	ds.b	1
 trackDirectionSign:
-	dc.b	$00
+	ds.b	1
 displayRowOffset:
-	dc.b	$00
+	ds.b	1
 displayTrackID:
-	dc.b	$00
+	ds.b	1
 lbB00D460:
-	dc.b	$00
+	ds.b	1
 lbB00D461:
-	dc.b	$00
+	ds.b	1
 lbB00D462:
-	dc.b	$00
+	ds.b	1
 gameExitFlag:
-	dc.b	$00
+	ds.b	1
 playerInputState:
-	dc.b	$00
+	ds.b	1
 lbB00D465:
-	dc.b	$00
+	ds.b	1
 segmentRenderingFlag:
-	dc.b	$00
+	ds.b	1
 lbB00D467:
-	dc.b	$00
+	ds.b	1
 lbB00D468:
-	dc.b	$00
+	ds.b	1
 lbB00D469:
-	dc.b	$00
+	ds.b	1
 trackModeParameter:
-	dc.b	$00
+	ds.b	1
 lbB00D46B:
-	dc.b	$00
+	ds.b	1
 wreckCountdownTimer:
-	dc.b	$00
+	ds.b	1
 textHorizontalOffset:
-	dc.b	$00
+	ds.b	1
 textYOffset:
-	dc.b	$00
+	ds.b	1
 currentTrackIDs:
-	dc.b	$00
+	ds.b	1
 raceActiveFlag:
-	dc.b	$00
+	ds.b	1
 graphicsUpdateFlag:
-	dc.b	$00
+	ds.b	1
 frameProcessingFlag:
-	dc.b	$00
+	ds.b	1
 gameTimerCountdown:
-	dc.b	$00
+	ds.b	1
 crashRecoveryTimer:
-	dc.b	$00
+	ds.b	1
 raceCompletionCheckFlag:
-	dc.b	$00
+	ds.b	1
 networkConnectionState:
-	dc.b	$00
+	ds.b	1
 lbB00D477:
-	dc.b	$00,$00
+	ds.b	2
 geometryFormatFlag:
-	dc.b	$00			; determines packed vs extended format
+	ds.b	1			; determines packed vs extended format
 lbB00D47A:
-	dc.b	$00
+	ds.b	1
 segmentOrientationPrimary:
-	dc.b	$00
+	ds.b	1
 lbB00D47C:
-	dc.b	$00
+	ds.b	1
 offTrackCollisionFlag:
-	dc.b	$00
+	ds.b	1
 playerStateFlag:
-	dc.b	$00
+	ds.b	1
 lbB00D47F:
-	dc.b	$00,$00,$00,$00,$00,$00
+	ds.b	6
 currentSegmentIndex:
-	dc.b	$00
+	ds.b	1
 trackGeometryTypeIndex:
-	dc.b	$00,$00
+	ds.b	2
 wreckBlinkFlag:
-	dc.b	$00
+	ds.b	1
 lbB00D489:
-	dc.b	$00,$00
+	ds.b	2
 currentTrackCoordinate:
-	dc.b	$00
+	ds.b	1
 displayModeFlag2:
-	dc.b	$00
+	ds.b	1
 maxMenuIndex:
-	dc.b	$00
+	ds.b	1
 lbB00D48E:
-	dc.b	$00
+	ds.b	1
 lbB00D48F:
-	dc.b	$00
+	ds.b	1
 renderModeFlag:
-	dc.b	$00
+	ds.b	1
 trackOffsetBase:
-	dc.b	$00
+	ds.b	1
 lbB00D492:
-	dc.b	$00
+	ds.b	1
 gridSweepDirection:
-	dc.b	$00
+	ds.b	1
 lbB00D494:
-	dc.b	$00
+	ds.b	1
 lbB00D495:
-	dc.b	$00,$00
+	ds.b	2
 trackSegmentLimit:
-	dc.b	$00
+	ds.b	1
 maxSegmentIndex:
-	dc.b	$00
+	ds.b	1
 maxLapsForRace:
-	dc.b	$00
+	ds.b	1
 lbB00D49A:
-	dc.b	$00
+	ds.b	1
 lbB00D49B:
-	dc.b	$00
+	ds.b	1
 collisionStateFlags:
-	dc.b	$00
+	ds.b	1
 lbB00D49D:
-	dc.b	$00
+	ds.b	1
 lbB00D49E:
-	dc.b	$00
+	ds.b	1
 lbB00D49F:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D4A1:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D4A3:
-	dc.b	$00
+	ds.b	1
 networkTimeoutFlag:
-	dc.b	$00
+	ds.b	1
 lbB00D4A5:
-	dc.b	$00
+	ds.b	1
 lbB00D4A6:
-	dc.b	$00
+	ds.b	1
 currentDataIndex:
-	dc.b	$00
+	ds.b	1
 accelerationStateFlag:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D4AA:
-	dc.b	$00
+	ds.b	1
 lbB00D4AB:
-	dc.b	$00
+	ds.b	1
 frameCounter:
-	dc.b	$00
+	ds.b	1
 lbB00D4AD:
-	dc.b	$00
+	ds.b	1
 lbB00D4AE:
-	dc.b	$00
+	ds.b	1
 gameEndModeFlag:
-	dc.b	$00
+	ds.b	1
 trackVariationSeed:
-	dc.b	$00
+	ds.b	1
 displayFlags:
-	dc.b	$00
+	ds.b	1
 raceResultFlag:
-	dc.b	$00,$00
+	ds.b	2
 displayModeParameter:
-	dc.b	$00
+	ds.b	1
 lbB00D4B5:
-	dc.b	$00
+	ds.b	1
 performanceStylePoints:
-	dc.b	$00,$00
+	ds.b	2
 carCrashedFlag:
-	dc.b	$00
+	ds.b	1
 lbB00D4B9:
-	dc.b	$00
+	ds.b	1
 lbB00D4BA:
-	dc.b	$00
+	ds.b	1
 trackSideIndicatorCopy:
-	dc.b	$00
+	ds.b	1
 singleBufferRenderMode:
-	dc.b	$00
+	ds.b	1
 aiDirectionFlag:
-	dc.b	$00
+	ds.b	1
 aiBehaviorFlag1:
-	dc.b	$00
+	ds.b	1
 aiBehaviorFlag2:
-	dc.b	$00
+	ds.b	1
 aiActionTimer:
-	dc.b	$00
+	ds.b	1
 rollTransitionFlag:
-	dc.b	$00
+	ds.b	1
 aiPatternOffset:
-	dc.b	$00
+	ds.b	1
 engineSoundType:
-	dc.b	$00
+	ds.b	1
 raceStartComplete:
-	dc.b	$00
+	ds.b	1
 segmentDataStartIndex:
-	dc.b	$00
+	ds.b	1
 controlResponseValue:
-	dc.b	$00
+	ds.b	1
 engineTimer:
-	dc.b	$00
+	ds.b	1
 displayStateFlag:
-	dc.b	$00
+	ds.b	1
 gameTimingCounter:
-	dc.b	$00
+	ds.b	1
 menuHighlightMode:
-	dc.b	$00
+	ds.b	1
 multiplayerRaceDisplayFlag:
-	dc.b	$00
+	ds.b	1
 eventTimerCountdown:
-	dc.b	$00
+	ds.b	1
 trackDirectionFlag:
-	dc.b	$00,$00
+	ds.b	2
 directionCalculation:
-	dc.b	$00
+	ds.b	1
 lbB00D4D0:
-	dc.b	$00
+	ds.b	1
 offRoadSideFlags:
-	dc.b	$00
+	ds.b	1
 lbB00D4D2:
-	dc.b	$00
+	ds.b	1
 textTransparencyMode:
-	dc.b	$00
+	ds.b	1
 trackControlParameter:
-	dc.b	$00
+	ds.b	1
 currentPlayerNameOffset:
-	dc.b	$00
+	ds.b	1
 selectedMenuItem:
-	dc.b	$00
+	ds.b	1
 collisionImpactLevel:
-	dc.b	$00,$00
+	ds.b	2
 segmentOrientationAlternate:
-	dc.b	$00
+	ds.b	1
 audioPitchModifier:
-	dc.b	$00
+	ds.b	1
 lbB00D4DB:
-	dc.b	$00
+	ds.b	1
 segmentAlternateFlag:
-	dc.b	$00
+	ds.b	1
 visualEffectBaseValue:
-	dc.b	$00
+	ds.b	1
 displayModeFlag1:
-	dc.b	$00
+	ds.b	1
 raceStartTimer:
-	dc.b	$00
+	ds.b	1
 multiplayerSyncFlag:
-	dc.b	$00
+	ds.b	1
 trackSideIndicator:
-	dc.b	$00
+	ds.b	1
 gameModeStateFlags:
-	dc.b	$00
+	ds.b	1
 lbB00D4E3:
-	dc.b	$00
+	ds.b	1
 savedPlayerIndex:
-	dc.b	$00
+	ds.b	1
 lbB00D4E5:
-	dc.b	$00
+	ds.b	1
 lbB00D4E6:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D4E8:
-	dc.b	$00
+	ds.b	1
 lbB00D4E9:
-	dc.b	$00
+	ds.b	1
 lbB00D4EA:
-	dc.b	$00
+	ds.b	1
 engineEffectFlag:
-	dc.b	$00
+	ds.b	1
 networkEngineFlag:
-	dc.b	$00
+	ds.b	1
 previousDataIndex:
-	dc.b	$00
+	ds.b	1
 lbW00D4EE:
-	dc.w	$0000
+	ds.w	1
 lbB00D4EF:	EQU	*-1
 lbW00D4F0:
-	dc.w	$0000
+	ds.w	1
 lbB00D4F1:	EQU	*-1
 trackHeightDifference:
-	dc.b	$00,$00
+	ds.b	2
 lbW00D4F4:
-	dc.w	$0000
+	ds.w	1
 lbB00D4F5:	EQU	*-1
 trackIncrementValue:
-	dc.w	$0000
+	ds.w	1
 trackBoostThreshold:	EQU	*-1
 raceSetupFlags:  EQU    *-1
 lbW00D4F8:
-	dc.w	$0000
+	ds.w	1
 trackBoostThresholdCopy:	EQU	*-1
 lbW00D4FA:
-	dc.w	$0000,$0000,$0000
+	ds.w	3
 carStartRotation:
-	dc.b	$00
+	ds.b	1
 carStartRotationLow:
-	dc.b	$00
+	ds.b	1
 interpolationPointsXY1:
-	dc.w	$0000
+	ds.w	1
 interpolationPointsXY2:
-	dc.w	$0000
+	ds.w	1
 interpolationPointsXY3:
-	dc.w	$0000
+	ds.w	1
 interpolationPointsXY4:
-	dc.w	$0000
+	ds.w	1
 additionalInterpolationPoints1:
-	dc.w	$0000
+	ds.w	1
 additionalInterpolationPoints2:
-	dc.w	$0000
+	ds.w	1
 segmentBezierOffset1:
-	dc.w	$0000
+	ds.w	1
 segmentBezierOffset2:
-	dc.w	$0000
+	ds.w	1
 storedDepth:
-	dc.w	$0000
+	ds.w	1
 processedSegmentIndices1:
-	dc.b	$00,$00
+	ds.b	2
 processedSegmentIndices2:
-	dc.b	$00,$00
+	ds.b	2
 trackEffectParameter:
-	dc.w	$0000,$0000
+	ds.w	2
 lbW00D51C:
-	dc.w	$0000
+	ds.w	1
 lbW00D51E:
-	dc.w	$0000
+	ds.w	1
 previousEffectParameter:
-	dc.w	$0000
+	ds.w	1
 lbW00D522:
-	dc.w	$0000
+	ds.w	1
 lbB00D524:
-	dc.b	$00,$00
+	ds.b	2
 visibilityAccumulator:
-	dc.w	$0000
+	ds.w	1
 lbW00D528:
-	dc.w	$0000
+	ds.w	1
 trackProgressionValue:
-	dc.w	$0000
+	ds.w	1
 trackDataComponent:	EQU	*-1
-	dc.b	$00,$00
+	ds.b	2
 lbW00D52E:
-	dc.w	$0000
+	ds.w	1
 cameraRotationFlags:
-	dc.b	$00,$00
+	ds.b	2
 reverseDirectionFlag:
-	dc.b	$00,$00
+	ds.b	2
 lbW00D534:
-	dc.w	$0000
+	ds.w	1
 lbW00D536:
-	dc.w	$0000
+	ds.w	1
 carRenderDistance:
-	dc.w	$0000
+	ds.w	1
 engineState:	EQU	*-1
 maxDistanceFromTrack:
-	dc.w	$0000
+	ds.w	1
 steeringScaleFactor:
-	dc.w	$0000
+	ds.w	1
 lbW00D53E:
-	dc.w	$0000
+	ds.w	1
 lbB00D540:
-	dc.b	$00
+	ds.b	1
 trackProcessingFlag:
-	dc.b	$00
+	ds.b	1
 lbW00D542:
-	dc.w	$0000
+	ds.w	1
 trackDirectionInversionFlag:
-	dc.b	$00,$00,$00,$00,$00,$00
+	ds.b	6
 segmentSlopeFlags:
-	dc.b	$00,$00
+	ds.b	2
 adjustedDistanceValue:
-	dc.w	$0000
+	ds.w	1
 lbB00D54D:	EQU	*-1
-	dc.b	$00,$00,$00,$00,$00,$00
+	ds.b	6
 lbB00D554:
-	dc.b	$00
+	ds.b	1
 previousSegmentProperties:
-	dc.b	$00
+	ds.b	1
 visualEffectFlags:
-	dc.w	$0000
+	ds.w	1
 lbB00D558:
-	dc.b	$00
+	ds.b	1
 lbB00D559:
-	dc.b	$00
+	ds.b	1
 lbB00D55A:
-	dc.b	$00
+	ds.b	1
 lbB00D55B:
-	dc.b	$00
+	ds.b	1
 offsetFromRoadCenter:
-	dc.w	$0000
+	ds.w	1
 lateralRoadPosition:
-	dc.w	$0000
+	ds.w	1
 speedMinor:	EQU	*-1
 trackSurfaceHeight:
-	dc.w	$0000
+	ds.w	1
 wheelSpeed:
-	dc.b	$00,$00
+	ds.b	2
 viewOffsetX:
-	dc.w	$0000
+	ds.w	1
 viewStepX:
-	dc.w	$0000
+	ds.w	1
 viewOffsetY:
-	dc.w	$0000
+	ds.w	1
 viewStepY:
-	dc.w	$0000
+	ds.w	1
 quadRectHalfWidth:
-	dc.w	$0000
+	ds.w	1
 quadRectWidth:
-	dc.w	$0000
+	ds.w	1
 quadRectHalfHeight:
-	dc.w	$0000
+	ds.w	1
 quadRectHeight:
-	dc.w	$0000
+	ds.w	1
 stepSizeXHalf:
-	dc.w	$0000
+	ds.w	1
 stepSizeYHalf:
-	dc.w	$0000
+	ds.w	1
 lbW00D578:
-	dc.w	$0000
+	ds.w	1
 lbW00D57A:
-	dc.w	$0000
+	ds.w	1
 stepSizeXQuarter:
-	dc.w	$0000
+	ds.w	1
 stepSizeYQuarter:
-	dc.w	$0000
+	ds.w	1
 lbW00D580:
-	dc.w	$0000
+	ds.w	1
 lbW00D582:
-	dc.w	$0000
+	ds.w	1
 quadTranslateX:
-	dc.w	$0000
+	ds.w	1
 quadTranslateY:
-	dc.w	$0000
+	ds.w	1
 adjustedViewX:
-	dc.w	$0000
+	ds.w	1
 adjustedViewY:
-	dc.w	$0000
+	ds.w	1
 primaryGeometryOffset:
-	dc.w	$0000,$0000
+	ds.w	2
 alternateGeometryOffset:
-	dc.w	$0000,$0000
+	ds.w	2
 trackCenterX:
-	dc.l	$00000000
+	ds.l	1
 trackCenterY:
-	dc.l	$00000000
+	ds.l	1
 trackCenterZ:
-	dc.l	$00000000
+	ds.l	1
 trackOffsetAdjustment:
-	dc.b	$00,$00
+	ds.b	2
 postWreckStateFlag:
-	dc.b	$00,$00
+	ds.b	2
 carWorldX:
-	dc.l	$00000000
+	ds.l	1
 carWorldY:
-	dc.l	$00000000
+	ds.l	1
 carWorldZ:
-	dc.l	$00000000
+	ds.l	1
 distanceFromTrackX:
-	dc.l	$00000000
+	ds.l	1
 distanceFromTrackY:
-	dc.l	$00000000
+	ds.l	1
 distanceFromTrackZ:
-	dc.l	$00000000
+	ds.l	1
 geometryDatabaseOffset:
-	dc.w	$0000,$0000
+	ds.w	2
 rawTrackDataOffset:
-	dc.w	$0000,$0000,$0000,$0000
+	ds.w	4
 lbB00D5C8:
-	dc.b	$00,$00,$00,$00
+	ds.b	4
 lbL00D5CC:
-	dc.l	$00000000
+	ds.l	1
 carHeightPosition:
-	dc.b	$00,$00,$00,$00
+	ds.b	4
 lbL00D5D4:
-	dc.l	$00000000
+	ds.l	1
 lbB00D5D8:
-	dc.b	$00,$00
+	ds.b	2
 lbW00D5DA:
-	dc.w	$0000
+	ds.w	1
 lbB00D5DC:
-	dc.b	$00
+	ds.b	1
 lbB00D5DD:
-	dc.b	$00
+	ds.b	1
 lbW00D5DE:
-	dc.w	$0000
+	ds.w	1
 lbB00D5E0:
-	dc.b	$00,$00
+	ds.b	2
 lbW00D5E2:
-	dc.w	$0000
+	ds.w	1
 cameraAngleX:
-	dc.w	$0000
+	ds.w	1
 cameraAngleY:
-	dc.b	$00
+	ds.b	1
 lbB00D5E7:
-	dc.b	$00
+	ds.b	1
 cameraAngleZ:
-	dc.w	$0000
+	ds.w	1
 worldXSpeed:
-	dc.w	$0000
+	ds.w	1
 worldYSpeed:
-	dc.w	$0000
+	ds.w	1
 worldZSpeed:
-	dc.w	$0000
+	ds.w	1
 rotationSpeedX:
-	dc.w	$0000
+	ds.w	1
 rotationSpeedY:
-	dc.w	$0000
+	ds.w	1
 rotationSpeedZ:
-	dc.w	$0000
+	ds.w	1
 lbW00D5F6:
-	dc.w	$0000
+	ds.w	1
 lbW00D5F8:
-	dc.w	$0000
+	ds.w	1
 lbW00D5FA:
-	dc.w	$0000
+	ds.w	1
 lbW00D5FC:
-	dc.w	$0000
+	ds.w	1
 steeringYawRate:
-	dc.w	$0000
+	ds.w	1
 lbW00D600:
-	dc.w	$0000
+	ds.w	1
 lbW00D602:
-	dc.w	$0000
+	ds.w	1
 lbW00D604:
-	dc.w	$0000
+	ds.w	1
 lbW00D606:
-	dc.w	$0000
+	ds.w	1
 lbW00D608:
-	dc.w	$0000
+	ds.w	1
 lbW00D60A:
-	dc.w	$0000
+	ds.w	1
 lbW00D60C:
-	dc.w	$0000
+	ds.w	1
 baseTargetRoll:
-	dc.w	$0000
+	ds.w	1
 baseRollAngle:
-	dc.w	$0000
+	ds.w	1
 additionalYawOffset:
-	dc.w	$0000
+	ds.w	1
 clampedDistanceX:
-	dc.w	$0000
+	ds.w	1
 clampedDistanceY:
-	dc.w	$0000
+	ds.w	1
 clampedDistanceZ:
-	dc.w	$0000
+	ds.w	1
 previousDistanceX:
-	dc.w	$0000
+	ds.w	1
 previousDistanceY:
-	dc.w	$0000
+	ds.w	1
 previousDistanceZ:
-	dc.w	$0000
+	ds.w	1
 lateralVelocityX:
-	dc.w	$0000
+	ds.w	1
 lateralVelocityY:
-	dc.w	$0000
+	ds.w	1
 lateralVelocityZ:
-	dc.w	$0000
+	ds.w	1
 verticalMotion:
-	dc.w	$0000
+	ds.w	1
 lateralMotion:
-	dc.w	$0000
+	ds.w	1
 gasOutputAccumulatorValue:
-	dc.b	$00
+	ds.b	1
 gasOutputIntensityValue:
-	dc.b	$00
+	ds.b	1
 targetRollAngle:
-	dc.w	$0000
+	ds.w	1
 lbW00D62E:
-	dc.w	$0000
+	ds.w	1
 carVelocity:
-	dc.b	$00,$00
+	ds.b	2
 adjustedRollAngle:
-	dc.w	$0000
+	ds.w	1
 adjustedPitchAngle:
-	dc.w	$0000
+	ds.w	1
 adjustedYawAngle:
-	dc.w	$0000
+	ds.w	1
 collisionStateFlags1:
-	dc.w	$0000
+	ds.w	1
 collisionStateFlags2:	EQU	*-1
 lbW00D63A:
-	dc.w	$0000
+	ds.w	1
 lbW00D63C:
-	dc.w	$0000
+	ds.w	1
 lbW00D63E:
-	dc.w	$0000
+	ds.w	1
 rollAngleModifier:
-	dc.w	$0000
+	ds.w	1
 carPitchAdjustment:
-	dc.w	$0000
+	ds.w	1
 yawAngleOffset:
-	dc.w	$0000
+	ds.w	1
 lbW00D646:
-	dc.w	$0000
+	ds.w	1
 lbW00D648:
-	dc.w	$0000
+	ds.w	1
 lbW00D64A:
-	dc.w	$0000
+	ds.w	1
 lbW00D64C:
-	dc.w	$0000
+	ds.w	1
 lbB00D64E:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D650:
-	dc.b	$00,$00
+	ds.b	2
 lbB00D652:
-	dc.b	$00,$00
+	ds.b	2
 lbW00D654:
-	dc.w	$0000
+	ds.w	1
 lbW00D656:
-	dc.w	$0000
+	ds.w	1
 lbW00D658:
-	dc.w	$0000
+	ds.w	1
 segmentTargetAngle:
-	dc.w	$0000
+	ds.w	1
 impactSeverity:
-	dc.b	$00,$00
+	ds.b	2
 lbL00D65E:
-	dc.l	$00000000
+	ds.l	1
 lbW00D660:	EQU	*-2
 lbW00D662:
-	dc.w	$0000,$0000
+	ds.w	2
 lbL00D666:
-	dc.l	$00000000
+	ds.l	1
 lbW00D668:	EQU	*-2
 lbW00D66A:
-	dc.w	$0000,$0000
+	ds.w	2
 lbW00D66E:
-	dc.w	$0000
+	ds.w	1
 lbW00D670:
-	dc.w	$0000
+	ds.w	1
 lbW00D672:
-	dc.w	$0000,$0000
+	ds.w	2
 lbW00D676:
-	dc.w	$0000
+	ds.w	1
 lbW00D678:
-	dc.w	$0000
+	ds.w	1
 lbW00D67A:
-	dc.w	$0000,$0000
+	ds.w	2
 lbW00D67E:
-	dc.w	$0000
+	ds.w	1
 lbW00D680:
-	dc.w	$0000
+	ds.w	1
 lbW00D682:
-	dc.w	$0000,$0000
+	ds.w	2
 boundsMinX:
-	dc.w	$0000
+	ds.w	1
 boundsMaxX:
-	dc.w	$0000
+	ds.w	1
 boundsMinY:
-	dc.w	$0000,$0000
+	ds.w	2
 trackCoordinatesX:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	8
 trackCoordinatesY:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	8
 	dc.w	$0024
 segmentProcessedFlags:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000
+	ds.l	39
 lbL00D76C:
-	dc.l	$00000000
+	ds.l	1
 trackSegmentData:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000
+	ds.l	61
 inputCoordX1:
-	dc.w	$0000
+	ds.w	1
 inputCoordY1:
-	dc.w	$0000
+	ds.w	1
 inputCoordX2:
-	dc.w	$0000
+	ds.w	1
 inputCoordY2:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000
+	ds.w	15
 clampedCoordX1:
-	dc.w	$0000
+	ds.w	1
 clampedCoordY1:
-	dc.w	$0000
+	ds.w	1
 clampedCoordX2:
-	dc.w	$0000
+	ds.w	1
 clampedCoordY2:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	ds.w	17
 coordinateLookupTable:
-	dc.l	$00000000
+	ds.l	1
 lbW00D8B4:
-	dc.w	$0000
+	ds.w	1
 lbW00D8B6:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	ds.w	117
 transformedCoordinates1:
-	dc.w	$0000
+	ds.w	1
 transformedCoordinates2:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	ds.w	7
 quadVertexX4:
-	dc.w	$0000
+	ds.w	1
 quadVertexX5:
-	dc.w	$0000
+	ds.w	1
 quadVertexX6:
-	dc.w	$0000
+	ds.w	1
 quadVertexX7:
-	dc.w	$0000
+	ds.w	1
 lbW00D9B8:
-	dc.w	$0000
+	ds.w	1
 lbW00D9BA:
-	dc.w	$0000
+	ds.w	1
 lbW00D9BC:
-	dc.w	$0000
+	ds.w	1
 lbW00D9BE:
-	dc.w	$0000
+	ds.w	1
 quadVertexX0:
-	dc.w	$0000
+	ds.w	1
 quadVertexX1:
-	dc.w	$0000
+	ds.w	1
 quadVertexX2:
-	dc.w	$0000
+	ds.w	1
 quadVertexX3:
-	dc.w	$0000
+	ds.w	1
 lbW00D9C8:
-	dc.w	$0000
+	ds.w	1
 lbW00D9CA:
-	dc.w	$0000
+	ds.w	1
 lbW00D9CC:
-	dc.w	$0000
+	ds.w	1
 lbW00D9CE:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	ds.w	17
 transformedVertexBounds:
-	dc.l	$00000000
+	ds.l	1
 lbW00D9F4:
-	dc.w	$0000
+	ds.w	1
 lbW00D9F6:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	ds.w	125
 quadVertexY4:
-	dc.w	$0000
+	ds.w	1
 quadVertexY5:
-	dc.w	$0000
+	ds.w	1
 quadVertexY6:
-	dc.w	$0000
+	ds.w	1
 quadVertexY7:
-	dc.w	$0000
+	ds.w	1
 lbW00DAF8:
-	dc.w	$0000
+	ds.w	1
 lbW00DAFA:
-	dc.w	$0000
+	ds.w	1
 lbW00DAFC:
-	dc.w	$0000
+	ds.w	1
 lbW00DAFE:
-	dc.w	$0000
+	ds.w	1
 quadVertexY0:
-	dc.w	$0000
+	ds.w	1
 quadVertexY1:
-	dc.w	$0000
+	ds.w	1
 quadVertexY2:
-	dc.w	$0000
+	ds.w	1
 quadVertexY3:
-	dc.w	$0000
+	ds.w	1
 lbW00DB08:
-	dc.w	$0000
+	ds.w	1
 lbW00DB0A:
-	dc.w	$0000
+	ds.w	1
 lbW00DB0C:
-	dc.w	$0000
+	ds.w	1
 lbW00DB0E:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	ds.w	17
 lbL00DB30:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	13
 lbW00DB64:
-	dc.w	$0000,$0000
+	ds.w	2
 lbW00DB68:
-	dc.w	$0000,$0000,$0000
+	ds.w	3
 lbW00DB6E:
-	dc.w	$0000,$0000
+	ds.w	2
 lbW00DB72:
-	dc.w	$0000
+	ds.w	1
 lbW00DB74:
-	dc.w	$0000
+	ds.w	1
 lbW00DB76:
-	dc.w	$0000,$0000,$0000,$0000,$0000
+	ds.w	5
 trackSegmentGrid:
 	ds.b	16*16
 debrisParticleXPositions:
@@ -21402,170 +21348,138 @@ trackSegmentCoordinates:	; lookup table mapping track segment indices to their 2
 trackSegmentPropertiesTable:
 	ds.b	100
 segmentInterpolationPoint1:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
+	ds.l	7
 lbL00DF6C:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.w	$0000
+	ds.l	18
+	ds.w	1
 graphicsOffsetX:
-	dc.w	$0000
+	ds.w	1
 graphicsOffsetY:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000
+	ds.w	48
 segmentInterpolationPoint2:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	ds.l	50
 segmentWorldPositions:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	ds.l	50
 obstacleSegmentIndices:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	5
+	ds.l	3
 obstacleTypes:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	5
+	ds.l	3
 trackFeatureData:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	5
+	ds.l	3
 playerStatsArray:
-	dc.b	$00
+	ds.b	1
 lbB00E209:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	13
 lbB00E216:
-	dc.b	$00
+	ds.b	1
 lbB00E217:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	9
 lapTimeSeconds:
-	dc.b	$00
+	ds.b	1
 lbB00E221:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	13
 lbB00E22E:
-	dc.b	$00
+	ds.b	1
 lbB00E22F:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	9
 lapTimeSubseconds:
-	dc.b	$00
+	ds.b	1
 lbB00E239:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	13
 lbB00E246:
-	dc.b	$00
+	ds.b	1
 lbB00E247:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	11
 segmentVisibilityData:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
+	ds.l	12
 paletteUpdateArray:
-	dc.w	$0000
-	dc.b	$00
+	ds.w	1
+	ds.b	1
 lbB00E285:
-	dc.b	$00
+	ds.b	1
 lbB00E286:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00
+	ds.b	48
 lbL00E2B6:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 lbL00E2C2:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 selectedTrack:
-	dc.b	$00
+	ds.b	1
 objectDisplayThreshold:
-	dc.b	$00
+	ds.b	1
 currentPlayerContext:
-	dc.b	$00,$00
+	ds.b	2
 lbL00E2D2:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 lbL00E2DE:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 lbL00E2EA:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 lbL00E2F6:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 lbL00E302:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 lbB00E30E:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	11
 trackDataBuffer:
-	dc.b	$00		; unused
+	ds.b	1		; unused
 numTrackSegments:
-	dc.b	$00
+	ds.b	1
 lbB00E31B:
-	dc.b	$00
+	ds.b	1
 trackParameter3:
-	dc.b	$00
+	ds.b	1
 finishLineSegmentIndex:
-	dc.b	$00
+	ds.b	1
 startWorldPosition:
-	dc.w	$0000
+	ds.w	1
 lbB00E320:
-	dc.b	$00
+	ds.b	1
 raceConfigValue:
-	dc.b	$00
+	ds.b	1
 selectedRaceType:
-	dc.b	$00
+	ds.b	1
 raceFlag1:
-	dc.b	$00
+	ds.b	1
 raceFlag2:
-	dc.b	$00
+	ds.b	1
 lbB00E325:
-	dc.b	$00
+	ds.b	1
 lbB00E326:
-	dc.b	$00
+	ds.b	1
 player1ID:
-	dc.b	$00
+	ds.b	1
 player2ID:
-	dc.b	$00
+	ds.b	1
 opponentID:
-	dc.b	$00
+	ds.b	1
 trackMetadataBuffer:
-	dc.b	$00
+	ds.b	1
 lbB00E32B:
-	dc.b	$00
+	ds.b	1
 lbB00E32C:
-	dc.b	$00
+	ds.b	1
 lbB00E32D:
-	dc.b	$00
+	ds.b	1
 obstacleCount:
-	dc.b	$00
+	ds.b	1
 trackFeatureCount:
-	dc.b	$00,$00
+	ds.b	2
 lbB00E331:
-	dc.b	$00
+	ds.b	1
 startingSegmentIndex:
-	dc.b	$00
+	ds.b	1
 currentTrackID:
-	dc.b	$00
+	ds.b	1
 lbB00E334:
-	dc.b	$00
+	ds.b	1
 currentRaceNumber:
-	dc.b	$00
+	ds.b	1
 lbL00E336:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 sineTable:
 	incbin	"sineTable"
 reciprocalTable:
@@ -21873,7 +21787,7 @@ primaryFontBitmapData:
 	dc.w	$AAAA,$BDFF,$C3C0,$C3F3,$BFBF,$0000,$C0C0,$C0C0,$4040
 	dc.w	$FF80,$8080,$8080,$8080,$8080,$8080,$8080,$80FF,$0808
 	dc.w	$087F,$0808,$0800,$0101,$0101,$0101,$01FF,$0000
-	dc.b	$00
+	ds.b	1
 lbB0117ED:
 	dc.b	$7F,$00,$00,$00,$00,$00,$00,$00,$00,$00
 lbB0117F7:
@@ -21910,7 +21824,7 @@ lbB0117F8:
 lbL01197A:
 	dc.l	$01000000
 lbW01197E:
-	dc.w	$0000
+	ds.w	1
 lbB011980:
 	dc.b	$00,$01,$00,$00,$00,$FF,$00,$00,$00,$FF,$00,$00,$3C,$02
 	dc.b	$3E,$42,$3E,$00,$00,$40,$7C,$42,$42,$42,$7C,$00,$00,$00
@@ -21956,115 +21870,115 @@ imagePlayersPalette:
 imagePlayers:
 	incbin	"imagePlayers"
 ciaTimerFlag:
-	dc.b	$00,$00
+	ds.b	2
 lbW0488F8:
 	dc.w	$0007,$8000,$0004,$477C,$0004,$AF3E,$0003,$D7B6,$0005
 	dc.w	$0E4C
 lbW049538:
-	dc.w	$0000
+	ds.w	1
 networkPacketReadyFlag:
-	dc.b	$00,$00
+	ds.b	2
 networkGameMode:
-	dc.b	$00,$00
+	ds.b	2
 checksumAccumulator:
-	dc.w	$0000
+	ds.w	1
 networkDataCounter1:
-	dc.w	$0000
+	ds.w	1
 lbW049542:
-	dc.w	$0000
+	ds.w	1
 networkDataCounter2:
-	dc.w	$0000
+	ds.w	1
 lbW049546:
-	dc.w	$0000
+	ds.w	1
 lbW049548:
-	dc.w	$0000
+	ds.w	1
 lbW04954A:
-	dc.w	$0000
+	ds.w	1
 lbW04954C:
-	dc.w	$0000
+	ds.w	1
 lbW04954E:
-	dc.w	$0000
+	ds.w	1
 lbB049550:
-	dc.b	$00
+	ds.b	1
 lbB049551:
-	dc.b	$00
+	ds.b	1
 lbB049552:
-	dc.b	$00
+	ds.b	1
 lbB049553:
-	dc.b	$00
+	ds.b	1
 lbB049554:
-	dc.b	$00
+	ds.b	1
 lbB049555:
-	dc.b	$00
+	ds.b	1
 lbB049556:
-	dc.b	$00
+	ds.b	1
 lbB049557:
-	dc.b	$00
+	ds.b	1
 lbB049558:
-	dc.b	$00
+	ds.b	1
 lbB049559:
-	dc.b	$00
+	ds.b	1
 lbB04955A:
-	dc.b	$00
+	ds.b	1
 gameInitFlag1:
-	dc.b	$00
+	ds.b	1
 receivedGameStateID:
-	dc.b	$00
+	ds.b	1
 receivedGameInitFlag:
-	dc.b	$00
+	ds.b	1
 receivedPlayerCommand:
-	dc.b	$00
+	ds.b	1
 receivedPlayerState:
-	dc.b	$00
+	ds.b	1
 lbB049560:
-	dc.b	$00
+	ds.b	1
 lbB049561:
-	dc.b	$00
+	ds.b	1
 gameStateID:
-	dc.b	$00
+	ds.b	1
 gameInitFlag2:
-	dc.b	$00
+	ds.b	1
 lbB049564:
-	dc.b	$00
+	ds.b	1
 lbB049565:
-	dc.b	$00
+	ds.b	1
 lbB049566:
-	dc.b	$00
+	ds.b	1
 raceSeriesCounter:
-	dc.b	$00
+	ds.b	1
 lbB049568:
-	dc.b	$00
+	ds.b	1
 opponentVisibilityFlag:
-	dc.b	$00
+	ds.b	1
 lbB04956A:
-	dc.b	$00
+	ds.b	1
 lbB04956B:
-	dc.b	$00
+	ds.b	1
 lbB04956C:
-	dc.b	$00
+	ds.b	1
 lbB04956D:
-	dc.b	$00
+	ds.b	1
 lbB04956E:
-	dc.b	$00
+	ds.b	1
 receivedKey:
-	dc.b	$00
+	ds.b	1
 lbW049570:
-	dc.w	$0000
+	ds.w	1
 totalRaceCounter:
-	dc.w	$0000
+	ds.w	1
 lbW049574:
-	dc.w	$0000
+	ds.w	1
 lbW049576:
-	dc.w	$0000
+	ds.w	1
 lbL049700:
 	dc.l	$1F0E104C,$696E6B20,$6162616E,$646F6E65,$64FF1F0E
 	dc.l	$104C696E,$6B20636F,$6D706C65,$7465FF1F,$11104C69
 	dc.l	$6E6B696E,$67FF1F0F,$10506C65,$61736520,$77616974
 	dc.w	$FF00
 lbB0499D6:
-	dc.b	$00
+	ds.b	1
 lbB0499D7:
-	dc.b	$00
+	ds.b	1
 lbW049A46:
 	dc.w	$0002,$040A,$162A,$4872
 lbW049A4E:
@@ -22081,8 +21995,8 @@ lbW049A56:
 	dc.w	$0206,$0005,$0104,$0207,$0306,$0007,$0106,$0205,$0304
 	dc.w	$0006,$0107,$0204,$0305
 lbL049D9A:
-	dc.l	$00000000
-	dc.w	$0000
+	ds.l	1
+	ds.w	1
 lbW049E00:
 	dc.w	$0E45,$0102,$0304,$0506,$0708,$090A,$0B0C,$4142,$1011
 	dc.w	$1213,$1415,$1617,$1819,$1A1B,$4463,$2021,$2223,$2425
@@ -22093,9 +22007,9 @@ lbW049E00:
 	dc.w	$2F1D,$1E1F,$0F3C,$4373,$7475,$7677,$7879,$7A7B,$7C7D
 	dc.w	$7E7F
 lbL04A180:
-	dc.l	$00000000,$00000000
+	ds.l	2
 lbB04A3A2:
-	dc.b	$00,$00
+	ds.b	2
 lbW04A3A4:
 	dc.w	$0000,$0780,$0000,$29E0,$0000,$4C40,$0000,$07A8,$0000
 	dc.w	$2A08,$0000,$4C68,$0000,$07D0,$0000,$2A30,$0000,$4C90
@@ -22110,21 +22024,21 @@ lbW04A49A:
 	dc.w	$C000,$C000,$0000,$0000,$0000,$0000,$0000,$0000,$0003
 	dc.w	$0003
 lbL04A4AE:
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	3
 lbB04A4BA:
-	dc.b	$00
+	ds.b	1
 lbB04A4BB:
-	dc.b	$00
+	ds.b	1
 lbL04A4BC:
 	dc.l	$0B0B0B0B,$05020E01,$040F090B
 lbB04A4C8:
-	dc.b	$00,$00
+	ds.b	2
 bitplaneMask1:
-	dc.l	$00000000
+	ds.l	1
 bitplaneMask2:
-	dc.l	$00000000
+	ds.l	1
 bitplaneMaskPointer:
-	dc.l	$00000000
+	ds.l	1
 playerGraphicsMask:
 	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFE000,$07FFFFFF,$F800001F
 	dc.l	$E0000FFF,$FFFFFC00,$001FE000,$1FFFFFFF,$FE00001F
@@ -22156,45 +22070,45 @@ playerGraphicsMask:
 	dc.l	$FFFFFFFF,$FFFFFFFF
 	dc.w	$FFFF
 lbB04AA3E:
-	dc.b	$00,$00
+	ds.b	2
 lbW04AA40:
-	dc.w	$0000
+	ds.w	1
 leagueStatisticsTextTable:
 	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced "
 	dc.b	$FF," Wins  ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First      Se"
 	dc.b	"cond        Third",$FF,$00
 useAlternateFontFlag:
-	dc.b	$00
+	ds.b	1
 lbB04AB4B:
-	dc.b	$00
+	ds.b	1
 alternateRenderBuffer:
-	dc.l	$00000000
+	ds.l	1
 lbB04ACF6:
 	dc.b	$80,$00
 foregroundColorMask1:
-	dc.l	$00000000
+	ds.l	1
 foregroundColorMask2:
-	dc.l	$00000000
+	ds.l	1
 backgroundColorMask1:
-	dc.l	$00000000
+	ds.l	1
 backgroundColorMask2:
-	dc.l	$00000000
+	ds.l	1
 textCursorColumn:
-	dc.b	$00
+	ds.b	1
 textCursorRow:
-	dc.b	$00
+	ds.b	1
 characterByteOffset:
-	dc.b	$00
+	ds.b	1
 characterPixelOffset:
-	dc.b	$00
+	ds.b	1
 savedTransparencyFlag:
-	dc.b	$00
+	ds.b	1
 textControlCodeState:
-	dc.b	$00
+	ds.b	1
 controlCodeByteCounter:
-	dc.b	$00,$00
+	ds.b	2
 coordinateTransformParameter:
-	dc.w	$0000
+	ds.w	1
 	dc.b	$17,$13,$19,$08,$15,$0A,$08,$15,$09,$1F
 textStringTable:
 	dc.b	$1F,$11,$0B,"SELECT",$FF,"Practise ",$FF,"Start the Racing Season",$FF
@@ -22213,7 +22127,7 @@ lbL04C3F4:
 lbL04C442:
 	dc.l	$09060300
 lbL04C4C8:
-	dc.l	$00000000
+	ds.l	1
 	dc.w	$0101
 lbL04C4CE:
 	dc.l	$01010202
@@ -22221,13 +22135,13 @@ lbL04C4CE:
 specialSegmentLookupTable:
 	dc.b	$03,$04,$04,$03
 lbB04CF46:
-	dc.b	$00,$00
+	ds.b	2
 maxInputLength:
-	dc.b	$00
+	ds.b	1
 inputCancelFlag:
-	dc.b	$00
+	ds.b	1
 currentInputPosition:
-	dc.b	$00,$00
+	ds.b	2
 menuStringOffsetTable:
 	dc.l	$EC0A142C,$44494E55,$5C6B5500,$7A875500,$0A1F7100
 	dc.l	$2B400000,$49494949,$0A0A5500
@@ -22242,37 +22156,31 @@ lbC04D740:
 lbL04DFB8:
 	dc.l	$00D480D4,$0000ABAB,$40400000
 lbB04E1F4:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$FF,$FF,$FF,$FF
+	ds.b	104
+	dc.b	$FF,$FF,$FF,$FF
 lbB04E7E2:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	ds.b	14
+	ds.b	10
 lbL04E82C:
 	dc.l	$28195027
 divider:
 	dc.b	'------------'
 	dc.b	$09
-	dc.b	$00
-	dc.b	$00
-	dc.b	$00
+	ds.b	1
+	ds.b	1
+	ds.b	1
 displayUpdateFlag:
-	dc.b	$00,$00
+	ds.b	2
 buttonReleaseMask:
-	dc.b	$00,$00
+	ds.b	2
 bufferSelector:
-	dc.b	$00,$00
+	ds.b	2
 lbL04FD6C:
 	dc.l	$16171617,$02040204
 gameMessageMode:
-	dc.b	$00
+	ds.b	1
 gameMessageIndex:
-	dc.b	$00
+	ds.b	1
 gameMessageTable:
 	dc.b	$03,"<WRCECK",$03," RACCE ",$21,"< WaON aT  ",$03," RACCE ! LOaST "
 	dc.b	$03," DRCOP ",$21,"<STaART",$03,"<PRCESS! FIaRE ",$03,"PAUSCED"
@@ -22291,27 +22199,27 @@ divisionRowPositions:
 trackColumnOffsets:
 	dc.l	$13131312,$11100F0F
 lbB050474:
-	dc.b	$00
+	ds.b	1
 textRenderingFlag:
-	dc.b	$00
+	ds.b	1
 additionalPlayerCount:
-	dc.b	$00
+	ds.b	1
 remainingRaces:
-	dc.b	$00
+	ds.b	1
 raceCount:
 	dc.b	$06
 currentPlayerID:
 	dc.b	$0B
 standingsDisplayModeFlag:
-	dc.b	$00
+	ds.b	1
 raceSeriesProgress:
-	dc.b	$00
+	ds.b	1
 selectedTrackGroup:
-	dc.b	$00
+	ds.b	1
 raceConfiguredFlag:
-	dc.b	$00
+	ds.b	1
 lbB05047E:
-	dc.b	$00
+	ds.b	1
 SELECTSingleP.MSG:
 	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
 	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
@@ -22355,9 +22263,9 @@ NOTloadedsave.MSG:
 lbW051020:
 	dc.w	$683B
 lbB0513DC:
-	dc.b	$00
+	ds.b	1
 lbB0513DD:
-	dc.b	$00
+	ds.b	1
 lbB0513DE:
 	dc.b	$00,$01,$04,$03,$02
 t.MSG:
@@ -22386,38 +22294,38 @@ keycodeTable:
 	dc.b	$02
 	dc.b	$03
 	dc.b	$04
-	dc.b	$00
+	ds.b	1
 debrisObjectOffsetTable:
 	dc.l	$00200020,$00200028,$00180020,$00200020
 debrisObjectAnimSequence:
 	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06
 	dc.b	$02,$07
 lbB0528BC:
-	dc.b	$00,$00
+	ds.b	2
 steeringOffsetTable:
 	dc.l	$000000D9
 	dc.w	$FF27
 trackDisplayYOffsets:
 	dc.l	$0F0D1010,$100F100D
-	dc.w	$0000
+	ds.w	1
 vSyncFlag:
-	dc.b	$00,$00
+	ds.b	2
 lbB052FDA:
-	dc.b	$00,$00
+	ds.b	2
 lbB0530CA:
 	dc.b	$00,$00,$4B,$26,$49,$27
 ascii.MSG1:
 	dc.b	$2C,$00,$0A,$00,$D3,$00,$F5,$00
 crashSoundCooldownTimer:
-	dc.b	$00,$00
+	ds.b	2
 randomSeed1:
-	dc.w	$0000
+	ds.w	1
 randomSeed2:
-	dc.b	$00
+	ds.b	1
 lbB053EA5:
-	dc.b	$00
+	ds.b	1
 randomSeed3:
-	dc.b	$00,$00
+	ds.b	2
 LOADgameposit.MSG:
 	dc.b	$1F,$0B,$09,"LOAD game position",$FF,$1F,$0B,$09,"SAVE game position",$FF
 	dc.b	"Drive not ready",$FF,"Disc write protected",$FF,"Insert disc",$FF,"Disc error",$FF
@@ -22429,25 +22337,25 @@ LOADgameposit.MSG:
 	even
 	dc.w	$0008
 lbB0544B4:
-	dc.b	$00
+	ds.b	1
 disableDirectionalInputFlag:
-	dc.b	$00
+	ds.b	1
 lbB0544B6:
-	dc.b	$00
+	ds.b	1
 lbB0544B7:
-	dc.b	$00
+	ds.b	1
 lbB0544B8:
 	dc.b	$0F
 lbB0544B9:
 	dc.b	$0B
 lbB0544BA:
-	dc.b	$00
+	ds.b	1
 lbB0544BB:
-	dc.b	$00
+	ds.b	1
 lbB0544BC:
-	dc.b	$00,$00
+	ds.b	2
 lbB054608:
-	dc.b	$00,$00
+	ds.b	2
 lbW054632:
 	dc.w	$8000
 lbW054F84:
@@ -22457,15 +22365,15 @@ lbL054FB8:
 lbB054FB9:	EQU	*-3
 	dc.b	$3B,$3B,$35,$62
 lbB0555E0:
-	dc.b	$00
+	ds.b	1
 lbB0555E1:
-	dc.b	$00
+	ds.b	1
 offTrackFrameThreshold:
-	dc.b	$00,$00
+	ds.b	2
 lbW0557DE:
-	dc.w	$0000
+	ds.w	1
 lbB0557E0:
-	dc.b	$00,$00
+	ds.b	2
 lbW055BEA:
 	dc.w	$0004,$0004,$FFFC
 leagueTextTable:
@@ -22480,7 +22388,7 @@ trackSpecificYOffset:
 	dc.b	"RESULTS TABLE",$1F,$06,$0E,"DRIVER     RACED WIN LAP  PTS",$FF,"Promotion for  ",$FF
 	dc.b	"Relegation for ",$FF," CHANGES",$FF,$1F,$12,$0E,"NAME?",$FF," 2pts",$FF," 1pt",$FF," of ",$FF,$00
 lbB055E30:
-	dc.b	$00,$00
+	ds.b	2
 trackIDLookupTable:
 	dc.w	$0002,$0103,$0607,$0405
 raceConfigLookupTable:
@@ -22501,7 +22409,7 @@ menuCursorObjectType:
 lbL05651A:
 	dc.l	$00004070,$00004F70,$00005E70,$00006D70,$00003170
 lbB056DC0:
-	dc.b	$00,$00
+	ds.b	2
 trackPreviewOverrideTable:
 	dc.b	$80,$00,$00,$00,$00,$00,$00,$00		; 4 entries of (segment_index, override_value) pairs, $80 terminates the list
 	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
@@ -22514,19 +22422,19 @@ trackPreviewOverrideTable:
 trackPreviewParameters:
 	ds.b	80
 transformedGridX:
-	dc.b	$00,$00
+	ds.b	2
 transformedGridY:
-	dc.b	$00,$00
+	ds.b	2
 lbB0579FA:
-	dc.b	$00,$00
+	ds.b	2
 lbW0579FC:
-	dc.w	$0000
+	ds.w	1
 lbW0579FE:
-	dc.w	$0000
+	ds.w	1
 previewSegmentFlags:
-	dc.w	$0000
+	ds.w	1
 previewDataWritePointer:
-	dc.l	$00000000
+	ds.l	1
 lbB057BAA:
 	dc.b	$04
 lbB057BAB:
@@ -22546,47 +22454,47 @@ lbW058160:
 	dc.w	$0040,$0040,$0020,$0020,$0010,$0010,$0008,$0008,$0004
 	dc.w	$0004,$0002,$0002,$0001,$0001
 lbB0581A0:
-	dc.b	$00,$00
+	ds.b	2
 lbW0581A2:
-	dc.w	$0000
+	ds.w	1
 lbW0581A4:
-	dc.w	$0000
+	ds.w	1
 lbW0581A6:
-	dc.w	$0000
+	ds.w	1
 lineDrawingBufferPointer:
-	dc.l	$00000000
+	ds.l	1
 renderDataPointer:
-	dc.w	$0000
+	ds.w	1
 savedXCoordinate:
-	dc.w	$0000
+	ds.w	1
 edgeDirectionFlag:
-	dc.b	$00
+	ds.b	1
 clipRequiredFlag:
-	dc.b	$00
+	ds.b	1
 clipIterationCounter:
-	dc.b	$00
+	ds.b	1
 renderingFlag:
-	dc.b	$00
+	ds.b	1
 hudDisplayMode2:
 	dc.b	$0A
 hudDisplayMode1:
 	dc.b	$09
 lbW05AC2C:
-	dc.w	$0000
+	ds.w	1
 mountainHorizontalAngles:
 	ds.l	12
 mountainShapeIndices:
 	ds.l	12
 lbB05B096:
-	dc.b	$00
+	ds.b	1
 lbB05B097:
-	dc.b	$00
+	ds.b	1
 lbB05B098:
-	dc.b	$00
+	ds.b	1
 mountainSegmentCount:
-	dc.b	$00
+	ds.b	1
 mountainScreenX:
-	dc.w	$0000
+	ds.w	1
 mountainShapeData:
 	dc.w	$0000,$0004,$0000,$0000,$80C8,$0000,$804B,$8019,$8078
 	dc.w	$801E,$0400,$0200,$0404,$0602,$0601,$0504,$0004,$080C
@@ -22638,67 +22546,43 @@ trackMountainDataTable:
 	dc.w	$06BF,$07C5,$08CF,$05D5,$00DF,$03E5,$04EF,$01F5,$02FF
 	dc.w	$0500
 lbB05B3CA:
-	dc.b	$00,$00
+	ds.b	2
 lbW05B3CC:
-	dc.w	$0000
+	ds.w	1
 lbW05B3CE:
-	dc.w	$0000
+	ds.w	1
 lbL05B3D0:
-	dc.l	$00000000
+	ds.l	1
 lbL05B3D4:
-	dc.l	$00000000
+	ds.l	1
 segmentAlternateRenderFlag:
-	dc.b	$00,$00
+	ds.b	2
 segmentProcessedFlag:
-	dc.b	$00,$00
+	ds.b	2
 edgeClipFailedFlag:
-	dc.b	$00,$00
+	ds.b	2
 lbB05B3DE:
-	dc.b	$00,$00,$00,$00
+	ds.b	4
 lbB05B3E2:
-	dc.b	$00,$00,$00,$00
+	ds.b	4
 depthValue:
-	dc.w	$0000
+	ds.w	1
 lbW05B3E8:
-	dc.w	$0000
+	ds.w	1
 lbB05B3EA:
-	dc.b	$00,$00
+	ds.b	2
 lbB05B3EC:
-	dc.b	$00,$00,$00,$00
+	ds.b	4
 lbL05B3F0:
-	dc.l	$00000000
+	ds.l	1
 lbL05B3F4:
-	dc.l	$00000000
+	ds.l	1
 lbL05B3F8:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
+	ds.l	33
 lbL05B47C:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
+	ds.l	32
 lbL05B4FC:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000
+	ds.l	64
 lbL05B7B4:
 	dc.l	$00000000,$0FFF0C88,$00000000,$0FFF0C88
 lbW05B7C4:
@@ -22706,15 +22590,15 @@ lbW05B7C4:
 gameLoopControl:
 	dc.w	$0020
 lbB05B840:
-	dc.b	$00
+	ds.b	1
 lbB05B841:
-	dc.b	$00
+	ds.b	1
 lbW05BA66:
-	dc.w	$0000
+	ds.w	1
 lbW05BA68:
-	dc.w	$0000
+	ds.w	1
 lbW05BA6A:
-	dc.w	$0000
+	ds.w	1
 lbW05BA6C:
 	dc.w	$0000,$0000,$0001,$0039
 blitterObjectConfigTable:
@@ -22779,11 +22663,6 @@ currentFrameBuffer:
 	ds.l	1
 viewportTopAddress:
 	ds.l	1
-
-
-
-
-
 
 name_graphics:	dc.b	"graphics.library",0
 
