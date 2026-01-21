@@ -807,53 +807,6 @@ copySampleLoop:
 	MOVE.L	D0,sampleSizeTable
 	RTS
 
-audioChannel0Period:
-	dc.l	$07000000
-sampleParameters:	EQU	*-2
-	dc.w	$0000
-downsampledSampleTable:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-lbL000DB4:
-	dc.l	$00000000
-sampleParameterTable:
-	; sample 0: $0000F4B8, 2436 bytes, period 150, volume 30, channel 1, Short sound effect
-	dc.l	$0000F4B8,$00000984
-	dc.w	$0096,$001E,$0001,$0000
-	; sample 1: $0000FE3C, 9032 bytes, period 180, volume 64, channel 1, engine
-	dc.l	$0000FE3C,$00002348
-sampleEnginePeriod:
-	dc.w	$00B4,$0040,$0001,$0000
-	; sample 2: $00012184, 8014 bytes, period 238, volume 56, channel 1, Crash/collision
-	dc.l	$00012184,$00001F4E
-	dc.w	$00EE,$0038,$0001,$0000
-	; sample 3: $000140D2, 3108 bytes, period 400, volume 50, channel 1, Impact sound
-	dc.l	$000140D2,$00000C24
-	dc.w	$0190
-	dc.b	$00
-sampleCrashVolume:
-	dc.b	$32
-	dc.w	$0001,$0000
-	; sample 4: $00014CF6, 5170 bytes, period 238, volume 64, channel 2, Secondary sound 
-	dc.l	$00014CF6,$00001432
-	dc.w	$00EE
-	dc.b	$00
-audioSample4Volume:
-	dc.b	$40
-	dc.w	$0002,$0000
-	; sample 5: $00016128, 8430 bytes, period 280, volume 64, channel 3, Background audio
-	dc.l	$00016128,$000020EE
-	dc.w	$0118,$0040,$0003,$0000
-	; sample 6: $00018216, 7120 bytes, period 500, volume 64, channel 1, ground collision
-	dc.l	$00018216,$00001BD0
-sampleGroundCollisionPeriod:
-	dc.w	$01F4,$0040,$0001,$0000
-baseSamplePointer:
-	dc.l	sampleEngineData
-sampleSizeTable:
-	dc.w	$0000,$0C64,$012C,$0030,$0000,$0000
-
 readJoystickState:
 	jsr	testQuit
 	MOVEM.L	D3/D4/A0,-(SP)
@@ -913,11 +866,6 @@ lbC00D0F0:
 	MOVEM.L	(SP)+,D3/D4
 	RTS
 
-lbL00D112:
-	dc.l	$00000000
-lbB00D116:
-	dc.b	$00,$00
-
 busyWaitDelay:
 	MOVE.L	#$00001800,D0
 lbC00D11E:
@@ -946,43 +894,6 @@ displayMessageWithColors:
 	MOVE.W	(SP)+,D0
 	MOVE.B	D0,textTransparencyMode
 	RTS
-
-joystickState:
-	dc.w	$FFFF
-lbW00D190:
-	dc.l	lowercaseTable
-lbB00D194:
-	dc.l	uppercaseTable
-uppercaseTable:
-	dc.b	$00,$31,$32,$33,$34,$35,$36,$37,$38,$39
-	dc.b	$30,$00,$00,$00,$00,$30,$51,$57,$45,$52,$54,$59,$55,$49
-	dc.b	$4F,$50,$00,$00,$00,$31,$32,$33,$41,$53,$44,$46,$47,$48
-	dc.b	$4A,$4B,$4C,$3A,$00,$00,$00,$34,$35,$36,$00,$5A,$58,$43
-	dc.b	$56,$42,$4E,$4D,$2C,$2E,$2F,$00,$2E,$37,$38,$39,$20,$08
-	dc.b	$00,$0D,$0D,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00
-lowercaseTable:
-	dc.b	$00,$31,$32,$33,$34,$35,$36,$37
-	dc.b	$38,$39,$30,$00,$00,$00,$00,$30,$71,$77,$65,$72,$74,$79
-	dc.b	$75,$69,$6F,$70,$00,$00,$00,$31,$32,$33,$61,$73,$64,$66
-	dc.b	$67,$68,$6A,$6B,$6C,$3A,$00,$00,$00,$34,$35,$36,$00,$7A
-	dc.b	$78,$63,$76,$62,$6E,$6D,$2C,$2E,$2F,$00,$2E,$37,$38,$39
-	dc.b	$20,$08,$00,$0D,$0D,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00
 
 initializeGameMemoryAndState:
 	CLR.L	D1
@@ -1048,1520 +959,6 @@ copySomeImageLoop:
 	MOVE.B	(A0)+,(A1)+
 	DBRA	D3,copySomeImageLoop
 	RTS
-
-lbW00D3F8:
-	dc.w	$0000
-gasInputIntensityValue:
-	dc.b	$00
-gasInputAccumulatorValue:
-	dc.b	$00
-lbB00D3FC:
-	dc.b	$00
-lbB00D3FD:
-	dc.b	$00
-lbB00D3FE:
-	dc.b	$00,$00,$00
-trackWidthMultiplier:
-	dc.b	$00,$00,$00
-trackViewOffsetX:
-	dc.b	$00,$00
-trackViewOffsetY:
-	dc.b	$00
-lbB00D407:
-	dc.b	$00,$00
-lbB00D409:
-	dc.b	$00
-trackProgressionByte:
-	dc.w	$0000
-gameStateCounter:
-	dc.b	$00,$00
-lbB00D40E:
-	dc.b	$00
-lbB00D40F:
-	dc.b	$00
-lbW00D410:
-	dc.w	$0000
-trackDistance:
-	dc.w	$0000
-lbB00D413:	EQU	*-1
-	dc.b	$00,$00
-currentMenuItem:
-	dc.b	$00
-speedDisplayThousands:
-	dc.b	$00
-currentMenuItemCopy:
-	dc.b	$00
-savedSegmentIndex:
-	dc.b	$00
-segmentDirectionFlags:
-	dc.b	$00
-temp:
-	dc.b	$00
-gameParameter1:
-	dc.b	$00
-gameParameter2:
-	dc.b	$00
-lapCrossingDetectionFlag:
-	dc.w	$0000
-player1LapCounter:
-	dc.b	$00
-player2LapCounter:
-	dc.b	$00
-baseCoordinateX:
-	dc.b	$00
-lbB00D423:
-	dc.b	$00,$00,$00
-baseCoordinateY:
-	dc.b	$00
-lbB00D427:
-	dc.b	$00,$00,$00
-lbB00D42A:
-	dc.b	$00
-lbB00D42B:
-	dc.b	$00
-lbB00D42C:
-	dc.b	$00
-lbB00D42D:
-	dc.b	$00
-lbB00D42E:
-	dc.b	$00,$00,$00,$00
-lbB00D432:
-	dc.b	$00,$00
-lbW00D434:
-	dc.w	$0000
-lbW00D436:
-	dc.w	$0000
-lbB00D438:
-	dc.b	$00,$00,$00,$00
-lbB00D43C:
-	dc.b	$00
-lbB00D43D:
-	dc.b	$00,$00
-trackEffectFlag:
-	dc.b	$00
-trackDirection:
-	dc.b	$00
-restartTimerCountdown:
-	dc.b	$00,$00
-distanceCharacteristic:
-	dc.b	$00
-aiEnabled:
-	dc.b	$00
-lbB00D445:
-	dc.b	$00
-lbB00D446:
-	dc.b	$00
-inputStateFlags:
-	dc.b	$00
-segmentRepeatCounter:
-	dc.b	$00,$00
-lbB00D44A:
-	dc.b	$00,$00,$00
-segmentSteeringFlags:
-	dc.b	$00,$00
-accumulatedOffTrackForceX:
-	dc.b	$00
-accumulatedOffTrackForceY:
-	dc.b	$00
-accumulatedOffTrackForceZ:
-	dc.b	$00,$00,$00
-offTrackAccumulationFlag:
-	dc.b	$00
-lbB00D455:
-	dc.b	$00
-offTrackFrameCounter:
-	dc.b	$00
-cameraAngleIndex:
-	dc.b	$00
-segmentDepthCounter:
-	dc.b	$00
-trackSegmentLimitDoubled:
-	dc.b	$00
-maxSegmentIndexDoubled:
-	dc.b	$00
-raceMode:
-	dc.b	$00
-lbB00D45C:
-	dc.b	$00
-trackDirectionSign:
-	dc.b	$00
-displayRowOffset:
-	dc.b	$00
-displayTrackID:
-	dc.b	$00
-lbB00D460:
-	dc.b	$00
-lbB00D461:
-	dc.b	$00
-lbB00D462:
-	dc.b	$00
-gameExitFlag:
-	dc.b	$00
-playerInputState:
-	dc.b	$00
-lbB00D465:
-	dc.b	$00
-segmentRenderingFlag:
-	dc.b	$00
-lbB00D467:
-	dc.b	$00
-lbB00D468:
-	dc.b	$00
-lbB00D469:
-	dc.b	$00
-trackModeParameter:
-	dc.b	$00
-lbB00D46B:
-	dc.b	$00
-wreckCountdownTimer:
-	dc.b	$00
-textHorizontalOffset:
-	dc.b	$00
-textYOffset:
-	dc.b	$00
-currentTrackIDs:
-	dc.b	$00
-raceActiveFlag:
-	dc.b	$00
-graphicsUpdateFlag:
-	dc.b	$00
-frameProcessingFlag:
-	dc.b	$00
-gameTimerCountdown:
-	dc.b	$00
-crashRecoveryTimer:
-	dc.b	$00
-raceCompletionCheckFlag:
-	dc.b	$00
-networkConnectionState:
-	dc.b	$00
-lbB00D477:
-	dc.b	$00,$00
-geometryFormatFlag:
-	dc.b	$00			; determines packed vs extended format
-lbB00D47A:
-	dc.b	$00
-segmentOrientationPrimary:
-	dc.b	$00
-lbB00D47C:
-	dc.b	$00
-offTrackCollisionFlag:
-	dc.b	$00
-playerStateFlag:
-	dc.b	$00
-lbB00D47F:
-	dc.b	$00,$00,$00,$00,$00,$00
-currentSegmentIndex:
-	dc.b	$00
-trackGeometryTypeIndex:
-	dc.b	$00,$00
-wreckBlinkFlag:
-	dc.b	$00
-lbB00D489:
-	dc.b	$00,$00
-currentTrackCoordinate:
-	dc.b	$00
-displayModeFlag2:
-	dc.b	$00
-maxMenuIndex:
-	dc.b	$00
-lbB00D48E:
-	dc.b	$00
-lbB00D48F:
-	dc.b	$00
-renderModeFlag:
-	dc.b	$00
-trackOffsetBase:
-	dc.b	$00
-lbB00D492:
-	dc.b	$00
-gridSweepDirection:
-	dc.b	$00
-lbB00D494:
-	dc.b	$00
-lbB00D495:
-	dc.b	$00,$00
-trackSegmentLimit:
-	dc.b	$00
-maxSegmentIndex:
-	dc.b	$00
-maxLapsForRace:
-	dc.b	$00
-lbB00D49A:
-	dc.b	$00
-lbB00D49B:
-	dc.b	$00
-collisionStateFlags:
-	dc.b	$00
-lbB00D49D:
-	dc.b	$00
-lbB00D49E:
-	dc.b	$00
-lbB00D49F:
-	dc.b	$00,$00
-lbB00D4A1:
-	dc.b	$00,$00
-lbB00D4A3:
-	dc.b	$00
-networkTimeoutFlag:
-	dc.b	$00
-lbB00D4A5:
-	dc.b	$00
-lbB00D4A6:
-	dc.b	$00
-currentDataIndex:
-	dc.b	$00
-accelerationStateFlag:
-	dc.b	$00,$00
-lbB00D4AA:
-	dc.b	$00
-lbB00D4AB:
-	dc.b	$00
-frameCounter:
-	dc.b	$00
-lbB00D4AD:
-	dc.b	$00
-lbB00D4AE:
-	dc.b	$00
-gameEndModeFlag:
-	dc.b	$00
-trackVariationSeed:
-	dc.b	$00
-displayFlags:
-	dc.b	$00
-raceResultFlag:
-	dc.b	$00,$00
-displayModeParameter:
-	dc.b	$00
-lbB00D4B5:
-	dc.b	$00
-performanceStylePoints:
-	dc.b	$00,$00
-carCrashedFlag:
-	dc.b	$00
-lbB00D4B9:
-	dc.b	$00
-lbB00D4BA:
-	dc.b	$00
-trackSideIndicatorCopy:
-	dc.b	$00
-singleBufferRenderMode:
-	dc.b	$00
-aiDirectionFlag:
-	dc.b	$00
-aiBehaviorFlag1:
-	dc.b	$00
-aiBehaviorFlag2:
-	dc.b	$00
-aiActionTimer:
-	dc.b	$00
-rollTransitionFlag:
-	dc.b	$00
-aiPatternOffset:
-	dc.b	$00
-engineSoundType:
-	dc.b	$00
-raceStartComplete:
-	dc.b	$00
-segmentDataStartIndex:
-	dc.b	$00
-controlResponseValue:
-	dc.b	$00
-engineTimer:
-	dc.b	$00
-displayStateFlag:
-	dc.b	$00
-gameTimingCounter:
-	dc.b	$00
-menuHighlightMode:
-	dc.b	$00
-multiplayerRaceDisplayFlag:
-	dc.b	$00
-eventTimerCountdown:
-	dc.b	$00
-trackDirectionFlag:
-	dc.b	$00,$00
-directionCalculation:
-	dc.b	$00
-lbB00D4D0:
-	dc.b	$00
-offRoadSideFlags:
-	dc.b	$00
-lbB00D4D2:
-	dc.b	$00
-textTransparencyMode:
-	dc.b	$00
-trackControlParameter:
-	dc.b	$00
-currentPlayerNameOffset:
-	dc.b	$00
-selectedMenuItem:
-	dc.b	$00
-collisionImpactLevel:
-	dc.b	$00,$00
-segmentOrientationAlternate:
-	dc.b	$00
-audioPitchModifier:
-	dc.b	$00
-lbB00D4DB:
-	dc.b	$00
-segmentAlternateFlag:
-	dc.b	$00
-visualEffectBaseValue:
-	dc.b	$00
-displayModeFlag1:
-	dc.b	$00
-raceStartTimer:
-	dc.b	$00
-multiplayerSyncFlag:
-	dc.b	$00
-trackSideIndicator:
-	dc.b	$00
-gameModeStateFlags:
-	dc.b	$00
-lbB00D4E3:
-	dc.b	$00
-savedPlayerIndex:
-	dc.b	$00
-lbB00D4E5:
-	dc.b	$00
-lbB00D4E6:
-	dc.b	$00,$00
-lbB00D4E8:
-	dc.b	$00
-lbB00D4E9:
-	dc.b	$00
-lbB00D4EA:
-	dc.b	$00
-engineEffectFlag:
-	dc.b	$00
-networkEngineFlag:
-	dc.b	$00
-previousDataIndex:
-	dc.b	$00
-lbW00D4EE:
-	dc.w	$0000
-lbB00D4EF:	EQU	*-1
-lbW00D4F0:
-	dc.w	$0000
-lbB00D4F1:	EQU	*-1
-trackHeightDifference:
-	dc.b	$00,$00
-lbW00D4F4:
-	dc.w	$0000
-lbB00D4F5:	EQU	*-1
-trackIncrementValue:
-	dc.w	$0000
-trackBoostThreshold:	EQU	*-1
-raceSetupFlags:  EQU    *-1
-lbW00D4F8:
-	dc.w	$0000
-trackBoostThresholdCopy:	EQU	*-1
-lbW00D4FA:
-	dc.w	$0000,$0000,$0000
-carStartRotation:
-	dc.b	$00
-carStartRotationLow:
-	dc.b	$00
-interpolationPointsXY1:
-	dc.w	$0000
-interpolationPointsXY2:
-	dc.w	$0000
-interpolationPointsXY3:
-	dc.w	$0000
-interpolationPointsXY4:
-	dc.w	$0000
-additionalInterpolationPoints1:
-	dc.w	$0000
-additionalInterpolationPoints2:
-	dc.w	$0000
-segmentBezierOffset1:
-	dc.w	$0000
-segmentBezierOffset2:
-	dc.w	$0000
-storedDepth:
-	dc.w	$0000
-processedSegmentIndices1:
-	dc.b	$00,$00
-processedSegmentIndices2:
-	dc.b	$00,$00
-trackEffectParameter:
-	dc.w	$0000,$0000
-lbW00D51C:
-	dc.w	$0000
-lbW00D51E:
-	dc.w	$0000
-previousEffectParameter:
-	dc.w	$0000
-lbW00D522:
-	dc.w	$0000
-lbB00D524:
-	dc.b	$00,$00
-visibilityAccumulator:
-	dc.w	$0000
-lbW00D528:
-	dc.w	$0000
-trackProgressionValue:
-	dc.w	$0000
-trackDataComponent:	EQU	*-1
-	dc.b	$00,$00
-lbW00D52E:
-	dc.w	$0000
-cameraRotationFlags:
-	dc.b	$00,$00
-reverseDirectionFlag:
-	dc.b	$00,$00
-lbW00D534:
-	dc.w	$0000
-lbW00D536:
-	dc.w	$0000
-carRenderDistance:
-	dc.w	$0000
-engineState:	EQU	*-1
-maxDistanceFromTrack:
-	dc.w	$0000
-steeringScaleFactor:
-	dc.w	$0000
-lbW00D53E:
-	dc.w	$0000
-lbB00D540:
-	dc.b	$00
-trackProcessingFlag:
-	dc.b	$00
-lbW00D542:
-	dc.w	$0000
-trackDirectionInversionFlag:
-	dc.b	$00,$00,$00,$00,$00,$00
-segmentSlopeFlags:
-	dc.b	$00,$00
-adjustedDistanceValue:
-	dc.w	$0000
-lbB00D54D:	EQU	*-1
-	dc.b	$00,$00,$00,$00,$00,$00
-lbB00D554:
-	dc.b	$00
-previousSegmentProperties:
-	dc.b	$00
-visualEffectFlags:
-	dc.w	$0000
-lbB00D558:
-	dc.b	$00
-lbB00D559:
-	dc.b	$00
-lbB00D55A:
-	dc.b	$00
-lbB00D55B:
-	dc.b	$00
-offsetFromRoadCenter:
-	dc.w	$0000
-lateralRoadPosition:
-	dc.w	$0000
-speedMinor:	EQU	*-1
-trackSurfaceHeight:
-	dc.w	$0000
-wheelSpeed:
-	dc.b	$00,$00
-viewOffsetX:
-	dc.w	$0000
-viewStepX:
-	dc.w	$0000
-viewOffsetY:
-	dc.w	$0000
-viewStepY:
-	dc.w	$0000
-quadRectHalfWidth:
-	dc.w	$0000
-quadRectWidth:
-	dc.w	$0000
-quadRectHalfHeight:
-	dc.w	$0000
-quadRectHeight:
-	dc.w	$0000
-stepSizeXHalf:
-	dc.w	$0000
-stepSizeYHalf:
-	dc.w	$0000
-lbW00D578:
-	dc.w	$0000
-lbW00D57A:
-	dc.w	$0000
-stepSizeXQuarter:
-	dc.w	$0000
-stepSizeYQuarter:
-	dc.w	$0000
-lbW00D580:
-	dc.w	$0000
-lbW00D582:
-	dc.w	$0000
-quadTranslateX:
-	dc.w	$0000
-quadTranslateY:
-	dc.w	$0000
-adjustedViewX:
-	dc.w	$0000
-adjustedViewY:
-	dc.w	$0000
-primaryGeometryOffset:
-	dc.w	$0000,$0000
-alternateGeometryOffset:
-	dc.w	$0000,$0000
-trackCenterX:
-	dc.l	$00000000
-trackCenterY:
-	dc.l	$00000000
-trackCenterZ:
-	dc.l	$00000000
-trackOffsetAdjustment:
-	dc.b	$00,$00
-postWreckStateFlag:
-	dc.b	$00,$00
-carWorldX:
-	dc.l	$00000000
-carWorldY:
-	dc.l	$00000000
-carWorldZ:
-	dc.l	$00000000
-distanceFromTrackX:
-	dc.l	$00000000
-distanceFromTrackY:
-	dc.l	$00000000
-distanceFromTrackZ:
-	dc.l	$00000000
-geometryDatabaseOffset:
-	dc.w	$0000,$0000
-rawTrackDataOffset:
-	dc.w	$0000,$0000,$0000,$0000
-lbB00D5C8:
-	dc.b	$00,$00,$00,$00
-lbL00D5CC:
-	dc.l	$00000000
-carHeightPosition:
-	dc.b	$00,$00,$00,$00
-lbL00D5D4:
-	dc.l	$00000000
-lbB00D5D8:
-	dc.b	$00,$00
-lbW00D5DA:
-	dc.w	$0000
-lbB00D5DC:
-	dc.b	$00
-lbB00D5DD:
-	dc.b	$00
-lbW00D5DE:
-	dc.w	$0000
-lbB00D5E0:
-	dc.b	$00,$00
-lbW00D5E2:
-	dc.w	$0000
-cameraAngleX:
-	dc.w	$0000
-cameraAngleY:
-	dc.b	$00
-lbB00D5E7:
-	dc.b	$00
-cameraAngleZ:
-	dc.w	$0000
-worldXSpeed:
-	dc.w	$0000
-worldYSpeed:
-	dc.w	$0000
-worldZSpeed:
-	dc.w	$0000
-rotationSpeedX:
-	dc.w	$0000
-rotationSpeedY:
-	dc.w	$0000
-rotationSpeedZ:
-	dc.w	$0000
-lbW00D5F6:
-	dc.w	$0000
-lbW00D5F8:
-	dc.w	$0000
-lbW00D5FA:
-	dc.w	$0000
-lbW00D5FC:
-	dc.w	$0000
-steeringYawRate:
-	dc.w	$0000
-lbW00D600:
-	dc.w	$0000
-lbW00D602:
-	dc.w	$0000
-lbW00D604:
-	dc.w	$0000
-lbW00D606:
-	dc.w	$0000
-lbW00D608:
-	dc.w	$0000
-lbW00D60A:
-	dc.w	$0000
-lbW00D60C:
-	dc.w	$0000
-baseTargetRoll:
-	dc.w	$0000
-baseRollAngle:
-	dc.w	$0000
-additionalYawOffset:
-	dc.w	$0000
-clampedDistanceX:
-	dc.w	$0000
-clampedDistanceY:
-	dc.w	$0000
-clampedDistanceZ:
-	dc.w	$0000
-previousDistanceX:
-	dc.w	$0000
-previousDistanceY:
-	dc.w	$0000
-previousDistanceZ:
-	dc.w	$0000
-lateralVelocityX:
-	dc.w	$0000
-lateralVelocityY:
-	dc.w	$0000
-lateralVelocityZ:
-	dc.w	$0000
-verticalMotion:
-	dc.w	$0000
-lateralMotion:
-	dc.w	$0000
-gasOutputAccumulatorValue:
-	dc.b	$00
-gasOutputIntensityValue:
-	dc.b	$00
-targetRollAngle:
-	dc.w	$0000
-lbW00D62E:
-	dc.w	$0000
-carVelocity:
-	dc.b	$00,$00
-adjustedRollAngle:
-	dc.w	$0000
-adjustedPitchAngle:
-	dc.w	$0000
-adjustedYawAngle:
-	dc.w	$0000
-collisionStateFlags1:
-	dc.w	$0000
-collisionStateFlags2:	EQU	*-1
-lbW00D63A:
-	dc.w	$0000
-lbW00D63C:
-	dc.w	$0000
-lbW00D63E:
-	dc.w	$0000
-rollAngleModifier:
-	dc.w	$0000
-carPitchAdjustment:
-	dc.w	$0000
-yawAngleOffset:
-	dc.w	$0000
-lbW00D646:
-	dc.w	$0000
-lbW00D648:
-	dc.w	$0000
-lbW00D64A:
-	dc.w	$0000
-lbW00D64C:
-	dc.w	$0000
-lbB00D64E:
-	dc.b	$00,$00
-lbB00D650:
-	dc.b	$00,$00
-lbB00D652:
-	dc.b	$00,$00
-lbW00D654:
-	dc.w	$0000
-lbW00D656:
-	dc.w	$0000
-lbW00D658:
-	dc.w	$0000
-segmentTargetAngle:
-	dc.w	$0000
-impactSeverity:
-	dc.b	$00,$00
-lbL00D65E:
-	dc.l	$00000000
-lbW00D660:	EQU	*-2
-lbW00D662:
-	dc.w	$0000,$0000
-lbL00D666:
-	dc.l	$00000000
-lbW00D668:	EQU	*-2
-lbW00D66A:
-	dc.w	$0000,$0000
-lbW00D66E:
-	dc.w	$0000
-lbW00D670:
-	dc.w	$0000
-lbW00D672:
-	dc.w	$0000,$0000
-lbW00D676:
-	dc.w	$0000
-lbW00D678:
-	dc.w	$0000
-lbW00D67A:
-	dc.w	$0000,$0000
-lbW00D67E:
-	dc.w	$0000
-lbW00D680:
-	dc.w	$0000
-lbW00D682:
-	dc.w	$0000,$0000
-boundsMinX:
-	dc.w	$0000
-boundsMaxX:
-	dc.w	$0000
-boundsMinY:
-	dc.w	$0000,$0000
-trackCoordinatesX:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-trackCoordinatesY:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.w	$0024
-segmentProcessedFlags:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000
-lbL00D76C:
-	dc.l	$00000000
-trackSegmentData:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000
-inputCoordX1:
-	dc.w	$0000
-inputCoordY1:
-	dc.w	$0000
-inputCoordX2:
-	dc.w	$0000
-inputCoordY2:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000
-clampedCoordX1:
-	dc.w	$0000
-clampedCoordY1:
-	dc.w	$0000
-clampedCoordX2:
-	dc.w	$0000
-clampedCoordY2:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-coordinateLookupTable:
-	dc.l	$00000000
-lbW00D8B4:
-	dc.w	$0000
-lbW00D8B6:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-transformedCoordinates1:
-	dc.w	$0000
-transformedCoordinates2:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000
-quadVertexX4:
-	dc.w	$0000
-quadVertexX5:
-	dc.w	$0000
-quadVertexX6:
-	dc.w	$0000
-quadVertexX7:
-	dc.w	$0000
-lbW00D9B8:
-	dc.w	$0000
-lbW00D9BA:
-	dc.w	$0000
-lbW00D9BC:
-	dc.w	$0000
-lbW00D9BE:
-	dc.w	$0000
-quadVertexX0:
-	dc.w	$0000
-quadVertexX1:
-	dc.w	$0000
-quadVertexX2:
-	dc.w	$0000
-quadVertexX3:
-	dc.w	$0000
-lbW00D9C8:
-	dc.w	$0000
-lbW00D9CA:
-	dc.w	$0000
-lbW00D9CC:
-	dc.w	$0000
-lbW00D9CE:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-transformedVertexBounds:
-	dc.l	$00000000
-lbW00D9F4:
-	dc.w	$0000
-lbW00D9F6:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-quadVertexY4:
-	dc.w	$0000
-quadVertexY5:
-	dc.w	$0000
-quadVertexY6:
-	dc.w	$0000
-quadVertexY7:
-	dc.w	$0000
-lbW00DAF8:
-	dc.w	$0000
-lbW00DAFA:
-	dc.w	$0000
-lbW00DAFC:
-	dc.w	$0000
-lbW00DAFE:
-	dc.w	$0000
-quadVertexY0:
-	dc.w	$0000
-quadVertexY1:
-	dc.w	$0000
-quadVertexY2:
-	dc.w	$0000
-quadVertexY3:
-	dc.w	$0000
-lbW00DB08:
-	dc.w	$0000
-lbW00DB0A:
-	dc.w	$0000
-lbW00DB0C:
-	dc.w	$0000
-lbW00DB0E:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-lbL00DB30:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-lbW00DB64:
-	dc.w	$0000,$0000
-lbW00DB68:
-	dc.w	$0000,$0000,$0000
-lbW00DB6E:
-	dc.w	$0000,$0000
-lbW00DB72:
-	dc.w	$0000
-lbW00DB74:
-	dc.w	$0000
-lbW00DB76:
-	dc.w	$0000,$0000,$0000,$0000,$0000
-trackSegmentGrid:
-	ds.b	16*16
-debrisParticleXPositions:
-	ds.w	32
-debrisParticleYPositions:
-	ds.w	32
-debrisParticleXVelocities:
-	ds.w	32
-debrisParticleYVelocities:
-	ds.w	32
-segmentGeometryIndices:
-	ds.b	100
-segmentAlternateGeometryIndices:
-	ds.b	100
-trackSegmentCoordinates:	; lookup table mapping track segment indices to their 2D grid coordinates, with each coordinate packed into a single byte
-	ds.b	100
-trackSegmentPropertiesTable:
-	ds.b	100
-segmentInterpolationPoint1:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
-lbL00DF6C:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-	dc.w	$0000
-graphicsOffsetX:
-	dc.w	$0000
-graphicsOffsetY:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000
-segmentInterpolationPoint2:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-segmentWorldPositions:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-obstacleSegmentIndices:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-obstacleTypes:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-trackFeatureData:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-playerStatsArray:
-	dc.b	$00
-lbB00E209:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-lbB00E216:
-	dc.b	$00
-lbB00E217:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00
-lapTimeSeconds:
-	dc.b	$00
-lbB00E221:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-lbB00E22E:
-	dc.b	$00
-lbB00E22F:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00
-lapTimeSubseconds:
-	dc.b	$00
-lbB00E239:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-lbB00E246:
-	dc.b	$00
-lbB00E247:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-segmentVisibilityData:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
-paletteUpdateArray:
-	dc.w	$0000
-	dc.b	$00
-lbB00E285:
-	dc.b	$00
-lbB00E286:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00
-lbL00E2B6:
-	dc.l	$00000000,$00000000,$00000000
-lbL00E2C2:
-	dc.l	$00000000,$00000000,$00000000
-selectedTrack:
-	dc.b	$00
-objectDisplayThreshold:
-	dc.b	$00
-currentPlayerContext:
-	dc.b	$00,$00
-lbL00E2D2:
-	dc.l	$00000000,$00000000,$00000000
-lbL00E2DE:
-	dc.l	$00000000,$00000000,$00000000
-lbL00E2EA:
-	dc.l	$00000000,$00000000,$00000000
-lbL00E2F6:
-	dc.l	$00000000,$00000000,$00000000
-lbL00E302:
-	dc.l	$00000000,$00000000,$00000000
-lbB00E30E:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-trackDataBuffer:
-	dc.b	$00		; unused
-numTrackSegments:
-	dc.b	$00
-lbB00E31B:
-	dc.b	$00
-trackParameter3:
-	dc.b	$00
-finishLineSegmentIndex:
-	dc.b	$00
-startWorldPosition:
-	dc.w	$0000
-lbB00E320:
-	dc.b	$00
-raceConfigValue:
-	dc.b	$00
-selectedRaceType:
-	dc.b	$00
-raceFlag1:
-	dc.b	$00
-raceFlag2:
-	dc.b	$00
-lbB00E325:
-	dc.b	$00
-lbB00E326:
-	dc.b	$00
-player1ID:
-	dc.b	$00
-player2ID:
-	dc.b	$00
-opponentID:
-	dc.b	$00
-trackMetadataBuffer:
-	dc.b	$00
-lbB00E32B:
-	dc.b	$00
-lbB00E32C:
-	dc.b	$00
-lbB00E32D:
-	dc.b	$00
-obstacleCount:
-	dc.b	$00
-trackFeatureCount:
-	dc.b	$00,$00
-lbB00E331:
-	dc.b	$00
-startingSegmentIndex:
-	dc.b	$00
-currentTrackID:
-	dc.b	$00
-lbB00E334:
-	dc.b	$00
-currentRaceNumber:
-	dc.b	$00
-lbL00E336:
-	dc.l	$00000000,$00000000,$00000000
-sineTable:
-	incbin	"sineTable"
-reciprocalTable:
-	incbin	"reciprocalTable"
-arctanTable:
-	incbin	"arctanTable"
-transformationMatrix:
-	dc.w	$1614,$0218,$0F04,$1715,$0316,$1817,$140F,$1502,$0403
-	dc.w	$1110,$1211,$454D,$332C,$6430,$0D09,$626E,$6509,$7363
-	dc.w	$6F32,$0D09,$0D09,$7274,$730D,$090D,$4645,$5443,$4809
-	dc.w	$6D6F,$7665,$2E62,$0930,$2861,$352C,$6435,$2E77,$292C
-	dc.w	$6430,$0D09,$6164,$6471,$2E77,$0923,$312C,$6435,$0D66
-	dc.w	$6574,$6368,$0961,$6E64,$692E
-playerNamesWithSpaces:
-	dc.b	' '
-playerNames:
-	dc.b	'Hot Rod      ',$D
-	dc.b	$09
-	dc.b	' Whizz Kid    '
-	dc.b	$09
-	dc.b	'T Bad Guy      '
-	dc.b	$09
-	dc.b	'b The Dodger   '
-	dc.b	$09
-	dc.b	'b'
-BigEdMaxBoost.MSG:
-	dc.b	' Big Ed       '
-	dc.b	$09
-	dc.b	'# Max Boost    p1 Dare Devil   ',$D
-	dc.b	$09
-	dc.b	' High Flyer   .b Bully Boy    ml Jumping Jack ,d Roa'
-	dc.b	'd Hog     b. '
-ascii.MSG3:
-	dc.b	'             '
-	dc.b	$09
-	dc.b	$0D
-	dc.b	$09
-lbB01066B:
-	dc.b	$0D,$09,$0D,"GTRACK",$0D,$09,$0D,$09,"move.b",$09,"d1,d0",$0D,$09,"asl."
-engineCharacteristics:
-	dc.l	$22206220,$3E043014,$4A100800
-	dc.b	"e.b",$09,"d0,d"
-	dc.b	"2",$0D,$09,"movea.l",$09,"#"
-levelNames:
-	dc.b	'LITTLE RAMP     '
-	dc.b	'STEPPING STONES '
-	dc.b	'HUMP BACK       '
-	dc.b	'BIG RAMP        '
-	dc.b	'SKI JUMP        '
-	dc.b	'DRAW BRIDGE     '
-	dc.b	'HIGH JUMP       '
-	dc.b	'ROLLER COASTER  ',0
-	dc.b	$81,$94,$00,$30,$A8,$0C,$80,$01,$81,$0F,$E0
-	dc.b	$64,$08,$1E,$80,$01,$81,$0F,$E0,$14,$08,$1E,$80,$01,$81
-	dc.b	$00,$F0,$03,$08,$03,$80,$01,$41,$02,$00,$64,$98,$01,$80
-	dc.b	$02,$00,$00,$FF,$50,$07,$FF,$80,$00,$00,$00,$CF,$50,$07
-	dc.b	$FF,$80,"ve.b",$09,"d0,DV",$0D,$09
-	dc.b	"jsr",$09,"FETCH",$0D,$09,"mov"
-	dc.b	"e.b",$09,"d0,DUH",$0D,$09,"mo"
-	dc.b	"ve.b",$09,"d0,DVH",$09,$0D,$09
-	dc.b	$0D,$09,"move.b",$09,"#0,d1"
-	dc.b	$0D,$09,"mo",$E9,$E5,$FA,$F3,$F8,$E3,$ED,$E2,$FE,$8A
-	dc.b	$ED,$EF,$E5,$EC,$EC,$8A,$E9,$F8,$EB,$E7,$E7,$E5,$E4,$EE
-	dc.b	$8A,$9B,$93,$92,$92,"PDU"
-attenuationTable:
-	dc.w	$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FEFE,$FEFE
-	dc.w	$FDFD,$FDFD,$FCFC,$FBFB,$FBFA,$FAF9,$F9F8,$F8F7,$F7F6
-	dc.w	$F6F5,$F4F4,$F3F3,$F2F1,$F0F0,$EFEE,$EDEC,$ECEB,$EAE9
-	dc.w	$E8E7,$E6E5,$E4E3,$E2E1,$E0DF,$DEDD,$DBDA,$D9D8,$D6D5
-	dc.w	$D4D2,$D1CF,$CECC,$CBC9,$C8C6,$C5C3,$C1BF,$BEBC,$BAB8
-	dc.w	$B6B4,$B2B0,$AEAC,$A9A7,$A5A2,$A09D,$9B98,$9592,$8F8C
-	dc.w	$8986,$837F,$7C78,$7470,$6C68,$635E,$5953,$4D47,$3F37
-	dc.w	$2D20
-distanceLookupTable:
-	dc.w	$1B1B,$1B1B,$1B1A,$1A1A,$1919,$1918,$1717,$1615,$1413
-	dc.w	$1211,$0F0E,$0B09,$0707,$0707,$0707,$0707,$2331,$362C
-	dc.b	"d0",$0D,$09,"beq",$09,"gt11",$0D,$09,"move"
-	dc.b	".b"
-trackGeometryDatabase:
-	dc.w	$50B2,$A3B2,$A9FF,$FEB2,$59B3,$20DA,$D8B3,$3BB4,$0A46
-	dc.w	$2E20,$9EB4,$A980,$852E,$60A5,$30C9,$8190
-segmentGeometryOffsetTable:	; This is a lookup table containing ~130 encoded offset values that map segment type/configuration indices to geometry data locations within trackGeometryDatabase
-	dc.w	$0DB5,$1BB5,$24B5,$36B5,$44B5,$52B5,$5CB5,$66B5,$6FB5
-	dc.w	$78B5,$86B5,$94B5,$9DB5,$A6B5,$B2B5,$CAB5,$D3B5,$EBB5
-	dc.w	$F7B5,$01B6,$0AB6,$14B6,$1DB6,$27B6,$31B6,$3AB6,$43B6
-	dc.w	$4DB6,$57B6,$60B6,$69B6,$72B6,$7BB6,$84B6,$90B6,$99B6
-	dc.w	$A2B6,$ABB6,$B7B6,$C0B6,$C9B6,$D5B6,$E1B6,$EDB6,$F9B6
-	dc.w	$02B7,$0BB7,$14B7,$1DB7,$26B7,$32B7,$3EB7,$4CB7,$56B7
-	dc.w	$5FB7,$68B7,$7AB7,$83B7,$8CB7,$95B7,$9EB7,$A7B7,$B0B7
-	dc.w	$B9B7,$C3B7,$CCB7,$D6B7,$E8B7,$F1B7,$FAB7,$03B8,$0CB8
-	dc.w	$16B8,$1FB8,$28B8,$31B8,$3AB8,$46B8,$4FB8,$58B8,$70B8
-	dc.w	$A720,$7EB8,$87B8,$90B8,$9EB8,$ACB8,$B5B8,$BFB8,$C9B8
-	dc.w	$D5B8,$DEB8,$E7B8,$F0B8,$FAB8,$03B9,$15B9,$27B9,$39B9
-	dc.w	$4BB9,$54B9,$60B9,$6AB9,$74B9,$7EB9,$88B9,$91B9,$9AB9
-	dc.w	$A3B9,$ACB9,$B5B9,$BEB9,$CAB9,$D4B9,$E0B9,$F8B9,$04BA
-	dc.w	$0DBA,$1FBA,$28BA,$A320,$7DA3,$31BA,$AA20,$3ABA,$44BA
-	dc.w	$4EBA,$58BA
-trackDataOffsetTable:	; Each word is an encoded offset that, when transformed, points to a specific track's compressed data in trackGeometryDatabase
-	dc.w	$62BA,$DEBA,$6FBB,$00BC,$8EBC,$1FBD,$F4BD,$82BE,$F5A7
-	dc.w	$4C00,$A54C,$B2A3,$0017,$4163,$6375,$7261
-geometryParameterTable:
-	dc.w	$0080,$20C0,$0073,$80C0,$A959,$0002,$A95E,$854B,$0400
-	dc.w	$4003,$1200,$AB80,$8001,$2040,$0300,$00C0,$0400,$0040
-	dc.w	$0300,$01C0,$0400,$0140,$0300,$02C0,$0400,$0240,$0300
-	dc.w	$03C0,$0400,$0340,$0300,$04C0,$0400,$0440,$0300,$05C0
-	dc.w	$0400,$0540,$0300,$06C0,$0400,$0640,$0300,$07C0,$0400
-	dc.w	$0740,$0300,$08C0,$0400,$080C,$80A8,$0D00,$0000,$FF80
-	dc.w	$680A,$8712,$00AB,$8780,$013E,$4003,$0000,$C004,$0000
-	dc.w	$4C03,$0501,$CA04,$DF00,$7303,$0702,$EB04,$BC01,$B203
-	dc.w	$0503,$2205,$9502,$0A04,$FB03,$6D05,$6803,$7A04,$E704
-	dc.w	$CD05,$3204,$0005,$C805,$4006,$F204,$9C05,$9A06,$C506
-	dc.w	$A605,$4C06,$5B07,$5B07,$4C06,$0CC0,$57FA,$0000,$0001
-	dc.w	$80E8,$0887,$1203,$AB87,$8001,$3E3F,$0300,$00BF,$0400
-	dc.w	$0035,$03DF,$00B3,$0405,$0114,$03BC,$018C,$0407,$02DD
-	dc.w	$0295,$024D,$0405,$0392,$0268,$03F5,$03FB,$0332,$0232
-	dc.w	$0485,$03E7,$04BF,$01F2,$04FF,$02C8,$053A,$01A6,$0563
-	dc.w	$029A,$06A4,$004C,$06B3,$015B,$0708,$4040,$FF00,$2080
-	dc.w	$B51C,$00AB,$8080,$0120,$78FF,$8700,$8700,$78FF,$2C00
-	dc.w	$3C01,$3C01,$2C00,$E100,$F001,$F001,$E100,$9601,$A502
-	dc.w	$A502,$9601,$4A02,$5A03,$5A03,$4A02,$FF02,$0E04,$0E04
-	dc.w	$FF02,$B303,$C304,$C304,$B303,$6804,$7705,$7705,$6804
-	dc.w	$1D05,$2C06,$2C06,$1D05,$D105,$E106,$E106,$D105,$8606
-	dc.w	$9507,$9507,$8606,$3A07,$4A08,$4A08,$3A07,$EF07,$FF08
-	dc.w	$FF08,$EF07,$A408,$B309,$B309,$A408,$0C80,$0010,$0000
-	dc.w	$00FF,$90C0,$0C7A,$1400,$AB7A,$8001,$3240,$0300,$00C0
-	dc.w	$0400,$004C,$031C,$01CA,$04FB,$0071,$0336,$02EB,$04F4
-	dc.w	$01AF,$034C,$0322,$05E9,$0204,$045C,$046D,$05D9,$0371
-	dc.w	$0463,$05CD,$05C1,$04F5,$0460,$0641,$06A0,$058E,$0550
-	dc.w	$07C8,$0673,$063B,$0632,$0861,$073B,$07FC,$0603,$090B
-	dc.w	$08F4,$070C,$C000,$F800,$0000,$0190,$400B,$7A14,$03AB
-	dc.w	$7A80,$0132,$4003,$0000,$C004,$0000,$3503,$FB00,$B304
-	dc.w	$1C01,$1403,$F401,$8E04,$3602,$DD02,$E902,$5004,$4C03
-	dc.w	$9202,$D903,$FB03,$5C04,$3202,$C104,$8E03,$6305,$BE01
-	dc.w	$A005,$0A03,$6006,$3701,$7306,$7102,$5007,$9E00,$3B07
-	dc.w	$C401,$3208,$F4FF,$F407,$0301,$0309,$0840,$40FF,$0020
-	dc.w	$7CB0,$1800,$AB7C,$8001,$2078,$FF87,$0087,$0078,$FF32
-	dc.w	$0041,$0141,$0132,$00EC,$00FC,$01FC,$01EC,$00A6,$01B6
-	dc.w	$02B6,$02A6,$0160,$0270,$0370,$0360,$021B,$032A,$042A
-	dc.w	$041B,$03D5,$03E4,$04E4,$04D5,$038F,$049F,$059F,$058F
-	dc.w	$0449,$0559,$0659,$0649,$0503,$0613,$0713,$0703,$06BE
-	dc.w	$06CD,$07CD,$07BE,$0678,$0787,$0887,$0878,$0700,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$6061,$0344,$2628
-	dc.w	$2A2C,$0000,$0200,$0400,$0600,$0800,$0A00,$0C00,$0E00
-	dc.w	$1000,$0020,$4060,$0121,$4161,$0202,$0202,$0202,$0261
-	dc.w	$4121,$0160,$4020,$0000,$0000,$0000,$0060,$2151,$0222
-	dc.w	$4262,$0313,$0020,$4070,$2141,$6102,$2232,$0002,$0406
-	dc.w	$E729,$CA4B,$2C46,$9655,$8524,$33B2,$2100,$0000,$0000
-	dc.w	$0010,$2040,$6001,$2141,$6102,$0202,$0202,$0271,$6141
-	dc.w	$2101,$6040,$2000,$0010,$1010,$1010,$1090,$8010,$0000
-	dc.w	$0000,$0000,$8090,$0001,$0203,$0405,$0607,$0809,$0A0B
-	dc.w	$1B80,$1C80,$1D80,$1E80,$1F80,$2080,$A180,$8000,$0000
-	dc.w	$0000,$0000,$0000,$4E1D,$DB0A,$A836,$3422,$0000,$009B
-	dc.w	$2019,$E018,$A017,$6016,$2014,$E013,$A012,$6011,$200F
-	dc.w	$E00E,$A048,$2726,$3544,$6313,$4271,$2150,$0013,$0362
-	dc.w	$4222,$0251,$21E0,$8005,$0585,$0000,$8505,$0505,$3222
-	dc.w	$0261,$4121,$7040,$A080,$0040,$0141,$0242,$0333,$6300
-	dc.w	$2030,$3030,$3030,$3030,$3030,$1000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$90B0,$3030,$3030,$3030,$30A0
-	dc.w	$8000,$0000,$0000,$0000,$0090,$B030,$3030,$3030,$3030
-	dc.w	$30A0,$8000,$2142,$53E4,$65E6,$5748,$0060,$4192,$62A3
-	dc.w	$6314,$4400,$2040,$D060,$60D0,$4020,$0463,$B303,$4282
-	dc.w	$3160,$00A6,$8000,$0000,$0000,$8035,$4787,$4675,$2544
-	dc.w	$6303,$2241,$6000,$0827,$36C5,$4443,$3221,$0050,$5050
-	dc.w	$50C0,$3020,$1000,$0000,$1030,$6011,$5122,$7200,$6041
-	dc.w	$A2D2,$62F2,$7272,$7272,$7222,$B232,$A212,$F131,$6000
-	dc.w	$0A68,$4726,$0563,$4221,$0000,$1030,$6021,$7142,$1363
-	dc.w	$3405,$5555,$2676,$4718,$6839,$8A00,$0000,$0000,$C776
-	dc.w	$2655,$0534,$6313,$4271,$2121,$6030,$1000,$0000,$0000
-	dc.w	$0000,$008A,$8000,$0000,$0000,$804C,$0041,$0344,$0647
-	dc.w	$094A,$0C70,$5030,$1000,$1030,$5070,$AA80,$0000,$0000
-	dc.w	$0080,$2A59,$4939,$A963,$6363,$6347,$0000,$0010,$3050
-	dc.w	$0131,$7142,$2314,$6262,$62D2,$42A2,$0261,$B101,$4000
-	dc.w	$0040,$0141,$0242,$0343,$0464,$4526,$0767,$0010,$2030
-	dc.w	$4040,$4040,$4040,$0000,$0000,$0010,$3060,$218D,$8000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$8000,$9C80,$1C80,$9C80
-	dc.w	$8000,$0000,$0000,$0000,$1020,$4060,$0131,$7100,$1030
-	dc.w	$7031,$71B2,$5262,$0000,$0010,$3060,$2102,$0300,$1030
-	dc.w	$6021,$7162,$5344,$0070,$6152,$4334,$2516,$0700,$0000
-	dc.w	$0000,$0000,$802E,$0001,$F152,$A363,$9434,$5400,$30D0
-	dc.w	$7011,$A131,$4141,$4140,$1000,$0000,$1040,$1161,$4040
-	dc.w	$4040,$4040,$3020,$1000,$9AC0,$8000,$0000,$0000,$0000
-	dc.w	$0000,$0000,$8000,$0C80,$2403,$0221,$6030,$1000,$0047
-	dc.w	$4665,$2505,$0515,$3575,$80E6,$1645,$7424,$5323,$1346
-	dc.w	$2514,$1322,$4170,$3000,$0001,$1233,$5475,$1738,$597A
-	dc.w	$0271,$D121,$6030,$1000,$0000,$0010,$3060,$21D1,$7102
-	dc.w	$0040,$8131,$D161,$F171,$7122,$6121,$6030,$1000,$0000
-	dc.w	$0060,$4122,$0363,$4425,$0666,$4728,$0000,$1030,$6021
-	dc.w	$7152,$4324,$45E6,$8021,$4263,$0526,$2860,$27C0,$2740
-	dc.w	$26E0,$26A0,$2680,$2680,$26A0,$26E0,$2720,$A760,$0000
-	dc.w	$0001,$0203,$0405,$0607,$0868,$492A,$0B6B,$0070,$5132
-	dc.w	$1373,$5435,$0600,$5031,$1272,$5334,$1506,$0060,$4122
-	dc.w	$0373,$6465,$6667,$6869,$6A6B,$0060,$4122,$0353,$2464
-	dc.w	$2565,$2666,$2767,$0081,$61A2,$4252,$5252,$5200,$4172
-	dc.w	$1435,$5677,$193A,$5B00,$2142,$6305,$2647,$681A,$5B64
-	dc.w	$1443,$7222,$5101,$4020,$1000,$0005,$0505,$1525,$45E5
-	dc.w	$0000,$2212,$F151,$3111,$6030,$0000,$5031,$2223,$3455
-	dc.w	$7618,$0021,$4263,$0526,$4768,$797A,$5271,$2160,$3010
-	dc.w	$0000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
-	dc.w	$2000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
-	dc.w	$2000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
-	dc.w	$2000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
-	dc.w	$2000,$0063,$43A3,$F242,$0241,$0140,$2847,$6606,$2544
-	dc.w	$6303,$2241,$6000,$1473,$4303,$4202,$4101,$4000,$7414
-	dc.w	$4303,$4202,$4101,$4000,$1453,$1352,$1251,$1150,$A080
-	dc.w	$7434,$7333,$7232,$7131,$E080,$2362,$2261,$2170,$4020
-	dc.w	$0042,$4252,$7213,$43F3,$8000,$0000,$0080,$8505,$0505
-	dc.w	$050C,$5947,$5504,$5241,$5000,$0010,$3050,$E050,$3010
-	dc.w	$0000,$0000,$0080,$0000,$0000,$0404,$0404,$0404,$73E3
-	dc.w	$3352,$4100,$4404,$4303,$4202,$4101,$4000,$4141,$4141
-	dc.w	$4141,$31A1,$01E0,$3000,$18C0,$1680,$1440,$1200,$0FC0
-	dc.w	$0D80,$0B40,$0900,$06C0,$0480,$0240,$0000,$7E4C,$1A08
-	dc.w	$1644,$1302,$1140,$1000,$6030,$1000,$0010,$3060,$2113
-	dc.w	$0010,$A00E,$400B,$E009,$8007,$2004,$C002,$6000,$0000
-	dc.w	$E818,$4776,$2655,$0534,$0000,$0010,$3060,$2171,$4200
-	dc.w	$2142,$6305,$2647,$680A,$0060,$3171,$3272,$3373,$3474
-	dc.w	$0020,$5011,$5112,$5213,$5314,$0040,$0141,$0242,$0343
-	dc.w	$94F4,$0040,$0141,$0242,$0343,$F394,$2C0F,$0F25,$0005
-	dc.w	$A0CF,$6A9F,$6B24,$5050,$2500,$0019,$6380,$2F04,$6486
-	dc.w	$1F65,$6657,$0E68,$67C0,$0D64,$04E0,$0C69,$9F17,$0000
-	dc.w	$0000,$0000,$0000,$CC02,$C601,$1617,$B710,$0001,$2019
-	dc.w	$1894,$3104,$032A,$4200,$2A53,$002A,$6400,$2A75,$282A
-	dc.w	$8629,$2A97,$002A,$A82A,$2AB9,$2B2A,$CA00,$2ADB,$0004
-	dc.w	$EC09,$0AD3,$FD16,$1766,$FE00,$17EF,$1B1A,$8DDF,$0605
-	dc.w	$222F,$0202,$2146,$0358,$0122,$382A,$2A0E,$000F,$A0CF
-	dc.w	$009F,$3B3C,$3C25,$1348,$4900,$3280,$2F04,$6486,$1F65
-	dc.w	$6657,$0E68,$67C0,$0D64,$04E0,$0C69,$9F2E,$2F2E,$2F2E
-	dc.w	$2F2E,$2F38,$C002,$4C03,$C601,$7C7D,$9710,$7F7E,$0020
-	dc.w	$034C,$2030,$339F,$3315,$1E1F,$6464,$6464,$5E0C,$D006
-	dc.w	$E016,$17D7,$F11B,$1A4D,$F260,$F300,$9F00,$4900,$5A6B
-	dc.w	$0000,$4800,$4CFD,$46FE,$1617,$17EF,$1B1A,$8DDF,$0709
-	dc.w	$3034,$0809,$03D4,$083F,$0FBE,$11BD,$13BB,$15BA,$2CF3
-	dc.w	$1E42,$1011,$1213,$1415,$162F,$0535,$2E2E,$1340,$0560
-	dc.w	$043A,$8F7A,$1C1D,$1E1F,$2227,$434D,$0D47,$0E17,$1696
-	dc.w	$1F1A,$1B0C,$2F20,$3F00,$9F48,$0039,$0048,$4948,$0038
-	dc.w	$00DF,$034C,$07EF,$7D7C,$56FE,$7E7F,$C0FD,$4C03,$E0FC
-	dc.w	$336F,$4A71,$1F64,$645E,$CDF5,$C7F4,$1716,$16E3,$1A1B
-	dc.w	$8CD3,$A0C3,$301F,$4B8C,$A381,$930B,$0C14,$8204,$0384
-	dc.w	$710A,$0911,$600C,$0B8C,$50A0,$4000,$1F00,$8D20,$8710
-	dc.w	$1716,$D601,$1A1B,$4C02,$6003,$0006,$0529,$3106,$0100
-	dc.w	$5201,$4D1B,$4C25,$4F28,$4D34,$5C26,$2C01,$0118,$8007
-	dc.w	$A0C0,$003F,$0000,$0080,$806D,$6E4F,$6E6D,$6D6E,$6E6D
-	dc.w	$6D6E,$A030,$008D,$2087,$1017,$16D6,$011A,$1B4C,$0260
-	dc.w	$0377,$9F29,$0000,$7640,$2900,$0045,$4D0D,$470E,$1716
-	dc.w	$B61F,$0003,$2F18,$1954,$3E03,$04EA,$4D31,$EA5C,$0DEA
-	dc.w	$6B0D,$EA7A,$8EEA,$8900,$EA98,$00EA,$A700,$EAB6,$90EA
-	dc.w	$C511,$EAD4,$59C4,$E30A,$0951,$F217,$16E7,$F100,$16E0
-	dc.w	$1A1B,$8CD0,$0A09,$2B29,$0508,$20D6,$0E4E,$0F4B,$134B
-	dc.w	$1446,$1011,$1516,$2021,$2223,$280F,$0F23,$406A,$AABD
-	dc.w	$71AA,$AC21,$AA9B,$64AA,$8ACF,$AA79,$00AA,$6800,$AA57
-	dc.w	$00AA,$466F,$AA35,$F2AA,$2473,$8413,$090A,$5302,$1617
-	dc.w	$E601,$0097,$101B,$1A0D,$2020,$3024,$0040,$5033,$0150
-	dc.w	$5253,$9461,$3350,$2A72,$4C04,$8355,$5491,$9453,$5200
-	dc.w	$A450,$3320,$B44C,$1F25,$0CD4,$06E4,$1617,$D7F5,$1B1A
-	dc.w	$4DF6,$60F7,$4D5F,$477A,$4E7A,$564C,$FD46,$FE16,$1737
-	dc.w	$EF00,$81DF,$1918,$14CE,$0403,$0708,$2B28,$0601,$03D8
-	dc.w	$1554,$1836,$20C2,$0042,$27C9,$204E,$2A2A,$04A0,$11A0
-	dc.w	$CC00,$7F38,$3333,$2C00,$0032,$804C,$0464,$863C,$6566
-	dc.w	$572B,$6867,$C02A,$6404,$E029,$2B3F,$2035,$5CC0,$252D
-	dc.w	$0DC6,$2457,$4797,$335D,$5800,$430D,$2D20,$531C,$3F1D
-	dc.w	$3F00,$0093,$6D6E,$2F6D,$6E6E,$6D20,$C332,$00D3,$6404
-	dc.w	$07E3,$6665,$76F2,$70E7,$F170,$16E0,$6768,$80D0
-	dc.w	$0464,$A0C0,$709F,$7070,$70C2,$0064,$642B,$008D,$2087
-	dc.w	$1017,$16D6,$011A,$1B4C,$0260,$0300,$9F00,$35DF,$E000
-	dc.w	$E1E2,$2B38,$400D,$034C,$470E,$7D7C,$961F,$7E7F,$002F
-	dc.w	$4C03,$203F,$339F,$3333,$151E,$1F22,$4464,$5E0D,$DF07
-	dc.w	$EF17,$1676,$FE00,$E7FD,$0016,$EC1A,$1B8C,$DC04,$0448
-	dc.w	$4809,$0703,$6206,$5507,$5014,$433D,$E441,$D82D,$5A2E
-	dc.w	$502F,$C604,$0D26,$3334,$3536,$341D,$1D04,$4006,$203F
-	dc.w	$009F,$003B,$254D,$3E26,$6464,$2B0D,$DF07,$EF17,$1656
-	dc.w	$FE1A,$1BCC,$FDE0,$FC00,$5F00,$0000,$0000,$CDF6,$C3F5
-	dc.w	$1716,$34E4,$00AA,$D300,$AAC2,$00A4,$B100,$11A0,$1819
-	dc.w	$8C90,$A080,$005F,$0000,$0000,$008D,$2087,$1017,$16D6
-	dc.w	$011A,$1B4C,$0260,$0300,$9F3A,$7A36,$00B7,$003D,$2743
-	dc.w	$4D0D,$470E,$1716,$961F,$1A1B,$0C2F,$0606,$2C2A,$060E
-	dc.w	$27D3,$28CE,$02D3,$1755,$1652,$1552,$1E1F,$2021,$2225
-	dc.w	$2627,$2829,$2A2B,$2C2D,$4E00,$0025,$0005,$A0CF,$389F
-	dc.w	$0182,$8282,$8282,$074A,$008C,$2F86,$1F16,$1757,$0E1B
-	dc.w	$1ACD,$0DE0,$0C19,$9F08,$0FF5,$F5F5,$F56C,$745C,$C002
-	dc.w	$2D0D,$C601,$5747,$9710,$5D58,$0020,$0D2D,$2030,$1C9F
-	dc.w	$1D1E,$1F22,$2727,$2743,$3800,$D04C,$0306,$E005,$06F7
-	dc.w	$F134,$66F2,$4117,$E312,$1480,$D364,$04A0,$C370,$7F4B
-	dc.w	$3533,$3333,$3333,$8043,$034C,$8733,$0605,$F624,$3467
-	dc.w	$2500,$9636,$1A1B,$0C46,$2056,$007F,$235B,$7070,$7070
-	dc.w	$7000,$D604,$6406,$E665,$66D7,$F768,$6740,$F864,$0460
-	dc.w	$F92B,$3F00,$0000,$4CFD,$46FE,$1617,$17EF,$1B1A,$8DDF
-	dc.w	$0303,$5059,$0700,$062A,$0729,$0E36,$1A54,$1B4A,$4D52
-	dc.w	$4C5A,$FE04,$BDFF,$0484,$0B85,$0C20,$7798,$4CA3,$8BA5
-	dc.w	$2638,$E90F,$8526,$A41B,$840A,$2097,$8AC9,$2CD0,$3E4C
-	dc.w	$95B6,$2054,$B3A5,$2618,$69F4,$854B,$A905,$854C,$2000
-	dc.w	$A5A5,$2A85,$37A5,$2B85,$3820,$E9B4,$A526,$8527,$1869
-	dc.w	$F985,$4BA9,$0585,$4C20,$5F9A,$F0AD,$BDF5,$0430,$04B0
-	dc.w	$A690,$B490,$A2B0,$B04C,$968B,$0022,$E320,$7661
-lbW01172C:
-	dc.w	$0707,$0707,$0707,$0707,$413A,$3E41,$4851,$484F,$0000
-	dc.w	$0000,$0000,$0000,$4841,$4548,$4F58,$4F56,$0703,$0303
-	dc.w	$0303,$0703,$6657,$5759,$5969,$6264,$0703,$0303,$0301
-	dc.w	$0303,$6155,$5356,$585B,$5A62
-H.MSG:
-	dc.b	$48,$00,$F0,$00,$EC,$00,$10,$60,$5B,$00,$00,$54,$0C,$40
-	dc.b	$01,$3A,$01,$0C,$6E,$69,$01,$00
-primaryFontBitmapData:
-	dc.w	$0000,$0000,$0000,$0000,$9595,$9595,$AAEA,$EAEA,$1515
-	dc.w	$1515,$156A,$6A6A,$75C3,$0000,$0000,$8080,$4040,$C000
-	dc.w	$0080,$8080,$5555,$5555,$55AA,$AAAA,$5555,$5555,$55AA
-	dc.w	$AAAA,$BDFF,$C3C0,$C3F3,$BFBF,$0000,$C0C0,$C0C0,$4040
-	dc.w	$FF80,$8080,$8080,$8080,$8080,$8080,$8080,$80FF,$0808
-	dc.w	$087F,$0808,$0800,$0101,$0101,$0101,$01FF,$0000
-	dc.b	$00
-lbB0117ED:
-	dc.b	$7F,$00,$00,$00,$00,$00,$00,$00,$00,$00
-lbB0117F7:
-	dc.b	$18
-lbB0117F8:
-	dc.b	$18,$00,$00,$02,$04,$08,$10,$20,$40,$00,$00,$3C,$42,$42
-	dc.b	$42,$42,$3C,$00,$00,$10,$30,$10,$10,$10,$38,$00,$00,$3C
-	dc.b	$42,$0C,$30,$40,$7E,$00,$00,$7E,$04,$0C,$02,$42,$3C,$00
-	dc.b	$00,$04,$0C,$14,$24,$7E,$04,$00,$00,$7E,$40,$7C,$02,$02
-	dc.b	$7C,$00,$00,$3C,$40,$7C,$42,$42,$3C,$00,$00,$7E,$04,$08
-	dc.b	$10,$20,$20,$00,$00,$3C,$42,$3C,$42,$42,$3C,$00,$00,$3C
-	dc.b	$42,$3C,$04,$08,$10,$00,$00,$00,$10,$00,$00,$10,$00,$00
-	dc.b	$00,$00,$10,$00,$00,$10,$20,$00,$18,$18,$18,$18,$18,$00
-	dc.b	$18,$00,$00,$00,$7E,$00,$7E,$00,$00,$00,$30,$18,$0C,$06
-	dc.b	$0C,$18,$30,$00,$00,$38,$44,$04,$08,$10,$00,$10,$3C,$66
-	dc.b	$6E,$6A,$6E,$60,$3C,$00,$00,$3C,$42,$42,$7E,$42,$42,$00
-	dc.b	$00,$78,$44,$7C,$42,$42,$7C,$00,$00,$3C,$42,$40,$40,$42
-	dc.b	$3C,$00,$00,$7C,$42,$42,$42,$42,$7C,$00,$00,$7E,$40,$78
-	dc.b	$40,$40,$7E,$00,$00,$7E,$40,$78,$40,$40,$40,$00,$00,$3C
-	dc.b	$42,$40,$4E,$42,$3E,$00,$00,$42,$42,$7E,$42,$42,$42,$00
-	dc.b	$00,$38,$10,$10,$10,$10,$38,$00,$00,$04,$04,$04,$04,$44
-	dc.b	$38,$00,$00,$44,$48,$70,$48,$44,$42,$00,$00,$20,$20,$20
-	dc.b	$20,$20,$3E,$00,$00,$42,$66,$5A,$42,$42,$42,$00,$00,$42
-	dc.b	$62,$52,$4A,$46,$42,$00,$00,$3C,$42,$42,$42,$42,$3C,$00
-	dc.b	$00,$7C,$42,$7C,$40,$40,$40,$00,$00,$3C,$42,$42,$42,$42
-	dc.b	$3C,$06,$00,$7C,$42,$7C,$48,$44,$42,$00,$00,$3E,$40,$3C
-	dc.b	$02,$02,$7C,$00,$00,$7C,$10,$10,$10,$10,$10,$00,$00,$42
-	dc.b	$42,$42,$42,$42,$3E,$00,$00,$42,$42,$42,$42,$24,$18,$00
-	dc.b	$00,$42,$42,$42,$5A,$66,$42,$00,$00,$42,$24,$18,$18,$24
-	dc.b	$42,$00,$00,$44,$44,$28,$10,$10,$10,$00,$00,$7E,$04,$08
-	dc.b	$10,$20,$7E,$00,$01,$00,$00,$00,$00,$00,$00,$FF,$80,$00
-	dc.b	$00,$00,$00,$00,$00,$FF,$00,$00,$00,$FF,$00,$00,$00,$01
-	dc.b	$00,$00,$00,$FF,$00,$00,$00,$80
-lbL01197A:
-	dc.l	$01000000
-lbW01197E:
-	dc.w	$0000
-lbB011980:
-	dc.b	$00,$01,$00,$00,$00,$FF,$00,$00,$00,$FF,$00,$00,$3C,$02
-	dc.b	$3E,$42,$3E,$00,$00,$40,$7C,$42,$42,$42,$7C,$00,$00,$00
-	dc.b	$3E,$40,$40,$40,$3E,$00,$00,$02,$3E,$42,$42,$42,$3E,$00
-	dc.b	$00,$00,$3C,$42,$7E,$40,$3C,$00,$00,$1C,$22,$20,$78,$20
-	dc.b	$20,$00,$00,$00,$3E,$42,$42,$3E,$02,$3C,$00,$40,$40,$7C
-	dc.b	$42,$42,$42,$00,$10,$00,$30,$10,$10,$10,$38,$00,$00,$08
-	dc.b	$00,$08,$08,$08,$48,$30,$00,$20,$20,$24,$38,$24,$22,$00
-	dc.b	$00,$30,$10,$10,$10,$10,$38,$00,$00,$00,$24,$5A,$5A,$42
-	dc.b	$42,$00,$00,$00,$7C,$42,$42,$42,$42,$00,$00,$00,$3C,$42
-	dc.b	$42,$42,$3C,$00,$00,$00,$7C,$42,$42,$7C,$40,$40,$00,$00
-	dc.b	$3E,$42,$42,$3E,$02,$02,$00,$00,$5C,$62,$40,$40,$40,$00
-	dc.b	$00,$00,$3E,$60,$3C,$06,$7C,$00,$00,$20,$7C,$20,$20,$24
-	dc.b	$18,$00,$00,$00,$42,$42,$42,$42,$3E,$00,$00,$00,$42,$42
-	dc.b	$42,$24,$18,$00,$00,$00,$42,$42,$5A,$5A,$24,$00,$00,$00
-	dc.b	$42,$24,$18,$24,$42,$00,$00,$00,$42,$42,$42,$3E,$02,$3C
-	dc.b	$00,$00,$7E,$04,$18,$20,$7E,$00,$00,$00,$00,$FF,$00,$00
-	dc.b	$00,$81,$81,$81,$81,$81,$81,$81,$81,$81,$81,$00,$00,$00
-	dc.b	$00,$00,$00,$81,$FF,$00,$00,$00,$00,$00,$00,$FF,$30,$18
-	dc.b	$0C,$06,$0C,$18,$30,$00,$80,$00
-image0Palette:
-	dc.w	$0000,$0443,$0554,$0770,$0451,$0233,$0257,$0247,$0123,$0200
-	dc.w	$0311,$0422,$0644,$0332,$0555,$0777
-image0:	incbin	"image0"
-imageMenuScreenPalette:
-	dc.w	$0000,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
-	dc.w	$0240,$0021,$0046,$0025,$0710,$0500,$0740
-imageMenuScreen:
-	incbin	"imageMenuScreen"
-alternateFontBitmapData:
-	incbin	"alternateFontBitmapData"
-image2Palette:
-	dc.w	$0022,$0443,$0554,$0770,$0123,$0222,$0030,$0247,$0000
-	dc.w	$0200,$0311,$0050,$0555,$0332,$0333,$0777
-image2:	incbin	"image2"
-image3Palette:
-	dc.w	$0000,$0221,$0332,$0443,$0034,$0110,$0030,$0770,$0000
-	dc.w	$0200,$0311,$0070,$0555,$0221,$0333,$0777
-image3:	incbin	"image3"
-imagePlayersPalette:
-	dc.w	$0222,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
-	dc.w	$0240,$0030,$0035,$0025,$0710,$0500,$0740
-imagePlayers:
-	incbin	"imagePlayers"
-lbW0488F8:
-	dc.w	$0007,$8000,$0004,$477C,$0004,$AF3E,$0003,$D7B6,$0005
-	dc.w	$0E4C
 
 sendSerialByteWithChecksum:
 	AND.W	#$00FF,D0
@@ -2704,9 +1101,6 @@ lbC048A98:
 	MOVE.L	(SP)+,A0
 	MOVE.W	(SP)+,D0
 	RTS
-
-ciaTimerFlag:
-	dc.b	$00,$00
 
 lbC048AAA:
 	CMP.B	#$40,D0
@@ -3322,103 +1716,6 @@ checkSpaceKeyPressed:
 	MOVE.W	(SP)+,SR
 	RTS
 
-lbW049538:
-	dc.w	$0000
-networkPacketReadyFlag:
-	dc.b	$00,$00
-networkGameMode:
-	dc.b	$00,$00
-checksumAccumulator:
-	dc.w	$0000
-networkDataCounter1:
-	dc.w	$0000
-lbW049542:
-	dc.w	$0000
-networkDataCounter2:
-	dc.w	$0000
-lbW049546:
-	dc.w	$0000
-lbW049548:
-	dc.w	$0000
-lbW04954A:
-	dc.w	$0000
-lbW04954C:
-	dc.w	$0000
-lbW04954E:
-	dc.w	$0000
-lbB049550:
-	dc.b	$00
-lbB049551:
-	dc.b	$00
-lbB049552:
-	dc.b	$00
-lbB049553:
-	dc.b	$00
-lbB049554:
-	dc.b	$00
-lbB049555:
-	dc.b	$00
-lbB049556:
-	dc.b	$00
-lbB049557:
-	dc.b	$00
-lbB049558:
-	dc.b	$00
-lbB049559:
-	dc.b	$00
-lbB04955A:
-	dc.b	$00
-gameInitFlag1:
-	dc.b	$00
-receivedGameStateID:
-	dc.b	$00
-receivedGameInitFlag:
-	dc.b	$00
-receivedPlayerCommand:
-	dc.b	$00
-receivedPlayerState:
-	dc.b	$00
-lbB049560:
-	dc.b	$00
-lbB049561:
-	dc.b	$00
-gameStateID:
-	dc.b	$00
-gameInitFlag2:
-	dc.b	$00
-lbB049564:
-	dc.b	$00
-lbB049565:
-	dc.b	$00
-lbB049566:
-	dc.b	$00
-raceSeriesCounter:
-	dc.b	$00
-lbB049568:
-	dc.b	$00
-opponentVisibilityFlag:
-	dc.b	$00
-lbB04956A:
-	dc.b	$00
-lbB04956B:
-	dc.b	$00
-lbB04956C:
-	dc.b	$00
-lbB04956D:
-	dc.b	$00
-lbB04956E:
-	dc.b	$00
-receivedKey:
-	dc.b	$00
-lbW049570:
-	dc.w	$0000
-totalRaceCounter:
-	dc.w	$0000
-lbW049574:
-	dc.w	$0000
-lbW049576:
-	dc.w	$0000
-
 establishComputerLink:
 	JSR	initializeNetworking
 	MOVE.L	currentFrameBuffer,-(SP)
@@ -3508,12 +1805,6 @@ renderNetworkString:
 
 lbC0496FE:
 	RTS
-
-lbL049700:
-	dc.l	$1F0E104C,$696E6B20,$6162616E,$646F6E65,$64FF1F0E
-	dc.l	$104C696E,$6B20636F,$6D706C65,$7465FF1F,$11104C69
-	dc.l	$6E6B696E,$67FF1F0F,$10506C65,$61736520,$77616974
-	dc.w	$FF00
 
 synchronizeLeagueSetup:
 	MOVE.B	#$00,lbB00E331
@@ -3679,11 +1970,6 @@ swapPlayerContextForNetwork:
 lbC0499D4:
 	RTS
 
-lbB0499D6:
-	dc.b	$00
-lbB0499D7:
-	dc.b	$00
-
 lbC0499D8:
 	MOVE.L	#lbW049A46,A2
 	MOVE.L	#lbW049A4E,A1
@@ -3716,22 +2002,6 @@ lbC049A32:
 	MOVE.B	D0,currentPlayerID
 	MOVE.B	D1,player2ID
 	RTS
-
-lbW049A46:
-	dc.w	$0002,$040A,$162A,$4872
-lbW049A4E:
-	dc.w	$0101,$0306,$0A0F,$151C
-lbW049A56:
-	dc.w	$0001,$0001,$0001,$0002,$0102,$0001,$0203,$0002,$0103
-	dc.w	$0003,$0201,$0001,$0203,$0400,$0102,$0304,$0002,$0103
-	dc.w	$0402,$0003,$0104,$0001,$0203,$0405,$0102,$0005,$0304
-	dc.w	$0002,$0305,$0104,$0003,$0402,$0501,$0004,$0103,$0205
-	dc.w	$0001,$0203,$0405,$0600,$0102,$0304,$0506,$0002,$0104
-	dc.w	$0305,$0602,$0004,$0105,$0306,$0204,$0005,$0103,$0604
-	dc.w	$0003,$0106,$0205,$0001,$0203,$0405,$0607,$0002,$0103
-	dc.w	$0406,$0507,$0003,$0102,$0407,$0506,$0004,$0307,$0105
-	dc.w	$0206,$0005,$0104,$0207,$0306,$0007,$0106,$0205,$0304
-	dc.w	$0006,$0107,$0204,$0305
 
 displayNetworkWaitMessage:
 	MOVE.L	currentFrameBuffer,-(SP)
@@ -3901,10 +2171,6 @@ lbC049D8A:
 	BPL	lbC049D8A
 	RTS
 
-lbL049D9A:
-	dc.l	$00000000
-	dc.w	$0000
-
 lbC049DA0:
 	MOVE.L	#lbW049E00,A0
 	MOVE.L	#controlKeys,A1
@@ -3935,16 +2201,6 @@ lbC049DF0:
 	MOVE.B	$00(A2,D0.W),$00(A0,D3.W)
 	DBRA	D3,lbC049DF0
 	RTS
-
-lbW049E00:
-	dc.w	$0E45,$0102,$0304,$0506,$0708,$090A,$0B0C,$4142,$1011
-	dc.w	$1213,$1415,$1617,$1819,$1A1B,$4463,$2021,$2223,$2425
-	dc.w	$2627,$2829,$2A0D,$6000,$3132,$3334,$3536,$3738,$393A
-	dc.w	$611C,$6440,$6750,$5152,$5354,$5556,$5758,$592B,$2C3B
-	dc.w	$4C47,$4A4F,$484E,$5E49,$4D4B,$6869,$626A,$6665,$6B6C
-	dc.w	$6D6E,$6F70,$7172,$305F,$465A,$5B5C,$5D3D,$3E3F,$2D2E
-	dc.w	$2F1D,$1E1F,$0F3C,$4373,$7475,$7677,$7879,$7A7B,$7C7D
-	dc.w	$7E7F
 
 checkRaceStartReady:
 	MOVE.B	#$50,D1
@@ -4143,9 +2399,6 @@ lbC04A16C:
 	MOVE.B	$00(A2,D1.W),$04(A3,D2.W)
 	RTS
 
-lbL04A180:
-	dc.l	$00000000,$00000000
-
 displaySinglePlayerResults:
 	MOVE.W	imagePlayersPalette,D0
 	JSR	fadeToColor
@@ -4283,19 +2536,6 @@ lbC04A39C:
 	MOVE.W	(SP)+,D6
 	RTS
 
-lbB04A3A2:
-	dc.b	$00,$00
-lbW04A3A4:
-	dc.w	$0000,$0780,$0000,$29E0,$0000,$4C40,$0000,$07A8,$0000
-	dc.w	$2A08,$0000,$4C68,$0000,$07D0,$0000,$2A30,$0000,$4C90
-	dc.w	$0000,$07F8,$0000,$2A58,$0000,$4CB8,$0000,$0E66,$0000
-	dc.w	$0E74,$0000,$156E,$0000,$157C,$0000,$0D72,$0000,$0D7C
-	dc.w	$0000,$0D86,$0000,$01E0,$0000,$0A78,$0000,$1310,$0000
-	dc.w	$01EA,$0000,$0A82,$0000,$131A,$0000,$01F4,$0000,$0A8C
-	dc.w	$0000,$1324,$0000,$01FE,$0000,$0A96,$0000,$132E
-lbW04A420:
-	dc.w	$0307,$0B09,$0608,$0A04,$0001,$0502
-
 applyPlayerGraphicsMasks:
 	MOVE.B	lbB04A4BA,D3
 	AND.L	#$0000000F,D3
@@ -4324,56 +2564,6 @@ lbC04A44E:
 	SUBQ.B	#$01,temp
 	BPL	lbC04A444
 	RTS
-
-lbW04A49A:
-	dc.w	$C000,$C000,$0000,$0000,$0000,$0000,$0000,$0000,$0003
-	dc.w	$0003
-lbL04A4AE:
-	dc.l	$00000000,$00000000,$00000000
-lbB04A4BA:
-	dc.b	$00
-lbB04A4BB:
-	dc.b	$00
-lbL04A4BC:
-	dc.l	$0B0B0B0B,$05020E01,$040F090B
-lbB04A4C8:
-	dc.b	$00,$00
-bitplaneMask1:
-	dc.l	$00000000
-bitplaneMask2:
-	dc.l	$00000000
-bitplaneMaskPointer:
-	dc.l	$00000000
-playerGraphicsMask:
-	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFE000,$07FFFFFF,$F800001F
-	dc.l	$E0000FFF,$FFFFFC00,$001FE000,$1FFFFFFF,$FE00001F
-	dc.l	$E0003FFF,$FFFFFF00,$001FE000,$3FFFFFFF,$FF00001F
-	dc.l	$E0007FFF,$FFFFFF80,$001FE000,$7FFFFFFF,$FF80001F
-	dc.l	$E000FFFF,$FFFFFFC0,$001FE000,$FFFFFFFF,$FFC0001F
-	dc.l	$E001FFFF,$FFFFFFC0,$001FE001,$FFFFFFFF,$FFC0001F
-	dc.l	$E001FFFF,$FFFFFFE0,$001FE003,$FFFFFFFF,$FFE0001F
-	dc.l	$E003FFFF,$FFFFFFE0,$001FE003,$FFFFFFFF,$FFE0001F
-	dc.l	$E007FFFF,$FFFFFFF8,$001FE007,$FFFFFFFF,$FFF8001F
-	dc.l	$E007FFFF,$FFFFFFF8,$001FE003,$FFFFFFFF,$FFF0001F
-	dc.l	$E003FFFF,$FFFFFFF0,$001FE003,$FFFFFFFF,$FFF0001F
-	dc.l	$E003FFFF,$FFFFFFE0,$001FE003,$FFFFFFFF,$FFE0001F
-	dc.l	$E003FFFF,$FFFFFFE0,$001FE001,$FFFFFFFF,$FFE0001F
-	dc.l	$E001FFFF,$FFFFFFE0,$001FE001,$FFFFFFFF,$FFE0001F
-	dc.l	$E001FFFF,$FFFFFFC0,$001FE001,$FFFFFFFF,$FFC0001F
-	dc.l	$E001FFFF,$FFFFFFC0,$001FE000,$FFFFFFFF,$FF80001F
-	dc.l	$E0007FFF,$FFFFFF80,$001FE000,$7FFFFFFF,$FF80001F
-	dc.l	$E0007FFF,$FFFFFF80,$001FE000,$3FFFFFFF,$FF00001F
-	dc.l	$E0000FFF,$FFFFFC00,$001FE000,$07FFFFFF,$F800001F
-	dc.l	$E0000FFF,$FFFFF800,$001FE000,$3FFFFFFF,$FFF8001F
-	dc.l	$E007FFFF,$FFFFFFFF,$C01FE07F,$FFFFFFFF,$FFFFFE1F
-	dc.l	$E7FFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
-	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
-	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
-	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
-	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
-	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
-	dc.l	$FFFFFFFF,$FFFFFFFF
-	dc.w	$FFFF
 
 applyBitplaneMask1:
 	MOVE.L	bitplaneMaskPointer,A4
@@ -4555,11 +2745,6 @@ lbC04A8D6:
 	BNE	lbC04A8D6
 	JMP	lbC056128
 
-lbB04AA3E:
-	dc.b	$00,$00
-lbW04AA40:
-	dc.w	$0000
-
 lbC04AA42:
 	JSR	renderCharacter
 	ADDQ.W	#$01,D3
@@ -4569,11 +2754,6 @@ renderTextFromTable:
 	CMP.B	#$FF,D0
 	BNE	lbC04AA42
 	RTS
-
-leagueStatisticsTextTable:
-	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced "
-	dc.b	$FF," Wins  ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First      Se"
-	dc.b	"cond        Third",$FF,$00
 
 calculateAlternateFontOffset:
 	AND.W	#$007F,D0
@@ -4622,13 +2802,6 @@ lbC04AB3C:
 	ASL.B	#$01,D7
 	ADD.L	#$000000A0,A0
 	RTS
-
-useAlternateFontFlag:
-	dc.b	$00
-lbB04AB4B:
-	dc.b	$00
-alternateRenderBuffer:
-	dc.l	$00000000
 
 displayPlayerName:
 	MOVE.B	textTransparencyMode,D0
@@ -4744,9 +2917,6 @@ lbC04ACDA:
 	CMP.L	A2,A0
 	BLT	lbC04ACDA
 	RTS
-
-lbB04ACF6:
-	dc.b	$80,$00
 
 decompressRLEImage:
 	MOVE.L	A1,A2
@@ -5093,29 +3263,6 @@ setForegroundColor:
 	MOVE.L	D6,foregroundColorMask1
 	MOVE.L	D7,foregroundColorMask2
 	RTS
-
-foregroundColorMask1:
-	dc.l	$00000000
-foregroundColorMask2:
-	dc.l	$00000000
-backgroundColorMask1:
-	dc.l	$00000000
-backgroundColorMask2:
-	dc.l	$00000000
-textCursorColumn:
-	dc.b	$00
-textCursorRow:
-	dc.b	$00
-characterByteOffset:
-	dc.b	$00
-characterPixelOffset:
-	dc.b	$00
-savedTransparencyFlag:
-	dc.b	$00
-textControlCodeState:
-	dc.b	$00
-controlCodeByteCounter:
-	dc.b	$00,$00
 
 waitForInputPress:
 	JSR	scanForInput
@@ -5893,9 +4040,6 @@ lbC04BE20:
 	SUBQ.B	#$04,D1
 	RTS
 
-coordinateTransformParameter:
-	dc.w	$0000
-
 lbC04BE50:
 	ADD.W	$00(A0,D1.W),D0
 	MOVE.W	D0,$00(A0,D2.W)
@@ -5989,16 +4133,6 @@ renderMenuString:
 	CMP.B	#$FF,D0
 	BNE	lbC04BF74
 	RTS
-
-	dc.b	$17,$13,$19,$08,$15,$0A,$08,$15,$09,$1F
-textStringTable:
-	dc.b	$1F,$11,$0B,"SELECT",$FF,"Practise ",$FF,"Start the Racing Season",$FF
-	dc.b	"Load/Save/Replay       ",$FF,"Load",$FF,"Save",$FF,"Replay",$FF,"Cancel",$FF
-	dc.b	"LOAD from Tape",$FF,"LOAD from Disc",$FF,"SAVE to Tape",$FF,"SAVE to Disc",$FF
-	dc.b	$1F,$07,$14,"   Filename?  >",$FF,"to the SUPER LEAGUE",$FF,$1F,$0C
-lbB04C057:
-	dc.b	$09,"SUPER DIVISION ",$FF,"EXCELLENT DRIVING - WELL DONE",$FF
-	dc.b	"Hall of Fame",$FF,$00
 
 generateDrawBridge:
 	MOVE.B	currentTrackID,D0
@@ -6128,11 +4262,6 @@ lbC04C282:
 lbC04C294:
 	RTS
 
-trackCharacteristicTable:
-	dc.l	$D2BBB7B3,$B1ADABA7,$A6A4A2A1,$9F9F9F9E
-colorProgressionTable:
-	dc.l	$F7F7F6F6,$F5F5F6F7,$F8F9FBFD,$FF0205FD
-
 initializeGameData:
 	MOVE.L	#lbW00D3F8,A0
 lbC04C2BC:
@@ -6209,9 +4338,6 @@ lbC04C3E2:
 	BLT	lbC04C3B6
 	RTS
 
-lbL04C3F4:
-	dc.l	$786E645A,$50463C32,$281E140A
-
 setupGameConfiguration:
 	MOVE.B	additionalPlayerCount,D0
 	BEQ	lbC04C422
@@ -6229,9 +4355,6 @@ lbC04C422:
 	ADDQ.B	#$03,D0
 	MOVE.B	D0,lbB00D559
 	RTS
-
-lbL04C442:
-	dc.l	$09060300
 
 configurePlayersAndCars:
 	JSR	setupGameConfiguration
@@ -6263,13 +4386,6 @@ lbC04C4BA:
 	MOVE.B	D0,player2ID
 	MOVE.B	D2,currentPlayerID
 	RTS
-
-lbL04C4C8:
-	dc.l	$00000000
-	dc.w	$0101
-lbL04C4CE:
-	dc.l	$01010202
-	dc.w	$0202
 
 setupCarPerformance:
 	MOVE.W	#$0000,D1
@@ -6718,9 +4834,6 @@ lbC04CBB0:
 	BNE	lbC04CAE0
 	RTS
 
-specialSegmentLookupTable:
-	dc.b	$03,$04,$04,$03
-
 switchToAlternateGeometryAndReadSegmentInterpolationValue:
 	MOVE.W	alternateGeometryOffset,primaryGeometryOffset
 readSegmentInterpolationValue:
@@ -6981,9 +5094,6 @@ lbC04CF32:
 	MOVE.B	#$00,lbB04CF46
 	RTS
 
-lbB04CF46:
-	dc.b	$00,$00
-
 screenUpdate:
 	JSR	drawScreenFrame
 	MOVE.B	#$E0,D1
@@ -7110,13 +5220,6 @@ padNameWithSpaces:
 	CMP.B	maxInputLength,D1
 	BLT	padNameLoop
 	JMP	resetTextYOffset
-
-maxInputLength:
-	dc.b	$00
-inputCancelFlag:
-	dc.b	$00
-currentInputPosition:
-	dc.b	$00,$00
 
 displayMenu:
 	SUBQ.B	#$01,D2
@@ -7404,10 +5507,6 @@ lbC04D5C2:
 	BNE	lbC04D5C2
 	RTS
 
-menuStringOffsetTable:
-	dc.l	$EC0A142C,$44494E55,$5C6B5500,$7A875500,$0A1F7100
-	dc.l	$2B400000,$49494949,$0A0A5500
-
 configureSelectedRace:
 	MOVE.B	D0,D1			; Copy index to D1
 	MOVE.L	#trackIDLookupTable,A0	; Point to track ID lookup table
@@ -7486,15 +5585,6 @@ lbC04D71C:
 	MOVE.B	D0,lbB00D49D
 lbC04D732:
 	RTS
-
-aiMovementPatterns:
-	dc.b	$20,$50,$60,$70
-lbB04D738:
-	dc.b	$70,$60,$50,$20,$E0,$B0
-lbB04D73E:
-	dc.b	$A0,$90
-lbC04D740:
-	dc.b	$90,$A0,$B0,$E0
 
 applyTrackSegmentGeometry:
 	MOVE.B	currentSegmentIndex,D1
@@ -8093,9 +6183,6 @@ lbC04DF5A:
 	ADD.W	D0,lbW00D536
 	RTS
 
-lbL04DFB8:
-	dc.l	$00D480D4,$0000ABAB,$40400000
-
 calculateTrackCoordinatesFromData:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
@@ -8234,122 +6321,14 @@ dividerIndexOk:
 	TST.B	skipSaveSlotScreen
 	BNE	lbC04E826
 	JSR	renderSlotGraphicsAtPosition
-	BRA	installLineEmulatorTrap
-
-lbB04E1F4:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$FF,$FF,$FF,$FF
-
-installLineEmulatorTrap:
-	MOVE.L	#$9CEDCD02,D0
-	MOVE.L	D0,$24
-	BRA	cleanupInitializationAndStartGame
-
-unusedProtectionCode:
-	dc.b	$2D,$5F,$FF,$F8,$22,$39,$00,$00,$00,$10,$48,$7A,$00,$0A
-	dc.b	$23,$DF,$00,$00,$00,$10,$4A,$FC,$48,$7A,$00,$1C,$23,$DF
-	dc.b	$00,$00,$00,$10,$22,$4F,$4E,$7A,$00,$02,$41,$FA,$FF,$C6
-	dc.b	$20,$80,$08,$80,$00,$00,$4E,$7B,$00,$02,$2E,$49,$23,$C1
-	dc.b	$00,$00,$00,$10,$4C,$F9,$00,$FF,$00,$00,$00,$08,$48,$D6
-	dc.b	$00,$FF,$41,$FA,$00,$7E,$23,$C8,$00,$00,$00,$10,$4A,$FC
-	dc.b	$D5,$03,$FF,$E1,$60,$1E,$2A,$C6,$B5,$39,$9F,$83,$00,$7C
-	dc.b	$4A,$CC,$D5,$33,$FF,$89,$60,$76,$2A,$D6,$B5,$29,$9F,$AB
-	dc.b	$00,$54,$4A,$84,$D5,$7B,$00,$49,$9F,$B6,$2A,$82,$B5,$7D
-	dc.b	$60,$47,$FF,$B8,$4A,$98,$D5,$67,$00,$71,$9F,$8E,$2A,$B6
-	dc.b	$B5,$49,$60,$63,$FF,$9C,$B5,$54,$2A,$AB,$FF,$81,$60,$7E
-	dc.b	$D5,$C0,$4A,$3F,$9F,$87,$00,$78,$4A,$7E,$D5,$81,$FF,$81
-	dc.b	$60,$7E,$D5,$CC,$4A,$33,$60,$3B,$FF,$C4,$4A,$06,$D5,$F9
-	dc.b	$FF,$E9,$60,$16,$D5,$E8,$4A,$17,$60,$1F,$FF,$E0,$4A,$3E
-	dc.b	$D5,$C1,$FF,$F5,$48,$E7,$80,$C0,$41,$FA,$00,$34,$23,$C8
-	dc.b	$00,$00,$00,$24,$41,$FA,$04,$64,$23,$C8,$00,$00,$00,$20
-	dc.b	$06,$AF,$00,$00,$00,$02,$00,$0E,$00,$2F,$00,$07,$00,$0C
-	dc.b	$08,$6F,$00,$07,$00,$0C,$43,$FA,$FE,$F0,$67,$1A,$20,$51
-	dc.b	$20,$A9,$00,$04,$60,$26,$02,$7C,$F8,$FF,$48,$E7,$80,$C0
-	dc.b	$43,$FA,$FE,$DA,$20,$51,$20,$A9,$00,$04,$20,$6F,$00,$0E
-	dc.b	$22,$88,$23,$50,$00,$04,$20,$28,$FF,$FC,$46,$80,$48,$40
-	dc.b	$B1,$90,$4C,$DF,$03,$01,$4E,$73,$F0,$76,$FC,$E0,$40,$E6
-	dc.b	$0F,$89,$00,$08,$BA,$0D,$0E,$CE,$81,$36,$0C,$C9,$C1,$2E
-	dc.b	$EC,$5B,$31,$65,$9F,$52,$EC,$52,$73,$AD,$60,$BF,$05,$CA
-	dc.b	$05,$4A,$00,$D6,$06,$0A,$06,$4A,$06,$CA,$05,$4A,$01,$10
-	dc.b	$DE,$D5,$04,$93,$B5,$3A,$DE,$C0,$69,$D8,$7A,$05,$E4,$FA
-	dc.b	$96,$C7,$1F,$3B,$81,$C4,$68,$7E,$F1,$81,$7E,$BB,$B5,$6A
-	dc.b	$F1,$92,$6F,$6D,$48,$D1,$D6,$2E,$91,$4E,$2C,$DF,$D6,$27
-	dc.b	$5D,$DA,$C3,$25,$29,$6A,$E6,$BB,$C3,$2C,$EC,$93,$21,$5A
-	dc.b	$3C,$2B,$B3,$FC,$6C,$6D,$3C,$26,$A2,$D9,$92,$D6,$0C,$29
-	dc.b	$5C,$5A,$C5,$EB,$36,$44,$E7,$0C,$7E,$DD,$83,$4A,$4D,$A6
-	dc.b	$00,$12,$99,$CB,$27,$DC,$FF,$F5,$70,$06,$EE,$F9,$00,$D2
-	dc.b	$4F,$51,$11,$52,$82,$9D,$71,$0C,$EE,$AF,$FF,$F6,$67,$07
-	dc.b	$94,$96,$00,$0A,$FF,$F6,$67,$0F,$28,$8C,$00,$05,$90,$E0
-	dc.b	$3E,$D5,$00,$56,$F9,$C7,$C1,$2B,$FF,$F6,$0C,$67,$3E,$D0
-	dc.b	$FF,$F6,$66,$93,$F8,$6C,$00,$E9,$8F,$16,$10,$C5,$8E,$3A
-	dc.b	$70,$31,$C9,$4E,$50,$A7,$9F,$76,$C9,$5B,$64,$E4,$99,$5B
-	dc.b	$36,$A7,$F4,$18,$99,$4E,$37,$7A,$F4,$85,$7B,$7A,$E4,$8B
-	dc.b	$3B,$1A,$7B,$77,$F6,$8C,$79,$73,$56,$14,$F8,$22,$79,$70
-	dc.b	$C5,$76,$07,$DD,$03,$D4,$BD,$D1,$FA,$BC,$64,$43,$42,$70
-	dc.b	$8F,$A1,$64,$56,$D7,$76,$73,$52,$C2,$F3,$5D,$0C,$8E,$11
-	dc.b	$51,$80,$5D,$01,$D0,$F4,$6D,$93,$C3,$A5,$D0,$F7,$61,$7D
-	dc.b	$9C,$C2,$2F,$0B,$ED,$B4,$9C,$D7,$5E,$54,$12,$4A,$FF,$EC
-	dc.b	$41,$EA,$ED,$B5,$03,$D4,$D1,$63,$ED,$B8,$2F,$3B,$A7,$89
-	dc.b	$FF,$F8,$3D,$7B,$D1,$62,$FF,$FA,$3D,$79,$A7,$8C,$FF,$FC
-	dc.b	$3D,$7F,$D1,$61,$FF,$FE,$3D,$7D,$D1,$61,$FF,$EE,$41,$E8
-	dc.b	$2E,$9E,$03,$D4,$BF,$D1,$D3,$5F,$5E,$AA,$83,$8D,$2D,$BB
-	dc.b	$5E,$A9,$EF,$23,$58,$7B,$D1,$56,$1C,$A9,$B0,$17,$3F,$E8
-	dc.b	$D6,$0F,$5D,$F7,$41,$0B,$DA,$F6,$77,$49,$D9,$7C,$DA,$F1
-	dc.b	$74,$C7,$D9,$73,$6A,$13,$8B,$36,$3A,$BC,$A4,$43,$74,$27
-	dc.b	$EA,$D8,$5A,$FE,$C3,$09,$01,$B7,$5A,$F1,$D5,$0E,$64,$84
-	dc.b	$A6,$3B,$D5,$01,$64,$8B,$B4,$74,$7F,$A5,$64,$84,$F0,$7F
-	dc.b	$6E,$80,$9B,$93,$05,$6C,$91,$DD,$4E,$3D,$FF,$B7,$43,$B1
-	dc.b	$B1,$1D,$F0,$00,$3C,$83,$CE,$F2,$00,$96,$CC,$15,$71,$0D
-	dc.b	$00,$24,$CC,$A7,$E8,$F2,$00,$9E,$CC,$1D,$82,$0D,$00,$9E
-	dc.b	$CC,$20,$7D,$8C,$A1,$3B,$33,$FF,$FF,$7C,$5E,$C6,$00,$9C
-	dc.b	$1D,$2B,$E2,$94,$7F,$63,$B3,$DC,$1D,$4F,$D1,$F0,$4C,$07
-	dc.b	$FD,$8D,$41,$8B,$B3,$27,$F0,$00,$2F,$C3,$4C,$D8,$0B,$B8
-	dc.b	$95,$47,$B2,$A7,$45,$71,$6A,$B9,$00,$1F,$99,$F6,$07,$09
-	dc.b	$FE,$86,$67,$8B,$AB,$08,$01,$7B,$00,$9C,$CC,$1F,$BE,$84
-	dc.b	$00,$24,$8F,$24,$3E,$AE,$F2,$2D,$70,$D9,$00,$9C,$CC,$1F
-	dc.b	$CF,$26,$00,$24,$8F,$DB,$3E,$51,$E1,$92,$70,$24,$0B,$B8
-	dc.b	$95,$47,$8E,$93,$79,$55,$6A,$BD,$00,$BF,$E0,$01,$78,$F4
-	dc.b	$E6,$0B,$1E,$D2,$87,$DD,$08,$DD,$B9,$57,$36,$A8,$87,$22
-	dc.b	$0A,$22,$E6,$1C,$78,$62,$D1,$00,$1E,$D1,$78,$77,$D1,$08
-	dc.b	$2F,$76,$C3,$48,$2E,$48,$D1,$00,$2F,$3E,$C3,$00,$2E,$40
-	dc.b	$D1,$00,$1D,$03,$D5,$BF,$00,$DF,$F0,$9E,$41,$14,$CC,$14
-	dc.b	$20,$2A,$BE,$54,$D1,$00,$26,$7E,$41,$AC,$DF,$9F,$00,$5C
-	dc.b	$BE,$53,$00,$1E,$9E,$E1,$41,$62,$F0,$E8,$3F,$39,$41,$73
-	dc.b	$D4,$8A,$4A,$75,$BE,$BA,$27,$75,$E7,$88,$FA,$3F,$E7,$8A
-	dc.b	$6A,$74,$01,$CB,$99,$2E,$0C,$D5,$81,$D5,$3A,$68,$B5,$94
-	dc.b	$FE,$57,$C5,$96,$54,$6B,$F8,$14,$66,$EB,$AB,$DE,$24,$22
-	dc.b	$88,$9F,$11,$96,$D3,$36,$88,$8E,$16,$71,$2C,$AB,$A3,$54
-	dc.b	$12,$DE,$A5,$C6,$7C,$AB,$F7,$01,$00,$C7,$83,$50,$00,$BF
-	dc.b	$E0,$01,$78,$EE,$F7,$12,$7A,$12,$E4,$ED,$08,$CD,$A6,$F8
-	dc.b	$E4,$FE,$6B,$FE,$F4,$11,$49,$80,$6B,$EF,$F5,$10,$B6,$49
-	dc.b	$3B,$E3,$56,$9E,$4A,$28,$C5,$D7,$76,$F7,$B5,$D3,$04,$59
-	dc.b	$D4,$A6,$4A,$59,$FB,$88,$4E,$76,$DA,$8D,$2D,$F2,$B1,$88
-	dc.b	$46,$F7,$D2,$0D,$3E,$32,$B9,$B7,$D1,$00,$26,$3F,$46,$48
-	dc.b	$AA,$77,$D9,$7F,$D1,$00,$0E,$E0,$91,$2F,$0F,$D0,$F1,$15
-	dc.b	$1D,$2A,$F0,$90,$D1,$00,$60,$8A,$8F,$4C,$2E,$40,$D1,$00
-	dc.b	$2E,$FF,$D1,$C0,$11,$3E,$DC,$EF,$D1,$D5,$78,$2B,$84,$54
-	dc.b	$49,$B4,$BE,$65,$7B,$AB,$FF,$EF,$67,$14,$90,$6B,$00,$12
-	dc.b	$B1,$98,$2F,$67,$FF,$CD,$08,$0B,$D0,$98,$00,$BF,$EE,$01
-	dc.b	$77,$08,$DB,$77,$42,$66,$F3,$EC,$04,$2A,$BD,$99,$00,$BF
-	dc.b	$EE,$01,$77,$E2,$DB,$9D,$43,$7A,$AF,$79,$24,$6A,$00,$BF
-	dc.b	$EE,$01,$02,$02,$FF,$8C,$00,$BF,$E4,$01,$08,$02,$FF,$42
-	dc.b	$00,$BF,$E5,$01,$54,$8B,$AB,$74,$1A,$FE,$E5,$01,$54,$8B
-	dc.b	$AB,$74,$1A,$FE,$E5,$01,$54,$8B,$AB,$74,$1A,$FE,$E5,$01
-	dc.b	$54,$8B,$AB,$74,$1A,$FE,$E5,$01,$54,$8B,$AB,$74,$1A,$FE
-	dc.b	$E5,$01,$54,$8B,$AB,$74,$1A,$FE,$E5,$01,$54,$8B,$EA,$8E
-	dc.b	$E0,$32,$3E,$8D,$15,$6D,$AB,$68,$3B,$F6,$E4,$89,$3A,$37
-	dc.b	$C4,$0D,$77,$08,$C5,$37,$FA,$B8,$25,$7E,$3A,$C8,$00,$04
-	dc.b	$DD,$FB,$63,$FE,$FF,$D9,$2F,$6E,$9C,$03,$29,$00,$20,$3A
-	dc.b	$FA,$CA,$6B,$04,$4E,$7B,$00,$02,$48,$F9,$00,$FF,$00,$00
-	dc.b	$00,$08,$4C,$FA,$7F,$FF,$FA,$4E,$4E,$73
-
-cleanupInitializationAndStartGame:
+;	BRA	installLineEmulatorTrap
+;
+;installLineEmulatorTrap:
+;	MOVE.L	#$9CEDCD02,D0
+;	MOVE.L	D0,$24
+;	BRA	cleanupInitializationAndStartGame
+;
+;cleanupInitializationAndStartGame:
 	JSR	finalizeGraphicsRendering
 	BRA	validateSaveDataChecksum
 
@@ -8363,10 +6342,6 @@ finalizeGraphicsRendering:
 	MOVE.B	#$00,lbB00D494
 	JMP	initializeCIA
 
-lbB04E7E2:
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-
 validateSaveDataChecksum:
 	MOVE.L	D0,lbL0563EC		; Store return value from initializeCIA
 	MOVE.L	memory_7A21A,D0		; Load value from save slot data
@@ -8378,16 +6353,7 @@ validateSaveDataChecksum:
 	CLR.W	D1
 	CLR.W	D2
 lbC04E826:
-	JMP	enterMainGameLoop
-
-lbL04E82C:
-	dc.l	$28195027
-divider:
-	dc.b	'------------'
-	dc.b	$09
-	dc.b	$00
-	dc.b	$00
-	dc.b	$00
+;	JMP	enterMainGameLoop
 
 enterMainGameLoop:
 	MOVE.W	#$00FF,D0
@@ -8801,9 +6767,6 @@ lbC04F014:
 	MOVE.B	#$80,gameInitFlag1
 	RTS
 
-displayUpdateFlag:
-	dc.b	$00,$00
-
 initializeMessageBuffer:
 	MOVE.L	#lbW00D3F8,A0
 lbC04F02C:
@@ -8978,9 +6941,6 @@ lbC04F2CE:
 	ORI.B	#$01,CCR
 	RTS
 
-buttonReleaseMask:
-	dc.b	$00,$00
-
 checkNetworkTimeout:
 	TST.B	networkTimeoutFlag
 	BMI	lbC04F2FC
@@ -9030,9 +6990,6 @@ initializeGameLoop:
 	JSR	playAudioSample
 	JSR	calculateSpeedAndMovement
 	RTS
-
-bufferSelector:
-	dc.b	$00,$00
 
 swapDisplayBuffers:
 	TST.B	vSyncFlag
@@ -9662,9 +7619,6 @@ lbC04FD54:
 	MOVE.B	#$00,textYOffset
 	RTS
 
-lbL04FD6C:
-	dc.l	$16171617,$02040204
-
 displayHUDText:
 	MOVE.B	#$02,textYOffset
 	MOVE.B	#$02,textHorizontalOffset
@@ -9772,17 +7726,6 @@ lbC04FF14:
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
 	RTS
-
-gameMessageMode:
-	dc.b	$00
-gameMessageIndex:
-	dc.b	$00
-gameMessageTable:
-	dc.b	$03,"<WRCECK",$03," RACCE ",$21,"< WaON aT  ",$03," RACCE ! LOaST "
-	dc.b	$03," DRCOP ",$21,"<STaART",$03,"<PRCESS! FIaRE ",$03,"PAUSCED"
-	dc.b	$03," LACPS ! OVaER ",$03,"DECFINE! KEaYS ",$03,"<STCEER! LEaFT "
-	dc.b	$03,"<STCEER",$21,"<RIaGHT",$03,"<AHCEAD!+BOaOST",$03," BACCK !+BOaOST"
-	dc.b	$03," BACCK !   a   ",$03,"VECRIFY! KEaYS ",$03,"<FACULT",$21,"<FOaUND<T",$06,$1A
 
 updateCarDirection:
 	MOVE.B	lbB00D4DB,D0
@@ -10056,50 +7999,6 @@ lbC05040E:
 lbC050462:
 	RTS
 
-divisionRowPositions:
-	dc.b	$0C
-	dc.b	$0C
-	dc.b	$0C
-	dc.b	$0C
-	dc.b	$0B
-	dc.b	$0B
-	dc.b	$0A
-	dc.b	$0A
-trackColumnOffsets:
-	dc.l	$13131312,$11100F0F
-lbB050474:
-	dc.b	$00
-textRenderingFlag:
-	dc.b	$00
-additionalPlayerCount:
-	dc.b	$00
-remainingRaces:
-	dc.b	$00
-raceCount:
-	dc.b	$06
-currentPlayerID:
-	dc.b	$0B
-standingsDisplayModeFlag:
-	dc.b	$00
-raceSeriesProgress:
-	dc.b	$00
-selectedTrackGroup:
-	dc.b	$00
-raceConfiguredFlag:
-	dc.b	$00
-lbB05047E:
-	dc.b	$00
-SELECTSingleP.MSG:
-	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
-	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
-	dc.b	" S.",$FF,"        s",$FF,"Computer Link",$FF,"sssssssssssssssssssssTrack:  The ",$FF
-	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
-lbL050548:
-	dc.b	"------------",$FF
-Newtrackrecor.MSG:
-	dc.b	"------------",$FF,$1F,$0C,$0F,"New track record",$FF
-	even
-
 lbC050576:
 	JSR	renderCharacter
 	ADDQ.B	#$01,D1
@@ -10109,13 +8008,6 @@ renderStatsText:
 	CMP.B	#$FF,D0
 	BNE	lbC050576
 	RTS
-
-TRACKBONUSPOI.MSG:
-	dc.b	"TRACK BONUS POINTS",$FF,$1F,$0E,$0C,"FINAL SEASON",$FF,"Race Time: ",$FF
-	dc.b	"Best Lap : ",$FF,$1F,$10,$01," SLIPSTREAM ",$FF,$1F,$10,$05,"SUPER LEAGUE",$FF
-	dc.b	$1F,$00,$07,"TRACK  DRIVER   LAP-TIME    DRIVER  RACE-TIME",$FF,$1F,$06
-DRIVERBESTLAP.MSG:
-	dc.b	$0E,"DRIVER      BEST-LAP RACE-TIME",$FF
 
 lbC050640:
 	MOVE.L	#playerStatsArray,A1
@@ -10688,31 +8580,6 @@ lbC050E6A:
 	ORI.B	#$01,CCR
 	RTS
 
-lbB050E86:
-	dc.b	"DIR "
-HALL.MSG:
-	dc.b	"HALL"
-MP.MSG:
-	dc.b	"MP$",$00,$10,$39,$00,$01,$BB,$94,$6B,$00,$00,$0C
-	dc.b	$10,$39,$00,$01,$BB,$6B,$6B,$00,$00,$8A,$4E,$B9,$00,$06
-	dc.b	$45,$32,$10,$3C,$00,$01,$13,$C0,$00,$01,$BB,$16,$4E,$B9
-	dc.b	$00,$06,$4B,$0E,$12,$3C,$00,$0C,$4E,$B9,$00,$06,$4C,$2E
-	dc.b	$10,$39,$00,$01,$BB,$94,$6A,$00,$00,$0C,$12,$3C,$00,$00
-	dc.b	$4E,$B9,$00,$05,$F6,$F2,$14,$39,$00,$01,$CA,$31,$24,$7C
-	dc.b	$00,$05,$F6,$36,$12,$32,$20,$00,$4E,$B9,$00,$05,$F6,$F2
-	dc.b	$10,$39,$00,$01,$BB,$94,$6A,$00,$00,$24,$4E,$B9,$00,$06
-	dc.b	$4B,$0E,$14,$39,$00,$01,$BB,$94,$54,$02,$02,$02,$00,$07
-	dc.b	$24,$7C,$00,$05,$F6,$36,$12,$32,$20,$00,$4E,$B9,$00,$05
-	dc.b	$F6,$F2,$4E,$B9,$00,$06,$44,$70,$4E,$B9,$00,$06,$48,$8A
-	dc.b	$4E,$B9,$00,$06,$48,$34,$10,$39,$00,$01,$BB,$94,$4E,$75
-	dc.b	$05,$0D,$43,$14,$2A,$43,$43,$43,$71,$8F,$94
-NOTloadedsave.MSG:
-	dc.b	" NOT",$FF," loaded",$FF," saved",$FF,"Incorrect data found ",$FF
-	dc.b	"File name already exists",$FF,"Problem encountered",$FF
-	dc.b	"File name is not suitable",$FF,$1F,$05,$13,"Insert game position save ",$FF
-	dc.b	"tape",$FF,"disc",$FF,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F
-	dc.b	$FF
-
 lbC050FEA:
 	JSR	renderCharacter
 	ADDQ.B	#$01,D1
@@ -10723,8 +8590,6 @@ lbC050FF2:
 	BNE	lbC050FEA
 	RTS
 
-	RTS
-
 lbC051008:
 	MOVE.W	lbW051020,D0
 	ASL.W	#$02,D0
@@ -10732,9 +8597,6 @@ lbC051008:
 	MOVE.W	D0,lbW051020
 	LSR.W	#$02,D0
 	RTS
-
-lbW051020:
-	dc.w	$683B
 
 lbC051022:
 	MOVE.B	#$00,D0
@@ -10981,15 +8843,6 @@ lbC0513C6:
 lbC0513DA:
 	RTS
 
-lbB0513DC:
-	dc.b	$00
-lbB0513DD:
-	dc.b	$00
-lbB0513DE:
-	dc.b	$00,$01,$04,$03,$02
-t.MSG:
-	dc.b	$B4,$A4,$94,$84,$74
-
 setDisplayMode51:
 	MOVE.B	#$33,D0
 	JMP	configureDisplayMode
@@ -11014,11 +8867,6 @@ lbC05142C:
 lbC05142E:
 	JSR	lbC049D8A
 	JMP	lbC049CE8
-
-DDDDDDDD.MSG:
-	dc.b	$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22
-	dc.b	$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21
-	dc.b	$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44
 
 lbC051462:
 	MOVE.B	#$80,D0
@@ -11155,12 +9003,6 @@ lbC0516B4:
 	JSR	waitForDisplaySync
 	MOVE.L	(SP)+,currentFrameBuffer
 	JMP	displayMenuScreen
-
-LRHBSSBRHJRCS.MSG:
-	dc.b	"L"
-RHBSSBRHJRCSJ.MSG:
-	dc.b	"RHBSSBRHJRCSJDB",$4E,$B9,$00,$06,$77,$0A,$30,$3C,$0F,$9F,$20,$C6,$20
-	dc.b	$C7,$51,$C8,$FF,$FA,$4E,$75
 
 lookupDataTable:
 	MOVE.B	trackViewOffsetY,D0
@@ -11615,13 +9457,6 @@ renderTrackPreview:
 	MOVE.B	#$00,lbB00D468
 	RTS
 
-lbL051E52:
-	dc.l	$04000408
-lbB051E56:
-	dc.b	$00,$04,$08,$04
-lbL051E5A:
-	dc.l	$004080C0
-
 lbC051E5E:
 	MOVE.L	#trackSegmentData,A6
 	MOVE.L	#segmentProcessedFlags,A0
@@ -12041,8 +9876,10 @@ lbC052482:
 	RTS
 
 	MOVE.B	#$03,lbB052FDA
+lbC0524A2:
 	TST.B	lbB052FDA
-	dc.b	$66,$00,$FF,$F8,$4E,$75
+	BNE.L	lbC0524A2
+	RTS
 
 readControllerInput:
 	JSR	generateRandomNumber
@@ -12105,17 +9942,6 @@ lbC05254C:
 lbC05257E:
 	MOVE.B	D0,inputStateFlags
 	RTS
-
-lbB052586:
-	dc.b	$11,$11
-controlKeys:
-	dc.b	$2A,$40,$21,$22,$44	; #, space, S, D, return
-keycodeTable:
-	dc.b	$01
-	dc.b	$02
-	dc.b	$03
-	dc.b	$04
-	dc.b	$00
 
 handleCollisionEffects:
 	MOVE.B	#$06,crashAudioSampleID		; Set audio sample #6 (collision sound)
@@ -12342,14 +10168,6 @@ renderParticleAsBlitterObject:
 	ADD.B	#$1D,D0			; Add 29 (sprite ID offset)
 	JMP	renderBlitterObjectAtPosition		; Render audio sprite
 
-debrisObjectOffsetTable:
-	dc.l	$00200020,$00200028,$00180020,$00200020
-debrisObjectAnimSequence:
-	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06
-	dc.b	$02,$07
-lbB0528BC:
-	dc.b	$00,$00
-
 updateWheelSpeed:
 	MOVE.W	carVelocity,D0
 	BPL	lbC0528CA
@@ -12536,10 +10354,6 @@ lbC052B46:
 	BCS	lbC052AD4
 	BRA	lbC052A60
 
-steeringOffsetTable:
-	dc.l	$000000D9
-	dc.w	$FF27
-
 displayTrackHeader:
 	JSR	setTextYOffset4
 	MOVE.B	currentTrackID,D1
@@ -12552,9 +10366,6 @@ displayTrackHeader:
 	JSR	renderTrackName
 	JSR	resetTextYOffset
 	RTS
-
-trackDisplayYOffsets:
-	dc.l	$0F0D1010,$100F100D
 
 multiplyAndRandomize:
 	AND.W	#$00FF,D0
@@ -12872,12 +10683,6 @@ lbC052F82:
 	MOVE.W	D0,lbW00D63E
 	RTS
 
-	dc.w	$0000
-vSyncFlag:
-	dc.b	$00,$00
-lbB052FDA:
-	dc.b	$00,$00
-
 verticalBlank:
 	CLR.W	D1
 	CLR.W	D2
@@ -12943,9 +10748,6 @@ verticalBlankDone:
 
 	MOVEM.L	(SP)+,D0-D7/A0-A6
 	RTS
-
-lbB0530CA:
-	dc.b	$00,$00,$4B,$26,$49,$27
 
 lbC0530D0:
 	MOVE.B	savedPlayerIndex,D1
@@ -13162,9 +10964,6 @@ lbC0533C2:
 	SUB.W	cameraAngleX,D0
 	MOVE.W	D0,lbW00D542
 	RTS
-
-ascii.MSG1:
-	dc.b	$2C,$00,$0A,$00,$D3,$00,$F5,$00
 
 applyVelocityIntegration:
 	MOVE.W	lbW00D5F6,D0
@@ -13556,9 +11355,6 @@ lbC053992:
 lbC0539B4:
 	RTS
 
-crashSoundCooldownTimer:
-	dc.b	$00,$00
-
 updateCarOrientation:
 	MOVE.W	baseRollAngle,D0
 	ADD.W	carPitchAdjustment,D0
@@ -13906,15 +11702,6 @@ generateRandomNumber:
 	MOVE.B	D0,randomSeed3
 	RTS
 
-randomSeed1:
-	dc.w	$0000
-randomSeed2:
-	dc.b	$00
-lbB053EA5:
-	dc.b	$00
-randomSeed3:
-	dc.b	$00,$00
-
 displayMessage:
 	CLR.W	D3
 	MOVE.W	D1,D3
@@ -13930,16 +11717,6 @@ lbC053EBA:
 	CMP.B	#$FF,D0
 	BNE	lbC053EB2
 	RTS
-
-LOADgameposit.MSG:
-	dc.b	$1F,$0B,$09,"LOAD game position",$FF,$1F,$0B,$09,"SAVE game position",$FF
-	dc.b	"Drive not ready",$FF,"Disc write protected",$FF,"Insert disc",$FF,"Disc error",$FF
-	dc.b	"Incorrect data found  ",$FF,"Type in file name",$FF,$1F,$07,$16,"                            "
-	dc.b	$1F,$07,$17,"                             ",$FF,$1F,$08,$17,$FF,"Disc error: retry or escape"
-	dc.b	$FF,$1F,$08,$16,"Warning: this disc has not",$1F,$08,$17,"been used for game saving",$FF
-	dc.b	$1F,$05,$0F,"Insert formatted game save disc",$1F,$0E,$11,"into drive 0.",$1F,$09,$14
-	dc.b	"Press any key to continue",$FF,$00
-	even
 
 displaySeasonSelection:
 	JSR	drawScreenFrame
@@ -14232,26 +12009,6 @@ lbC0544AA:
 	MOVE.B	#$80,D0
 	BRA	lbC0544A2
 
-	dc.w	$0008
-lbB0544B4:
-	dc.b	$00
-disableDirectionalInputFlag:
-	dc.b	$00
-lbB0544B6:
-	dc.b	$00
-lbB0544B7:
-	dc.b	$00
-lbB0544B8:
-	dc.b	$0F
-lbB0544B9:
-	dc.b	$0B
-lbB0544BA:
-	dc.b	$00
-lbB0544BB:
-	dc.b	$00
-lbB0544BC:
-	dc.b	$00,$00
-
 saveSlotTextAndDisplay:
 	CLR.L	D0
 	MOVE.W	lbW054632,D0
@@ -14331,9 +12088,6 @@ lbC0545FA:
 lbC054606:
 	RTS
 
-lbB054608:
-	dc.b	$00,$00
-
 renderSlotGraphicsAtPosition:
 	MOVE.W	#$0000,D0
 	MOVE.W	#$0005,D1
@@ -14345,9 +12099,6 @@ renderSlotGraphicsAtPosition:
 	CLR.W	D1
 	CLR.W	D0
 	RTS
-
-lbW054632:
-	dc.w	$8000
 
 displayAllSaveSlots:
 	MOVE.B	#$00,textTransparencyMode
@@ -14436,7 +12187,7 @@ renderSlotGraphics:
 	JSR	setupSlotRenderingParams
 	JMP	finalizeGraphicsRendering
 
-	dc.w	$0000
+;	dc.w	$0000
 
 setupSlotRenderingParams:
 	MOVEM.L	D1-D7/A0-A5,-(SP)
@@ -15034,7 +12785,7 @@ positionDiskHead:
 	BSR	applyDriveConfiguration
 	MOVE.W	-$0024(A6),D0
 	ADD.W	D0,D0
-	LEA	lbW054F84(PC),A0
+	LEA	lbW054F84,A0
 	MOVE.W	$00(A0,D0.W),D0
 	BPL.S	lbC054E72
 	BSR	recalibrateDiskHeadToTrack0
@@ -15058,7 +12809,7 @@ lbC054E84:
 lbC054E8E:
 	MOVE.W	-$0024(A6),D0
 	ADD.W	D0,D0
-	LEA	lbW054F84(PC),A0
+	LEA	lbW054F84,A0
 	MOVE.W	D3,$00(A0,D0.W)
 	BSR	applyDriveConfiguration
 	MOVEQ	#$00,D0
@@ -15082,7 +12833,7 @@ lbC054EAE:
 lbC054EC8:
 	MOVE.W	-$0024(A6),D0
 	ADD.W	D0,D0
-	LEA	lbW054F84(PC),A0
+	LEA	lbW054F84,A0
 	CLR.W	$00(A0,D0.W)
 	MOVEQ	#$00,D0
 lbC054ED8:
@@ -15110,6 +12861,7 @@ applyDriveConfiguration:
 	RTS
 
 buildCIABDiskControlByte:
+	move.l	a0,-(sp)
 	MOVEM.W	D1/D2,-(SP)
 	MOVE.W	-$0024(A6),D0
 	MOVE.B	$00BFD100,D2
@@ -15118,13 +12870,15 @@ buildCIABDiskControlByte:
 	BCLR	D0,D2
 	SUB.B	#$03,D0
 	ADD.W	D0,D0
-	MOVE.W	lbW054F84(PC,D0.W),D1
+	lea	lbW054F84,a0
+	MOVE.W	(A0,D0.W),D1
 	BTST	#$00,D1
 	BEQ.S	lbC054F40
 	BCLR	#$02,D2
 lbC054F40:
 	MOVE.B	D2,D0
 	MOVEM.W	(SP)+,D1/D2
+	move.l	(sp)+,a0
 	RTS
 
 driveDelay:
@@ -15148,9 +12902,6 @@ setDiskTimeout:
 lbC054F82:
 	RTS
 
-lbW054F84:
-	dc.w	$FFFF,$FFFF,$FFFF,$FFFF
-
 saveRandomState:
 	MOVE.L	randomSeed1,lbL054FB8
 	MOVE.B	randomSeed3,lbB054FB9
@@ -15160,11 +12911,6 @@ lbC054FA2:
 	MOVE.L	lbL054FB8,randomSeed1
 	MOVE.B	lbB054FB9,randomSeed3
 	RTS
-
-lbL054FB8:
-	dc.l	$3B3B1E49
-lbB054FB9:	EQU	*-3
-	dc.b	$3B,$3B,$35,$62
 
 updateEngineState:
 	MOVE.B	opponentID,D1
@@ -15589,13 +13335,6 @@ lbC0555D6:
 	MOVE.B	#$80,lbB00D445
 	RTS
 
-lbB0555E0:
-	dc.b	$00
-lbB0555E1:
-	dc.b	$00
-offTrackFrameThreshold:
-	dc.b	$00,$00
-
 processEngineSound:
 	MOVE.B	raceStartComplete,D0
 	BNE	lbC0555FA
@@ -15729,11 +13468,6 @@ lbC055764:
 	MOVE.B	#$05,lbB0557E0
 lbC0557DC:
 	RTS
-
-lbW0557DE:
-	dc.w	$0000
-lbB0557E0:
-	dc.b	$00,$00
 
 lbC0557E2:
 	MOVE.W	#$8000,lbW0557DE
@@ -16002,9 +13736,6 @@ lbC055BDA:
 lbC055BE8:
 	RTS
 
-lbW055BEA:
-	dc.w	$0004,$0004,$FFFC
-
 lbC055BF0:
 	MOVE.W	$00(A4,D1.W),D0
 	ADD.W	$00(A4,D2.W),D0
@@ -16039,19 +13770,6 @@ renderLeagueText:
 	CMP.B	#$FF,D0
 	BNE	lbC055C38
 	RTS
-
-leagueTextTable:
-	dc.w	$1F0F
-	; These are strings
-lbB055C56:
-	dc.b	$09,"DIVISION ",$FF,$1F,$0E
-lbB055C63:
-	dc.b	$0D,"RACE  ",$FF,$1F,$06,$0B,"Track:  ",$FF,"The ",$FF," V ",$FF,$1F,$03,$18
-  	dc.b    "steer to rotate view or fire to continue",$FF,$1F
-trackSpecificYOffset:
-	dc.b	$0F,$15,"The ",$FF,$1F,$11,$0F,"RESULT",$FF,"Race Winner: ",$FF,"Fastest Lap: ",$FF,$1F,$0E,$0B
-	dc.b	"RESULTS TABLE",$1F,$06,$0E,"DRIVER     RACED WIN LAP  PTS",$FF,"Promotion for  ",$FF
-	dc.b	"Relegation for ",$FF," CHANGES",$FF,$1F,$12,$0E,"NAME?",$FF," 2pts",$FF," 1pt",$FF," of ",$FF,$00
 
 fadeToColor:
 	MOVE.W	D0,palette
@@ -16128,9 +13846,6 @@ lbC055E24:
 	TST.B	lbB052FDA
 	BNE	lbC055E24
 	RTS
-
-lbB055E30:
-	dc.b	$00,$00
 
 displayMenuScreen:
 	MOVE.W	imageMenuScreenPalette,D0
@@ -16353,11 +14068,6 @@ initializeRaceMode:
 	BNE	configureRaceSetup
 	JMP	displaySinglePlayerResults
 
-trackIDLookupTable:
-	dc.w	$0002,$0103,$0607,$0405
-raceConfigLookupTable:
-	dc.l	$08050C05,$05080C08
-
 lbC0561D2:
 	MOVE.B	D0,currentMenuItem
 	JSR	configurePlayersAndCars
@@ -16476,9 +14186,6 @@ lbC0563B6:
 	MOVE.B	D0,objectDisplayThreshold
 	RTS
 
-lbL0563C6:
-	dc.l	$03030302,$02020101,$01000000
-
 lbC0563D2:
 	MOVE.B	#$0B,D1
 lbC0563D6:
@@ -16489,16 +14196,6 @@ lbC0563D6:
 	BPL	lbC0563D6
 lbC0563EA:
 	RTS
-
-lbL0563EC:
-	dc.l	$2F76EA80
-skipSaveSlotScreen:
-	dc.b	$00,$06,$04,$00
-lbL0563F4:
-	dc.l	$0D101316,$1013100F,$14170A0E
-	dc.w	$1216
-displayColumnOffset:
-	dc.b	$0E,$0B,$11,$0C,$13,$FC,$00,$03,$00,$06,$4C,$18
 
 blitMenuCursor:
 	MOVE.B	#$02,D0
@@ -16565,11 +14262,6 @@ lbC0564F6:
 setTextYOffset4:
 	MOVE.B	#$04,textYOffset
 	RTS
-
-menuCursorObjectType:
-	dc.b	$02,$00
-lbL05651A:
-	dc.l	$00004070,$00004F70,$00005E70,$00006D70,$00003170
 
 renderPlayerName:
 	MOVE.L	#playerNamesWithSpaces,A0
@@ -17126,9 +14818,6 @@ lbC056DA8:
 	BNE	lbC056D9A
 	MOVE.B	processedSegmentIndices1,lbB056DC0
 	RTS
-
-lbB056DC0:
-	dc.b	$00,$00
 
 lbC056DC2:
 	MOVE.L	#coordinateLookupTable,A4
@@ -17804,22 +15493,6 @@ lbC05771A:
 lbC05772E:
 	RTS
 
-trackPreviewOverrideTable:
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00		; 4 entries of (segment_index, override_value) pairs, $80 terminates the list
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$30,$18,$80,$00,$00,$00,$00,$00
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$1A,$18,$80,$00,$00,$00,$00,$00
-	dc.b	$0F,$28,$1C,$28,$80,$00,$00,$00
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$3D,$30,$80,$00,$00,$00,$00,$00
-trackPreviewParameters:
-	ds.b	80
-transformedGridX:
-	dc.b	$00,$00
-transformedGridY:
-	dc.b	$00,$00
-
 transformCoordinates:
 	CLR.W	D0
 	MOVE.B	currentSegmentIndex,D0
@@ -17974,17 +15647,6 @@ lbC0579F2:
 	MOVE.B	D1,lbB0579FA
 	RTS
 
-lbB0579FA:
-	dc.b	$00,$00
-lbW0579FC:
-	dc.w	$0000
-lbW0579FE:
-	dc.w	$0000
-previewSegmentFlags:
-	dc.w	$0000
-previewDataWritePointer:
-	dc.l	$00000000
-
 updatePerformanceMetrics:
 	MOVE.B	performanceStylePoints,D0
 	CMP.B	lbB00D455,D0
@@ -18102,11 +15764,6 @@ lbC057B86:
 	AND.L	$00(A3,D3.W),D0
 	RTS
 
-lbB057BAA:
-	dc.b	$04
-lbB057BAB:
-	dc.b	$0B,$FC,$F3,$CF,$3F,$03,$0C,$30,$C0
-
 updateScrollingDisplay:
 	MOVE.B	raceStartTimer,D0
 	BNE	lbC057BE0
@@ -18194,7 +15851,7 @@ plotPixel:
 	EOR.W	#$000F,D0
 	CMP.W	#$0008,D0
 	BGE	lbC057D16
-	; Self modifying code here!
+	; FIXME Self modifying code here!
 	dc.b	$01
 lbB057D05:
 	dc.b	$E8,$00,$01,$01
@@ -18207,7 +15864,7 @@ lbB057D11:
 
 lbC057D16:
 	AND.W	#$0007,D0
-	; Self modifying code here!
+	; FIXME Self modifying code here!
 	dc.b	$01
 lbB057D1B:
 	dc.b	$D0,$01
@@ -18247,7 +15904,7 @@ lbC057D66:
 applyBitplaneMask:
 	MOVE.W	D4,D2
 	NOT.W	D2
-	; Self modifying code here!
+	; FIXME Self modifying code here!
 	dc.w	$6000
 	dc.b	$00
 lbB057D75:
@@ -18571,29 +16228,6 @@ lbC0580DA:
 	CLR.L	D1
 	CLR.L	D2
 	RTS
-
-lbW0580E0:
-	dc.w	$FFFF,$FFFF,$7FFF,$7FFF,$3FFF,$3FFF,$1FFF,$1FFF,$0FFF
-	dc.w	$0FFF,$07FF,$07FF,$03FF,$03FF,$01FF,$01FF,$00FF,$00FF
-	dc.w	$007F,$007F,$003F,$003F,$001F,$001F,$000F,$000F,$0007
-	dc.w	$0007,$0003,$0003,$0001,$0001,$0000,$0000,$8000,$8000
-	dc.w	$C000,$C000,$E000,$E000,$F000,$F000,$F800,$F800,$FC00
-	dc.w	$FC00,$FE00,$FE00,$FF00,$FF00,$FF80,$FF80,$FFC0,$FFC0
-	dc.w	$FFE0,$FFE0,$FFF0,$FFF0,$FFF8,$FFF8,$FFFC,$FFFC,$FFFE
-	dc.w	$FFFE
-lbW058160:
-	dc.w	$8000,$8000,$4000,$4000,$2000,$2000,$1000,$1000,$0800
-	dc.w	$0800,$0400,$0400,$0200,$0200,$0100,$0100,$0080,$0080
-	dc.w	$0040,$0040,$0020,$0020,$0010,$0010,$0008,$0008,$0004
-	dc.w	$0004,$0002,$0002,$0001,$0001
-lbB0581A0:
-	dc.b	$00,$00
-lbW0581A2:
-	dc.w	$0000
-lbW0581A4:
-	dc.w	$0000
-lbW0581A6:
-	dc.w	$0000
 
 drawClippedLine:
 	MOVE.L	#renderCommandQueue,A1
@@ -20641,11 +18275,6 @@ lbC059A34:
 lbC059A42:
 	RTS
 
-lineDrawingBufferPointer:
-	dc.l	$00000000
-renderDataPointer:
-	dc.w	$0000
-
 clipLineAndMakeEdge:
 	CMP.W	D2,D1
 	BGE	lbC059A52
@@ -20699,9 +18328,6 @@ lbC059ACA:
 	MOVE.W	$0002(A5),D7
 	MOVE.W	$0006(A5),D6
 	RTS
-
-savedXCoordinate:
-	dc.w	$0000
 
 lbC059AD6:
 	MOVE.B	#$00,edgeClipFailedFlag
@@ -20945,15 +18571,6 @@ lbC059D9A:
 	MOVE.W	#$8000,$00(A6,D1.W)
 	ORI.B	#$01,CCR
 	RTS
-
-edgeDirectionFlag:
-	dc.b	$00
-clipRequiredFlag:
-	dc.b	$00
-clipIterationCounter:
-	dc.b	$00
-renderingFlag:
-	dc.b	$00
 
 lbC059DAA:
 	MOVE.W	lbW05B3CC,D2
@@ -21882,11 +19499,6 @@ lbC05AA92:
 lbC05AAB0:
 	RTS
 
-hudDisplayMode2:
-	dc.b	$0A
-hudDisplayMode1:
-	dc.b	$09
-
 renderLeftTrackSidePanel:
 	MOVE.L	#renderCommandQueue,A4
 	MOVE.W	renderDataPointer,D3
@@ -22008,9 +19620,6 @@ lbC05AC24:
 	JSR	renderQuadrilateral
 lbC05AC2A:
 	RTS
-
-lbW05AC2C:
-	dc.w	$0000
 
 rasterizeVerticalEdge:
 	CMP.W	#$0080,$0002(A3)
@@ -22353,133 +19962,6 @@ lbC05B02A:
 	BNE	lbC05B02A
 	RTS
 
-mountainHorizontalAngles:
-	ds.l	12
-mountainShapeIndices:
-	ds.l	12
-lbB05B096:
-	dc.b	$00
-lbB05B097:
-	dc.b	$00
-lbB05B098:
-	dc.b	$00
-mountainSegmentCount:
-	dc.b	$00
-mountainScreenX:
-	dc.w	$0000
-mountainShapeData:
-	dc.w	$0000,$0004,$0000,$0000,$80C8,$0000,$804B,$8019,$8078
-	dc.w	$801E,$0400,$0200,$0404,$0602,$0601,$0504,$0004,$080C
-	dc.w	$0004,$0000,$0000,$80C8,$0000,$80FA,$0000,$8050,$801E
-	dc.w	$0500,$0202,$0400,$0602,$0604,$0602,$0403,$0008,$0C05
-	dc.w	$0304,$0C10,$0007,$0000,$0000,$81F4,$0000,$8348,$0000
-	dc.w	$84A6,$0000,$8302,$805C,$8230,$8069,$833E,$80E6,$0A00
-	dc.w	$0202,$0404,$0600,$0A02,$0804,$0806,$0C08,$0A0A,$0C08
-	dc.w	$0C04,$0404,$000C,$1C10,$0503,$0410,$1405,$0408,$1424
-	dc.w	$180F,$031C,$2024,$0006,$0000,$0000,$805A,$0000,$808C
-	dc.w	$0000,$0000,$8140,$805A,$8140,$808C,$8140,$0700,$0202
-	dc.w	$0400,$0602,$0804,$0A06,$0808,$0A02,$0F04,$0008,$140C
-	dc.w	$0E04,$040C,$1810,$0004,$0000,$0008,$0032,$0000,$028A
-	dc.w	$0000,$02BC,$0008,$0402,$0400,$0200,$0604,$0601,$0604
-	dc.w	$0004,$080C,$0180,$004B,$001C,$0104,$0010,$0100,$007D
-	dc.w	$0012,$00C0,$001E,$0180,$0064,$0014,$0136,$0025,$0100
-	dc.w	$0046,$0018,$00D8,$0024,$0180,$00C8,$0027,$00F0,$001F
-	dc.w	$0100,$0032,$000C,$00A8,$001A,$0172,$0070,$0019,$00E6
-	dc.w	$0014,$00FA,$0064,$000C,$00BB,$0012,$0180,$00C6,$001C
-	dc.w	$013B,$0018,$0100,$0023,$0028,$006E,$0037,$0159,$005C
-	dc.w	$002A,$00F0,$001E,$00FA,$002D,$000F,$0080,$000B,$017C
-	dc.w	$0088,$002B,$00D2,$0023,$0100,$004B,$0029,$009B,$0037
-	dc.w	$0064,$019A,$00FA,$002D,$004B,$023F,$00AA,$002D,$00B9
-	dc.w	$0145,$007D,$0046,$0032,$012C,$00A5,$0015,$00FA,$01A4
-	dc.w	$0253,$0181,$002E,$0118,$0034,$019F,$0073,$004B,$0127
-	dc.w	$01F4,$00AF,$0032,$0087,$003C,$00FF,$0048,$0087,$00C5
-	dc.w	$00FA,$0096,$0046,$0069,$0050,$00AA,$005F,$0087,$0113
-	dc.w	$01A9,$0091,$002A,$003C,$0032,$008C,$004D,$0010,$0018
-	dc.w	$0050,$0010,$0050,$0018,$0050,$0010,$0018,$003C,$0010
-	dc.w	$003C,$0018,$003C,$0028,$003C,$0039,$0028,$0039,$003C
-	dc.w	$0039,$0069,$007D,$002A,$0069,$002A,$007D,$002A,$0000
-mountainSilhouetteTable:
-	dc.w	$0006,$979E,$0006,$988A,$0006,$979E,$0006,$9894,$0006
-	dc.w	$979E,$0006,$989E,$0006,$979E,$0006,$98A8,$0006,$979E
-	dc.w	$0006,$98B2,$0006,$979E,$0006,$98BC,$0006,$979E,$0006
-	dc.w	$98C6,$0006,$979E,$0006,$98D0,$0006,$979E,$0006,$98DA
-	dc.w	$0006,$979E,$0006,$98E4,$0006,$979E,$0006,$98EE,$0006
-	dc.w	$979E,$0006,$98F8,$0006,$979E,$0006,$9902,$0006,$979E
-	dc.w	$0006,$990C,$0006,$97C0,$0006,$9902,$0006,$97C0,$0006
-	dc.w	$990C,$0006,$97E8,$0006,$9936,$0006,$97E8,$0006,$9948
-	dc.w	$0006,$97E8,$0006,$995A,$0006,$97E8,$0006,$996C,$0006
-	dc.w	$9832,$0006,$997E,$0006,$9832,$0006,$998C,$0006,$9832
-	dc.w	$0006,$999A,$0006,$9832,$0006,$99A8,$0006,$9868,$0006
-	dc.w	$99B6
-trackMountainDataTable:
-	dc.w	$0006,$9A88,$0006,$9A88,$2005,$000F,$0D15,$0A1F,$0B25
-	dc.w	$0C2F,$0535,$023F,$0345,$004F,$0155,$045F,$0565,$026F
-	dc.w	$0175,$007F,$0585,$028F,$0395,$049F,$05A5,$00AF,$09B5
-	dc.w	$06BF,$07C5,$08CF,$05D5,$00DF,$03E5,$04EF,$01F5,$02FF
-	dc.w	$0500
-lbB05B3CA:
-	dc.b	$00,$00
-lbW05B3CC:
-	dc.w	$0000
-lbW05B3CE:
-	dc.w	$0000
-lbL05B3D0:
-	dc.l	$00000000
-lbL05B3D4:
-	dc.l	$00000000
-segmentAlternateRenderFlag:
-	dc.b	$00,$00
-segmentProcessedFlag:
-	dc.b	$00,$00
-edgeClipFailedFlag:
-	dc.b	$00,$00
-lbB05B3DE:
-	dc.b	$00,$00,$00,$00
-lbB05B3E2:
-	dc.b	$00,$00,$00,$00
-depthValue:
-	dc.w	$0000
-lbW05B3E8:
-	dc.w	$0000
-lbB05B3EA:
-	dc.b	$00,$00
-lbB05B3EC:
-	dc.b	$00,$00,$00,$00
-lbL05B3F0:
-	dc.l	$00000000
-lbL05B3F4:
-	dc.l	$00000000
-lbL05B3F8:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000
-lbL05B47C:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000
-lbL05B4FC:
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
-	dc.l	$00000000,$00000000,$00000000,$00000000
-
 initializeGraphicsData:
 	MOVE.L	#memory_6490,A1
 	MOVE.W	#$0000,D4
@@ -22635,11 +20117,6 @@ lbC05B7AA:
 	DBRA	D0,lbC05B7AA
 	RTS
 
-lbL05B7B4:
-	dc.l	$00000000,$0FFF0C88,$00000000,$0FFF0C88
-lbW05B7C4:
-	dc.w	$002C
-
 initializeSpritePointers:
 	MOVE.W	#$0007,D3
 lbC05B7CA:
@@ -22648,9 +20125,6 @@ lbC05B7CA:
 	JSR	setSpritePointer
 	DBRA	D3,lbC05B7CA
 	RTS
-
-gameLoopControl:
-	dc.w	$0020
 
 setSpriteFromTable:
 	MOVE.L	#graphicsDataTable,A1
@@ -22684,11 +20158,6 @@ lbC05B808:
 	CMP.W	#$00C4,D1
 	BNE	lbC05B808
 	RTS
-
-lbB05B840:
-	dc.b	$00
-lbB05B841:
-	dc.b	$00
 
 configureDisplayMode:
 	MOVE.L	D5,-(SP)
@@ -22887,6 +20356,2359 @@ lbC05BA48:
 	MOVE.W	(SP)+,D1
 	RTS
 
+	section Data,data
+audioChannelMasks:
+	dc.l	$00000001,$00000002,$00000004,$00000008
+audioChannel0Period:
+	dc.l	$07000000
+sampleParameters:	EQU	*-2
+	dc.w	$0000
+downsampledSampleTable:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+lbL000DB4:
+	dc.l	$00000000
+sampleParameterTable:
+	; sample 0: $0000F4B8, 2436 bytes, period 150, volume 30, channel 1, Short sound effect
+	dc.l	$0000F4B8,$00000984
+	dc.w	$0096,$001E,$0001,$0000
+	; sample 1: $0000FE3C, 9032 bytes, period 180, volume 64, channel 1, engine
+	dc.l	$0000FE3C,$00002348
+sampleEnginePeriod:
+	dc.w	$00B4,$0040,$0001,$0000
+	; sample 2: $00012184, 8014 bytes, period 238, volume 56, channel 1, Crash/collision
+	dc.l	$00012184,$00001F4E
+	dc.w	$00EE,$0038,$0001,$0000
+	; sample 3: $000140D2, 3108 bytes, period 400, volume 50, channel 1, Impact sound
+	dc.l	$000140D2,$00000C24
+	dc.w	$0190
+	dc.b	$00
+sampleCrashVolume:
+	dc.b	$32
+	dc.w	$0001,$0000
+	; sample 4: $00014CF6, 5170 bytes, period 238, volume 64, channel 2, Secondary sound 
+	dc.l	$00014CF6,$00001432
+	dc.w	$00EE
+	dc.b	$00
+audioSample4Volume:
+	dc.b	$40
+	dc.w	$0002,$0000
+	; sample 5: $00016128, 8430 bytes, period 280, volume 64, channel 3, Background audio
+	dc.l	$00016128,$000020EE
+	dc.w	$0118,$0040,$0003,$0000
+	; sample 6: $00018216, 7120 bytes, period 500, volume 64, channel 1, ground collision
+	dc.l	$00018216,$00001BD0
+sampleGroundCollisionPeriod:
+	dc.w	$01F4,$0040,$0001,$0000
+baseSamplePointer:
+	dc.l	sampleEngineData
+sampleSizeTable:
+	dc.w	$0000,$0C64,$012C,$0030,$0000,$0000
+lbL00D112:
+	dc.l	$00000000
+lbB00D116:
+	dc.b	$00,$00
+joystickState:
+	dc.w	$FFFF
+lbW00D190:
+	dc.l	lowercaseTable
+lbB00D194:
+	dc.l	uppercaseTable
+uppercaseTable:
+	dc.b	$00,$31,$32,$33,$34,$35,$36,$37,$38,$39
+	dc.b	$30,$00,$00,$00,$00,$30,$51,$57,$45,$52,$54,$59,$55,$49
+	dc.b	$4F,$50,$00,$00,$00,$31,$32,$33,$41,$53,$44,$46,$47,$48
+	dc.b	$4A,$4B,$4C,$3A,$00,$00,$00,$34,$35,$36,$00,$5A,$58,$43
+	dc.b	$56,$42,$4E,$4D,$2C,$2E,$2F,$00,$2E,$37,$38,$39,$20,$08
+	dc.b	$00,$0D,$0D,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00
+lowercaseTable:
+	dc.b	$00,$31,$32,$33,$34,$35,$36,$37
+	dc.b	$38,$39,$30,$00,$00,$00,$00,$30,$71,$77,$65,$72,$74,$79
+	dc.b	$75,$69,$6F,$70,$00,$00,$00,$31,$32,$33,$61,$73,$64,$66
+	dc.b	$67,$68,$6A,$6B,$6C,$3A,$00,$00,$00,$34,$35,$36,$00,$7A
+	dc.b	$78,$63,$76,$62,$6E,$6D,$2C,$2E,$2F,$00,$2E,$37,$38,$39
+	dc.b	$20,$08,$00,$0D,$0D,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00
+lbW00D3F8:
+	dc.w	$0000
+gasInputIntensityValue:
+	dc.b	$00
+gasInputAccumulatorValue:
+	dc.b	$00
+lbB00D3FC:
+	dc.b	$00
+lbB00D3FD:
+	dc.b	$00
+lbB00D3FE:
+	dc.b	$00,$00,$00
+trackWidthMultiplier:
+	dc.b	$00,$00,$00
+trackViewOffsetX:
+	dc.b	$00,$00
+trackViewOffsetY:
+	dc.b	$00
+lbB00D407:
+	dc.b	$00,$00
+lbB00D409:
+	dc.b	$00
+trackProgressionByte:
+	dc.w	$0000
+gameStateCounter:
+	dc.b	$00,$00
+lbB00D40E:
+	dc.b	$00
+lbB00D40F:
+	dc.b	$00
+lbW00D410:
+	dc.w	$0000
+trackDistance:
+	dc.w	$0000
+lbB00D413:	EQU	*-1
+	dc.b	$00,$00
+currentMenuItem:
+	dc.b	$00
+speedDisplayThousands:
+	dc.b	$00
+currentMenuItemCopy:
+	dc.b	$00
+savedSegmentIndex:
+	dc.b	$00
+segmentDirectionFlags:
+	dc.b	$00
+temp:
+	dc.b	$00
+gameParameter1:
+	dc.b	$00
+gameParameter2:
+	dc.b	$00
+lapCrossingDetectionFlag:
+	dc.w	$0000
+player1LapCounter:
+	dc.b	$00
+player2LapCounter:
+	dc.b	$00
+baseCoordinateX:
+	dc.b	$00
+lbB00D423:
+	dc.b	$00,$00,$00
+baseCoordinateY:
+	dc.b	$00
+lbB00D427:
+	dc.b	$00,$00,$00
+lbB00D42A:
+	dc.b	$00
+lbB00D42B:
+	dc.b	$00
+lbB00D42C:
+	dc.b	$00
+lbB00D42D:
+	dc.b	$00
+lbB00D42E:
+	dc.b	$00,$00,$00,$00
+lbB00D432:
+	dc.b	$00,$00
+lbW00D434:
+	dc.w	$0000
+lbW00D436:
+	dc.w	$0000
+lbB00D438:
+	dc.b	$00,$00,$00,$00
+lbB00D43C:
+	dc.b	$00
+lbB00D43D:
+	dc.b	$00,$00
+trackEffectFlag:
+	dc.b	$00
+trackDirection:
+	dc.b	$00
+restartTimerCountdown:
+	dc.b	$00,$00
+distanceCharacteristic:
+	dc.b	$00
+aiEnabled:
+	dc.b	$00
+lbB00D445:
+	dc.b	$00
+lbB00D446:
+	dc.b	$00
+inputStateFlags:
+	dc.b	$00
+segmentRepeatCounter:
+	dc.b	$00,$00
+lbB00D44A:
+	dc.b	$00,$00,$00
+segmentSteeringFlags:
+	dc.b	$00,$00
+accumulatedOffTrackForceX:
+	dc.b	$00
+accumulatedOffTrackForceY:
+	dc.b	$00
+accumulatedOffTrackForceZ:
+	dc.b	$00,$00,$00
+offTrackAccumulationFlag:
+	dc.b	$00
+lbB00D455:
+	dc.b	$00
+offTrackFrameCounter:
+	dc.b	$00
+cameraAngleIndex:
+	dc.b	$00
+segmentDepthCounter:
+	dc.b	$00
+trackSegmentLimitDoubled:
+	dc.b	$00
+maxSegmentIndexDoubled:
+	dc.b	$00
+raceMode:
+	dc.b	$00
+lbB00D45C:
+	dc.b	$00
+trackDirectionSign:
+	dc.b	$00
+displayRowOffset:
+	dc.b	$00
+displayTrackID:
+	dc.b	$00
+lbB00D460:
+	dc.b	$00
+lbB00D461:
+	dc.b	$00
+lbB00D462:
+	dc.b	$00
+gameExitFlag:
+	dc.b	$00
+playerInputState:
+	dc.b	$00
+lbB00D465:
+	dc.b	$00
+segmentRenderingFlag:
+	dc.b	$00
+lbB00D467:
+	dc.b	$00
+lbB00D468:
+	dc.b	$00
+lbB00D469:
+	dc.b	$00
+trackModeParameter:
+	dc.b	$00
+lbB00D46B:
+	dc.b	$00
+wreckCountdownTimer:
+	dc.b	$00
+textHorizontalOffset:
+	dc.b	$00
+textYOffset:
+	dc.b	$00
+currentTrackIDs:
+	dc.b	$00
+raceActiveFlag:
+	dc.b	$00
+graphicsUpdateFlag:
+	dc.b	$00
+frameProcessingFlag:
+	dc.b	$00
+gameTimerCountdown:
+	dc.b	$00
+crashRecoveryTimer:
+	dc.b	$00
+raceCompletionCheckFlag:
+	dc.b	$00
+networkConnectionState:
+	dc.b	$00
+lbB00D477:
+	dc.b	$00,$00
+geometryFormatFlag:
+	dc.b	$00			; determines packed vs extended format
+lbB00D47A:
+	dc.b	$00
+segmentOrientationPrimary:
+	dc.b	$00
+lbB00D47C:
+	dc.b	$00
+offTrackCollisionFlag:
+	dc.b	$00
+playerStateFlag:
+	dc.b	$00
+lbB00D47F:
+	dc.b	$00,$00,$00,$00,$00,$00
+currentSegmentIndex:
+	dc.b	$00
+trackGeometryTypeIndex:
+	dc.b	$00,$00
+wreckBlinkFlag:
+	dc.b	$00
+lbB00D489:
+	dc.b	$00,$00
+currentTrackCoordinate:
+	dc.b	$00
+displayModeFlag2:
+	dc.b	$00
+maxMenuIndex:
+	dc.b	$00
+lbB00D48E:
+	dc.b	$00
+lbB00D48F:
+	dc.b	$00
+renderModeFlag:
+	dc.b	$00
+trackOffsetBase:
+	dc.b	$00
+lbB00D492:
+	dc.b	$00
+gridSweepDirection:
+	dc.b	$00
+lbB00D494:
+	dc.b	$00
+lbB00D495:
+	dc.b	$00,$00
+trackSegmentLimit:
+	dc.b	$00
+maxSegmentIndex:
+	dc.b	$00
+maxLapsForRace:
+	dc.b	$00
+lbB00D49A:
+	dc.b	$00
+lbB00D49B:
+	dc.b	$00
+collisionStateFlags:
+	dc.b	$00
+lbB00D49D:
+	dc.b	$00
+lbB00D49E:
+	dc.b	$00
+lbB00D49F:
+	dc.b	$00,$00
+lbB00D4A1:
+	dc.b	$00,$00
+lbB00D4A3:
+	dc.b	$00
+networkTimeoutFlag:
+	dc.b	$00
+lbB00D4A5:
+	dc.b	$00
+lbB00D4A6:
+	dc.b	$00
+currentDataIndex:
+	dc.b	$00
+accelerationStateFlag:
+	dc.b	$00,$00
+lbB00D4AA:
+	dc.b	$00
+lbB00D4AB:
+	dc.b	$00
+frameCounter:
+	dc.b	$00
+lbB00D4AD:
+	dc.b	$00
+lbB00D4AE:
+	dc.b	$00
+gameEndModeFlag:
+	dc.b	$00
+trackVariationSeed:
+	dc.b	$00
+displayFlags:
+	dc.b	$00
+raceResultFlag:
+	dc.b	$00,$00
+displayModeParameter:
+	dc.b	$00
+lbB00D4B5:
+	dc.b	$00
+performanceStylePoints:
+	dc.b	$00,$00
+carCrashedFlag:
+	dc.b	$00
+lbB00D4B9:
+	dc.b	$00
+lbB00D4BA:
+	dc.b	$00
+trackSideIndicatorCopy:
+	dc.b	$00
+singleBufferRenderMode:
+	dc.b	$00
+aiDirectionFlag:
+	dc.b	$00
+aiBehaviorFlag1:
+	dc.b	$00
+aiBehaviorFlag2:
+	dc.b	$00
+aiActionTimer:
+	dc.b	$00
+rollTransitionFlag:
+	dc.b	$00
+aiPatternOffset:
+	dc.b	$00
+engineSoundType:
+	dc.b	$00
+raceStartComplete:
+	dc.b	$00
+segmentDataStartIndex:
+	dc.b	$00
+controlResponseValue:
+	dc.b	$00
+engineTimer:
+	dc.b	$00
+displayStateFlag:
+	dc.b	$00
+gameTimingCounter:
+	dc.b	$00
+menuHighlightMode:
+	dc.b	$00
+multiplayerRaceDisplayFlag:
+	dc.b	$00
+eventTimerCountdown:
+	dc.b	$00
+trackDirectionFlag:
+	dc.b	$00,$00
+directionCalculation:
+	dc.b	$00
+lbB00D4D0:
+	dc.b	$00
+offRoadSideFlags:
+	dc.b	$00
+lbB00D4D2:
+	dc.b	$00
+textTransparencyMode:
+	dc.b	$00
+trackControlParameter:
+	dc.b	$00
+currentPlayerNameOffset:
+	dc.b	$00
+selectedMenuItem:
+	dc.b	$00
+collisionImpactLevel:
+	dc.b	$00,$00
+segmentOrientationAlternate:
+	dc.b	$00
+audioPitchModifier:
+	dc.b	$00
+lbB00D4DB:
+	dc.b	$00
+segmentAlternateFlag:
+	dc.b	$00
+visualEffectBaseValue:
+	dc.b	$00
+displayModeFlag1:
+	dc.b	$00
+raceStartTimer:
+	dc.b	$00
+multiplayerSyncFlag:
+	dc.b	$00
+trackSideIndicator:
+	dc.b	$00
+gameModeStateFlags:
+	dc.b	$00
+lbB00D4E3:
+	dc.b	$00
+savedPlayerIndex:
+	dc.b	$00
+lbB00D4E5:
+	dc.b	$00
+lbB00D4E6:
+	dc.b	$00,$00
+lbB00D4E8:
+	dc.b	$00
+lbB00D4E9:
+	dc.b	$00
+lbB00D4EA:
+	dc.b	$00
+engineEffectFlag:
+	dc.b	$00
+networkEngineFlag:
+	dc.b	$00
+previousDataIndex:
+	dc.b	$00
+lbW00D4EE:
+	dc.w	$0000
+lbB00D4EF:	EQU	*-1
+lbW00D4F0:
+	dc.w	$0000
+lbB00D4F1:	EQU	*-1
+trackHeightDifference:
+	dc.b	$00,$00
+lbW00D4F4:
+	dc.w	$0000
+lbB00D4F5:	EQU	*-1
+trackIncrementValue:
+	dc.w	$0000
+trackBoostThreshold:	EQU	*-1
+raceSetupFlags:  EQU    *-1
+lbW00D4F8:
+	dc.w	$0000
+trackBoostThresholdCopy:	EQU	*-1
+lbW00D4FA:
+	dc.w	$0000,$0000,$0000
+carStartRotation:
+	dc.b	$00
+carStartRotationLow:
+	dc.b	$00
+interpolationPointsXY1:
+	dc.w	$0000
+interpolationPointsXY2:
+	dc.w	$0000
+interpolationPointsXY3:
+	dc.w	$0000
+interpolationPointsXY4:
+	dc.w	$0000
+additionalInterpolationPoints1:
+	dc.w	$0000
+additionalInterpolationPoints2:
+	dc.w	$0000
+segmentBezierOffset1:
+	dc.w	$0000
+segmentBezierOffset2:
+	dc.w	$0000
+storedDepth:
+	dc.w	$0000
+processedSegmentIndices1:
+	dc.b	$00,$00
+processedSegmentIndices2:
+	dc.b	$00,$00
+trackEffectParameter:
+	dc.w	$0000,$0000
+lbW00D51C:
+	dc.w	$0000
+lbW00D51E:
+	dc.w	$0000
+previousEffectParameter:
+	dc.w	$0000
+lbW00D522:
+	dc.w	$0000
+lbB00D524:
+	dc.b	$00,$00
+visibilityAccumulator:
+	dc.w	$0000
+lbW00D528:
+	dc.w	$0000
+trackProgressionValue:
+	dc.w	$0000
+trackDataComponent:	EQU	*-1
+	dc.b	$00,$00
+lbW00D52E:
+	dc.w	$0000
+cameraRotationFlags:
+	dc.b	$00,$00
+reverseDirectionFlag:
+	dc.b	$00,$00
+lbW00D534:
+	dc.w	$0000
+lbW00D536:
+	dc.w	$0000
+carRenderDistance:
+	dc.w	$0000
+engineState:	EQU	*-1
+maxDistanceFromTrack:
+	dc.w	$0000
+steeringScaleFactor:
+	dc.w	$0000
+lbW00D53E:
+	dc.w	$0000
+lbB00D540:
+	dc.b	$00
+trackProcessingFlag:
+	dc.b	$00
+lbW00D542:
+	dc.w	$0000
+trackDirectionInversionFlag:
+	dc.b	$00,$00,$00,$00,$00,$00
+segmentSlopeFlags:
+	dc.b	$00,$00
+adjustedDistanceValue:
+	dc.w	$0000
+lbB00D54D:	EQU	*-1
+	dc.b	$00,$00,$00,$00,$00,$00
+lbB00D554:
+	dc.b	$00
+previousSegmentProperties:
+	dc.b	$00
+visualEffectFlags:
+	dc.w	$0000
+lbB00D558:
+	dc.b	$00
+lbB00D559:
+	dc.b	$00
+lbB00D55A:
+	dc.b	$00
+lbB00D55B:
+	dc.b	$00
+offsetFromRoadCenter:
+	dc.w	$0000
+lateralRoadPosition:
+	dc.w	$0000
+speedMinor:	EQU	*-1
+trackSurfaceHeight:
+	dc.w	$0000
+wheelSpeed:
+	dc.b	$00,$00
+viewOffsetX:
+	dc.w	$0000
+viewStepX:
+	dc.w	$0000
+viewOffsetY:
+	dc.w	$0000
+viewStepY:
+	dc.w	$0000
+quadRectHalfWidth:
+	dc.w	$0000
+quadRectWidth:
+	dc.w	$0000
+quadRectHalfHeight:
+	dc.w	$0000
+quadRectHeight:
+	dc.w	$0000
+stepSizeXHalf:
+	dc.w	$0000
+stepSizeYHalf:
+	dc.w	$0000
+lbW00D578:
+	dc.w	$0000
+lbW00D57A:
+	dc.w	$0000
+stepSizeXQuarter:
+	dc.w	$0000
+stepSizeYQuarter:
+	dc.w	$0000
+lbW00D580:
+	dc.w	$0000
+lbW00D582:
+	dc.w	$0000
+quadTranslateX:
+	dc.w	$0000
+quadTranslateY:
+	dc.w	$0000
+adjustedViewX:
+	dc.w	$0000
+adjustedViewY:
+	dc.w	$0000
+primaryGeometryOffset:
+	dc.w	$0000,$0000
+alternateGeometryOffset:
+	dc.w	$0000,$0000
+trackCenterX:
+	dc.l	$00000000
+trackCenterY:
+	dc.l	$00000000
+trackCenterZ:
+	dc.l	$00000000
+trackOffsetAdjustment:
+	dc.b	$00,$00
+postWreckStateFlag:
+	dc.b	$00,$00
+carWorldX:
+	dc.l	$00000000
+carWorldY:
+	dc.l	$00000000
+carWorldZ:
+	dc.l	$00000000
+distanceFromTrackX:
+	dc.l	$00000000
+distanceFromTrackY:
+	dc.l	$00000000
+distanceFromTrackZ:
+	dc.l	$00000000
+geometryDatabaseOffset:
+	dc.w	$0000,$0000
+rawTrackDataOffset:
+	dc.w	$0000,$0000,$0000,$0000
+lbB00D5C8:
+	dc.b	$00,$00,$00,$00
+lbL00D5CC:
+	dc.l	$00000000
+carHeightPosition:
+	dc.b	$00,$00,$00,$00
+lbL00D5D4:
+	dc.l	$00000000
+lbB00D5D8:
+	dc.b	$00,$00
+lbW00D5DA:
+	dc.w	$0000
+lbB00D5DC:
+	dc.b	$00
+lbB00D5DD:
+	dc.b	$00
+lbW00D5DE:
+	dc.w	$0000
+lbB00D5E0:
+	dc.b	$00,$00
+lbW00D5E2:
+	dc.w	$0000
+cameraAngleX:
+	dc.w	$0000
+cameraAngleY:
+	dc.b	$00
+lbB00D5E7:
+	dc.b	$00
+cameraAngleZ:
+	dc.w	$0000
+worldXSpeed:
+	dc.w	$0000
+worldYSpeed:
+	dc.w	$0000
+worldZSpeed:
+	dc.w	$0000
+rotationSpeedX:
+	dc.w	$0000
+rotationSpeedY:
+	dc.w	$0000
+rotationSpeedZ:
+	dc.w	$0000
+lbW00D5F6:
+	dc.w	$0000
+lbW00D5F8:
+	dc.w	$0000
+lbW00D5FA:
+	dc.w	$0000
+lbW00D5FC:
+	dc.w	$0000
+steeringYawRate:
+	dc.w	$0000
+lbW00D600:
+	dc.w	$0000
+lbW00D602:
+	dc.w	$0000
+lbW00D604:
+	dc.w	$0000
+lbW00D606:
+	dc.w	$0000
+lbW00D608:
+	dc.w	$0000
+lbW00D60A:
+	dc.w	$0000
+lbW00D60C:
+	dc.w	$0000
+baseTargetRoll:
+	dc.w	$0000
+baseRollAngle:
+	dc.w	$0000
+additionalYawOffset:
+	dc.w	$0000
+clampedDistanceX:
+	dc.w	$0000
+clampedDistanceY:
+	dc.w	$0000
+clampedDistanceZ:
+	dc.w	$0000
+previousDistanceX:
+	dc.w	$0000
+previousDistanceY:
+	dc.w	$0000
+previousDistanceZ:
+	dc.w	$0000
+lateralVelocityX:
+	dc.w	$0000
+lateralVelocityY:
+	dc.w	$0000
+lateralVelocityZ:
+	dc.w	$0000
+verticalMotion:
+	dc.w	$0000
+lateralMotion:
+	dc.w	$0000
+gasOutputAccumulatorValue:
+	dc.b	$00
+gasOutputIntensityValue:
+	dc.b	$00
+targetRollAngle:
+	dc.w	$0000
+lbW00D62E:
+	dc.w	$0000
+carVelocity:
+	dc.b	$00,$00
+adjustedRollAngle:
+	dc.w	$0000
+adjustedPitchAngle:
+	dc.w	$0000
+adjustedYawAngle:
+	dc.w	$0000
+collisionStateFlags1:
+	dc.w	$0000
+collisionStateFlags2:	EQU	*-1
+lbW00D63A:
+	dc.w	$0000
+lbW00D63C:
+	dc.w	$0000
+lbW00D63E:
+	dc.w	$0000
+rollAngleModifier:
+	dc.w	$0000
+carPitchAdjustment:
+	dc.w	$0000
+yawAngleOffset:
+	dc.w	$0000
+lbW00D646:
+	dc.w	$0000
+lbW00D648:
+	dc.w	$0000
+lbW00D64A:
+	dc.w	$0000
+lbW00D64C:
+	dc.w	$0000
+lbB00D64E:
+	dc.b	$00,$00
+lbB00D650:
+	dc.b	$00,$00
+lbB00D652:
+	dc.b	$00,$00
+lbW00D654:
+	dc.w	$0000
+lbW00D656:
+	dc.w	$0000
+lbW00D658:
+	dc.w	$0000
+segmentTargetAngle:
+	dc.w	$0000
+impactSeverity:
+	dc.b	$00,$00
+lbL00D65E:
+	dc.l	$00000000
+lbW00D660:	EQU	*-2
+lbW00D662:
+	dc.w	$0000,$0000
+lbL00D666:
+	dc.l	$00000000
+lbW00D668:	EQU	*-2
+lbW00D66A:
+	dc.w	$0000,$0000
+lbW00D66E:
+	dc.w	$0000
+lbW00D670:
+	dc.w	$0000
+lbW00D672:
+	dc.w	$0000,$0000
+lbW00D676:
+	dc.w	$0000
+lbW00D678:
+	dc.w	$0000
+lbW00D67A:
+	dc.w	$0000,$0000
+lbW00D67E:
+	dc.w	$0000
+lbW00D680:
+	dc.w	$0000
+lbW00D682:
+	dc.w	$0000,$0000
+boundsMinX:
+	dc.w	$0000
+boundsMaxX:
+	dc.w	$0000
+boundsMinY:
+	dc.w	$0000,$0000
+trackCoordinatesX:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+trackCoordinatesY:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.w	$0024
+segmentProcessedFlags:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000
+lbL00D76C:
+	dc.l	$00000000
+trackSegmentData:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000
+inputCoordX1:
+	dc.w	$0000
+inputCoordY1:
+	dc.w	$0000
+inputCoordX2:
+	dc.w	$0000
+inputCoordY2:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000
+clampedCoordX1:
+	dc.w	$0000
+clampedCoordY1:
+	dc.w	$0000
+clampedCoordX2:
+	dc.w	$0000
+clampedCoordY2:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+coordinateLookupTable:
+	dc.l	$00000000
+lbW00D8B4:
+	dc.w	$0000
+lbW00D8B6:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+transformedCoordinates1:
+	dc.w	$0000
+transformedCoordinates2:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000
+quadVertexX4:
+	dc.w	$0000
+quadVertexX5:
+	dc.w	$0000
+quadVertexX6:
+	dc.w	$0000
+quadVertexX7:
+	dc.w	$0000
+lbW00D9B8:
+	dc.w	$0000
+lbW00D9BA:
+	dc.w	$0000
+lbW00D9BC:
+	dc.w	$0000
+lbW00D9BE:
+	dc.w	$0000
+quadVertexX0:
+	dc.w	$0000
+quadVertexX1:
+	dc.w	$0000
+quadVertexX2:
+	dc.w	$0000
+quadVertexX3:
+	dc.w	$0000
+lbW00D9C8:
+	dc.w	$0000
+lbW00D9CA:
+	dc.w	$0000
+lbW00D9CC:
+	dc.w	$0000
+lbW00D9CE:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+transformedVertexBounds:
+	dc.l	$00000000
+lbW00D9F4:
+	dc.w	$0000
+lbW00D9F6:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+quadVertexY4:
+	dc.w	$0000
+quadVertexY5:
+	dc.w	$0000
+quadVertexY6:
+	dc.w	$0000
+quadVertexY7:
+	dc.w	$0000
+lbW00DAF8:
+	dc.w	$0000
+lbW00DAFA:
+	dc.w	$0000
+lbW00DAFC:
+	dc.w	$0000
+lbW00DAFE:
+	dc.w	$0000
+quadVertexY0:
+	dc.w	$0000
+quadVertexY1:
+	dc.w	$0000
+quadVertexY2:
+	dc.w	$0000
+quadVertexY3:
+	dc.w	$0000
+lbW00DB08:
+	dc.w	$0000
+lbW00DB0A:
+	dc.w	$0000
+lbW00DB0C:
+	dc.w	$0000
+lbW00DB0E:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+lbL00DB30:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+lbW00DB64:
+	dc.w	$0000,$0000
+lbW00DB68:
+	dc.w	$0000,$0000,$0000
+lbW00DB6E:
+	dc.w	$0000,$0000
+lbW00DB72:
+	dc.w	$0000
+lbW00DB74:
+	dc.w	$0000
+lbW00DB76:
+	dc.w	$0000,$0000,$0000,$0000,$0000
+trackSegmentGrid:
+	ds.b	16*16
+debrisParticleXPositions:
+	ds.w	32
+debrisParticleYPositions:
+	ds.w	32
+debrisParticleXVelocities:
+	ds.w	32
+debrisParticleYVelocities:
+	ds.w	32
+segmentGeometryIndices:
+	ds.b	100
+segmentAlternateGeometryIndices:
+	ds.b	100
+trackSegmentCoordinates:	; lookup table mapping track segment indices to their 2D grid coordinates, with each coordinate packed into a single byte
+	ds.b	100
+trackSegmentPropertiesTable:
+	ds.b	100
+segmentInterpolationPoint1:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000
+lbL00DF6C:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+	dc.w	$0000
+graphicsOffsetX:
+	dc.w	$0000
+graphicsOffsetY:
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000
+segmentInterpolationPoint2:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+segmentWorldPositions:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+obstacleSegmentIndices:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+obstacleTypes:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+trackFeatureData:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+playerStatsArray:
+	dc.b	$00
+lbB00E209:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+lbB00E216:
+	dc.b	$00
+lbB00E217:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00
+lapTimeSeconds:
+	dc.b	$00
+lbB00E221:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+lbB00E22E:
+	dc.b	$00
+lbB00E22F:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00
+lapTimeSubseconds:
+	dc.b	$00
+lbB00E239:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+lbB00E246:
+	dc.b	$00
+lbB00E247:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+segmentVisibilityData:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000
+paletteUpdateArray:
+	dc.w	$0000
+	dc.b	$00
+lbB00E285:
+	dc.b	$00
+lbB00E286:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00
+lbL00E2B6:
+	dc.l	$00000000,$00000000,$00000000
+lbL00E2C2:
+	dc.l	$00000000,$00000000,$00000000
+selectedTrack:
+	dc.b	$00
+objectDisplayThreshold:
+	dc.b	$00
+currentPlayerContext:
+	dc.b	$00,$00
+lbL00E2D2:
+	dc.l	$00000000,$00000000,$00000000
+lbL00E2DE:
+	dc.l	$00000000,$00000000,$00000000
+lbL00E2EA:
+	dc.l	$00000000,$00000000,$00000000
+lbL00E2F6:
+	dc.l	$00000000,$00000000,$00000000
+lbL00E302:
+	dc.l	$00000000,$00000000,$00000000
+lbB00E30E:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+trackDataBuffer:
+	dc.b	$00		; unused
+numTrackSegments:
+	dc.b	$00
+lbB00E31B:
+	dc.b	$00
+trackParameter3:
+	dc.b	$00
+finishLineSegmentIndex:
+	dc.b	$00
+startWorldPosition:
+	dc.w	$0000
+lbB00E320:
+	dc.b	$00
+raceConfigValue:
+	dc.b	$00
+selectedRaceType:
+	dc.b	$00
+raceFlag1:
+	dc.b	$00
+raceFlag2:
+	dc.b	$00
+lbB00E325:
+	dc.b	$00
+lbB00E326:
+	dc.b	$00
+player1ID:
+	dc.b	$00
+player2ID:
+	dc.b	$00
+opponentID:
+	dc.b	$00
+trackMetadataBuffer:
+	dc.b	$00
+lbB00E32B:
+	dc.b	$00
+lbB00E32C:
+	dc.b	$00
+lbB00E32D:
+	dc.b	$00
+obstacleCount:
+	dc.b	$00
+trackFeatureCount:
+	dc.b	$00,$00
+lbB00E331:
+	dc.b	$00
+startingSegmentIndex:
+	dc.b	$00
+currentTrackID:
+	dc.b	$00
+lbB00E334:
+	dc.b	$00
+currentRaceNumber:
+	dc.b	$00
+lbL00E336:
+	dc.l	$00000000,$00000000,$00000000
+sineTable:
+	incbin	"sineTable"
+reciprocalTable:
+	incbin	"reciprocalTable"
+arctanTable:
+	incbin	"arctanTable"
+transformationMatrix:
+	dc.w	$1614,$0218,$0F04,$1715,$0316,$1817,$140F,$1502,$0403
+	dc.w	$1110,$1211,$454D,$332C,$6430,$0D09,$626E,$6509,$7363
+	dc.w	$6F32,$0D09,$0D09,$7274,$730D,$090D,$4645,$5443,$4809
+	dc.w	$6D6F,$7665,$2E62,$0930,$2861,$352C,$6435,$2E77,$292C
+	dc.w	$6430,$0D09,$6164,$6471,$2E77,$0923,$312C,$6435,$0D66
+	dc.w	$6574,$6368,$0961,$6E64,$692E
+playerNamesWithSpaces:
+	dc.b	' '
+playerNames:
+	dc.b	'Hot Rod      ',$D
+	dc.b	$09
+	dc.b	' Whizz Kid    '
+	dc.b	$09
+	dc.b	'T Bad Guy      '
+	dc.b	$09
+	dc.b	'b The Dodger   '
+	dc.b	$09
+	dc.b	'b'
+BigEdMaxBoost.MSG:
+	dc.b	' Big Ed       '
+	dc.b	$09
+	dc.b	'# Max Boost    p1 Dare Devil   ',$D
+	dc.b	$09
+	dc.b	' High Flyer   .b Bully Boy    ml Jumping Jack ,d Roa'
+	dc.b	'd Hog     b. '
+ascii.MSG3:
+	dc.b	'             '
+	dc.b	$09
+	dc.b	$0D
+	dc.b	$09
+lbB01066B:
+	dc.b	$0D,$09,$0D,"GTRACK",$0D,$09,$0D,$09,"move.b",$09,"d1,d0",$0D,$09,"asl."
+engineCharacteristics:
+	dc.l	$22206220,$3E043014,$4A100800
+	dc.b	"e.b",$09,"d0,d"
+	dc.b	"2",$0D,$09,"movea.l",$09,"#"
+levelNames:
+	dc.b	'LITTLE RAMP     '
+	dc.b	'STEPPING STONES '
+	dc.b	'HUMP BACK       '
+	dc.b	'BIG RAMP        '
+	dc.b	'SKI JUMP        '
+	dc.b	'DRAW BRIDGE     '
+	dc.b	'HIGH JUMP       '
+	dc.b	'ROLLER COASTER  ',0
+	dc.b	$81,$94,$00,$30,$A8,$0C,$80,$01,$81,$0F,$E0
+	dc.b	$64,$08,$1E,$80,$01,$81,$0F,$E0,$14,$08,$1E,$80,$01,$81
+	dc.b	$00,$F0,$03,$08,$03,$80,$01,$41,$02,$00,$64,$98,$01,$80
+	dc.b	$02,$00,$00,$FF,$50,$07,$FF,$80,$00,$00,$00,$CF,$50,$07
+	dc.b	$FF,$80,"ve.b",$09,"d0,DV",$0D,$09
+	dc.b	"jsr",$09,"FETCH",$0D,$09,"mov"
+	dc.b	"e.b",$09,"d0,DUH",$0D,$09,"mo"
+	dc.b	"ve.b",$09,"d0,DVH",$09,$0D,$09
+	dc.b	$0D,$09,"move.b",$09,"#0,d1"
+	dc.b	$0D,$09,"mo",$E9,$E5,$FA,$F3,$F8,$E3,$ED,$E2,$FE,$8A
+	dc.b	$ED,$EF,$E5,$EC,$EC,$8A,$E9,$F8,$EB,$E7,$E7,$E5,$E4,$EE
+	dc.b	$8A,$9B,$93,$92,$92,"PDU"
+attenuationTable:
+	dc.w	$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FEFE,$FEFE
+	dc.w	$FDFD,$FDFD,$FCFC,$FBFB,$FBFA,$FAF9,$F9F8,$F8F7,$F7F6
+	dc.w	$F6F5,$F4F4,$F3F3,$F2F1,$F0F0,$EFEE,$EDEC,$ECEB,$EAE9
+	dc.w	$E8E7,$E6E5,$E4E3,$E2E1,$E0DF,$DEDD,$DBDA,$D9D8,$D6D5
+	dc.w	$D4D2,$D1CF,$CECC,$CBC9,$C8C6,$C5C3,$C1BF,$BEBC,$BAB8
+	dc.w	$B6B4,$B2B0,$AEAC,$A9A7,$A5A2,$A09D,$9B98,$9592,$8F8C
+	dc.w	$8986,$837F,$7C78,$7470,$6C68,$635E,$5953,$4D47,$3F37
+	dc.w	$2D20
+distanceLookupTable:
+	dc.w	$1B1B,$1B1B,$1B1A,$1A1A,$1919,$1918,$1717,$1615,$1413
+	dc.w	$1211,$0F0E,$0B09,$0707,$0707,$0707,$0707,$2331,$362C
+	dc.b	"d0",$0D,$09,"beq",$09,"gt11",$0D,$09,"move"
+	dc.b	".b"
+trackGeometryDatabase:
+	dc.w	$50B2,$A3B2,$A9FF,$FEB2,$59B3,$20DA,$D8B3,$3BB4,$0A46
+	dc.w	$2E20,$9EB4,$A980,$852E,$60A5,$30C9,$8190
+segmentGeometryOffsetTable:	; This is a lookup table containing ~130 encoded offset values that map segment type/configuration indices to geometry data locations within trackGeometryDatabase
+	dc.w	$0DB5,$1BB5,$24B5,$36B5,$44B5,$52B5,$5CB5,$66B5,$6FB5
+	dc.w	$78B5,$86B5,$94B5,$9DB5,$A6B5,$B2B5,$CAB5,$D3B5,$EBB5
+	dc.w	$F7B5,$01B6,$0AB6,$14B6,$1DB6,$27B6,$31B6,$3AB6,$43B6
+	dc.w	$4DB6,$57B6,$60B6,$69B6,$72B6,$7BB6,$84B6,$90B6,$99B6
+	dc.w	$A2B6,$ABB6,$B7B6,$C0B6,$C9B6,$D5B6,$E1B6,$EDB6,$F9B6
+	dc.w	$02B7,$0BB7,$14B7,$1DB7,$26B7,$32B7,$3EB7,$4CB7,$56B7
+	dc.w	$5FB7,$68B7,$7AB7,$83B7,$8CB7,$95B7,$9EB7,$A7B7,$B0B7
+	dc.w	$B9B7,$C3B7,$CCB7,$D6B7,$E8B7,$F1B7,$FAB7,$03B8,$0CB8
+	dc.w	$16B8,$1FB8,$28B8,$31B8,$3AB8,$46B8,$4FB8,$58B8,$70B8
+	dc.w	$A720,$7EB8,$87B8,$90B8,$9EB8,$ACB8,$B5B8,$BFB8,$C9B8
+	dc.w	$D5B8,$DEB8,$E7B8,$F0B8,$FAB8,$03B9,$15B9,$27B9,$39B9
+	dc.w	$4BB9,$54B9,$60B9,$6AB9,$74B9,$7EB9,$88B9,$91B9,$9AB9
+	dc.w	$A3B9,$ACB9,$B5B9,$BEB9,$CAB9,$D4B9,$E0B9,$F8B9,$04BA
+	dc.w	$0DBA,$1FBA,$28BA,$A320,$7DA3,$31BA,$AA20,$3ABA,$44BA
+	dc.w	$4EBA,$58BA
+trackDataOffsetTable:	; Each word is an encoded offset that, when transformed, points to a specific track's compressed data in trackGeometryDatabase
+	dc.w	$62BA,$DEBA,$6FBB,$00BC,$8EBC,$1FBD,$F4BD,$82BE,$F5A7
+	dc.w	$4C00,$A54C,$B2A3,$0017,$4163,$6375,$7261
+geometryParameterTable:
+	dc.w	$0080,$20C0,$0073,$80C0,$A959,$0002,$A95E,$854B,$0400
+	dc.w	$4003,$1200,$AB80,$8001,$2040,$0300,$00C0,$0400,$0040
+	dc.w	$0300,$01C0,$0400,$0140,$0300,$02C0,$0400,$0240,$0300
+	dc.w	$03C0,$0400,$0340,$0300,$04C0,$0400,$0440,$0300,$05C0
+	dc.w	$0400,$0540,$0300,$06C0,$0400,$0640,$0300,$07C0,$0400
+	dc.w	$0740,$0300,$08C0,$0400,$080C,$80A8,$0D00,$0000,$FF80
+	dc.w	$680A,$8712,$00AB,$8780,$013E,$4003,$0000,$C004,$0000
+	dc.w	$4C03,$0501,$CA04,$DF00,$7303,$0702,$EB04,$BC01,$B203
+	dc.w	$0503,$2205,$9502,$0A04,$FB03,$6D05,$6803,$7A04,$E704
+	dc.w	$CD05,$3204,$0005,$C805,$4006,$F204,$9C05,$9A06,$C506
+	dc.w	$A605,$4C06,$5B07,$5B07,$4C06,$0CC0,$57FA,$0000,$0001
+	dc.w	$80E8,$0887,$1203,$AB87,$8001,$3E3F,$0300,$00BF,$0400
+	dc.w	$0035,$03DF,$00B3,$0405,$0114,$03BC,$018C,$0407,$02DD
+	dc.w	$0295,$024D,$0405,$0392,$0268,$03F5,$03FB,$0332,$0232
+	dc.w	$0485,$03E7,$04BF,$01F2,$04FF,$02C8,$053A,$01A6,$0563
+	dc.w	$029A,$06A4,$004C,$06B3,$015B,$0708,$4040,$FF00,$2080
+	dc.w	$B51C,$00AB,$8080,$0120,$78FF,$8700,$8700,$78FF,$2C00
+	dc.w	$3C01,$3C01,$2C00,$E100,$F001,$F001,$E100,$9601,$A502
+	dc.w	$A502,$9601,$4A02,$5A03,$5A03,$4A02,$FF02,$0E04,$0E04
+	dc.w	$FF02,$B303,$C304,$C304,$B303,$6804,$7705,$7705,$6804
+	dc.w	$1D05,$2C06,$2C06,$1D05,$D105,$E106,$E106,$D105,$8606
+	dc.w	$9507,$9507,$8606,$3A07,$4A08,$4A08,$3A07,$EF07,$FF08
+	dc.w	$FF08,$EF07,$A408,$B309,$B309,$A408,$0C80,$0010,$0000
+	dc.w	$00FF,$90C0,$0C7A,$1400,$AB7A,$8001,$3240,$0300,$00C0
+	dc.w	$0400,$004C,$031C,$01CA,$04FB,$0071,$0336,$02EB,$04F4
+	dc.w	$01AF,$034C,$0322,$05E9,$0204,$045C,$046D,$05D9,$0371
+	dc.w	$0463,$05CD,$05C1,$04F5,$0460,$0641,$06A0,$058E,$0550
+	dc.w	$07C8,$0673,$063B,$0632,$0861,$073B,$07FC,$0603,$090B
+	dc.w	$08F4,$070C,$C000,$F800,$0000,$0190,$400B,$7A14,$03AB
+	dc.w	$7A80,$0132,$4003,$0000,$C004,$0000,$3503,$FB00,$B304
+	dc.w	$1C01,$1403,$F401,$8E04,$3602,$DD02,$E902,$5004,$4C03
+	dc.w	$9202,$D903,$FB03,$5C04,$3202,$C104,$8E03,$6305,$BE01
+	dc.w	$A005,$0A03,$6006,$3701,$7306,$7102,$5007,$9E00,$3B07
+	dc.w	$C401,$3208,$F4FF,$F407,$0301,$0309,$0840,$40FF,$0020
+	dc.w	$7CB0,$1800,$AB7C,$8001,$2078,$FF87,$0087,$0078,$FF32
+	dc.w	$0041,$0141,$0132,$00EC,$00FC,$01FC,$01EC,$00A6,$01B6
+	dc.w	$02B6,$02A6,$0160,$0270,$0370,$0360,$021B,$032A,$042A
+	dc.w	$041B,$03D5,$03E4,$04E4,$04D5,$038F,$049F,$059F,$058F
+	dc.w	$0449,$0559,$0659,$0649,$0503,$0613,$0713,$0703,$06BE
+	dc.w	$06CD,$07CD,$07BE,$0678,$0787,$0887,$0878,$0700,$0000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$6061,$0344,$2628
+	dc.w	$2A2C,$0000,$0200,$0400,$0600,$0800,$0A00,$0C00,$0E00
+	dc.w	$1000,$0020,$4060,$0121,$4161,$0202,$0202,$0202,$0261
+	dc.w	$4121,$0160,$4020,$0000,$0000,$0000,$0060,$2151,$0222
+	dc.w	$4262,$0313,$0020,$4070,$2141,$6102,$2232,$0002,$0406
+	dc.w	$E729,$CA4B,$2C46,$9655,$8524,$33B2,$2100,$0000,$0000
+	dc.w	$0010,$2040,$6001,$2141,$6102,$0202,$0202,$0271,$6141
+	dc.w	$2101,$6040,$2000,$0010,$1010,$1010,$1090,$8010,$0000
+	dc.w	$0000,$0000,$8090,$0001,$0203,$0405,$0607,$0809,$0A0B
+	dc.w	$1B80,$1C80,$1D80,$1E80,$1F80,$2080,$A180,$8000,$0000
+	dc.w	$0000,$0000,$0000,$4E1D,$DB0A,$A836,$3422,$0000,$009B
+	dc.w	$2019,$E018,$A017,$6016,$2014,$E013,$A012,$6011,$200F
+	dc.w	$E00E,$A048,$2726,$3544,$6313,$4271,$2150,$0013,$0362
+	dc.w	$4222,$0251,$21E0,$8005,$0585,$0000,$8505,$0505,$3222
+	dc.w	$0261,$4121,$7040,$A080,$0040,$0141,$0242,$0333,$6300
+	dc.w	$2030,$3030,$3030,$3030,$3030,$1000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$0000,$0000,$90B0,$3030,$3030,$3030,$30A0
+	dc.w	$8000,$0000,$0000,$0000,$0090,$B030,$3030,$3030,$3030
+	dc.w	$30A0,$8000,$2142,$53E4,$65E6,$5748,$0060,$4192,$62A3
+	dc.w	$6314,$4400,$2040,$D060,$60D0,$4020,$0463,$B303,$4282
+	dc.w	$3160,$00A6,$8000,$0000,$0000,$8035,$4787,$4675,$2544
+	dc.w	$6303,$2241,$6000,$0827,$36C5,$4443,$3221,$0050,$5050
+	dc.w	$50C0,$3020,$1000,$0000,$1030,$6011,$5122,$7200,$6041
+	dc.w	$A2D2,$62F2,$7272,$7272,$7222,$B232,$A212,$F131,$6000
+	dc.w	$0A68,$4726,$0563,$4221,$0000,$1030,$6021,$7142,$1363
+	dc.w	$3405,$5555,$2676,$4718,$6839,$8A00,$0000,$0000,$C776
+	dc.w	$2655,$0534,$6313,$4271,$2121,$6030,$1000,$0000,$0000
+	dc.w	$0000,$008A,$8000,$0000,$0000,$804C,$0041,$0344,$0647
+	dc.w	$094A,$0C70,$5030,$1000,$1030,$5070,$AA80,$0000,$0000
+	dc.w	$0080,$2A59,$4939,$A963,$6363,$6347,$0000,$0010,$3050
+	dc.w	$0131,$7142,$2314,$6262,$62D2,$42A2,$0261,$B101,$4000
+	dc.w	$0040,$0141,$0242,$0343,$0464,$4526,$0767,$0010,$2030
+	dc.w	$4040,$4040,$4040,$0000,$0000,$0010,$3060,$218D,$8000
+	dc.w	$0000,$0000,$0000,$0000,$0000,$8000,$9C80,$1C80,$9C80
+	dc.w	$8000,$0000,$0000,$0000,$1020,$4060,$0131,$7100,$1030
+	dc.w	$7031,$71B2,$5262,$0000,$0010,$3060,$2102,$0300,$1030
+	dc.w	$6021,$7162,$5344,$0070,$6152,$4334,$2516,$0700,$0000
+	dc.w	$0000,$0000,$802E,$0001,$F152,$A363,$9434,$5400,$30D0
+	dc.w	$7011,$A131,$4141,$4140,$1000,$0000,$1040,$1161,$4040
+	dc.w	$4040,$4040,$3020,$1000,$9AC0,$8000,$0000,$0000,$0000
+	dc.w	$0000,$0000,$8000,$0C80,$2403,$0221,$6030,$1000,$0047
+	dc.w	$4665,$2505,$0515,$3575,$80E6,$1645,$7424,$5323,$1346
+	dc.w	$2514,$1322,$4170,$3000,$0001,$1233,$5475,$1738,$597A
+	dc.w	$0271,$D121,$6030,$1000,$0000,$0010,$3060,$21D1,$7102
+	dc.w	$0040,$8131,$D161,$F171,$7122,$6121,$6030,$1000,$0000
+	dc.w	$0060,$4122,$0363,$4425,$0666,$4728,$0000,$1030,$6021
+	dc.w	$7152,$4324,$45E6,$8021,$4263,$0526,$2860,$27C0,$2740
+	dc.w	$26E0,$26A0,$2680,$2680,$26A0,$26E0,$2720,$A760,$0000
+	dc.w	$0001,$0203,$0405,$0607,$0868,$492A,$0B6B,$0070,$5132
+	dc.w	$1373,$5435,$0600,$5031,$1272,$5334,$1506,$0060,$4122
+	dc.w	$0373,$6465,$6667,$6869,$6A6B,$0060,$4122,$0353,$2464
+	dc.w	$2565,$2666,$2767,$0081,$61A2,$4252,$5252,$5200,$4172
+	dc.w	$1435,$5677,$193A,$5B00,$2142,$6305,$2647,$681A,$5B64
+	dc.w	$1443,$7222,$5101,$4020,$1000,$0005,$0505,$1525,$45E5
+	dc.w	$0000,$2212,$F151,$3111,$6030,$0000,$5031,$2223,$3455
+	dc.w	$7618,$0021,$4263,$0526,$4768,$797A,$5271,$2160,$3010
+	dc.w	$0000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
+	dc.w	$2000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
+	dc.w	$2000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
+	dc.w	$2000,$0000,$0000,$2000,$4000,$6032,$0000,$6000,$4000
+	dc.w	$2000,$0063,$43A3,$F242,$0241,$0140,$2847,$6606,$2544
+	dc.w	$6303,$2241,$6000,$1473,$4303,$4202,$4101,$4000,$7414
+	dc.w	$4303,$4202,$4101,$4000,$1453,$1352,$1251,$1150,$A080
+	dc.w	$7434,$7333,$7232,$7131,$E080,$2362,$2261,$2170,$4020
+	dc.w	$0042,$4252,$7213,$43F3,$8000,$0000,$0080,$8505,$0505
+	dc.w	$050C,$5947,$5504,$5241,$5000,$0010,$3050,$E050,$3010
+	dc.w	$0000,$0000,$0080,$0000,$0000,$0404,$0404,$0404,$73E3
+	dc.w	$3352,$4100,$4404,$4303,$4202,$4101,$4000,$4141,$4141
+	dc.w	$4141,$31A1,$01E0,$3000,$18C0,$1680,$1440,$1200,$0FC0
+	dc.w	$0D80,$0B40,$0900,$06C0,$0480,$0240,$0000,$7E4C,$1A08
+	dc.w	$1644,$1302,$1140,$1000,$6030,$1000,$0010,$3060,$2113
+	dc.w	$0010,$A00E,$400B,$E009,$8007,$2004,$C002,$6000,$0000
+	dc.w	$E818,$4776,$2655,$0534,$0000,$0010,$3060,$2171,$4200
+	dc.w	$2142,$6305,$2647,$680A,$0060,$3171,$3272,$3373,$3474
+	dc.w	$0020,$5011,$5112,$5213,$5314,$0040,$0141,$0242,$0343
+	dc.w	$94F4,$0040,$0141,$0242,$0343,$F394,$2C0F,$0F25,$0005
+	dc.w	$A0CF,$6A9F,$6B24,$5050,$2500,$0019,$6380,$2F04,$6486
+	dc.w	$1F65,$6657,$0E68,$67C0,$0D64,$04E0,$0C69,$9F17,$0000
+	dc.w	$0000,$0000,$0000,$CC02,$C601,$1617,$B710,$0001,$2019
+	dc.w	$1894,$3104,$032A,$4200,$2A53,$002A,$6400,$2A75,$282A
+	dc.w	$8629,$2A97,$002A,$A82A,$2AB9,$2B2A,$CA00,$2ADB,$0004
+	dc.w	$EC09,$0AD3,$FD16,$1766,$FE00,$17EF,$1B1A,$8DDF,$0605
+	dc.w	$222F,$0202,$2146,$0358,$0122,$382A,$2A0E,$000F,$A0CF
+	dc.w	$009F,$3B3C,$3C25,$1348,$4900,$3280,$2F04,$6486,$1F65
+	dc.w	$6657,$0E68,$67C0,$0D64,$04E0,$0C69,$9F2E,$2F2E,$2F2E
+	dc.w	$2F2E,$2F38,$C002,$4C03,$C601,$7C7D,$9710,$7F7E,$0020
+	dc.w	$034C,$2030,$339F,$3315,$1E1F,$6464,$6464,$5E0C,$D006
+	dc.w	$E016,$17D7,$F11B,$1A4D,$F260,$F300,$9F00,$4900,$5A6B
+	dc.w	$0000,$4800,$4CFD,$46FE,$1617,$17EF,$1B1A,$8DDF,$0709
+	dc.w	$3034,$0809,$03D4,$083F,$0FBE,$11BD,$13BB,$15BA,$2CF3
+	dc.w	$1E42,$1011,$1213,$1415,$162F,$0535,$2E2E,$1340,$0560
+	dc.w	$043A,$8F7A,$1C1D,$1E1F,$2227,$434D,$0D47,$0E17,$1696
+	dc.w	$1F1A,$1B0C,$2F20,$3F00,$9F48,$0039,$0048,$4948,$0038
+	dc.w	$00DF,$034C,$07EF,$7D7C,$56FE,$7E7F,$C0FD,$4C03,$E0FC
+	dc.w	$336F,$4A71,$1F64,$645E,$CDF5,$C7F4,$1716,$16E3,$1A1B
+	dc.w	$8CD3,$A0C3,$301F,$4B8C,$A381,$930B,$0C14,$8204,$0384
+	dc.w	$710A,$0911,$600C,$0B8C,$50A0,$4000,$1F00,$8D20,$8710
+	dc.w	$1716,$D601,$1A1B,$4C02,$6003,$0006,$0529,$3106,$0100
+	dc.w	$5201,$4D1B,$4C25,$4F28,$4D34,$5C26,$2C01,$0118,$8007
+	dc.w	$A0C0,$003F,$0000,$0080,$806D,$6E4F,$6E6D,$6D6E,$6E6D
+	dc.w	$6D6E,$A030,$008D,$2087,$1017,$16D6,$011A,$1B4C,$0260
+	dc.w	$0377,$9F29,$0000,$7640,$2900,$0045,$4D0D,$470E,$1716
+	dc.w	$B61F,$0003,$2F18,$1954,$3E03,$04EA,$4D31,$EA5C,$0DEA
+	dc.w	$6B0D,$EA7A,$8EEA,$8900,$EA98,$00EA,$A700,$EAB6,$90EA
+	dc.w	$C511,$EAD4,$59C4,$E30A,$0951,$F217,$16E7,$F100,$16E0
+	dc.w	$1A1B,$8CD0,$0A09,$2B29,$0508,$20D6,$0E4E,$0F4B,$134B
+	dc.w	$1446,$1011,$1516,$2021,$2223,$280F,$0F23,$406A,$AABD
+	dc.w	$71AA,$AC21,$AA9B,$64AA,$8ACF,$AA79,$00AA,$6800,$AA57
+	dc.w	$00AA,$466F,$AA35,$F2AA,$2473,$8413,$090A,$5302,$1617
+	dc.w	$E601,$0097,$101B,$1A0D,$2020,$3024,$0040,$5033,$0150
+	dc.w	$5253,$9461,$3350,$2A72,$4C04,$8355,$5491,$9453,$5200
+	dc.w	$A450,$3320,$B44C,$1F25,$0CD4,$06E4,$1617,$D7F5,$1B1A
+	dc.w	$4DF6,$60F7,$4D5F,$477A,$4E7A,$564C,$FD46,$FE16,$1737
+	dc.w	$EF00,$81DF,$1918,$14CE,$0403,$0708,$2B28,$0601,$03D8
+	dc.w	$1554,$1836,$20C2,$0042,$27C9,$204E,$2A2A,$04A0,$11A0
+	dc.w	$CC00,$7F38,$3333,$2C00,$0032,$804C,$0464,$863C,$6566
+	dc.w	$572B,$6867,$C02A,$6404,$E029,$2B3F,$2035,$5CC0,$252D
+	dc.w	$0DC6,$2457,$4797,$335D,$5800,$430D,$2D20,$531C,$3F1D
+	dc.w	$3F00,$0093,$6D6E,$2F6D,$6E6E,$6D20,$C332,$00D3,$6404
+	dc.w	$07E3,$6665,$76F2,$70E7,$F170,$16E0,$6768,$80D0
+	dc.w	$0464,$A0C0,$709F,$7070,$70C2,$0064,$642B,$008D,$2087
+	dc.w	$1017,$16D6,$011A,$1B4C,$0260,$0300,$9F00,$35DF,$E000
+	dc.w	$E1E2,$2B38,$400D,$034C,$470E,$7D7C,$961F,$7E7F,$002F
+	dc.w	$4C03,$203F,$339F,$3333,$151E,$1F22,$4464,$5E0D,$DF07
+	dc.w	$EF17,$1676,$FE00,$E7FD,$0016,$EC1A,$1B8C,$DC04,$0448
+	dc.w	$4809,$0703,$6206,$5507,$5014,$433D,$E441,$D82D,$5A2E
+	dc.w	$502F,$C604,$0D26,$3334,$3536,$341D,$1D04,$4006,$203F
+	dc.w	$009F,$003B,$254D,$3E26,$6464,$2B0D,$DF07,$EF17,$1656
+	dc.w	$FE1A,$1BCC,$FDE0,$FC00,$5F00,$0000,$0000,$CDF6,$C3F5
+	dc.w	$1716,$34E4,$00AA,$D300,$AAC2,$00A4,$B100,$11A0,$1819
+	dc.w	$8C90,$A080,$005F,$0000,$0000,$008D,$2087,$1017,$16D6
+	dc.w	$011A,$1B4C,$0260,$0300,$9F3A,$7A36,$00B7,$003D,$2743
+	dc.w	$4D0D,$470E,$1716,$961F,$1A1B,$0C2F,$0606,$2C2A,$060E
+	dc.w	$27D3,$28CE,$02D3,$1755,$1652,$1552,$1E1F,$2021,$2225
+	dc.w	$2627,$2829,$2A2B,$2C2D,$4E00,$0025,$0005,$A0CF,$389F
+	dc.w	$0182,$8282,$8282,$074A,$008C,$2F86,$1F16,$1757,$0E1B
+	dc.w	$1ACD,$0DE0,$0C19,$9F08,$0FF5,$F5F5,$F56C,$745C,$C002
+	dc.w	$2D0D,$C601,$5747,$9710,$5D58,$0020,$0D2D,$2030,$1C9F
+	dc.w	$1D1E,$1F22,$2727,$2743,$3800,$D04C,$0306,$E005,$06F7
+	dc.w	$F134,$66F2,$4117,$E312,$1480,$D364,$04A0,$C370,$7F4B
+	dc.w	$3533,$3333,$3333,$8043,$034C,$8733,$0605,$F624,$3467
+	dc.w	$2500,$9636,$1A1B,$0C46,$2056,$007F,$235B,$7070,$7070
+	dc.w	$7000,$D604,$6406,$E665,$66D7,$F768,$6740,$F864,$0460
+	dc.w	$F92B,$3F00,$0000,$4CFD,$46FE,$1617,$17EF,$1B1A,$8DDF
+	dc.w	$0303,$5059,$0700,$062A,$0729,$0E36,$1A54,$1B4A,$4D52
+	dc.w	$4C5A,$FE04,$BDFF,$0484,$0B85,$0C20,$7798,$4CA3,$8BA5
+	dc.w	$2638,$E90F,$8526,$A41B,$840A,$2097,$8AC9,$2CD0,$3E4C
+	dc.w	$95B6,$2054,$B3A5,$2618,$69F4,$854B,$A905,$854C,$2000
+	dc.w	$A5A5,$2A85,$37A5,$2B85,$3820,$E9B4,$A526,$8527,$1869
+	dc.w	$F985,$4BA9,$0585,$4C20,$5F9A,$F0AD,$BDF5,$0430,$04B0
+	dc.w	$A690,$B490,$A2B0,$B04C,$968B,$0022,$E320,$7661
+lbW01172C:
+	dc.w	$0707,$0707,$0707,$0707,$413A,$3E41,$4851,$484F,$0000
+	dc.w	$0000,$0000,$0000,$4841,$4548,$4F58,$4F56,$0703,$0303
+	dc.w	$0303,$0703,$6657,$5759,$5969,$6264,$0703,$0303,$0301
+	dc.w	$0303,$6155,$5356,$585B,$5A62
+H.MSG:
+	dc.b	$48,$00,$F0,$00,$EC,$00,$10,$60,$5B,$00,$00,$54,$0C,$40
+	dc.b	$01,$3A,$01,$0C,$6E,$69,$01,$00
+primaryFontBitmapData:
+	dc.w	$0000,$0000,$0000,$0000,$9595,$9595,$AAEA,$EAEA,$1515
+	dc.w	$1515,$156A,$6A6A,$75C3,$0000,$0000,$8080,$4040,$C000
+	dc.w	$0080,$8080,$5555,$5555,$55AA,$AAAA,$5555,$5555,$55AA
+	dc.w	$AAAA,$BDFF,$C3C0,$C3F3,$BFBF,$0000,$C0C0,$C0C0,$4040
+	dc.w	$FF80,$8080,$8080,$8080,$8080,$8080,$8080,$80FF,$0808
+	dc.w	$087F,$0808,$0800,$0101,$0101,$0101,$01FF,$0000
+	dc.b	$00
+lbB0117ED:
+	dc.b	$7F,$00,$00,$00,$00,$00,$00,$00,$00,$00
+lbB0117F7:
+	dc.b	$18
+lbB0117F8:
+	dc.b	$18,$00,$00,$02,$04,$08,$10,$20,$40,$00,$00,$3C,$42,$42
+	dc.b	$42,$42,$3C,$00,$00,$10,$30,$10,$10,$10,$38,$00,$00,$3C
+	dc.b	$42,$0C,$30,$40,$7E,$00,$00,$7E,$04,$0C,$02,$42,$3C,$00
+	dc.b	$00,$04,$0C,$14,$24,$7E,$04,$00,$00,$7E,$40,$7C,$02,$02
+	dc.b	$7C,$00,$00,$3C,$40,$7C,$42,$42,$3C,$00,$00,$7E,$04,$08
+	dc.b	$10,$20,$20,$00,$00,$3C,$42,$3C,$42,$42,$3C,$00,$00,$3C
+	dc.b	$42,$3C,$04,$08,$10,$00,$00,$00,$10,$00,$00,$10,$00,$00
+	dc.b	$00,$00,$10,$00,$00,$10,$20,$00,$18,$18,$18,$18,$18,$00
+	dc.b	$18,$00,$00,$00,$7E,$00,$7E,$00,$00,$00,$30,$18,$0C,$06
+	dc.b	$0C,$18,$30,$00,$00,$38,$44,$04,$08,$10,$00,$10,$3C,$66
+	dc.b	$6E,$6A,$6E,$60,$3C,$00,$00,$3C,$42,$42,$7E,$42,$42,$00
+	dc.b	$00,$78,$44,$7C,$42,$42,$7C,$00,$00,$3C,$42,$40,$40,$42
+	dc.b	$3C,$00,$00,$7C,$42,$42,$42,$42,$7C,$00,$00,$7E,$40,$78
+	dc.b	$40,$40,$7E,$00,$00,$7E,$40,$78,$40,$40,$40,$00,$00,$3C
+	dc.b	$42,$40,$4E,$42,$3E,$00,$00,$42,$42,$7E,$42,$42,$42,$00
+	dc.b	$00,$38,$10,$10,$10,$10,$38,$00,$00,$04,$04,$04,$04,$44
+	dc.b	$38,$00,$00,$44,$48,$70,$48,$44,$42,$00,$00,$20,$20,$20
+	dc.b	$20,$20,$3E,$00,$00,$42,$66,$5A,$42,$42,$42,$00,$00,$42
+	dc.b	$62,$52,$4A,$46,$42,$00,$00,$3C,$42,$42,$42,$42,$3C,$00
+	dc.b	$00,$7C,$42,$7C,$40,$40,$40,$00,$00,$3C,$42,$42,$42,$42
+	dc.b	$3C,$06,$00,$7C,$42,$7C,$48,$44,$42,$00,$00,$3E,$40,$3C
+	dc.b	$02,$02,$7C,$00,$00,$7C,$10,$10,$10,$10,$10,$00,$00,$42
+	dc.b	$42,$42,$42,$42,$3E,$00,$00,$42,$42,$42,$42,$24,$18,$00
+	dc.b	$00,$42,$42,$42,$5A,$66,$42,$00,$00,$42,$24,$18,$18,$24
+	dc.b	$42,$00,$00,$44,$44,$28,$10,$10,$10,$00,$00,$7E,$04,$08
+	dc.b	$10,$20,$7E,$00,$01,$00,$00,$00,$00,$00,$00,$FF,$80,$00
+	dc.b	$00,$00,$00,$00,$00,$FF,$00,$00,$00,$FF,$00,$00,$00,$01
+	dc.b	$00,$00,$00,$FF,$00,$00,$00,$80
+lbL01197A:
+	dc.l	$01000000
+lbW01197E:
+	dc.w	$0000
+lbB011980:
+	dc.b	$00,$01,$00,$00,$00,$FF,$00,$00,$00,$FF,$00,$00,$3C,$02
+	dc.b	$3E,$42,$3E,$00,$00,$40,$7C,$42,$42,$42,$7C,$00,$00,$00
+	dc.b	$3E,$40,$40,$40,$3E,$00,$00,$02,$3E,$42,$42,$42,$3E,$00
+	dc.b	$00,$00,$3C,$42,$7E,$40,$3C,$00,$00,$1C,$22,$20,$78,$20
+	dc.b	$20,$00,$00,$00,$3E,$42,$42,$3E,$02,$3C,$00,$40,$40,$7C
+	dc.b	$42,$42,$42,$00,$10,$00,$30,$10,$10,$10,$38,$00,$00,$08
+	dc.b	$00,$08,$08,$08,$48,$30,$00,$20,$20,$24,$38,$24,$22,$00
+	dc.b	$00,$30,$10,$10,$10,$10,$38,$00,$00,$00,$24,$5A,$5A,$42
+	dc.b	$42,$00,$00,$00,$7C,$42,$42,$42,$42,$00,$00,$00,$3C,$42
+	dc.b	$42,$42,$3C,$00,$00,$00,$7C,$42,$42,$7C,$40,$40,$00,$00
+	dc.b	$3E,$42,$42,$3E,$02,$02,$00,$00,$5C,$62,$40,$40,$40,$00
+	dc.b	$00,$00,$3E,$60,$3C,$06,$7C,$00,$00,$20,$7C,$20,$20,$24
+	dc.b	$18,$00,$00,$00,$42,$42,$42,$42,$3E,$00,$00,$00,$42,$42
+	dc.b	$42,$24,$18,$00,$00,$00,$42,$42,$5A,$5A,$24,$00,$00,$00
+	dc.b	$42,$24,$18,$24,$42,$00,$00,$00,$42,$42,$42,$3E,$02,$3C
+	dc.b	$00,$00,$7E,$04,$18,$20,$7E,$00,$00,$00,$00,$FF,$00,$00
+	dc.b	$00,$81,$81,$81,$81,$81,$81,$81,$81,$81,$81,$00,$00,$00
+	dc.b	$00,$00,$00,$81,$FF,$00,$00,$00,$00,$00,$00,$FF,$30,$18
+	dc.b	$0C,$06,$0C,$18,$30,$00,$80,$00
+image0Palette:
+	dc.w	$0000,$0443,$0554,$0770,$0451,$0233,$0257,$0247,$0123,$0200
+	dc.w	$0311,$0422,$0644,$0332,$0555,$0777
+image0:	incbin	"image0"
+imageMenuScreenPalette:
+	dc.w	$0000,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
+	dc.w	$0240,$0021,$0046,$0025,$0710,$0500,$0740
+imageMenuScreen:
+	incbin	"imageMenuScreen"
+alternateFontBitmapData:
+	incbin	"alternateFontBitmapData"
+image2Palette:
+	dc.w	$0022,$0443,$0554,$0770,$0123,$0222,$0030,$0247,$0000
+	dc.w	$0200,$0311,$0050,$0555,$0332,$0333,$0777
+image2:	incbin	"image2"
+image3Palette:
+	dc.w	$0000,$0221,$0332,$0443,$0034,$0110,$0030,$0770,$0000
+	dc.w	$0200,$0311,$0070,$0555,$0221,$0333,$0777
+image3:	incbin	"image3"
+imagePlayersPalette:
+	dc.w	$0222,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
+	dc.w	$0240,$0030,$0035,$0025,$0710,$0500,$0740
+imagePlayers:
+	incbin	"imagePlayers"
+ciaTimerFlag:
+	dc.b	$00,$00
+lbW0488F8:
+	dc.w	$0007,$8000,$0004,$477C,$0004,$AF3E,$0003,$D7B6,$0005
+	dc.w	$0E4C
+lbW049538:
+	dc.w	$0000
+networkPacketReadyFlag:
+	dc.b	$00,$00
+networkGameMode:
+	dc.b	$00,$00
+checksumAccumulator:
+	dc.w	$0000
+networkDataCounter1:
+	dc.w	$0000
+lbW049542:
+	dc.w	$0000
+networkDataCounter2:
+	dc.w	$0000
+lbW049546:
+	dc.w	$0000
+lbW049548:
+	dc.w	$0000
+lbW04954A:
+	dc.w	$0000
+lbW04954C:
+	dc.w	$0000
+lbW04954E:
+	dc.w	$0000
+lbB049550:
+	dc.b	$00
+lbB049551:
+	dc.b	$00
+lbB049552:
+	dc.b	$00
+lbB049553:
+	dc.b	$00
+lbB049554:
+	dc.b	$00
+lbB049555:
+	dc.b	$00
+lbB049556:
+	dc.b	$00
+lbB049557:
+	dc.b	$00
+lbB049558:
+	dc.b	$00
+lbB049559:
+	dc.b	$00
+lbB04955A:
+	dc.b	$00
+gameInitFlag1:
+	dc.b	$00
+receivedGameStateID:
+	dc.b	$00
+receivedGameInitFlag:
+	dc.b	$00
+receivedPlayerCommand:
+	dc.b	$00
+receivedPlayerState:
+	dc.b	$00
+lbB049560:
+	dc.b	$00
+lbB049561:
+	dc.b	$00
+gameStateID:
+	dc.b	$00
+gameInitFlag2:
+	dc.b	$00
+lbB049564:
+	dc.b	$00
+lbB049565:
+	dc.b	$00
+lbB049566:
+	dc.b	$00
+raceSeriesCounter:
+	dc.b	$00
+lbB049568:
+	dc.b	$00
+opponentVisibilityFlag:
+	dc.b	$00
+lbB04956A:
+	dc.b	$00
+lbB04956B:
+	dc.b	$00
+lbB04956C:
+	dc.b	$00
+lbB04956D:
+	dc.b	$00
+lbB04956E:
+	dc.b	$00
+receivedKey:
+	dc.b	$00
+lbW049570:
+	dc.w	$0000
+totalRaceCounter:
+	dc.w	$0000
+lbW049574:
+	dc.w	$0000
+lbW049576:
+	dc.w	$0000
+lbL049700:
+	dc.l	$1F0E104C,$696E6B20,$6162616E,$646F6E65,$64FF1F0E
+	dc.l	$104C696E,$6B20636F,$6D706C65,$7465FF1F,$11104C69
+	dc.l	$6E6B696E,$67FF1F0F,$10506C65,$61736520,$77616974
+	dc.w	$FF00
+lbB0499D6:
+	dc.b	$00
+lbB0499D7:
+	dc.b	$00
+lbW049A46:
+	dc.w	$0002,$040A,$162A,$4872
+lbW049A4E:
+	dc.w	$0101,$0306,$0A0F,$151C
+lbW049A56:
+	dc.w	$0001,$0001,$0001,$0002,$0102,$0001,$0203,$0002,$0103
+	dc.w	$0003,$0201,$0001,$0203,$0400,$0102,$0304,$0002,$0103
+	dc.w	$0402,$0003,$0104,$0001,$0203,$0405,$0102,$0005,$0304
+	dc.w	$0002,$0305,$0104,$0003,$0402,$0501,$0004,$0103,$0205
+	dc.w	$0001,$0203,$0405,$0600,$0102,$0304,$0506,$0002,$0104
+	dc.w	$0305,$0602,$0004,$0105,$0306,$0204,$0005,$0103,$0604
+	dc.w	$0003,$0106,$0205,$0001,$0203,$0405,$0607,$0002,$0103
+	dc.w	$0406,$0507,$0003,$0102,$0407,$0506,$0004,$0307,$0105
+	dc.w	$0206,$0005,$0104,$0207,$0306,$0007,$0106,$0205,$0304
+	dc.w	$0006,$0107,$0204,$0305
+lbL049D9A:
+	dc.l	$00000000
+	dc.w	$0000
+lbW049E00:
+	dc.w	$0E45,$0102,$0304,$0506,$0708,$090A,$0B0C,$4142,$1011
+	dc.w	$1213,$1415,$1617,$1819,$1A1B,$4463,$2021,$2223,$2425
+	dc.w	$2627,$2829,$2A0D,$6000,$3132,$3334,$3536,$3738,$393A
+	dc.w	$611C,$6440,$6750,$5152,$5354,$5556,$5758,$592B,$2C3B
+	dc.w	$4C47,$4A4F,$484E,$5E49,$4D4B,$6869,$626A,$6665,$6B6C
+	dc.w	$6D6E,$6F70,$7172,$305F,$465A,$5B5C,$5D3D,$3E3F,$2D2E
+	dc.w	$2F1D,$1E1F,$0F3C,$4373,$7475,$7677,$7879,$7A7B,$7C7D
+	dc.w	$7E7F
+lbL04A180:
+	dc.l	$00000000,$00000000
+lbB04A3A2:
+	dc.b	$00,$00
+lbW04A3A4:
+	dc.w	$0000,$0780,$0000,$29E0,$0000,$4C40,$0000,$07A8,$0000
+	dc.w	$2A08,$0000,$4C68,$0000,$07D0,$0000,$2A30,$0000,$4C90
+	dc.w	$0000,$07F8,$0000,$2A58,$0000,$4CB8,$0000,$0E66,$0000
+	dc.w	$0E74,$0000,$156E,$0000,$157C,$0000,$0D72,$0000,$0D7C
+	dc.w	$0000,$0D86,$0000,$01E0,$0000,$0A78,$0000,$1310,$0000
+	dc.w	$01EA,$0000,$0A82,$0000,$131A,$0000,$01F4,$0000,$0A8C
+	dc.w	$0000,$1324,$0000,$01FE,$0000,$0A96,$0000,$132E
+lbW04A420:
+	dc.w	$0307,$0B09,$0608,$0A04,$0001,$0502
+lbW04A49A:
+	dc.w	$C000,$C000,$0000,$0000,$0000,$0000,$0000,$0000,$0003
+	dc.w	$0003
+lbL04A4AE:
+	dc.l	$00000000,$00000000,$00000000
+lbB04A4BA:
+	dc.b	$00
+lbB04A4BB:
+	dc.b	$00
+lbL04A4BC:
+	dc.l	$0B0B0B0B,$05020E01,$040F090B
+lbB04A4C8:
+	dc.b	$00,$00
+bitplaneMask1:
+	dc.l	$00000000
+bitplaneMask2:
+	dc.l	$00000000
+bitplaneMaskPointer:
+	dc.l	$00000000
+playerGraphicsMask:
+	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFE000,$07FFFFFF,$F800001F
+	dc.l	$E0000FFF,$FFFFFC00,$001FE000,$1FFFFFFF,$FE00001F
+	dc.l	$E0003FFF,$FFFFFF00,$001FE000,$3FFFFFFF,$FF00001F
+	dc.l	$E0007FFF,$FFFFFF80,$001FE000,$7FFFFFFF,$FF80001F
+	dc.l	$E000FFFF,$FFFFFFC0,$001FE000,$FFFFFFFF,$FFC0001F
+	dc.l	$E001FFFF,$FFFFFFC0,$001FE001,$FFFFFFFF,$FFC0001F
+	dc.l	$E001FFFF,$FFFFFFE0,$001FE003,$FFFFFFFF,$FFE0001F
+	dc.l	$E003FFFF,$FFFFFFE0,$001FE003,$FFFFFFFF,$FFE0001F
+	dc.l	$E007FFFF,$FFFFFFF8,$001FE007,$FFFFFFFF,$FFF8001F
+	dc.l	$E007FFFF,$FFFFFFF8,$001FE003,$FFFFFFFF,$FFF0001F
+	dc.l	$E003FFFF,$FFFFFFF0,$001FE003,$FFFFFFFF,$FFF0001F
+	dc.l	$E003FFFF,$FFFFFFE0,$001FE003,$FFFFFFFF,$FFE0001F
+	dc.l	$E003FFFF,$FFFFFFE0,$001FE001,$FFFFFFFF,$FFE0001F
+	dc.l	$E001FFFF,$FFFFFFE0,$001FE001,$FFFFFFFF,$FFE0001F
+	dc.l	$E001FFFF,$FFFFFFC0,$001FE001,$FFFFFFFF,$FFC0001F
+	dc.l	$E001FFFF,$FFFFFFC0,$001FE000,$FFFFFFFF,$FF80001F
+	dc.l	$E0007FFF,$FFFFFF80,$001FE000,$7FFFFFFF,$FF80001F
+	dc.l	$E0007FFF,$FFFFFF80,$001FE000,$3FFFFFFF,$FF00001F
+	dc.l	$E0000FFF,$FFFFFC00,$001FE000,$07FFFFFF,$F800001F
+	dc.l	$E0000FFF,$FFFFF800,$001FE000,$3FFFFFFF,$FFF8001F
+	dc.l	$E007FFFF,$FFFFFFFF,$C01FE07F,$FFFFFFFF,$FFFFFE1F
+	dc.l	$E7FFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
+	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
+	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
+	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
+	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
+	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
+	dc.l	$FFFFFFFF,$FFFFFFFF
+	dc.w	$FFFF
+lbB04AA3E:
+	dc.b	$00,$00
+lbW04AA40:
+	dc.w	$0000
+leagueStatisticsTextTable:
+	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced "
+	dc.b	$FF," Wins  ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First      Se"
+	dc.b	"cond        Third",$FF,$00
+useAlternateFontFlag:
+	dc.b	$00
+lbB04AB4B:
+	dc.b	$00
+alternateRenderBuffer:
+	dc.l	$00000000
+lbB04ACF6:
+	dc.b	$80,$00
+foregroundColorMask1:
+	dc.l	$00000000
+foregroundColorMask2:
+	dc.l	$00000000
+backgroundColorMask1:
+	dc.l	$00000000
+backgroundColorMask2:
+	dc.l	$00000000
+textCursorColumn:
+	dc.b	$00
+textCursorRow:
+	dc.b	$00
+characterByteOffset:
+	dc.b	$00
+characterPixelOffset:
+	dc.b	$00
+savedTransparencyFlag:
+	dc.b	$00
+textControlCodeState:
+	dc.b	$00
+controlCodeByteCounter:
+	dc.b	$00,$00
+coordinateTransformParameter:
+	dc.w	$0000
+	dc.b	$17,$13,$19,$08,$15,$0A,$08,$15,$09,$1F
+textStringTable:
+	dc.b	$1F,$11,$0B,"SELECT",$FF,"Practise ",$FF,"Start the Racing Season",$FF
+	dc.b	"Load/Save/Replay       ",$FF,"Load",$FF,"Save",$FF,"Replay",$FF,"Cancel",$FF
+	dc.b	"LOAD from Tape",$FF,"LOAD from Disc",$FF,"SAVE to Tape",$FF,"SAVE to Disc",$FF
+	dc.b	$1F,$07,$14,"   Filename?  >",$FF,"to the SUPER LEAGUE",$FF,$1F,$0C
+lbB04C057:
+	dc.b	$09,"SUPER DIVISION ",$FF,"EXCELLENT DRIVING - WELL DONE",$FF
+	dc.b	"Hall of Fame",$FF,$00
+trackCharacteristicTable:
+	dc.l	$D2BBB7B3,$B1ADABA7,$A6A4A2A1,$9F9F9F9E
+colorProgressionTable:
+	dc.l	$F7F7F6F6,$F5F5F6F7,$F8F9FBFD,$FF0205FD
+lbL04C3F4:
+	dc.l	$786E645A,$50463C32,$281E140A
+lbL04C442:
+	dc.l	$09060300
+lbL04C4C8:
+	dc.l	$00000000
+	dc.w	$0101
+lbL04C4CE:
+	dc.l	$01010202
+	dc.w	$0202
+specialSegmentLookupTable:
+	dc.b	$03,$04,$04,$03
+lbB04CF46:
+	dc.b	$00,$00
+maxInputLength:
+	dc.b	$00
+inputCancelFlag:
+	dc.b	$00
+currentInputPosition:
+	dc.b	$00,$00
+menuStringOffsetTable:
+	dc.l	$EC0A142C,$44494E55,$5C6B5500,$7A875500,$0A1F7100
+	dc.l	$2B400000,$49494949,$0A0A5500
+aiMovementPatterns:
+	dc.b	$20,$50,$60,$70
+lbB04D738:
+	dc.b	$70,$60,$50,$20,$E0,$B0
+lbB04D73E:
+	dc.b	$A0,$90
+lbC04D740:
+	dc.b	$90,$A0,$B0,$E0
+lbL04DFB8:
+	dc.l	$00D480D4,$0000ABAB,$40400000
+lbB04E1F4:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$FF,$FF,$FF,$FF
+lbB04E7E2:
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+lbL04E82C:
+	dc.l	$28195027
+divider:
+	dc.b	'------------'
+	dc.b	$09
+	dc.b	$00
+	dc.b	$00
+	dc.b	$00
+displayUpdateFlag:
+	dc.b	$00,$00
+buttonReleaseMask:
+	dc.b	$00,$00
+bufferSelector:
+	dc.b	$00,$00
+lbL04FD6C:
+	dc.l	$16171617,$02040204
+gameMessageMode:
+	dc.b	$00
+gameMessageIndex:
+	dc.b	$00
+gameMessageTable:
+	dc.b	$03,"<WRCECK",$03," RACCE ",$21,"< WaON aT  ",$03," RACCE ! LOaST "
+	dc.b	$03," DRCOP ",$21,"<STaART",$03,"<PRCESS! FIaRE ",$03,"PAUSCED"
+	dc.b	$03," LACPS ! OVaER ",$03,"DECFINE! KEaYS ",$03,"<STCEER! LEaFT "
+	dc.b	$03,"<STCEER",$21,"<RIaGHT",$03,"<AHCEAD!+BOaOST",$03," BACCK !+BOaOST"
+	dc.b	$03," BACCK !   a   ",$03,"VECRIFY! KEaYS ",$03,"<FACULT",$21,"<FOaUND<T",$06,$1A
+divisionRowPositions:
+	dc.b	$0C
+	dc.b	$0C
+	dc.b	$0C
+	dc.b	$0C
+	dc.b	$0B
+	dc.b	$0B
+	dc.b	$0A
+	dc.b	$0A
+trackColumnOffsets:
+	dc.l	$13131312,$11100F0F
+lbB050474:
+	dc.b	$00
+textRenderingFlag:
+	dc.b	$00
+additionalPlayerCount:
+	dc.b	$00
+remainingRaces:
+	dc.b	$00
+raceCount:
+	dc.b	$06
+currentPlayerID:
+	dc.b	$0B
+standingsDisplayModeFlag:
+	dc.b	$00
+raceSeriesProgress:
+	dc.b	$00
+selectedTrackGroup:
+	dc.b	$00
+raceConfiguredFlag:
+	dc.b	$00
+lbB05047E:
+	dc.b	$00
+SELECTSingleP.MSG:
+	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
+	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
+	dc.b	" S.",$FF,"        s",$FF,"Computer Link",$FF,"sssssssssssssssssssssTrack:  The ",$FF
+	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
+lbL050548:
+	dc.b	"------------",$FF
+Newtrackrecor.MSG:
+	dc.b	"------------",$FF,$1F,$0C,$0F,"New track record",$FF
+TRACKBONUSPOI.MSG:
+	dc.b	"TRACK BONUS POINTS",$FF,$1F,$0E,$0C,"FINAL SEASON",$FF,"Race Time: ",$FF
+	dc.b	"Best Lap : ",$FF,$1F,$10,$01," SLIPSTREAM ",$FF,$1F,$10,$05,"SUPER LEAGUE",$FF
+	dc.b	$1F,$00,$07,"TRACK  DRIVER   LAP-TIME    DRIVER  RACE-TIME",$FF,$1F,$06
+DRIVERBESTLAP.MSG:
+	dc.b	$0E,"DRIVER      BEST-LAP RACE-TIME",$FF
+lbB050E86:
+	dc.b	"DIR "
+HALL.MSG:
+	dc.b	"HALL"
+MP.MSG:
+	dc.b	"MP$",$00,$10,$39,$00,$01,$BB,$94,$6B,$00,$00,$0C
+	dc.b	$10,$39,$00,$01,$BB,$6B,$6B,$00,$00,$8A,$4E,$B9,$00,$06
+	dc.b	$45,$32,$10,$3C,$00,$01,$13,$C0,$00,$01,$BB,$16,$4E,$B9
+	dc.b	$00,$06,$4B,$0E,$12,$3C,$00,$0C,$4E,$B9,$00,$06,$4C,$2E
+	dc.b	$10,$39,$00,$01,$BB,$94,$6A,$00,$00,$0C,$12,$3C,$00,$00
+	dc.b	$4E,$B9,$00,$05,$F6,$F2,$14,$39,$00,$01,$CA,$31,$24,$7C
+	dc.b	$00,$05,$F6,$36,$12,$32,$20,$00,$4E,$B9,$00,$05,$F6,$F2
+	dc.b	$10,$39,$00,$01,$BB,$94,$6A,$00,$00,$24,$4E,$B9,$00,$06
+	dc.b	$4B,$0E,$14,$39,$00,$01,$BB,$94,$54,$02,$02,$02,$00,$07
+	dc.b	$24,$7C,$00,$05,$F6,$36,$12,$32,$20,$00,$4E,$B9,$00,$05
+	dc.b	$F6,$F2,$4E,$B9,$00,$06,$44,$70,$4E,$B9,$00,$06,$48,$8A
+	dc.b	$4E,$B9,$00,$06,$48,$34,$10,$39,$00,$01,$BB,$94,$4E,$75
+	dc.b	$05,$0D,$43,$14,$2A,$43,$43,$43,$71,$8F,$94
+NOTloadedsave.MSG:
+	dc.b	" NOT",$FF," loaded",$FF," saved",$FF,"Incorrect data found ",$FF
+	dc.b	"File name already exists",$FF,"Problem encountered",$FF
+	dc.b	"File name is not suitable",$FF,$1F,$05,$13,"Insert game position save ",$FF
+	dc.b	"tape",$FF,"disc",$FF,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F
+	dc.b	$FF
+	even
+lbW051020:
+	dc.w	$683B
+lbB0513DC:
+	dc.b	$00
+lbB0513DD:
+	dc.b	$00
+lbB0513DE:
+	dc.b	$00,$01,$04,$03,$02
+t.MSG:
+	dc.b	$B4,$A4,$94,$84,$74
+DDDDDDDD.MSG:
+	dc.b	$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22
+	dc.b	$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21
+	dc.b	$22,$44,$2A,$40,$21,$22,$44,$2A,$40,$21,$22,$44
+LRHBSSBRHJRCS.MSG:
+	dc.b	"L"
+RHBSSBRHJRCSJ.MSG:
+	dc.b	"RHBSSBRHJRCSJDB",$4E,$B9,$00,$06,$77,$0A,$30,$3C,$0F,$9F,$20,$C6,$20
+	dc.b	$C7,$51,$C8,$FF,$FA,$4E,$75
+lbL051E52:
+	dc.l	$04000408
+lbB051E56:
+	dc.b	$00,$04,$08,$04
+lbL051E5A:
+	dc.l	$004080C0
+lbB052586:
+	dc.b	$11,$11
+controlKeys:
+	dc.b	$2A,$40,$21,$22,$44	; #, space, S, D, return
+keycodeTable:
+	dc.b	$01
+	dc.b	$02
+	dc.b	$03
+	dc.b	$04
+	dc.b	$00
+debrisObjectOffsetTable:
+	dc.l	$00200020,$00200028,$00180020,$00200020
+debrisObjectAnimSequence:
+	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06
+	dc.b	$02,$07
+lbB0528BC:
+	dc.b	$00,$00
+steeringOffsetTable:
+	dc.l	$000000D9
+	dc.w	$FF27
+trackDisplayYOffsets:
+	dc.l	$0F0D1010,$100F100D
+	dc.w	$0000
+vSyncFlag:
+	dc.b	$00,$00
+lbB052FDA:
+	dc.b	$00,$00
+lbB0530CA:
+	dc.b	$00,$00,$4B,$26,$49,$27
+ascii.MSG1:
+	dc.b	$2C,$00,$0A,$00,$D3,$00,$F5,$00
+crashSoundCooldownTimer:
+	dc.b	$00,$00
+randomSeed1:
+	dc.w	$0000
+randomSeed2:
+	dc.b	$00
+lbB053EA5:
+	dc.b	$00
+randomSeed3:
+	dc.b	$00,$00
+LOADgameposit.MSG:
+	dc.b	$1F,$0B,$09,"LOAD game position",$FF,$1F,$0B,$09,"SAVE game position",$FF
+	dc.b	"Drive not ready",$FF,"Disc write protected",$FF,"Insert disc",$FF,"Disc error",$FF
+	dc.b	"Incorrect data found  ",$FF,"Type in file name",$FF,$1F,$07,$16,"                            "
+	dc.b	$1F,$07,$17,"                             ",$FF,$1F,$08,$17,$FF,"Disc error: retry or escape"
+	dc.b	$FF,$1F,$08,$16,"Warning: this disc has not",$1F,$08,$17,"been used for game saving",$FF
+	dc.b	$1F,$05,$0F,"Insert formatted game save disc",$1F,$0E,$11,"into drive 0.",$1F,$09,$14
+	dc.b	"Press any key to continue",$FF,$00
+	even
+	dc.w	$0008
+lbB0544B4:
+	dc.b	$00
+disableDirectionalInputFlag:
+	dc.b	$00
+lbB0544B6:
+	dc.b	$00
+lbB0544B7:
+	dc.b	$00
+lbB0544B8:
+	dc.b	$0F
+lbB0544B9:
+	dc.b	$0B
+lbB0544BA:
+	dc.b	$00
+lbB0544BB:
+	dc.b	$00
+lbB0544BC:
+	dc.b	$00,$00
+lbB054608:
+	dc.b	$00,$00
+lbW054632:
+	dc.w	$8000
+lbW054F84:
+	dc.w	$FFFF,$FFFF,$FFFF,$FFFF
+lbL054FB8:
+	dc.l	$3B3B1E49
+lbB054FB9:	EQU	*-3
+	dc.b	$3B,$3B,$35,$62
+lbB0555E0:
+	dc.b	$00
+lbB0555E1:
+	dc.b	$00
+offTrackFrameThreshold:
+	dc.b	$00,$00
+lbW0557DE:
+	dc.w	$0000
+lbB0557E0:
+	dc.b	$00,$00
+lbW055BEA:
+	dc.w	$0004,$0004,$FFFC
+leagueTextTable:
+	dc.w	$1F0F
+lbB055C56:
+	dc.b	$09,"DIVISION ",$FF,$1F,$0E
+lbB055C63:
+	dc.b	$0D,"RACE  ",$FF,$1F,$06,$0B,"Track:  ",$FF,"The ",$FF," V ",$FF,$1F,$03,$18
+  	dc.b    "steer to rotate view or fire to continue",$FF,$1F
+trackSpecificYOffset:
+	dc.b	$0F,$15,"The ",$FF,$1F,$11,$0F,"RESULT",$FF,"Race Winner: ",$FF,"Fastest Lap: ",$FF,$1F,$0E,$0B
+	dc.b	"RESULTS TABLE",$1F,$06,$0E,"DRIVER     RACED WIN LAP  PTS",$FF,"Promotion for  ",$FF
+	dc.b	"Relegation for ",$FF," CHANGES",$FF,$1F,$12,$0E,"NAME?",$FF," 2pts",$FF," 1pt",$FF," of ",$FF,$00
+lbB055E30:
+	dc.b	$00,$00
+trackIDLookupTable:
+	dc.w	$0002,$0103,$0607,$0405
+raceConfigLookupTable:
+	dc.l	$08050C05,$05080C08
+lbL0563C6:
+	dc.l	$03030302,$02020101,$01000000
+lbL0563EC:
+	dc.l	$2F76EA80
+skipSaveSlotScreen:
+	dc.b	$00,$06,$04,$00
+lbL0563F4:
+	dc.l	$0D101316,$1013100F,$14170A0E
+	dc.w	$1216
+displayColumnOffset:
+	dc.b	$0E,$0B,$11,$0C,$13,$FC,$00,$03,$00,$06,$4C,$18
+menuCursorObjectType:
+	dc.b	$02,$00
+lbL05651A:
+	dc.l	$00004070,$00004F70,$00005E70,$00006D70,$00003170
+lbB056DC0:
+	dc.b	$00,$00
+trackPreviewOverrideTable:
+	dc.b	$80,$00,$00,$00,$00,$00,$00,$00		; 4 entries of (segment_index, override_value) pairs, $80 terminates the list
+	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$30,$18,$80,$00,$00,$00,$00,$00
+	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$1A,$18,$80,$00,$00,$00,$00,$00
+	dc.b	$0F,$28,$1C,$28,$80,$00,$00,$00
+	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
+	dc.b	$3D,$30,$80,$00,$00,$00,$00,$00
+trackPreviewParameters:
+	ds.b	80
+transformedGridX:
+	dc.b	$00,$00
+transformedGridY:
+	dc.b	$00,$00
+lbB0579FA:
+	dc.b	$00,$00
+lbW0579FC:
+	dc.w	$0000
+lbW0579FE:
+	dc.w	$0000
+previewSegmentFlags:
+	dc.w	$0000
+previewDataWritePointer:
+	dc.l	$00000000
+lbB057BAA:
+	dc.b	$04
+lbB057BAB:
+	dc.b	$0B,$FC,$F3,$CF,$3F,$03,$0C,$30,$C0
+lbW0580E0:
+	dc.w	$FFFF,$FFFF,$7FFF,$7FFF,$3FFF,$3FFF,$1FFF,$1FFF,$0FFF
+	dc.w	$0FFF,$07FF,$07FF,$03FF,$03FF,$01FF,$01FF,$00FF,$00FF
+	dc.w	$007F,$007F,$003F,$003F,$001F,$001F,$000F,$000F,$0007
+	dc.w	$0007,$0003,$0003,$0001,$0001,$0000,$0000,$8000,$8000
+	dc.w	$C000,$C000,$E000,$E000,$F000,$F000,$F800,$F800,$FC00
+	dc.w	$FC00,$FE00,$FE00,$FF00,$FF00,$FF80,$FF80,$FFC0,$FFC0
+	dc.w	$FFE0,$FFE0,$FFF0,$FFF0,$FFF8,$FFF8,$FFFC,$FFFC,$FFFE
+	dc.w	$FFFE
+lbW058160:
+	dc.w	$8000,$8000,$4000,$4000,$2000,$2000,$1000,$1000,$0800
+	dc.w	$0800,$0400,$0400,$0200,$0200,$0100,$0100,$0080,$0080
+	dc.w	$0040,$0040,$0020,$0020,$0010,$0010,$0008,$0008,$0004
+	dc.w	$0004,$0002,$0002,$0001,$0001
+lbB0581A0:
+	dc.b	$00,$00
+lbW0581A2:
+	dc.w	$0000
+lbW0581A4:
+	dc.w	$0000
+lbW0581A6:
+	dc.w	$0000
+lineDrawingBufferPointer:
+	dc.l	$00000000
+renderDataPointer:
+	dc.w	$0000
+savedXCoordinate:
+	dc.w	$0000
+edgeDirectionFlag:
+	dc.b	$00
+clipRequiredFlag:
+	dc.b	$00
+clipIterationCounter:
+	dc.b	$00
+renderingFlag:
+	dc.b	$00
+hudDisplayMode2:
+	dc.b	$0A
+hudDisplayMode1:
+	dc.b	$09
+lbW05AC2C:
+	dc.w	$0000
+mountainHorizontalAngles:
+	ds.l	12
+mountainShapeIndices:
+	ds.l	12
+lbB05B096:
+	dc.b	$00
+lbB05B097:
+	dc.b	$00
+lbB05B098:
+	dc.b	$00
+mountainSegmentCount:
+	dc.b	$00
+mountainScreenX:
+	dc.w	$0000
+mountainShapeData:
+	dc.w	$0000,$0004,$0000,$0000,$80C8,$0000,$804B,$8019,$8078
+	dc.w	$801E,$0400,$0200,$0404,$0602,$0601,$0504,$0004,$080C
+	dc.w	$0004,$0000,$0000,$80C8,$0000,$80FA,$0000,$8050,$801E
+	dc.w	$0500,$0202,$0400,$0602,$0604,$0602,$0403,$0008,$0C05
+	dc.w	$0304,$0C10,$0007,$0000,$0000,$81F4,$0000,$8348,$0000
+	dc.w	$84A6,$0000,$8302,$805C,$8230,$8069,$833E,$80E6,$0A00
+	dc.w	$0202,$0404,$0600,$0A02,$0804,$0806,$0C08,$0A0A,$0C08
+	dc.w	$0C04,$0404,$000C,$1C10,$0503,$0410,$1405,$0408,$1424
+	dc.w	$180F,$031C,$2024,$0006,$0000,$0000,$805A,$0000,$808C
+	dc.w	$0000,$0000,$8140,$805A,$8140,$808C,$8140,$0700,$0202
+	dc.w	$0400,$0602,$0804,$0A06,$0808,$0A02,$0F04,$0008,$140C
+	dc.w	$0E04,$040C,$1810,$0004,$0000,$0008,$0032,$0000,$028A
+	dc.w	$0000,$02BC,$0008,$0402,$0400,$0200,$0604,$0601,$0604
+	dc.w	$0004,$080C,$0180,$004B,$001C,$0104,$0010,$0100,$007D
+	dc.w	$0012,$00C0,$001E,$0180,$0064,$0014,$0136,$0025,$0100
+	dc.w	$0046,$0018,$00D8,$0024,$0180,$00C8,$0027,$00F0,$001F
+	dc.w	$0100,$0032,$000C,$00A8,$001A,$0172,$0070,$0019,$00E6
+	dc.w	$0014,$00FA,$0064,$000C,$00BB,$0012,$0180,$00C6,$001C
+	dc.w	$013B,$0018,$0100,$0023,$0028,$006E,$0037,$0159,$005C
+	dc.w	$002A,$00F0,$001E,$00FA,$002D,$000F,$0080,$000B,$017C
+	dc.w	$0088,$002B,$00D2,$0023,$0100,$004B,$0029,$009B,$0037
+	dc.w	$0064,$019A,$00FA,$002D,$004B,$023F,$00AA,$002D,$00B9
+	dc.w	$0145,$007D,$0046,$0032,$012C,$00A5,$0015,$00FA,$01A4
+	dc.w	$0253,$0181,$002E,$0118,$0034,$019F,$0073,$004B,$0127
+	dc.w	$01F4,$00AF,$0032,$0087,$003C,$00FF,$0048,$0087,$00C5
+	dc.w	$00FA,$0096,$0046,$0069,$0050,$00AA,$005F,$0087,$0113
+	dc.w	$01A9,$0091,$002A,$003C,$0032,$008C,$004D,$0010,$0018
+	dc.w	$0050,$0010,$0050,$0018,$0050,$0010,$0018,$003C,$0010
+	dc.w	$003C,$0018,$003C,$0028,$003C,$0039,$0028,$0039,$003C
+	dc.w	$0039,$0069,$007D,$002A,$0069,$002A,$007D,$002A,$0000
+mountainSilhouetteTable:
+	dc.w	$0006,$979E,$0006,$988A,$0006,$979E,$0006,$9894,$0006
+	dc.w	$979E,$0006,$989E,$0006,$979E,$0006,$98A8,$0006,$979E
+	dc.w	$0006,$98B2,$0006,$979E,$0006,$98BC,$0006,$979E,$0006
+	dc.w	$98C6,$0006,$979E,$0006,$98D0,$0006,$979E,$0006,$98DA
+	dc.w	$0006,$979E,$0006,$98E4,$0006,$979E,$0006,$98EE,$0006
+	dc.w	$979E,$0006,$98F8,$0006,$979E,$0006,$9902,$0006,$979E
+	dc.w	$0006,$990C,$0006,$97C0,$0006,$9902,$0006,$97C0,$0006
+	dc.w	$990C,$0006,$97E8,$0006,$9936,$0006,$97E8,$0006,$9948
+	dc.w	$0006,$97E8,$0006,$995A,$0006,$97E8,$0006,$996C,$0006
+	dc.w	$9832,$0006,$997E,$0006,$9832,$0006,$998C,$0006,$9832
+	dc.w	$0006,$999A,$0006,$9832,$0006,$99A8,$0006,$9868,$0006
+	dc.w	$99B6
+trackMountainDataTable:
+	dc.w	$0006,$9A88,$0006,$9A88,$2005,$000F,$0D15,$0A1F,$0B25
+	dc.w	$0C2F,$0535,$023F,$0345,$004F,$0155,$045F,$0565,$026F
+	dc.w	$0175,$007F,$0585,$028F,$0395,$049F,$05A5,$00AF,$09B5
+	dc.w	$06BF,$07C5,$08CF,$05D5,$00DF,$03E5,$04EF,$01F5,$02FF
+	dc.w	$0500
+lbB05B3CA:
+	dc.b	$00,$00
+lbW05B3CC:
+	dc.w	$0000
+lbW05B3CE:
+	dc.w	$0000
+lbL05B3D0:
+	dc.l	$00000000
+lbL05B3D4:
+	dc.l	$00000000
+segmentAlternateRenderFlag:
+	dc.b	$00,$00
+segmentProcessedFlag:
+	dc.b	$00,$00
+edgeClipFailedFlag:
+	dc.b	$00,$00
+lbB05B3DE:
+	dc.b	$00,$00,$00,$00
+lbB05B3E2:
+	dc.b	$00,$00,$00,$00
+depthValue:
+	dc.w	$0000
+lbW05B3E8:
+	dc.w	$0000
+lbB05B3EA:
+	dc.b	$00,$00
+lbB05B3EC:
+	dc.b	$00,$00,$00,$00
+lbL05B3F0:
+	dc.l	$00000000
+lbL05B3F4:
+	dc.l	$00000000
+lbL05B3F8:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000
+lbL05B47C:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000
+lbL05B4FC:
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000,$00000000
+	dc.l	$00000000,$00000000,$00000000,$00000000
+lbL05B7B4:
+	dc.l	$00000000,$0FFF0C88,$00000000,$0FFF0C88
+lbW05B7C4:
+	dc.w	$002C
+gameLoopControl:
+	dc.w	$0020
+lbB05B840:
+	dc.b	$00
+lbB05B841:
+	dc.b	$00
 lbW05BA66:
 	dc.w	$0000
 lbW05BA68:
@@ -22958,13 +22780,13 @@ currentFrameBuffer:
 viewportTopAddress:
 	ds.l	1
 
-	section Data,data
-name_graphics:	dc.b	"graphics.library",0
-		even
 
-audioChannelMasks:
-	dc.l	$00000001,$00000002,$00000004,$00000008
-	
+
+
+
+
+name_graphics:	dc.b	"graphics.library",0
+
 	section	ChipData,data_c
 copperlist:
 	dc.w	bpl1pth,$0007,bpl1ptl,$8000,bpl2pth,$0007,bpl2ptl,$A000,bpl3pth
