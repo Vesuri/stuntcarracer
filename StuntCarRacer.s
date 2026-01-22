@@ -1,198 +1,6 @@
-; memory_7A21A saveSlots
-; 00007D00 frameBufferSize 320x200x4
-dsksync:	EQU	$0000007E
-CIAF_PRTRBUSY:	EQU	$00000001
-copjmp1:	EQU	$00000088
-ciasdr:	EQU	$00000C00
-DMAF_BLTNZERO:	EQU	$00002000
-adkcon:	EQU	$0000009E
-serdat:	EQU	$00000030
-tv_UserIntVects:	EQU	$00000100
-DMAF_MASTER:	EQU	$00000200
-INTF_EXTER:	EQU	$00002000
-CIACRBF_RUNMODE:	EQU	$00000008
-_custom:	EQU	$00DFF000
-CIACRAF_RUNMODE:	EQU	$00000008
-ddfstop:	EQU	$00000094
-bplcon2:	EQU	$00000104
-diwstrt:	EQU	$0000008E
-ac_per:	EQU	$00000006
-intreq:	EQU	$0000009C
-bplcon0:	EQU	$00000100
-bplcon1:	EQU	$00000102
-INTF_AUD1:	EQU	$00000100
-INTB_AUD0:	EQU	$00000007
-INTF_AUD0:	EQU	$00000080
-INTF_AUD3:	EQU	$00000400
-INTF_BLIT:	EQU	$00000040
-INTF_AUD2:	EQU	$00000200
-INTF_SOFTINT:	EQU	$00000004
-INTF_DSKBLK:	EQU	$00000002
-INTB_DSKBLK:	EQU	$00000001
-aud0:	EQU	$000000A0
-diwstop:	EQU	$00000090
-INTF_RBF:	EQU	$00000800
-CIAICRF_SETCLR:	EQU	$00000080
-ddfstrt:	EQU	$00000092
-CIAF_COMCTS:	EQU	$00000010
-dmaconr:	EQU	$00000002
-DMAF_BLITHOG:	EQU	$00000400
-CIAF_COMCD:	EQU	$00000020
-CIAICRF_ALRM:	EQU	$00000004
-INTF_TBE:	EQU	$00000001
-ciapra:	EQU	$00000000
-ciaprb:	EQU	$00000100
-CIAF_COMDTR:	EQU	$00000080
-CIAICRF_FLG:	EQU	$00000010
-CIAF_COMDSR:	EQU	$00000008
-DMAF_COPPER:	EQU	$00000080
-CIAF_DSKSEL0:	EQU	$00000008
-intena:	EQU	$0000009A
-INTB_SETCLR:	EQU	$0000000F
-INTF_PORTS:	EQU	$00000008
-INTF_SETCLR:	EQU	$00008000
-bltafwm:	EQU	$00000044
-intreqr:	EQU	$0000001E
-tv_Lev7IntVect:	EQU	$0000007C
-tv_Lev6IntVect:	EQU	$00000078
-tv_Lev5IntVect:	EQU	$00000074
-tv_Lev4IntVect:	EQU	$00000070
-CIAICRF_SP:	EQU	$00000008
-tv_Lev3IntVect:	EQU	$0000006C
-tv_Lev2IntVect:	EQU	$00000068
-tv_Lev1IntVect:	EQU	$00000064
-joy1dat:	EQU	$0000000C
-bltbmod:	EQU	$00000062
-bpl2mod:	EQU	$0000010A
-serper:	EQU	$00000032
-ciaddra:	EQU	$00000200
-CIAICRF_TB:	EQU	$00000002
-CIAF_PRTRSEL:	EQU	$00000004
-bltamod:	EQU	$00000064
-bpl1mod:	EQU	$00000108
-CIAICRF_TA:	EQU	$00000001
-INTB_COPER:	EQU	$00000004
-DMAF_BLITTER:	EQU	$00000040
-INTF_COPER:	EQU	$00000010
-INTF_DSKSYNC:	EQU	$00001000
-DMAB_BLITTER:	EQU	$00000006
-INTF_VERTB:	EQU	$00000020
-ciaicr:	EQU	$00000D00
-INTB_VERTB:	EQU	$00000005
-dskpt:	EQU	$00000020
-DMAF_SETCLR:	EQU	$00008000
-DMAF_DISK:	EQU	$00000010
-cop1lc:	EQU	$00000080
-DMAF_BLTDONE:	EQU	$00004000
-DMAF_AUD0:	EQU	$00000001
-_ciaa:	EQU	$00BFE001
-DMAF_AUD1:	EQU	$00000002
-DMAF_AUD2:	EQU	$00000004
-DMAF_AUD3:	EQU	$00000008
-serdatr:	EQU	$00000018
-_ciab:	EQU	$00BFD000
-dmacon:	EQU	$00000096
-DMAF_AUDIO:	EQU	$0000000F
-bltcdat:	EQU	$00000070
-ciatbhi:	EQU	$00000700
-DMAF_RASTER:	EQU	$00000100
-INTB_TBE:	EQU	$00000000
-CIAICRB_TB:	EQU	$00000001
-ac_len:	EQU	$00000004
-dsklen:	EQU	$00000024
-ciacra:	EQU	$00000E00
-ciacrb:	EQU	$00000F00
-CIAF_PRTRPOUT:	EQU	$00000002
-ciatblo:	EQU	$00000600
-bltdmod:	EQU	$00000066
-INTF_INTEN:	EQU	$00004000
-bpl1pth = $0e0
-bpl1ptl = $0e2
-bpl2pth = $0e4
-bpl2ptl = $0e6
-bpl3pth = $0e8
-bpl3ptl = $0ea
-bpl4pth = $0ec
-bpl4ptl = $0ee
-color00  = $180
-color01  = $182
-color02  = $184
-color03  = $186
-color04  = $188
-color05  = $18a
-color06  = $18c
-color07  = $18e
-color08  = $190
-color09  = $192
-color10 = $194
-color11 = $196
-color12 = $198
-color13 = $19a
-color14 = $19c
-color15 = $19e
-color16 = $1a0
-color17 = $1a2
-color18 = $1a4
-color19 = $1a6
-color20 = $1a8
-color21 = $1aa
-color22 = $1ac
-color23 = $1ae
-color24 = $1b0
-color25 = $1b2
-color26 = $1b4
-color27 = $1b6
-color28 = $1b8
-color29 = $1ba
-color30 = $1bc
-color31 = $1be
-cop1lch = $080
-intenar = $01c 
-spr0pth = $120
-spr0ptl = $122
-spr1pth = $124
-spr1ptl = $126
-spr2pth = $128
-spr2ptl = $12a
-spr3pth = $12c
-spr3ptl = $12e
-spr4pth = $130
-spr4ptl = $132
-spr5pth = $134
-spr5ptl = $136
-spr6pth = $138
-spr6ptl = $13a
-spr7pth = $13c
-spr7ptl = $13e
-_LVOOpenLibrary		equ	-$228
-_LVOCloseLibrary	equ	-$19e
-_LVOForbid		equ	-$84
-_LVOPermit		equ	-$8a
-_LVOSuperVisor		equ	-$1e
-_LVOCacheControl	equ	-$288
-_LVOLoadView		equ	-$de
-_LVOWaitTOF		equ	-$10e
-AttnFlags		equ	$128
-CACR_EnableI		equ	$00000001
-CACR_FreezeI		equ	$00000002
-CACR_ClearI		equ	$00000008
-CACR_IBE		equ	$00000010
-CACR_EnableD		equ	$00000100
-CACR_FreezeD		equ	$00000200
-CACR_ClearD		equ	$00000800
-CACR_DBE		equ	$00001000
-CACR_WriteAllocate	equ	$00002000
-CACR_EnableE		equ	$40000000
-CACR_CopyBack		equ	$80000000
-gb_ActiView		equ	34
-gb_copinit		equ	38
-DMAF_ALL		equ	$01FF
-
-TRACK_DATA_MASK		equ	$FFFF	; This was incorrectly set to $18FF in the original disassembly
+	incdir	"scr:"
 
 	section	Code,code
-
-	incdir	"scr:"
 startup:
 ;	moveq	#0,d2
 ;	jmp	debug
@@ -356,7 +164,8 @@ initialize:
 	MOVE.L	#level6Interrupt,tv_Lev6IntVect(a5)
 	MOVE.L	#level7Interrupt,tv_Lev7IntVect(a5)
 ;	MOVE.W	#$2000,SR
-	MOVE.L	#lbL05BE94,D0
+;	MOVE.L	#lbL05BE94,D0
+        move.l  #frameBuffer1,d0
 	MOVE.L	D0,primaryFrameBuffer
 	MOVE.L	D0,currentFrameBuffer
 	ADD.L	#$00007D00,D0
@@ -2478,7 +2287,7 @@ lbC04A27A:
 	ASL.W	#$02,D3
 	ADD.L	$00(A1,D0.W),A0
 	ADD.L	$00(A1,D3.W),A3
-	MOVE.L	A3,alternateRenderBuffer
+	MOVE.L	A3,playerNameRenderingPosition
 	TST.B	lbB04A4BA
 	BEQ	renderPlayerGraphicsToScreen
 	JSR	applyPlayerGraphicsMasks
@@ -2807,9 +2616,9 @@ displayPlayerName:
 	MOVE.B	textTransparencyMode,D0
 	MOVE.W	D0,-(SP)
 	MOVE.B	#$80,textTransparencyMode
-	MOVE.L	alternateRenderBuffer,D0
+	MOVE.L	playerNameRenderingPosition,D0
 	ADD.L	#$000006E0,D0
-	MOVE.L	D0,alternateRenderBuffer
+	MOVE.L	D0,playerNameRenderingPosition
 	MOVE.B	lbB04A4BA,textHorizontalOffset
 	ADDQ.B	#$03,textHorizontalOffset
 	MOVE.B	#$80,useAlternateFontFlag
@@ -3088,7 +2897,7 @@ calculateCharacterScreenAddress:
 lbC04AF02:
 	TST.B	useAlternateFontFlag
 	BEQ	lbC04AF12
-	MOVE.L	alternateRenderBuffer,A1
+	MOVE.L	playerNameRenderingPosition,A1
 lbC04AF12:
 	ADD.L	D0,A1
 	MOVE.B	characterByteOffset,D3
@@ -3106,13 +2915,13 @@ lbC04AF44:
 	TST.B	useAlternateFontFlag
 	BEQ	lbC04AF5E
 	JSR	extractAlternateFontScanline
-	MOVE.L	#$11100,D5
+	MOVE.L	#$1F800,D5
 	BRA	lbC04AF6C
 
 lbC04AF5E:
 	MOVE.B	(A0)+,D7
 	AND.L	#$000000FF,D7
-	MOVE.L	#$11500,D5
+	MOVE.L	#$1FC00,D5
 lbC04AF6C:
 	ASL.L	#$08,D7
 	ASL.L	#$01,D7
@@ -3831,13 +3640,13 @@ processTrackSegmentData:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.B	trackDistance,D1
@@ -3861,13 +3670,13 @@ processTrackSegmentData:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	#$0002,D1
@@ -3882,13 +3691,13 @@ processTrackSegmentData:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	BRA	doProcessTrackCharacteristics
@@ -4072,7 +3881,7 @@ processTrackCharacteristics:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A3
 	MOVE.B	(A3),D0
@@ -4187,7 +3996,7 @@ lbC04C132:
 	MOVE.W	rawTrackDataOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	#$0F,D1
@@ -4567,7 +4376,7 @@ processTrackDataBuffer:
 	MOVE.W	rawTrackDataOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	#$0000,D5
@@ -4840,7 +4649,7 @@ readSegmentInterpolationValue:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	geometryFormatFlag,D0
@@ -5592,7 +5401,7 @@ applyTrackSegmentGeometry:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.W	D1,D0
@@ -5920,13 +5729,13 @@ lbC04DBFE:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	TST.B	reverseDirectionFlag
@@ -6187,7 +5996,7 @@ calculateTrackCoordinatesFromData:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	TST.B	trackHeightDifference
@@ -9068,7 +8877,7 @@ loadTrackSegmentConfiguration:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	$0001(A0),segmentSteeringFlags
@@ -10322,7 +10131,7 @@ lbC052AD4:
 	LSR.W	D2,D0
 	SUB.W	D0,D4
 ;	MOVE.L	#memory_79360,A0
-;	SUB.L	#$6174,A0
+;	SUB.L	#START+$6174,A0
 ;	MOVE.L	#$667B379F,D3
 ;	ADD.L	#$36729563,D3
 ;	CMP.L	(A0),D3			; This is the magic value at installLineEmulatorTrap
@@ -14712,7 +14521,7 @@ lbC056C0E:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
@@ -14757,7 +14566,7 @@ lbC056CBC:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
@@ -15007,13 +14816,13 @@ processTrackSegmentData2:
 	MOVE.W	primaryGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A4
 	MOVE.W	alternateGeometryOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A5
 	MOVE.L	#segmentProcessedFlags,A3
@@ -15375,7 +15184,7 @@ lbC057566:
 	MOVE.W	geometryDatabaseOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
-	AND.L	#TRACK_DATA_MASK,D0
+	AND.L	#$FFFF,D0
 	ADD.L	#trackGeometryDatabase,D0
 	MOVE.L	D0,A0
 	MOVE.B	(A0),D0
@@ -21271,13 +21080,13 @@ gameLoopControl:
 	dc.w	$0020
 lbW05BA6C:
 	dc.w	$0000,$0000,$0001,$0039
-objectRenderingParameters:
+objectRenderingParameters:      ; structs of 8 words, only 3-6 used (size, position)
 	dc.l	$00100077
 lbW05BA76:	EQU	*-2
 	dc.w	$0000,$0000,$0002,$0000,$0001,$0039,$0010,$0077,$0000
 	dc.w	$0000,$0004,$0000,$0001,$0039,$0010,$0077,$0000,$0000
 	dc.w	$0008,$0000,$0001,$0039,$0002
-audioConfigurationData:
+audioConfigurationData: ; fixme wrong name
 	dc.w	$0077,$0000,$0000,$000A,$0000,$0001,$0039,$0002,$0077
 	dc.w	$0000,$0000,$000C,$0000,$0001,$0039,$0002,$0077,$0000
 	dc.w	$0000,$0000,$0044,$0003,$001B,$0002,$007B,$0000,$0000
@@ -21293,7 +21102,7 @@ audioConfigurationData:
 	dc.w	$0010,$0000,$0007,$000D,$00BE,$0000,$0000,$000E,$0018
 	dc.w	$0000,$0007,$000D,$00BE,$0000,$0000,$000F,$0000,$0000
 	dc.w	$0007,$0004
-wheelGraphicsConfigTable:
+wheelGraphicsConfigTable:       ; fixme wrong name 
 	dc.w	$0010,$0000,$0000,$000F,$0008,$0000,$0007,$0004,$0018
 	dc.w	$0000,$0000,$000F,$0010,$0000,$0007,$000F,$0010,$0000
 	dc.w	$0000,$000F,$0018,$0000,$0007,$000F,$0018,$0000,$0000
@@ -21324,6 +21133,9 @@ wheelGraphicsConfigTable:
 	dc.w	$0010,$00AC,$0003,$001B,$000E,$007B,$0000,$0000,$0010
 	dc.w	$0086,$0003,$001B,$0008,$001B,$0000,$0000
 
+bitplaneMaskTable:      ; fixme - these might be pointers + data
+	incbin	"bitplaneMaskTable"
+
 name_graphics:	dc.b	"graphics.library",0
 
 	section	ChipData,data_c
@@ -21346,14 +21158,6 @@ copperlistSprite0:
 	dc.w	$0000,$0134,$0000,$0136,$0000,$0138,$0000,$013A,$0000
 	dc.w	$013C,$0000,$013E,$0000,$FA01,$FF00,intreq,$8010,$FFFF
 	dc.w	$FFFE
-
-lbL05BE94:
-	dc.l	$00000000,$04430554,$07700451,$02330257,$02470123
-	dc.l	$02000311,$04220644,$03320555
-	dc.w	$0777
-bitplaneMaskTable:
-	incbin	"bitplaneMaskTable"
-	ds.b	40*200*4
 
 sampleData:
 	incbin	"rawAudioSampleData"
@@ -22551,7 +22355,7 @@ useAlternateFontFlag:
 	ds.b	1
 lbB04AB4B:
 	ds.b	1
-alternateRenderBuffer:
+playerNameRenderingPosition:
 	ds.l	1
 foregroundColorMask1:
 	ds.l	1
@@ -22794,6 +22598,8 @@ quit:			ds.b	1
 	section	ChipBSS,bss_c
 memory_00000:	ds.b	$10000
 memory_70000:	ds.b	$10000
+frameBuffer1:   ds.b    40*200*4
+frameBuffer2:   ds.b    40*200*4
 
 memory_0400	equ	(memory_00000+$0400)
 memory_3D80	equ	(memory_00000+$3D80)
@@ -22826,3 +22632,191 @@ memory_7AB5A	equ	(memory_70000+$AB5A)
 previewDataBuffer	equ	(memory_70000+$ABDA)
 renderCommandQueue	equ	(memory_70000+$B08A)
 memory_7B6FA	equ	(memory_70000+$B6FA)
+
+dsksync:	EQU	$0000007E
+CIAF_PRTRBUSY:	EQU	$00000001
+copjmp1:	EQU	$00000088
+ciasdr:	EQU	$00000C00
+DMAF_BLTNZERO:	EQU	$00002000
+adkcon:	EQU	$0000009E
+serdat:	EQU	$00000030
+tv_UserIntVects:	EQU	$00000100
+DMAF_MASTER:	EQU	$00000200
+INTF_EXTER:	EQU	$00002000
+CIACRBF_RUNMODE:	EQU	$00000008
+_custom:	EQU	$00DFF000
+CIACRAF_RUNMODE:	EQU	$00000008
+ddfstop:	EQU	$00000094
+bplcon2:	EQU	$00000104
+diwstrt:	EQU	$0000008E
+ac_per:	EQU	$00000006
+intreq:	EQU	$0000009C
+bplcon0:	EQU	$00000100
+bplcon1:	EQU	$00000102
+INTF_AUD1:	EQU	$00000100
+INTB_AUD0:	EQU	$00000007
+INTF_AUD0:	EQU	$00000080
+INTF_AUD3:	EQU	$00000400
+INTF_BLIT:	EQU	$00000040
+INTF_AUD2:	EQU	$00000200
+INTF_SOFTINT:	EQU	$00000004
+INTF_DSKBLK:	EQU	$00000002
+INTB_DSKBLK:	EQU	$00000001
+aud0:	EQU	$000000A0
+diwstop:	EQU	$00000090
+INTF_RBF:	EQU	$00000800
+CIAICRF_SETCLR:	EQU	$00000080
+ddfstrt:	EQU	$00000092
+CIAF_COMCTS:	EQU	$00000010
+dmaconr:	EQU	$00000002
+DMAF_BLITHOG:	EQU	$00000400
+CIAF_COMCD:	EQU	$00000020
+CIAICRF_ALRM:	EQU	$00000004
+INTF_TBE:	EQU	$00000001
+ciapra:	EQU	$00000000
+ciaprb:	EQU	$00000100
+CIAF_COMDTR:	EQU	$00000080
+CIAICRF_FLG:	EQU	$00000010
+CIAF_COMDSR:	EQU	$00000008
+DMAF_COPPER:	EQU	$00000080
+CIAF_DSKSEL0:	EQU	$00000008
+intena:	EQU	$0000009A
+INTB_SETCLR:	EQU	$0000000F
+INTF_PORTS:	EQU	$00000008
+INTF_SETCLR:	EQU	$00008000
+bltafwm:	EQU	$00000044
+intreqr:	EQU	$0000001E
+tv_Lev7IntVect:	EQU	$0000007C
+tv_Lev6IntVect:	EQU	$00000078
+tv_Lev5IntVect:	EQU	$00000074
+tv_Lev4IntVect:	EQU	$00000070
+CIAICRF_SP:	EQU	$00000008
+tv_Lev3IntVect:	EQU	$0000006C
+tv_Lev2IntVect:	EQU	$00000068
+tv_Lev1IntVect:	EQU	$00000064
+joy1dat:	EQU	$0000000C
+bltbmod:	EQU	$00000062
+bpl2mod:	EQU	$0000010A
+serper:	EQU	$00000032
+ciaddra:	EQU	$00000200
+CIAICRF_TB:	EQU	$00000002
+CIAF_PRTRSEL:	EQU	$00000004
+bltamod:	EQU	$00000064
+bpl1mod:	EQU	$00000108
+CIAICRF_TA:	EQU	$00000001
+INTB_COPER:	EQU	$00000004
+DMAF_BLITTER:	EQU	$00000040
+INTF_COPER:	EQU	$00000010
+INTF_DSKSYNC:	EQU	$00001000
+DMAB_BLITTER:	EQU	$00000006
+INTF_VERTB:	EQU	$00000020
+ciaicr:	EQU	$00000D00
+INTB_VERTB:	EQU	$00000005
+dskpt:	EQU	$00000020
+DMAF_SETCLR:	EQU	$00008000
+DMAF_DISK:	EQU	$00000010
+cop1lc:	EQU	$00000080
+DMAF_BLTDONE:	EQU	$00004000
+DMAF_AUD0:	EQU	$00000001
+_ciaa:	EQU	$00BFE001
+DMAF_AUD1:	EQU	$00000002
+DMAF_AUD2:	EQU	$00000004
+DMAF_AUD3:	EQU	$00000008
+serdatr:	EQU	$00000018
+_ciab:	EQU	$00BFD000
+dmacon:	EQU	$00000096
+DMAF_AUDIO:	EQU	$0000000F
+bltcdat:	EQU	$00000070
+ciatbhi:	EQU	$00000700
+DMAF_RASTER:	EQU	$00000100
+INTB_TBE:	EQU	$00000000
+CIAICRB_TB:	EQU	$00000001
+ac_len:	EQU	$00000004
+dsklen:	EQU	$00000024
+ciacra:	EQU	$00000E00
+ciacrb:	EQU	$00000F00
+CIAF_PRTRPOUT:	EQU	$00000002
+ciatblo:	EQU	$00000600
+bltdmod:	EQU	$00000066
+INTF_INTEN:	EQU	$00004000
+bpl1pth = $0e0
+bpl1ptl = $0e2
+bpl2pth = $0e4
+bpl2ptl = $0e6
+bpl3pth = $0e8
+bpl3ptl = $0ea
+bpl4pth = $0ec
+bpl4ptl = $0ee
+color00  = $180
+color01  = $182
+color02  = $184
+color03  = $186
+color04  = $188
+color05  = $18a
+color06  = $18c
+color07  = $18e
+color08  = $190
+color09  = $192
+color10 = $194
+color11 = $196
+color12 = $198
+color13 = $19a
+color14 = $19c
+color15 = $19e
+color16 = $1a0
+color17 = $1a2
+color18 = $1a4
+color19 = $1a6
+color20 = $1a8
+color21 = $1aa
+color22 = $1ac
+color23 = $1ae
+color24 = $1b0
+color25 = $1b2
+color26 = $1b4
+color27 = $1b6
+color28 = $1b8
+color29 = $1ba
+color30 = $1bc
+color31 = $1be
+cop1lch = $080
+intenar = $01c 
+spr0pth = $120
+spr0ptl = $122
+spr1pth = $124
+spr1ptl = $126
+spr2pth = $128
+spr2ptl = $12a
+spr3pth = $12c
+spr3ptl = $12e
+spr4pth = $130
+spr4ptl = $132
+spr5pth = $134
+spr5ptl = $136
+spr6pth = $138
+spr6ptl = $13a
+spr7pth = $13c
+spr7ptl = $13e
+_LVOOpenLibrary		equ	-$228
+_LVOCloseLibrary	equ	-$19e
+_LVOForbid		equ	-$84
+_LVOPermit		equ	-$8a
+_LVOSuperVisor		equ	-$1e
+_LVOCacheControl	equ	-$288
+_LVOLoadView		equ	-$de
+_LVOWaitTOF		equ	-$10e
+AttnFlags		equ	$128
+CACR_EnableI		equ	$00000001
+CACR_FreezeI		equ	$00000002
+CACR_ClearI		equ	$00000008
+CACR_IBE		equ	$00000010
+CACR_EnableD		equ	$00000100
+CACR_FreezeD		equ	$00000200
+CACR_ClearD		equ	$00000800
+CACR_DBE		equ	$00001000
+CACR_WriteAllocate	equ	$00002000
+CACR_EnableE		equ	$40000000
+CACR_CopyBack		equ	$80000000
+gb_ActiView		equ	34
+gb_copinit		equ	38
+DMAF_ALL		equ	$01FF
