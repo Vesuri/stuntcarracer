@@ -947,17 +947,17 @@ copyPaletteR:
 	DBRA	D4,copyPaletteToCopperlistLoop
 	RTS
 
-copySomeImage:
+copyMainGameBackground:
 	MOVE.L	primaryFrameBuffer,A1
-	MOVE.L	#image0,A0
+	MOVE.L	#imageMainGameBackground,A0
 	JSR	decompressRLEImage
 	MOVE.L	primaryFrameBuffer,A0
 	MOVE.L	A0,A1
 	ADD.W	#$7D00,A1
 	MOVE.W	#$7CFF,D3
-copySomeImageLoop:
+copyMainGameBackgroundLoop:
 	MOVE.B	(A0)+,(A1)+
-	DBRA	D3,copySomeImageLoop
+	DBRA	D3,copyMainGameBackgroundLoop
 	RTS
 
 sendSerialByteWithChecksum:
@@ -1281,7 +1281,7 @@ handleNetworkProtocol:
 	MOVE.W	D0,lbW049548
 	JSR	waitForNetworkWord
 	MOVE.W	D0,lbW04954A
-	MOVE.W	#$0000,lbW0557DE
+	MOVE.W	#$0000,minBoundaryDistance
 	JSR	waitForNetworkWord
 	MOVE.W	D0,lbW04954C
 	JSR	waitForNetworkWord
@@ -1342,10 +1342,10 @@ lbC048E96:
 	MOVE.B	D0,lbB049559
 	JSR	waitForNetworkByte
 	MOVE.B	D0,lbB04955A
-	MOVE.W	networkDataCounter1,lbW049542
+	MOVE.W	networkDataCounter1,savedNetworkCounter
 	JSR	waitForNetworkWord
 	MOVE.W	D0,D0
-	CMP.W	lbW049542,D0
+	CMP.W	savedNetworkCounter,D0
 	BNE	lbC048FEE
 	JSR	networkHandshakeLoop
 	MOVE.L	lbW049546,lbL00D666
@@ -1424,7 +1424,7 @@ lbC04906E:
 	MOVE.B	D4,D0
 	AND.B	#$C0,D0
 	EOR.B	#$C0,D0
-	MOVE.B	D0,displayModeParameter
+	MOVE.B	D0,raceOutcomeFlags
 	MOVE.B	#$80,currentTrackIDs
 	MOVE.B	#$05,gameEndModeFlag
 	MOVE.B	#$00,gameModeStateFlags
@@ -1462,11 +1462,11 @@ sendNetworkGamePacket:
 	JSR	sendSerialByteWithChecksum
 	MOVE.B	gameStateID,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	lbB049566,D0
+	MOVE.B	localInputStateCache,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	lbB049564,D0
+	MOVE.B	networkProtocolState,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	lbB049565,D0
+	MOVE.B	localPlayerStateCache,D0
 	JSR	sendSerialByteWithChecksum
 	MOVE.W	checksumAccumulator,D0
 	MOVE.B	D0,D0
@@ -1506,17 +1506,17 @@ lbC049172:
 	MOVE.B	D0,receivedGameStateID
 	JSR	waitForNetworkByteTimeout
 	BCS	lbC049240
-	MOVE.B	D0,lbB049560
+	MOVE.B	D0,receivedInputState
 	JSR	waitForNetworkByteTimeout
 	BCS	lbC049240
 	MOVE.B	D0,receivedPlayerCommand
 	JSR	waitForNetworkByteTimeout
 	BCS	lbC049240
 	MOVE.B	D0,receivedPlayerState
-	MOVE.W	networkDataCounter1,lbW049542
+	MOVE.W	networkDataCounter1,savedNetworkCounter
 	JSR	waitForNetworkByte
 	MOVE.B	D0,D0
-	MOVE.W	lbW049542,D3
+	MOVE.W	savedNetworkCounter,D3
 	CMP.B	D3,D0
 	BNE	lbC049240
 	MOVE.W	(SP)+,D7
@@ -1543,7 +1543,7 @@ updateNetworkGameFlags:
 	MOVE.B	#$00,D0
 	TST.B	gameEndModeFlag
 	BEQ	lbC049286
-	MOVE.B	displayModeParameter,D0
+	MOVE.B	raceOutcomeFlags,D0
 	OR.B	#$20,D0
 lbC049286:
 	TST.B	playerInputState
@@ -1571,17 +1571,17 @@ lbC0492CA:
 	JSR	sendNetworkGamePacket
 	JSR	receiveNetworkGamePacket
 	BCS	lbC0492CA
-	MOVE.B	lbB049564,D0
+	MOVE.B	networkProtocolState,D0
 	CMP.B	receivedPlayerCommand,D0
 	BEQ	lbC049310
 	CMP.B	#$88,receivedPlayerCommand
 	BNE	lbC0492CA
-	CMP.B	#$C1,lbB049564
+	CMP.B	#$C1,networkProtocolState
 	BNE	lbC0492CA
 	BRA	lbC0493BA
 
 lbC049310:
-	MOVE.B	#$AA,lbB049564
+	MOVE.B	#$AA,networkProtocolState
 lbC049318:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC0493BA
@@ -1605,15 +1605,15 @@ lbC04934E:
 	MOVE.B	receivedPlayerCommand,D0
 	CMP.B	#$AA,D0
 	BEQ	lbC0493AE
-	CMP.B	lbB049564,D0
+	CMP.B	networkProtocolState,D0
 	BEQ	lbC04934E
 	TST.B	D0
 	BPL	lbC04934E
-	CMP.B	#$E3,lbB049564
+	CMP.B	#$E3,networkProtocolState
 	BEQ	lbC0493AE
 	CMP.B	#$88,receivedPlayerCommand
 	BNE	lbC04934E
-	CMP.B	#$C1,lbB049564
+	CMP.B	#$C1,networkProtocolState
 	BNE	lbC04934E
 	BRA	lbC0493BA
 
@@ -1644,18 +1644,18 @@ lbC0493E6:
 lbC049400:
 	SUBQ.B	#$01,D2
 	BPL	lbC0493E6
-	MOVE.B	receivedKey,lbB049565
+	MOVE.B	receivedKey,localPlayerStateCache
 lbC049410:
-	MOVE.B	inputStateFlags,lbB049566
-	MOVE.B	#$E3,lbB049564
+	MOVE.B	inputStateFlags,localInputStateCache
+	MOVE.B	#$E3,networkProtocolState
 	JSR	waitForNetworkHandshake
 	BCS	lbC04944C
 	CMP.B	#$40,networkGameMode
 	BNE	lbC04944C
-	MOVE.B	lbB049560,inputStateFlags
+	MOVE.B	receivedInputState,inputStateFlags
 	MOVE.B	receivedPlayerState,receivedKey
 lbC04944C:
-	MOVE.B	#$00,lbB049564
+	MOVE.B	#$00,networkProtocolState
 	MOVE.B	inputStateFlags,D0
 	RTS
 
@@ -1677,7 +1677,7 @@ lbC049486:
 	TST.B	networkGameMode
 	BEQ	lbC0494F6
 	MOVE.B	#$01,gameInitFlag2
-	MOVE.B	#$F1,lbB049564
+	MOVE.B	#$F1,networkProtocolState
 	JSR	waitForNetworkHandshake
 	BCS	lbC04950A
 lbC0494AA:
@@ -1693,7 +1693,7 @@ lbC0494AA:
 	CMP.B	#$F2,receivedPlayerCommand
 	BNE	lbC0494AA
 lbC0494E4:
-	MOVE.B	#$F2,lbB049564
+	MOVE.B	#$F2,networkProtocolState
 	JSR	waitForNetworkHandshake
 	BRA	lbC04950A
 
@@ -1722,7 +1722,7 @@ establishComputerLink:
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
 	JSR	drawScreenFrame
 	MOVE.B	#$01,currentMenuItem
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	JSR	networkHandshakeLoop
 	JSR	longNetworkDelay
 	JSR	checkNetworkStatus
@@ -1760,7 +1760,7 @@ lbC049600:
 	BNE	lbC049600
 lbC04963C:
 	MOVE.B	#$01,currentMenuItem
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.W	#$0012,D3
 	JSR	displayNetworkMessage
 	MOVE.B	#$80,gameInitFlag1
@@ -1778,7 +1778,7 @@ lbC04967E:
 lbC04968A:
 	MOVE.B	#$00,networkGameMode
 	MOVE.B	#$01,currentMenuItem
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.W	#$0000,D3
 	JSR	displayNetworkMessage
 	JSR	waitForDisplaySync
@@ -1807,8 +1807,8 @@ lbC0496FE:
 	RTS
 
 synchronizeLeagueSetup:
-	MOVE.B	#$00,lbB00E331
-	MOVE.B	#$40,lbB00D46B
+	MOVE.B	#$00,networkSyncStateFlag
+	MOVE.B	#$40,networkPlayerStateCache
 	TST.B	networkGameMode
 	BMI	lbC0497D4
 lbC049758:
@@ -1885,7 +1885,7 @@ lbC049866:
 	DBRA	D7,lbC049866
 	MOVE.W	checksumAccumulator,D0
 	JSR	sendSerialWordWithChecksum
-	MOVE.B	#$C1,lbB049564
+	MOVE.B	#$C1,networkProtocolState
 	JSR	waitForNetworkHandshake
 	BCS	lbC049898
 	MOVE.B	receivedPlayerState,D0
@@ -1902,9 +1902,9 @@ lbC0498A6:
 	BLT	lbC0498D6
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049948
-	MOVE.B	#$88,lbB049564
+	MOVE.B	#$88,networkProtocolState
 	JSR	sendNetworkGamePacket
-	CLR.B	lbB049564
+	CLR.B	networkProtocolState
 	CLR.W	networkDataCounter2
 lbC0498D6:
 	JSR	waitForNetworkByte
@@ -1925,13 +1925,13 @@ lbC04990C:
 	MOVE.B	D0,D0
 	MOVE.B	D0,(A6)+
 	DBRA	D7,lbC04990C
-	MOVE.W	networkDataCounter1,lbW049542
+	MOVE.W	networkDataCounter1,savedNetworkCounter
 	JSR	waitForNetworkByte
 	MOVE.B	D0,D5
 	ASL.W	#$08,D5
 	JSR	waitForNetworkByte
 	MOVE.B	D0,D5
-	CMP.W	lbW049542,D5
+	CMP.W	savedNetworkCounter,D5
 	BNE	lbC049948
 	MOVE.B	#$33,D0
 	BRA	lbC04994C
@@ -1939,9 +1939,9 @@ lbC04990C:
 lbC049948:
 	MOVE.B	#$99,D0
 lbC04994C:
-	MOVE.B	D0,lbB049565
+	MOVE.B	D0,localPlayerStateCache
 	MOVE.W	D0,-(SP)
-	MOVE.B	#$C1,lbB049564
+	MOVE.B	#$C1,networkProtocolState
 	JSR	waitForNetworkHandshake
 	BCS	lbC04996C
 	MOVE.W	(SP)+,D0
@@ -2008,7 +2008,7 @@ displayNetworkWaitMessage:
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
 	JSR	drawScreenFrame
 	MOVE.B	#$01,currentMenuItem
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.W	#$002E,D3
 	JSR	displayNetworkMessage
 	JSR	resetTextYOffset
@@ -2018,37 +2018,37 @@ displayNetworkWaitMessage:
 synchronizeNetworkGame:
 	CMP.B	#$80,networkGameMode
 	BNE	synchronizeNetworkSetup
-	MOVE.B	lbB00E331,D0
+	MOVE.B	networkSyncStateFlag,D0
 	OR.B	#$10,D0
 	TST.B	inputCancelFlag
 	BPL	lbC049B60
 	BSET	#$03,D0
 lbC049B60:
-	MOVE.B	D0,lbB049566
-	MOVE.B	lbB00D46B,lbB049565
-	MOVE.B	#$B2,lbB049564
+	MOVE.B	D0,localInputStateCache
+	MOVE.B	networkPlayerStateCache,localPlayerStateCache
+	MOVE.B	#$B2,networkProtocolState
 	JSR	waitForNetworkHandshake
-	TST.B	lbB00E331
+	TST.B	networkSyncStateFlag
 	BNE	lbC049BF2
 	TST.B	inputCancelFlag
 	BNE	lbC049BF2
 synchronizeNetworkSetup:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049BF2
-	TST.B	lbB00D46B
+	TST.B	networkPlayerStateCache
 	BNE	lbC049BB4
 	MOVE.L	#selectedTrack,A6
 	MOVE.W	#$0002,D7
 	BRA	lbC049BE8
 
 lbC049BB4:
-	MOVE.B	#$01,lbB00E331
+	MOVE.B	#$01,networkSyncStateFlag
 	MOVE.B	#$01,D0
 	JSR	syncMultiplayerRecords
-	MOVE.B	#$00,lbB00E331
+	MOVE.B	#$00,networkSyncStateFlag
 	MOVE.L	#networkTransferBuffer,A6
 	MOVE.W	#$00FF,D7
-	CMP.B	#$40,lbB00D46B
+	CMP.B	#$40,networkPlayerStateCache
 	BNE	lbC049BE8
 	MOVE.W	#$01FF,D7
 lbC049BE8:
@@ -2060,15 +2060,15 @@ lbC049BF2:
 lbC049BF4:
 	MOVE.B	#$00,lbB00D494
 	JSR	displayNetworkWaitMessage
-	MOVE.B	#$B2,lbB049564
+	MOVE.B	#$B2,networkProtocolState
 	JSR	waitForNetworkHandshake
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049C42
-	MOVE.B	receivedPlayerState,lbB00D46B
-	MOVE.B	lbB049560,D0
+	MOVE.B	receivedPlayerState,networkPlayerStateCache
+	MOVE.B	receivedInputState,D0
 	BPL	lbC049C4A
 	JSR	initializeGameTables
-	MOVE.B	lbB049560,D0
+	MOVE.B	receivedInputState,D0
 	CMP.B	#$C0,D0
 	BNE	lbC049C46
 lbC049C42:
@@ -2086,7 +2086,7 @@ lbC049C4A:
 	BNE	lbC049C78
 	BTST	#$00,D0
 	BNE	lbC049C78
-	MOVE.B	#$00,lbB00E331
+	MOVE.B	#$00,networkSyncStateFlag
 	JSR	receiveAdditionalSyncData
 lbC049C78:
 	JMP	lbC04D590
@@ -2096,16 +2096,16 @@ receiveAdditionalSyncData:
 	BEQ	lbC049CE6
 	MOVE.W	#$0002,D7
 	MOVE.L	#networkTransferBuffer,A6
-	TST.B	lbB00D46B
+	TST.B	networkPlayerStateCache
 	BEQ	lbC049CB0
 	MOVE.W	#$00FF,D7
-	CMP.B	#$40,lbB00D46B
+	CMP.B	#$40,networkPlayerStateCache
 	BNE	lbC049CB0
 	MOVE.W	#$01FF,D7
 lbC049CB0:
 	JSR	receiveLeagueDataPacket
 	BMI	receiveAdditionalSyncData
-	TST.B	lbB00D46B
+	TST.B	networkPlayerStateCache
 	BNE	lbC049CDC
 	MOVE.L	#selectedTrack,A0
 	MOVE.L	#networkTransferBuffer,A6
@@ -2206,31 +2206,31 @@ checkRaceStartReady:
 	MOVE.B	#$50,D1
 	JSR	checkKeyPressed
 	BEQ	lbC049E9A
-	MOVE.B	#$80,lbB049568
+	MOVE.B	#$80,localPlayerReadyFlag
 	BRA	lbC049EA2
 
 lbC049E9A:
-	MOVE.B	#$00,lbB049568
+	MOVE.B	#$00,localPlayerReadyFlag
 lbC049EA2:
 	TST.B	networkGameMode
 	BEQ	lbC049EF8
 	CMP.B	#$02,additionalPlayerCount
 	BGE	lbC049EC2
-	MOVE.B	#$80,lbB049568
+	MOVE.B	#$80,localPlayerReadyFlag
 	RTS
 
 lbC049EC2:
 	TST.B	networkGameMode
 	BPL	lbC049ED6
-	MOVE.B	lbB049568,lbB049566
+	MOVE.B	localPlayerReadyFlag,localInputStateCache
 lbC049ED6:
-	MOVE.B	#$F4,lbB049564
+	MOVE.B	#$F4,networkProtocolState
 	JSR	waitForNetworkHandshake
 	TST.B	networkGameMode
 	BMI	lbC049EF8
-	MOVE.B	lbB049560,lbB049568
+	MOVE.B	receivedInputState,localPlayerReadyFlag
 lbC049EF8:
-	TST.B	lbB049568
+	TST.B	localPlayerReadyFlag
 	RTS
 
 updateNetworkTiming:
@@ -2280,8 +2280,8 @@ lbC049F88:
 lbC049FB6:
 	MOVE.B	(A6)+,(A0)+
 	DBRA	D7,lbC049FB6
-	MOVE.B	(A6)+,displayModeParameter
-	EOR.B	#$C0,displayModeParameter
+	MOVE.B	(A6)+,raceOutcomeFlags
+	EOR.B	#$C0,raceOutcomeFlags
 	MOVE.B	(A6)+,displayFlags
 	MOVE.B	(A6)+,raceFlag1
 	MOVE.B	(A6)+,raceFlag2
@@ -2300,7 +2300,7 @@ lbC049FF4:
 copyGameStateData:
 	MOVE.B	(A0)+,(A6)+
 	DBRA	D7,copyGameStateData
-	MOVE.B	displayModeParameter,(A6)+
+	MOVE.B	raceOutcomeFlags,(A6)+
 	MOVE.B	displayFlags,(A6)+
 	MOVE.B	raceFlag1,(A6)+
 	MOVE.B	raceFlag2,(A6)+
@@ -2546,7 +2546,7 @@ lbC04A444:
 	MOVE.W	#$0000,D1
 	MOVE.L	#lbW04A49A,A2
 lbC04A44E:
-	MOVE.W	#$0008,lbW05BA68
+	MOVE.W	#$0008,renderGraphicsCurrentX
 	MOVE.L	#lbL04A4AE,A1
 	MOVE.L	(A2)+,D0
 	MOVE.W	D0,(A1)
@@ -2555,7 +2555,7 @@ lbC04A44E:
 	NOT.L	D0
 	AND.L	D0,$0002(A1)
 	AND.L	D0,$0006(A1)
-	JSR	blitObjectColumn
+	JSR	renderObjectColumn
 	ADDQ.B	#$01,D1
 	CMP.B	#$05,D1
 	BLT	lbC04A44E
@@ -2741,7 +2741,7 @@ lbC04A8D6:
 	ADD.B	#$0B,lbB04AA3E
 	ADDQ.B	#$01,lbB00D4E8
 	MOVE.B	lbB00D4E8,D0
-	CMP.B	lbB00D559,D0
+	CMP.B	maxRenderingIndex,D0
 	BNE	lbC04A8D6
 	JMP	lbC056128
 
@@ -2850,7 +2850,7 @@ lbC04ABDE:
 
 displayRaceEndScreen:
 	MOVE.L	#$00000001,D0
-	TST.B	displayModeParameter
+	TST.B	raceOutcomeFlags
 	BPL	lbC04AC32
 	MOVE.L	#$00000002,D0
 	TST.B	postWreckStateFlag
@@ -2858,25 +2858,25 @@ displayRaceEndScreen:
 	CLR.L	D0
 	MOVE.B	#$03,D0
 lbC04AC32:
-	JSR	lbC04AC52
+	JSR	displayResultScreen
 	RTS
 
 displayAlternateEndScreen:
-	TST.B	lbB04ACF6
+	TST.B	alternateEndScreenEnabledFlag
 	BMI	lbC04AC50
 	MOVE.L	#$00000004,D0
-	JMP	lbC04AC52
+	JMP	displayResultScreen
 
 lbC04AC50:
 	RTS
 
-lbC04AC52:
+displayResultScreen:
 	ASL.W	#$02,D0
 	MOVE.W	D0,-(SP)
 	MOVE.W	#$0000,D0
 	JSR	fadeToColor
 	MOVE.W	(SP)+,D0
-	MOVE.L	#lbW0488F8,A0
+	MOVE.L	#resultScreenPointerTable,A0
 	MOVE.L	$00(A0,D0.W),A6
 	LEA	$0002(A6),A1
 	JSR	copyPalette
@@ -2954,7 +2954,7 @@ lbC04AD38:
 	DBRA	D6,lbC04ACFE
 	RTS
 
-decompressBlitterObjectToMask:
+decompressRLEObjectToMask:
 	MOVE.L	A1,A2
 	MOVE.W	#$00C7,D6
 lbC04AD56:
@@ -3993,9 +3993,9 @@ lbC04BD68:
 	MOVE.L	#trackCoordinatesX,A0
 	MOVE.W	$000E(A0),D0
 	SUB.W	$000A(A0),D0
-	MOVE.W	D0,lbB00D42C
+	MOVE.W	D0,segmentDirectionTemp2
 	ASR.W	#$01,D0
-	ADD.W	D0,lbB00D42C
+	ADD.W	D0,segmentDirectionTemp2
 	MOVE.W	$002E(A0),D0
 	SUB.W	$002A(A0),D0
 	MOVE.W	D0,lbB00D42A
@@ -4005,13 +4005,13 @@ lbC04BD68:
 	SUB.W	lbB00D42A,D0
 	MOVE.W	D0,$0010(A0)
 	MOVE.W	$002A(A0),D0
-	ADD.W	lbB00D42C,D0
+	ADD.W	segmentDirectionTemp2,D0
 	MOVE.W	D0,$0030(A0)
 	MOVE.W	$000E(A0),D0
 	SUB.W	lbB00D42A,D0
 	MOVE.W	D0,$0014(A0)
 	MOVE.W	$002E(A0),D0
-	ADD.W	lbB00D42C,D0
+	ADD.W	segmentDirectionTemp2,D0
 	MOVE.W	D0,$0034(A0)
 	MOVE.B	lbB00D413,D0
 	ADD.B	#$80,D0
@@ -4343,17 +4343,17 @@ setupGameConfiguration:
 	BEQ	lbC04C422
 	EOR.B	#$FF,D0
 	ADD.B	#$0C,D0
-	MOVE.B	D0,lbB00D55B
-	MOVE.B	#$0C,lbB00D559
+	MOVE.B	D0,trackBaseOffset
+	MOVE.B	#$0C,maxRenderingIndex
 	RTS
 
 lbC04C422:
 	MOVE.B	displayTrackID,D1
 	MOVE.L	#lbL04C442,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.B	D0,lbB00D55B
+	MOVE.B	D0,trackBaseOffset
 	ADDQ.B	#$03,D0
-	MOVE.B	D0,lbB00D559
+	MOVE.B	D0,maxRenderingIndex
 	RTS
 
 configurePlayersAndCars:
@@ -4374,12 +4374,12 @@ lbC04C47C:
 	MOVE.L	#lbL04C4CE,A1
 	MOVE.B	currentRaceNumber,D1
 	MOVE.B	$00(A0,D1.W),D2
-	ADD.B	lbB00D55B,D2
+	ADD.B	trackBaseOffset,D2
 	MOVE.L	#lbL00E2C2,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.B	D0,player1ID
 	MOVE.B	$00(A1,D1.W),D2
-	ADD.B	lbB00D55B,D2
+	ADD.B	trackBaseOffset,D2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.B	#$0B,D2
 lbC04C4BA:
@@ -4400,7 +4400,7 @@ lbC04C4EA:
 	MOVE.L	#lbL00E2F6,A1
 	ADDQ.B	#$01,$00(A1,D1.W)
 	ADDQ.B	#$01,$00(A1,D2.W)
-	MOVE.B	displayModeParameter,D0
+	MOVE.B	raceOutcomeFlags,D0
 	CMP.B	currentPlayerID,D1
 	BEQ	lbC04C528
 	CMP.B	currentPlayerID,D2
@@ -4463,7 +4463,7 @@ lbC04C5FC:
 sortRaceResults:
 	JSR	setupGameConfiguration
 	MOVE.L	#lbB00E30E,A3
-	MOVE.B	lbB00D55B,D2
+	MOVE.B	trackBaseOffset,D2
 lbC04C610:
 	MOVE.L	#lbL00E2C2,A2
 	MOVE.B	$00(A2,D2.W),D1
@@ -4477,12 +4477,12 @@ lbC04C610:
 	MOVE.L	#lbL00E302,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$01,D2
-	CMP.B	lbB00D559,D2
+	CMP.B	maxRenderingIndex,D2
 	BLT	lbC04C610
 lbC04C64C:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,savedSegmentIndex
-	MOVE.B	lbB00D55B,D2
+	MOVE.B	trackBaseOffset,D2
 lbC04C65C:
 	MOVE.B	D2,currentMenuItemCopy
 	MOVE.B	$00(A3,D2.W),D1
@@ -4520,7 +4520,7 @@ lbC04C6DA:
 	MOVE.B	currentMenuItemCopy,D2
 	ADDQ.B	#$01,D2
 	ADDQ.B	#$01,D2
-	CMP.B	lbB00D559,D2
+	CMP.B	maxRenderingIndex,D2
 	BGE	lbC04C6F4
 	SUBQ.B	#$01,D2
 	BRA	lbC04C65C
@@ -5102,7 +5102,7 @@ screenUpdate:
 	MOVE.B	D0,currentMenuItem
 
 lbC04CF62:
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	#$0A,D0
 	MOVE.W	#$006A,D4
 	MOVE.W	#$00BE,D6
@@ -5249,7 +5249,7 @@ lbC04D188:
 lbC04D1B0:
 	MOVE.B	D0,menuCursorObjectType
 lbC04D1B6:
-	JSR	blitMenuCursor		; Draw cursor/arrow sprite
+	JSR	renderMenuCursor		; Draw cursor/arrow sprite
 	MOVE.B	currentMenuItemCopy,D0
 	ADDQ.B	#$01,D0
 	JSR	renderDigit			; Draw "1", "2", "3", etc.
@@ -5363,7 +5363,7 @@ lbC04D34C:
 handleMenuRaceOptions:
 	TST.B	D0		; Test menu selection (0 or 1)
 	BNE	lbC04D378	; If 1, handle race selection
-	JSR	lbC0514C6	; Option 0: View league standings - Display standings screen (image3)
+	JSR	displayStandings	; Option 0: View league standings - Display standings screen (imageStandingsBackground)
 	BRA	handleMainMenu	; Return to main menu
 
 lbC04D378:			; Option 1: Select and configure race
@@ -5388,8 +5388,8 @@ lbC04D3AE:
 lbC04D3C4:
 	TST.B	networkGameMode
 	BPL	lbC04D3E4
-	MOVE.B	#$20,lbB049566
-	MOVE.B	#$B2,lbB049564
+	MOVE.B	#$20,localInputStateCache
+	MOVE.B	#$B2,networkProtocolState
 	JSR	waitForNetworkHandshake
 lbC04D3E4:
 	JSR	delayRoutine
@@ -5424,17 +5424,17 @@ lbC04D40E:
 	BNE	startNewGame
 	TST.B	networkGameMode
 	BPL	lbC04D48C
-	MOVE.B	#$C0,lbB049566
-	MOVE.B	#$B2,lbB049564
+	MOVE.B	#$C0,localInputStateCache
+	MOVE.B	#$B2,networkProtocolState
 	JSR	waitForNetworkHandshake
 lbC04D48C:
-	JMP	enterMainGameLoop
+	JMP	enterMenuSystemLoop
 
 startNewGame:
 	TST.B	networkGameMode
 	BPL	lbC04D4B2
-	MOVE.B	#$80,lbB049566
-	MOVE.B	#$B2,lbB049564
+	MOVE.B	#$80,localInputStateCache
+	MOVE.B	#$B2,networkProtocolState
 	JSR	waitForNetworkHandshake
 lbC04D4B2:
 	TST.B	additionalPlayerCount
@@ -5448,7 +5448,7 @@ lbC04D4CA:
 	BRA	lbC04D59C
 
 startGameSession:
-	MOVE.B	D0,lbB00E331
+	MOVE.B	D0,networkSyncStateFlag
 	ASL.B	#$02,D0
 	ADD.B	#$08,D0
 	MOVE.B	D0,D1
@@ -5466,11 +5466,11 @@ lbC04D4EC:
 	MOVE.B	#$00,D0
 	JSR	saveLoadGameData
 	JSR	displaySeasonSelection
-	TST.B	lbB00D46B
+	TST.B	networkPlayerStateCache
 	BNE	lbC04D562
 	TST.B	lbB00D492
 	BMI	lbC04D55C
-	MOVE.B	lbB00E331,D0
+	MOVE.B	networkSyncStateFlag,D0
 	BNE	lbC04D55C
 	MOVE.B	#$80,D0
 	JSR	saveLoadGameData
@@ -5489,7 +5489,7 @@ lbC04D57E:
 	BNE	lbC04D590
 	JSR	synchronizeNetworkGame
 lbC04D590:
-	CMP.B	#$40,lbB00D46B
+	CMP.B	#$40,networkPlayerStateCache
 	BEQ	lbC04D5A2
 lbC04D59C:
 	JSR	initializeRaceMode
@@ -5817,7 +5817,7 @@ lbC04DA76:
 	ASL.B	#$01,D0
 	MOVE.B	D0,lbB00D4E5
 	ASL.B	#$01,D0
-	MOVE.B	D0,lbB00D460
+	MOVE.B	D0,renderingLoopIndex
 	MOVE.B	reverseDirectionFlag,D0
 	BPL	lbC04DAA2
 	MOVE.W	D4,D0
@@ -5862,7 +5862,7 @@ lbC04DB18:
 	ADD.W	lateralRoadPosition,D0
 	CMP.W	#$0180,D0
 	BCS	lbC04DB5E
-	BSET	#$07,lbB00D465
+	BSET	#$07,networkSyncBitFlag
 	MOVE.W	D0,lbW00D522
 	BMI	lbC04DB56
 	MOVE.B	#$FF,D0
@@ -6131,7 +6131,7 @@ lbC04DEF2:
 	JSR	calculateInterpolatedValue
 	ASL.B	#$01,D1
 	MOVE.L	#carWorldX,A3
-	BCLR	#$07,lbB00D465
+	BCLR	#$07,networkSyncBitFlag
 	BEQ	lbC04DF12
 	JSR	lbC04E108
 lbC04DF12:
@@ -6353,9 +6353,9 @@ validateSaveDataChecksum:
 	CLR.W	D1
 	CLR.W	D2
 lbC04E826:
-;	JMP	enterMainGameLoop
+;	JMP	enterMenuSystemLoop
 
-enterMainGameLoop:
+enterMenuSystemLoop:
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
 	MOVE.L	#memory_7A91A,A1
@@ -6364,36 +6364,36 @@ copyPlayerNamesWithSpacesLoop:
 	DBRA	D0,copyPlayerNamesWithSpacesLoop
 	MOVE.B	#$00,networkGameMode
 	MOVE.B	#$40,gameStateID
-	TST.B	lbB0528BC
+	TST.B	menuInitializedFlag
 	BNE	lbC04E87E
-	MOVE.B	#$80,lbB0528BC
+	MOVE.B	#$80,menuInitializedFlag
 lbC04E87E:
 	JSR	initializeGameData
-	MOVE.B	#$80,lbB055E30
+	MOVE.B	#$80,suppressMenuTextFlag
 	JSR	displayMenuScreen
-	CLR.B	lbB055E30
+	CLR.B	suppressMenuTextFlag
 	JSR	selectGameMode
 	JSR	initializeRaceMode
 	JSR	saveRandomState
-	MOVE.B	#$F3,lbB049564
+	MOVE.B	#$F3,networkProtocolState
 	JSR	waitForNetworkHandshake
-enterMainGameLoopLoop:
+menuSystemLoop:
 	BCLR	#$07,raceMode		; Clear race active bit
 	MOVE.B	#$10,gameStateID	; Menu state
 	JSR	handleMainMenu		; Display and handle menu input
 	TST.B	selectedRaceType		; Check for game start
 	BMI	gameStateTransition	; Transition to race if set
 	MOVE.B	#$12,gameStateID	; Otherwise, show intermediate screens and loop back
-	JSR	displayImage2
+	JSR	displayTrackPreviewBackground
 	MOVE.B	#$00,gameStateID
 	JSR	loadMainGameScreen
 	JSR	displayMenuScreen
-	JMP	enterMainGameLoopLoop
+	JMP	menuSystemLoop
 
 lbC04E900:
 	MOVE.B	#$C0,D0
 	MOVE.B	D0,raceMode
-	MOVE.B	D0,displayModeParameter
+	MOVE.B	D0,raceOutcomeFlags
 	BRA	lbC04E968
 
 gameStateTransition:
@@ -6444,7 +6444,7 @@ startCompetitiveRace:
 	MOVE.B	#$00,D0
 	JSR	displayRacePositions
 	MOVE.B	#$12,gameStateID
-	JSR	displayImage2
+	JSR	displayTrackPreviewBackground
 	MOVE.B	#$80,D0
 	JSR	transmitNetworkMessage
 	MOVE.B	#$00,gameStateID
@@ -6487,7 +6487,7 @@ lbC04EA8C:
 	JSR	initializeRaceMode
 lbC04EAD0:
 	JSR	initializeGameTables
-	JMP	enterMainGameLoopLoop
+	JMP	menuSystemLoop
 
 lbC04EADC:
 	JSR	cleanupNetworkRace
@@ -6500,20 +6500,20 @@ lbC04EAF6:
 	ADDQ.B	#$01,raceSeriesCounter
 	CMP.B	#$04,raceSeriesCounter
 	BCC	lbC04EAD0
-	BRA	enterMainGameLoopLoop
+	BRA	menuSystemLoop
 
-displayImage2:
+displayTrackPreviewBackground:
 	JSR	initializeMessageBuffer
-	MOVE.W	image2Palette,D0
+	MOVE.W	imageTrackPreviewBackgroundPalette,D0
 	JSR	fadeToColor
 	MOVE.B	#$40,D0
 	MOVE.B	D0,displayUpdateFlag
-	MOVE.L	#image2Palette,A1
+	MOVE.L	#imageTrackPreviewBackgroundPalette,A1
 	JSR	copyPalette
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
-	MOVE.L	#image2,A0
+	MOVE.L	#imageTrackPreviewBackground,A0
 	MOVE.L	primaryFrameBuffer,A1
 	JSR	decompressRLEImage
 	MOVE.L	primaryFrameBuffer,A1
@@ -6574,8 +6574,8 @@ lbC04EC48:
 	MOVE.B	#$00,gameInitFlag1
 	MOVE.B	#$00,gameInitFlag2
 	JSR	initializeMessageBuffer
-	JSR	copySomeImage
-	MOVE.L	#image0Palette,A1
+	JSR	copyMainGameBackground
+	MOVE.L	#imageMainGameBackgroundPalette,A1
 	JSR	copyPalette
 	MOVE.B	#$0E,D0
 	JSR	setForegroundColor
@@ -6656,13 +6656,13 @@ lbC04EDFC:
 	BNE	lbC04EE34
 	MOVE.B	networkGameMode,D0
 	BEQ	lbC04EE22
-	MOVE.B	#$00,displayModeParameter
+	MOVE.B	#$00,raceOutcomeFlags
 	CMP.B	gameModeStateFlags,D0
 	BNE	lbC04EE34
 lbC04EE22:
 	MOVE.B	#$0B,D2
 	JSR	setupGameDisplay2
-	MOVE.B	#$C0,displayModeParameter
+	MOVE.B	#$C0,raceOutcomeFlags
 lbC04EE34:
 	JSR	setDisplayMode51
 	MOVE.B	#$3C,D2
@@ -6725,11 +6725,11 @@ lbC04EF2C:
 	BNE	lbC04EF6E
 	MOVE.B	networkGameMode,D0
 	BEQ	lbC04EF66
-	MOVE.B	#$00,displayModeParameter
+	MOVE.B	#$00,raceOutcomeFlags
 	CMP.B	playerInputState,D0
 	BNE	lbC04EF6E
 lbC04EF66:
-	MOVE.B	#$C0,displayModeParameter
+	MOVE.B	#$C0,raceOutcomeFlags
 lbC04EF6E:
 	JSR	updateNetworkGameFlags
 lbC04EF74:
@@ -7227,16 +7227,16 @@ lbC04F758:
 	BNE	lbC04F78E
 lbC04F780:
 	MOVE.B	#$80,D0
-	MOVE.B	D0,displayModeParameter
+	MOVE.B	D0,raceOutcomeFlags
 	MOVE.B	#$1C,D2
 lbC04F78E:
 	MOVE.B	#$04,D0
 	JSR	setMessageParameters
 lbC04F798:
-	MOVE.B	displayModeParameter,D0
+	MOVE.B	raceOutcomeFlags,D0
 	AND.B	#$BF,D0
 	OR.B	raceResultFlag,D0
-	MOVE.B	D0,displayModeParameter
+	MOVE.B	D0,raceOutcomeFlags
 	SUBQ.B	#$01,D1
 	BPL	lbC04F720
 	RTS
@@ -7412,12 +7412,12 @@ lbC04F9EC:
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	primaryFrameBuffer,currentFrameBuffer
 	MOVE.W	D0,-(SP)
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.W	(SP)+,D0
 	MOVE.L	currentFrameBuffer,D3
 	ADD.L	#$00007D00,D3
 	MOVE.L	D3,currentFrameBuffer
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.L	(SP)+,currentFrameBuffer
 	MOVE.W	(SP)+,D2
 	RTS
@@ -8236,7 +8236,7 @@ lbC05094A:
 	MOVE.L	#networkTransferBuffer,A0
 	MOVE.L	#memory_7A01A,A1
 	MOVE.W	#$00BF,D0
-	TST.B	lbB00E331
+	TST.B	networkSyncStateFlag
 	BNE	lbC05096C
 lbC050964:
 	MOVE.B	(A0)+,(A1)+
@@ -8428,12 +8428,12 @@ lbC050C02:
 	RTS
 
 syncMultiplayerRecords:
-	MOVE.B	lbB00E331,D3
+	MOVE.B	networkSyncStateFlag,D3
 	EOR.B	D3,D0
 	BNE	lbC050CE8
 	MOVE.B	lbB00D494,D0
 	BMI	lbC050CE8
-	MOVE.B	lbB00D46B,D0
+	MOVE.B	networkPlayerStateCache,D0
 	BMI	lbC050CE8
 	BEQ	lbC05094A
 	CMP.B	#$40,D0
@@ -8441,7 +8441,7 @@ syncMultiplayerRecords:
 	JMP	lbC0511A8
 
 lbC050CA6:
-	MOVE.B	lbB00E331,D0
+	MOVE.B	networkSyncStateFlag,D0
 	BEQ	lbC050CEA
 	MOVE.B	#$00,D1
 lbC050CB4:
@@ -8546,8 +8546,8 @@ lbC050DE8:
 	BPL	lbC050DE8
 	MOVE.B	#$01,D2
 lbC050E0A:
-	MOVE.B	D2,lbB00D46B
-	MOVE.B	lbB00E331,D0
+	MOVE.B	D2,networkPlayerStateCache
+	MOVE.B	networkSyncStateFlag,D0
 	BEQ	lbC050E32
 	MOVE.B	D2,D0
 	BEQ	lbC050E38
@@ -8699,7 +8699,7 @@ lbC051192:
 	JMP	lbC051096
 
 lbC0511A8:
-	MOVE.B	lbB00E331,D0
+	MOVE.B	networkSyncStateFlag,D0
 	BEQ	lbC05121C
 	MOVE.B	#$7F,D1
 lbC0511B6:
@@ -8845,7 +8845,7 @@ lbC0513DA:
 
 setDisplayMode51:
 	MOVE.B	#$33,D0
-	JMP	configureDisplayMode
+	JMP	renderMaskedGraphicsObject
 
 transmitNetworkMessage:
 	MOVE.B	D0,temp
@@ -8891,9 +8891,9 @@ lbC05149A:
 	MOVE.B	D2,textRenderingFlag
 	RTS
 
-lbC0514C6:
+displayStandings:
 	MOVE.B	#$42,displayUpdateFlag
-	MOVE.W	image3Palette,D0
+	MOVE.W	imageStandingsBackgroundPalette,D0
 	JSR	fadeToColor
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
@@ -8914,12 +8914,12 @@ lbC051500:
 	SUBQ.B	#$01,D2
 	SUBQ.B	#$01,D1
 	BPL	lbC051500
-	MOVE.L	#image3Palette,A1
+	MOVE.L	#imageStandingsBackgroundPalette,A1
 	JSR	copyPalette
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
-	MOVE.L	#image3,A0
+	MOVE.L	#imageStandingsBackground,A0
 	MOVE.L	secondaryFrameBuffer,A1
 	JSR	decompressRLEImage
 	MOVE.B	#$02,textHorizontalOffset
@@ -9450,9 +9450,9 @@ renderTrackPreview:
 	JSR	initializeRenderingState
 	JSR	copyTrackPreviewRegion
 	JSR	animatePaletteToTarget
-	MOVE.B	#$80,lbB00D48F
+	MOVE.B	#$80,segmentConfigLoadedFlag
 	JSR	renderTrackPreviewGrid
-	MOVE.B	#$00,lbB00D48F
+	MOVE.B	#$00,segmentConfigLoadedFlag
 	MOVE.W	#$0000,lbW00D51E
 	MOVE.B	#$00,lbB00D468
 	RTS
@@ -9577,8 +9577,8 @@ lbC05202C:
 	MOVE.L	#$00000000,previousDistanceX
 	MOVE.W	#$0000,previousDistanceZ
 	JSR	calculate3DProjection1
-	MOVE.B	#$B0,lbB00D4EA
-	MOVE.B	#$08,lbB00D4E9
+	MOVE.B	#$B0,wheelAnimationFrame
+	MOVE.B	#$08,wheelAnimationSpeed
 	RTS
 
 calculatePlayerDistance:
@@ -9681,12 +9681,12 @@ lbC0521CC:
 	MOVE.B	#$99,D0
 	JSR	lbC052124
 lbC052200:
-	MOVE.B	#$80,lbB00D462
+	MOVE.B	#$80,displayModeActiveFlag
 	ASL.W	gasOutputAccumulatorValue
 	RTS
 
 lbC052210:
-	MOVE.B	#$00,lbB00D462
+	MOVE.B	#$00,displayModeActiveFlag
 	RTS
 
 displayLapCompletionGraphics:
@@ -9701,7 +9701,7 @@ displayGameObjectDigit:
 	MOVE.B	#$1B,D1
 lbC05222E:
 	MOVE.W	D1,-(SP)
-	MOVE.L	#blitterObjectConfigTable,A0
+	MOVE.L	#objectRenderingParameters,A0
 	MOVE.B	D2,D0
 	ASL.B	#$01,D0
 	ADD.B	D2,D0
@@ -9717,11 +9717,11 @@ lbC052246:
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	primaryFrameBuffer,currentFrameBuffer
 	MOVE.B	D1,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.L	#$00007D00,D0
 	ADD.L	D0,currentFrameBuffer
 	MOVE.B	D1,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.L	(SP)+,currentFrameBuffer
 	MOVE.W	(SP)+,D1
 	RTS
@@ -10103,7 +10103,7 @@ lbC0527AE:
 lbC0527B6:
 	TST.B	collisionStateFlags
 	BPL	lbC0527CC		; Branch for normal rendering
-	JSR	renderParticleAsBlitterObject		; Render as sprite (major crash)
+	JSR	renderDustCloud		; Render as sprite (major crash)
 	JMP	lbC05282A
 
 lbC0527CC:				; Normal pixel rendering
@@ -10149,24 +10149,24 @@ initializeMajorCrashParticle:
 	MOVE.W	D0,$40(A4,D1.W)		; Set Y position (upper screen)
 	RTS
 
-renderParticleAsBlitterObject:
+renderDustCloud:
 	MOVE.B	D1,D2
 	LSR.B	#$01,D2			; Particle index / 2
 	ADD.B	frameCounter,D2		; Add frame counter for animation
 	AND.W	#$000F,D2		; Mask to 0-15
-	MOVE.L	#debrisObjectAnimSequence,A0		; Sprite animation sequence table
-	MOVE.B	$00(A0,D2.W),D2		; Get sprite frame index
+	MOVE.L	#dustCloudAnimSequence,A0		; Dust cloud animation sequence table
+	MOVE.B	$00(A0,D2.W),D2		; Get frame index
 	ASL.B	#$01,D2			; Multiply by 2
 	MOVE.W	$00(A4,D1.W),D4		; Load X position
-	MOVE.L	#debrisObjectOffsetTable,A0		; Sprite offset table
-	SUB.W	$00(A0,D2.W),D4		; Adjust X by sprite offset
+	MOVE.L	#dustCloudOffsetTable,A0		; Offset table
+	SUB.W	$00(A0,D2.W),D4		; Adjust X by offset
 	ADD.W	#$0020,D4		; Add 32 (center)
 	MOVE.W	$40(A4,D1.W),D5		; Load Y position
 	ADD.W	#$0010,D5		; Add 16 (center)
 	MOVE.B	D2,D0
-	LSR.B	#$01,D0			; Sprite index / 2
-	ADD.B	#$1D,D0			; Add 29 (sprite ID offset)
-	JMP	renderBlitterObjectAtPosition		; Render audio sprite
+	LSR.B	#$01,D0			; Index / 2
+	ADD.B	#$1D,D0			; Add 29 (dust cloud ID offset)
+	JMP	renderGraphicsObjectAtPosition		; Render dust cloud
 
 updateWheelSpeed:
 	MOVE.W	carVelocity,D0
@@ -11527,18 +11527,18 @@ calculateSpatialDistortion:
 	EOR.W	#$8000,D3
 	MOVE.W	D3,lbW00D64C
 	JSR	lbC053D24
-	MOVE.B	lbB00D42D,lbB00D42C
-	MOVE.B	lbB00D42B,lbB00D652
+	MOVE.B	segmentDirectionSource,segmentDirectionTemp2
+	MOVE.B	segmentDirectionTemp1,lbB00D652
 	MOVE.L	distanceFromTrackX,D0
 	SUB.L	distanceFromTrackY,D0
 	ASR.L	#$03,D0
 	MOVE.W	D0,lbW00D648
 	JSR	lbC053D24
-	MOVE.B	lbB00D42C,segmentDirectionFlags
-	MOVE.B	lbB00D42D,D0
+	MOVE.B	segmentDirectionTemp2,segmentDirectionFlags
+	MOVE.B	segmentDirectionSource,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,lbB00D650
-	MOVE.B	lbB00D42B,D0
+	MOVE.B	segmentDirectionTemp1,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,lbB00D64E
 	MOVE.B	lbB00D64E,segmentDirectionFlags
@@ -11595,17 +11595,17 @@ lbC053D2C:
 	BGE	lbC053D3A
 	MOVE.B	D0,D1
 lbC053D3A:
-	MOVE.B	D1,lbB00D42B
+	MOVE.B	D1,segmentDirectionTemp1
 	LSR.B	#$01,D1
 	MOVE.L	#attenuationTable,A0
 	MOVE.B	$00(A0,D1.W),D0
-	MOVE.B	D0,lbB00D42D
+	MOVE.B	D0,segmentDirectionSource
 	RTS
 
 calculate3DProjection:
 	MOVE.W	trackIncrementValue,D0
 	MOVE.W	lbW00D4F8,D3
-	TST.B	lbB00D48F
+	TST.B	segmentConfigLoadedFlag
 	BPL	lbC053D9C
 	ASR.W	#$01,D0
 	ASR.W	#$01,D3
@@ -11637,7 +11637,7 @@ transformCoordinate:
 	NEG.W	D0
 	ASR.W	#$02,D0
 	MOVE.W	lbW00D536,D3
-	TST.B	lbB00D48F
+	TST.B	segmentConfigLoadedFlag
 	BPL	lbC053DF0
 	MOVE.W	#$4C1B,D4
 	MULS	D4,D0
@@ -11728,7 +11728,7 @@ displaySeasonSelection:
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.W	#$0000,D1
-	TST.B	lbB00E331
+	TST.B	networkSyncStateFlag
 	BEQ	lbC054086
 	MOVE.W	#$0016,D1
 lbC054086:
@@ -11756,12 +11756,12 @@ lbC0540DC:
 lbC0540EA:
 	MOVE.B	#$0F,lbB0544B8
 	MOVE.B	#$0B,lbB0544B9
-	MOVE.B	lbB0544B6,D0
-	TST.B	lbB00E331
+	MOVE.B	selectedSaveSlotIndex,D0
+	TST.B	networkSyncStateFlag
 	BEQ	lbC054110
 	MOVE.B	lbB0544B7,D0
 lbC054110:
-	MOVE.B	D0,lbB0544B4
+	MOVE.B	D0,currentSaveSlotIndex
 	MOVE.B	#$00,lbB0544B8
 	MOVE.B	#$00,lbB0544B9
 	MOVE.B	#$02,D0
@@ -11774,7 +11774,7 @@ lbC054110:
 	JSR	renderCharacter
 	JSR	waitForDirectionRelease
 	MOVE.B	textCursorColumn,lbB0544BA
-	TST.B	lbB00E331
+	TST.B	networkSyncStateFlag
 	BNE	lbC05419A
 lbC05416C:
 	JSR	waitForInputPress
@@ -11843,13 +11843,13 @@ lbC05424A:
 	MOVE.B	#$01,D0
 	JSR	syncMultiplayerRecords
 	CLR.W	D0
-	MOVE.B	lbB0544B4,D0
+	MOVE.B	currentSaveSlotIndex,D0
 	ADD.W	#$0017,D0
 	MOVE.W	D0,lbW054632
 lbC05428A:
 	MOVE.W	lbW054632,D0
 	MOVE.L	#networkTransferBuffer,A0
-	TST.B	lbB00E331
+	TST.B	networkSyncStateFlag
 	BEQ	lbC0542D2
 	JSR	displaySlotRight
 	BEQ	advanceSecondarySlot
@@ -11857,7 +11857,7 @@ lbC05428A:
 	RTS
 
 advanceSecondarySlot:
-	MOVE.B	lbB0544B4,D3
+	MOVE.B	currentSaveSlotIndex,D3
 	ADDQ.B	#$01,D3
 	CMP.B	#$1E,D3
 	BLT	lbC0542C4
@@ -11874,7 +11874,7 @@ lbC0542D2:
 	RTS
 
 lbC0542E2:
-	MOVE.B	lbB0544B4,lbB0544B6
+	MOVE.B	currentSaveSlotIndex,selectedSaveSlotIndex
 	JSR	saveSlotTextAndDisplay
 	MOVE.B	#$00,D0
 	JSR	syncMultiplayerRecords
@@ -11928,7 +11928,7 @@ refreshSaveSlotDisplay:
 	RTS
 
 moveToPreviousSlot:
-	MOVE.B	lbB0544B4,D0
+	MOVE.B	currentSaveSlotIndex,D0
 	SUBQ.B	#$01,D0
 	BPL	lbC0543C6
 	MOVE.B	#$1D,D0
@@ -11936,31 +11936,31 @@ lbC0543C6:
 	BRA	updateCurrentSlot
 
 moveToNextSlot:
-	MOVE.B	lbB0544B4,D0
+	MOVE.B	currentSaveSlotIndex,D0
 	ADDQ.B	#$01,D0
 	CMP.B	#$1E,D0
 	BLT	updateCurrentSlot
 	MOVE.B	#$00,D0
 updateCurrentSlot:
-	MOVE.B	D0,lbB0544B4
-	TST.B	lbB00E331
+	MOVE.B	D0,currentSaveSlotIndex
+	TST.B	networkSyncStateFlag
 	BEQ	lbC0543F6
 	MOVE.B	D0,lbB0544B7
 	RTS
 
 lbC0543F6:
-	MOVE.B	D0,lbB0544B6
+	MOVE.B	D0,selectedSaveSlotIndex
 	RTS
 
 checkMaximumSlotThreshold:
-	MOVE.B	lbB0544B4,D0
+	MOVE.B	currentSaveSlotIndex,D0
 	ADD.B	#$0A,D0
 	CMP.B	#$1E,D0
 	BLT	updateCurrentSlot
 	RTS
 
 checkMinimumSlotThreshold:
-	MOVE.B	lbB0544B4,D0
+	MOVE.B	currentSaveSlotIndex,D0
 	SUB.B	#$0A,D0
 	BPL	updateCurrentSlot
 	RTS
@@ -12026,7 +12026,7 @@ lbC0544F0:
 	MOVE.L	#memory_7A21A,A0
 	MOVE.W	#$0016,D0
 	MOVE.L	#$47826653,memory_7A234
-	MOVE.B	lbB0544B6,memory_7A224
+	MOVE.B	selectedSaveSlotIndex,memory_7A224
 	MOVE.B	lbB0544B7,memory_7A225
 	JSR	displaySlotRight
 	BEQ	lbC054526
@@ -12037,7 +12037,7 @@ lbC054526:
 loadSaveGameFromDisk:
 	MOVE.B	#$01,lbB054608
 lbC054530:
-	MOVE.B	#$00,lbB0544BB
+	MOVE.B	#$00,saveSlotHighlightFlag
 	MOVE.B	#$00,lbB00D492
 	MOVE.L	#memory_7A21A,A0
 	MOVE.W	#$0016,D0
@@ -12051,8 +12051,8 @@ lbC05455C:
 	MOVE.B	memory_7A225,D3
 	CMP.L	#$47826653,memory_7A234
 	BEQ	lbC0545FA
-	MOVE.B	#$80,lbB0544BB
-	TST.B	lbB00E331
+	MOVE.B	#$80,saveSlotHighlightFlag
+	TST.B	networkSyncStateFlag
 	BEQ	lbC0545F2
 	MOVE.W	#$00F0,D1
 	JSR	displayMessageWithColors
@@ -12071,7 +12071,7 @@ lbC0545C0:
 	JSR	drawScreenFrame
 	MOVE.B	#$01,textYOffset
 	MOVE.W	#$0000,D1
-	TST.B	lbB00E331
+	TST.B	networkSyncStateFlag
 	BEQ	lbC0545E0
 	MOVE.W	#$0016,D1
 lbC0545E0:
@@ -12083,7 +12083,7 @@ lbC0545F2:
 	MOVE.B	#$00,D0
 	MOVE.B	#$00,D3
 lbC0545FA:
-	MOVE.B	D0,lbB0544B6
+	MOVE.B	D0,selectedSaveSlotIndex
 	MOVE.B	D3,lbB0544B7
 lbC054606:
 	RTS
@@ -12106,11 +12106,11 @@ displayAllSaveSlots:
 	JSR	setForegroundColor
 	MOVE.B	#$0F,lbB0544B8
 	MOVE.B	#$0B,lbB0544B9
-	MOVE.B	#$00,lbB0544B4
+	MOVE.B	#$00,currentSaveSlotIndex
 lbC05465E:
 	JSR	displaySaveSlot
-	ADDQ.B	#$01,lbB0544B4
-	CMP.B	#$1E,lbB0544B4
+	ADDQ.B	#$01,currentSaveSlotIndex
+	CMP.B	#$1E,currentSaveSlotIndex
 	BNE	lbC05465E
 	MOVE.B	#$80,textTransparencyMode
 	RTS
@@ -12125,7 +12125,7 @@ lbC054692:
 	MOVE.L	#lbB01066B,A1
 	MOVE.B	#$00,currentInputPosition
 	MOVE.B	#$06,D4
-	MOVE.B	lbB0544B4,D5
+	MOVE.B	currentSaveSlotIndex,D5
 	CMP.B	#$1E,D5
 	BCS	lbC0546B6
 	MOVE.B	#$00,D5
@@ -12145,7 +12145,7 @@ lbC0546CA:
 	MOVE.B	D5,D0
 	JSR	renderCharacter
 	CLR.W	D0
-	MOVE.B	lbB0544B4,D0
+	MOVE.B	currentSaveSlotIndex,D0
 	ASL.W	#$04,D0
 	MOVE.L	#memory_7A21A,A0
 	LEA	$00(A0,D0.W),A0
@@ -12160,7 +12160,7 @@ lbC054700:
 lbC054718:
 	TST.B	$000F(A0)
 	BNE	lbC054750
-	TST.B	lbB0544BB
+	TST.B	saveSlotHighlightFlag
 	BNE	lbC054750
 	MOVE.B	lbB0544B8,D0
 	JSR	setBackgroundColor
@@ -13306,12 +13306,12 @@ lbC055548:
 	MOVE.B	lbB0555E0,D0
 lbC05556C:
 	AND.B	#$7F,D0
-	MOVE.B	D0,lbB00D44A
+	MOVE.B	D0,collisionDistanceTemp
 	MOVE.B	lbW00D4EE,D0
-	SUB.B	lbB00D44A,D0
+	SUB.B	collisionDistanceTemp,D0
 	BCS	lbC0555A0
 	BEQ	lbC0555D6
-	MOVE.B	#$80,lbB00D445
+	MOVE.B	#$80,boundaryCollisionDirectionFlag
 	NEG.W	lbW00D4F0
 	CMP.B	#$0E,D0
 	BCS	lbC0555D4
@@ -13321,18 +13321,18 @@ lbC0555A0:
 	BMI	lbC0555CE
 	TST.B	D0
 	BPL	lbC0555CE
-	MOVE.B	lbB00D445,D2
+	MOVE.B	boundaryCollisionDirectionFlag,D2
 	BEQ	lbC0555CE
 	CMP.B	#$FE,D0
 	BCC	lbC0555D4
-	BCLR	#$07,lbB00D445
+	BCLR	#$07,boundaryCollisionDirectionFlag
 lbC0555CE:
 	ASL.W	lbW00D4F0
 lbC0555D4:
 	RTS
 
 lbC0555D6:
-	MOVE.B	#$80,lbB00D445
+	MOVE.B	#$80,boundaryCollisionDirectionFlag
 	RTS
 
 processEngineSound:
@@ -13382,7 +13382,7 @@ lbC055654:
 	BMI	lbC055682
 	MOVE.B	#$F8,D0
 lbC055682:
-	MOVE.B	D0,lbW00D654
+	MOVE.B	D0,velocityAdjustment
 lbC055688:
 	TST.B	engineEffectFlag
 	BMI	lbC0556C2
@@ -13398,12 +13398,12 @@ lbC0556AA:
 lbC0556B8:
 	ASR.W	#$01,D0
 	ADD.W	D3,D0
-	MOVE.W	D0,lbW00D658
+	MOVE.W	D0,speedDifferential
 lbC0556C2:
-	MOVE.B	#$80,lbB00D446
+	MOVE.B	#$80,collisionActiveFlag
 	MOVE.B	#$80,engineEffectFlag
 	MOVE.W	#$0200,D3
-	MOVE.W	lbW00D654,D0
+	MOVE.W	velocityAdjustment,D0
 	BPL	lbC0556E2
 	NEG.W	D0
 lbC0556E2:
@@ -13413,7 +13413,7 @@ lbC0556E2:
 	NEG.W	D0
 lbC0556F0:
 	ADD.W	D0,D3
-	MOVE.W	lbW00D658,D0
+	MOVE.W	speedDifferential,D0
 	BPL	lbC0556FE
 	NEG.W	D0
 lbC0556FE:
@@ -13438,11 +13438,11 @@ handleCollisionBetweenCars:
 	BEQ	lbC05573E
 	SUBQ.B	#$01,lbB0557E0
 lbC05573E:
-	TST.B	lbB00D446
+	TST.B	collisionActiveFlag
 	BEQ	lbC0557DC
-	MOVE.B	#$00,lbB00D446
+	MOVE.B	#$00,collisionActiveFlag
 	MOVE.W	lbW00D4EE,D0
-	SUB.W	lbW00D658,D0
+	SUB.W	speedDifferential,D0
 	BPL	lbC055764
 	MOVE.W	#$0000,D0
 lbC055764:
@@ -13452,15 +13452,15 @@ lbC055764:
 	SUB.W	D0,lbW00D676
 	SUB.W	D0,lbW00D678
 	SUB.W	D0,lbW00D67A
-	MOVE.W	lbW00D654,D0
+	MOVE.W	velocityAdjustment,D0
 	ADD.W	D0,rollAngleModifier
 	MOVE.W	lbW00D656,D0
 	ADD.W	D0,carPitchAdjustment
-	MOVE.W	lbW00D658,D0
+	MOVE.W	speedDifferential,D0
 	ADD.W	D0,yawAngleOffset
-	MOVE.W	#$0000,lbW00D654
+	MOVE.W	#$0000,velocityAdjustment
 	MOVE.W	#$0000,lbW00D656
-	MOVE.W	#$0000,lbW00D658
+	MOVE.W	#$0000,speedDifferential
 	TST.B	lbB0557E0
 	BNE	lbC0557DC
 	MOVE.B	#$02,D0
@@ -13470,7 +13470,7 @@ lbC0557DC:
 	RTS
 
 lbC0557E2:
-	MOVE.W	#$8000,lbW0557DE
+	MOVE.W	#$8000,minBoundaryDistance
 	MOVE.W	#$0028,D0
 	TST.B	segmentSteeringFlags
 	BPL	lbC0557FC
@@ -13480,9 +13480,9 @@ lbC0557FC:
 	MOVE.W	#$0000,D7
 	MOVE.W	boundsMinX,D0
 	SUB.W	lbL00D666,D0
-	CMP.W	lbW0557DE,D0
+	CMP.W	minBoundaryDistance,D0
 	BLT	lbC055822
-	MOVE.W	D0,lbW0557DE
+	MOVE.W	D0,minBoundaryDistance
 lbC055822:
 	ADD.W	lbW00D4F8,D0
 	BPL	lbC055838
@@ -13506,9 +13506,9 @@ lbC05585A:
 	MOVE.W	D6,lbW00D66E
 	MOVE.W	boundsMaxX,D0
 	SUB.W	lbW00D668,D0
-	CMP.W	lbW0557DE,D0
+	CMP.W	minBoundaryDistance,D0
 	BLT	lbC05588A
-	MOVE.W	D0,lbW0557DE
+	MOVE.W	D0,minBoundaryDistance
 lbC05588A:
 	ADD.W	lbW00D4F8,D0
 	BPL	lbC0558A0
@@ -13532,9 +13532,9 @@ lbC0558C2:
 	MOVE.W	D6,lbW00D670
 	MOVE.W	boundsMinY,D0
 	SUB.W	lbW00D66A,D0
-	CMP.W	lbW0557DE,D0
+	CMP.W	minBoundaryDistance,D0
 	BLT	lbC0558F2
-	MOVE.W	D0,lbW0557DE
+	MOVE.W	D0,minBoundaryDistance
 lbC0558F2:
 	ADD.W	lbW00D4F8,D0
 	BPL	lbC055908
@@ -13885,7 +13885,7 @@ setupDisplayMode:
 	JSR	drawScreenFrame
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
-	TST.B	lbB055E30
+	TST.B	suppressMenuTextFlag
 	BNE	lbC055EF6
 	TST.B	textRenderingFlag
 	BEQ	lbC055EF8
@@ -13958,7 +13958,7 @@ finalizeRaceDisplay:
 
 configureRaceSetup:
 	JSR	setupGameConfiguration
-	MOVE.B	lbB00D55B,lbB00D4E8
+	MOVE.B	trackBaseOffset,lbB00D4E8
 	TST.B	additionalPlayerCount
 	BEQ	lbC05600C
 	JSR	displayLeagueRaceResults
@@ -14003,21 +14003,21 @@ lbC05606E:
 lbC0560B4:
 	ADDQ.B	#$01,lbB00D4E8
 	MOVE.B	lbB00D4E8,D0
-	CMP.B	lbB00D559,D0
+	CMP.B	maxRenderingIndex,D0
 	RTS
 
 	MOVE.B	#$07,D0
 	JSR	lbC0561D2
 	MOVE.B	#$60,D1
 	JSR	renderLeagueText
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	#$6A,D1
 	JSR	renderLeagueText
 	MOVE.B	lbB00E325,D1
 	JSR	renderPlayerName
 	MOVE.B	#$E9,D1
 	JSR	renderLeagueText
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	#$78,D1
 	JSR	renderLeagueText
 	MOVE.B	lbB00E326,D1
@@ -14071,7 +14071,7 @@ initializeRaceMode:
 lbC0561D2:
 	MOVE.B	D0,currentMenuItem
 	JSR	configurePlayersAndCars
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	player1ID,D1
 	JSR	renderPlayerName
 	MOVE.B	#$28,D1
@@ -14083,7 +14083,7 @@ lbC0561D2:
 	JMP	resetTextYOffset
 
 lbC056216:
-	MOVE.B	#$80,lbB04ACF6
+	MOVE.B	#$80,alternateEndScreenEnabledFlag
 	MOVE.B	#$0B,D1
 	MOVE.L	#lbL00E2C2,A0
 	MOVE.L	#lbB00E30E,A1
@@ -14099,46 +14099,46 @@ lbC05622E:
 	JSR	renderLeagueText
 	MOVE.B	#$01,D0
 	MOVE.B	D0,currentMenuItem
-	MOVE.B	lbB00D55B,D2
+	MOVE.B	trackBaseOffset,D2
 	BNE	lbC05629C
 	MOVE.B	lbB00E30E,D0
 	CMP.B	currentPlayerID,D0
 	BNE	lbC0562F2
 	MOVE.B	currentPlayerContext,D0
 	BEQ	lbC05629C
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	#$CE,D1
 	JSR	renderTextString
 	JMP	lbC05632A
 
 lbC05629C:
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	#$B7,D1
 	JSR	renderLeagueText
-	MOVE.B	lbB00D55B,D2
+	MOVE.B	trackBaseOffset,D2
 	MOVE.L	#lbB00E30E,A2
 	MOVE.B	$00(A2,D2.W),D1
 	CMP.B	currentPlayerID,D1
 	BNE	lbC0562CC
-	MOVE.B	D1,lbB04ACF6
+	MOVE.B	D1,alternateEndScreenEnabledFlag
 lbC0562CC:
 	JSR	renderPlayerName
-	MOVE.B	lbB00D55B,D2
+	MOVE.B	trackBaseOffset,D2
 	BNE	lbC0562F2
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	#$A7,D1
 	JSR	renderTextString
 	JMP	lbC05632A
 
 lbC0562F2:
-	MOVE.B	lbB00D559,D2
+	MOVE.B	maxRenderingIndex,D2
 	SUBQ.B	#$01,D2
 	CMP.B	#$0B,D2
 	BEQ	lbC05632A
-	JSR	blitMenuCursor
+	JSR	renderMenuCursor
 	MOVE.B	#$C7,D1
 	JSR	renderLeagueText
-	MOVE.B	lbB00D559,D2
+	MOVE.B	maxRenderingIndex,D2
 	SUBQ.B	#$01,D2
 	MOVE.L	#lbB00E30E,A2
 	MOVE.B	$00(A2,D2.W),D1
@@ -14148,7 +14148,7 @@ lbC05632A:
 	MOVE.B	D0,displayTrackID
 lbC056334:
 	JSR	setupGameConfiguration
-	MOVE.B	lbB00D55B,D2
+	MOVE.B	trackBaseOffset,D2
 	MOVE.L	#lbL00E2C2,A0
 	MOVE.B	$00(A0,D2.W),D1
 	MOVE.B	-$01(A0,D2.W),$00(A0,D2.W)
@@ -14197,7 +14197,7 @@ lbC0563D6:
 lbC0563EA:
 	RTS
 
-blitMenuCursor:
+renderMenuCursor:
 	MOVE.B	#$02,D0
 lbC056412:
 	SUBQ.B	#$02,D0
@@ -14544,7 +14544,7 @@ lbC0568E2:
 	JSR	processRenderData
 	JSR	processTrackSegments
 	MOVE.B	#$00,lbB00D4E5
-	MOVE.B	#$00,lbB00D460
+	MOVE.B	#$00,renderingLoopIndex
 	MOVE.B	#$04,segmentDataStartIndex
 	JSR	shiftCoordinateArrays
 	JSR	advanceToNextSegment
@@ -14588,24 +14588,24 @@ lbC0569E2:
 	JSR	handleCollisionEffects
 lbC0569FC:
 	JSR	processCollisionState
-	JSR	updateScrollingDisplay
+	JSR	updateWheelAnimation
 	MOVE.B	#$0D,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$0E,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	JSR	initializeDisplayBuffers
 	MOVE.B	lbB00D4DB,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$05,D0
 	SUB.B	lbB00D4DB,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$0A,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$0B,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$0C,D0
-	JSR	configureDisplayMode
-	TST.B	lbB00D462
+	JSR	renderMaskedGraphicsObject
+	TST.B	displayModeActiveFlag
 	BEQ	lbC056AB0
 	MOVE.B	lbB00D469,D0
 	ADDQ.B	#$01,D0
@@ -14620,14 +14620,14 @@ lbC056A7A:
 	BNE	lbC056A92
 	MOVE.B	#$31,D0
 lbC056A92:
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.W	(SP)+,D0
 	ADD.B	#$08,D0
 	CMP.B	#$0A,D0
 	BNE	lbC056AAA
 	MOVE.B	#$32,D0
 lbC056AAA:
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 lbC056AB0:
 	JSR	lbC04FE08
 	RTS
@@ -14667,7 +14667,7 @@ transformTrackSegmentCoordinates:
 	SUB.B	segmentSlopeFlags,D0
 	MOVE.B	D0,trackHeightDifference
 	JSR	processTrackSegmentData2
-	MOVE.B	lbB00D460,D1
+	MOVE.B	renderingLoopIndex,D1
 	BEQ	lbC056B72
 	MOVE.L	#lbL00D76C,A0
 	MOVE.W	$00(A0,D1.W),lbW00D434
@@ -14724,7 +14724,7 @@ lbC056C3E:
 	TST.W	$00(A6,D1.W)
 	BMI	lbC056CAA
 	MOVE.W	#$8000,$78(A6,D1.W)
-	CMP.B	lbB00D460,D1
+	CMP.B	renderingLoopIndex,D1
 	BGE	lbC056C62
 	MOVE.W	#$8000,$00(A6,D1.W)
 	JMP	lbC056CAA
@@ -14773,7 +14773,7 @@ lbC056CF8:
 	TST.W	$00(A6,D1.W)
 	BMI	lbC056D66
 	MOVE.W	#$8000,$78(A6,D1.W)
-	CMP.B	lbB00D460,D1
+	CMP.B	renderingLoopIndex,D1
 	BGE	lbC056D1C
 	MOVE.W	#$8000,$00(A6,D1.W)
 	JMP	lbC056D66
@@ -14920,7 +14920,7 @@ lbC056F24:
 	BPL	lbC056FB0
 	MOVE.B	D1,D0
 	BCLR	#$01,D0
-	CMP.B	lbB00D460,D0
+	CMP.B	renderingLoopIndex,D0
 	BEQ	lbC056F6E
 	BTST	#$01,D1
 	BNE	lbC056F5E
@@ -14961,7 +14961,7 @@ lbC056FB0:
 	BMI	lbC056FB0
 	TST.W	$78(A6,D1.W)
 	BPL	lbC056FB0
-	CMP.B	lbB00D460,D1
+	CMP.B	renderingLoopIndex,D1
 	BLT	lbC05701E
 lbC056FD0:
 	JSR	lbC057020
@@ -15037,10 +15037,10 @@ lbC0570D0:
 	MOVE.B	#$00,D2
 	MOVE.B	segmentDataStartIndex,D1
 	BNE	lbC057112
-	MOVE.B	D2,lbB00D47A
+	MOVE.B	D2,segmentProcessingIndex
 	TST.B	geometryFormatFlag
 	BPL	lbC057106
-	MOVE.B	lbB00D47A,D2
+	MOVE.B	segmentProcessingIndex,D2
 	ASL.B	#$01,D2
 	MOVE.B	$00(A4,D2.W),D0
 	BPL	lbC057236
@@ -15053,7 +15053,7 @@ lbC057106:
 
 lbC057112:
 	MOVE.B	#$01,D2
-	MOVE.B	D2,lbB00D47A
+	MOVE.B	D2,segmentProcessingIndex
 	TST.B	geometryFormatFlag
 	BMI	lbC057202
 lbC057126:
@@ -15127,11 +15127,11 @@ lbC0571EC:
 	BRA	lbC0572EE
 
 lbC057202:
-	MOVE.B	lbB00D47A,D2
+	MOVE.B	segmentProcessingIndex,D2
 	ASL.B	#$01,D2
 	TST.B	$00(A4,D2.W)
 	BMI	lbC057230
-	MOVE.B	lbB00D47A,D0
+	MOVE.B	segmentProcessingIndex,D0
 	CMP.B	D7,D0
 	BCS	lbC057236
 	MOVE.W	#$8000,$00(A6,D1.W)
@@ -15186,12 +15186,12 @@ lbC0572B0:
 	ADD.W	segmentBezierOffset2,D0
 	MOVE.W	D0,$02(A6,D1.W)
 lbC0572CA:
-	ADDQ.B	#$01,lbB00D47A
+	ADDQ.B	#$01,segmentProcessingIndex
 	ADDQ.B	#$04,D1
 	CMP.B	maxSegmentIndexDoubled,D1
 	BLT	lbC057202
 	BNE	lbC0572F0
-	MOVE.B	lbB00D47A,D2
+	MOVE.B	segmentProcessingIndex,D2
 	ASL.B	#$01,D2
 	JMP	lbC057236
 
@@ -15210,22 +15210,22 @@ lbC057316:
 	RTS
 
 processRenderData:
-	MOVE.B	lbB00D460,D1
+	MOVE.B	renderingLoopIndex,D1
 	BNE	lbC057324
 	RTS
 
 lbC057324:
 	MOVE.W	#$0008,D3
 	JSR	renderBarrierPost
-	MOVE.B	lbB00D460,D1
+	MOVE.B	renderingLoopIndex,D1
 	ADDQ.B	#$02,D1
 	MOVE.W	#$0009,D3
 	JSR	renderBarrierPost
-	MOVE.B	lbB00D460,D1
+	MOVE.B	renderingLoopIndex,D1
 	ADD.B	#$78,D1
 	MOVE.W	#$000A,D3
 	JSR	renderBarrierPost
-	MOVE.B	lbB00D460,D1
+	MOVE.B	renderingLoopIndex,D1
 	ADD.B	#$7A,D1
 	MOVE.W	#$000B,D3
 	JSR	renderBarrierPost
@@ -15764,19 +15764,19 @@ lbC057B86:
 	AND.L	$00(A3,D3.W),D0
 	RTS
 
-updateScrollingDisplay:
+updateWheelAnimation:
 	MOVE.B	raceStartTimer,D0
-	BNE	lbC057BE0
-	MOVE.B	lbB00D4EA,D0
+	BNE	renderWheels
+	MOVE.B	wheelAnimationFrame,D0
 	CMP.B	#$60,D0
-	BEQ	lbC057C46
-	SUB.B	lbB00D4E9,D0
-	MOVE.B	D0,lbB00D4EA
-	ADD.B	#$08,lbB00D4E9
-lbC057BE0:
-	MOVE.B	lbB00D4EA,D2
-lbC057BE6:
-	MOVE.L	#dynamicBlitterObjectConfigBuffer,A3
+	BEQ	wheelAnimationDone
+	SUB.B	wheelAnimationSpeed,D0
+	MOVE.B	D0,wheelAnimationFrame
+	ADD.B	#$08,wheelAnimationSpeed
+renderWheels:
+	MOVE.B	wheelAnimationFrame,D2
+renderWheelStrip:
+	MOVE.L	#wheelGraphicsConfigTable,A3
 	MOVE.W	D2,D3
 	SUB.W	#$0030,D3
 	MOVE.W	D3,(A3)
@@ -15785,21 +15785,21 @@ lbC057BE6:
 	MOVE.W	D3,$0010(A3)
 	MOVE.W	D3,$0030(A3)
 	CMP.W	#$0010,$0010(A3)
-	BLT	lbC057C46
+	BLT	wheelAnimationDone
 	MOVE.B	#$14,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$16,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	CMP.W	#$0010,(A3)
-	BLT	lbC057C46
+	BLT	wheelAnimationDone
 	MOVE.B	#$13,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$15,D0
-	JSR	configureDisplayMode
+	JSR	renderMaskedGraphicsObject
 	SUB.B	#$10,D2
-	BRA	lbC057BE6
+	BRA	renderWheelStrip
 
-lbC057C46:
+wheelAnimationDone:
 	RTS
 
 setPixelColor:
@@ -16011,7 +16011,7 @@ lbC057E76:
 	CMP.W	D4,D5
 	BGT	lbC057E8E
 	BEQ	lbC057F12
-	TST.B	lbB00D438
+	TST.B	trackRenderingEnableFlag
 	BPL	lbC057F12
 	BRA	lbC057F12
 
@@ -16168,7 +16168,7 @@ lbC058028:
 	CMP.W	D4,D5
 	BGT	lbC058040
 	BEQ	lbC0580C4
-	TST.B	lbB00D438
+	TST.B	trackRenderingEnableFlag
 	BPL	lbC0580C4
 	BRA	lbC0580DA
 
@@ -16237,7 +16237,7 @@ drawClippedLine:
 	MOVE.L	lineDrawingBufferPointer,A0
 	CMP.L	#memory_60A8,A0
 	BLT	lbC0581EC
-	TST.B	lbB00D477
+	TST.B	lineDrawingModeFlag
 	BMI	lbC0581EC
 	MOVE.L	#$80000000,$00(A1,D0.W)
 	CLR.W	D1
@@ -16614,7 +16614,7 @@ lbC05855C:
 	ADD.W	D4,D5
 	MOVE.W	#$0000,D4
 	MOVE.W	(SP)+,D3
-	TST.B	lbB00D477
+	TST.B	lineDrawingModeFlag
 	BPL	lbC058572
 	MOVE.W	D5,D3
 	MOVE.W	D5,(A2)
@@ -16678,7 +16678,7 @@ lbC0585EC:
 	ADD.W	D4,D5
 	MOVE.W	#$0100,D4
 	MOVE.W	(SP)+,D3
-	TST.B	lbB00D477
+	TST.B	lineDrawingModeFlag
 	BPL	lbC058602
 	MOVE.W	D5,D3
 	MOVE.W	D5,(A2)
@@ -16741,7 +16741,7 @@ lbC058676:
 	MOVE.W	D7,D3
 	SUB.W	(SP)+,D3
 	SUBQ.W	#$01,D3
-	TST.B	lbB00D477
+	TST.B	lineDrawingModeFlag
 	BPL	lbC058694
 	MOVE.W	D7,$0002(A2)
 	BRA	lbC0586A2
@@ -16802,7 +16802,7 @@ lbC05870A:
 	MOVE.W	D7,D3
 	SUB.W	(SP)+,D3
 	SUBQ.W	#$01,D3
-	TST.B	lbB00D477
+	TST.B	lineDrawingModeFlag
 	BPL	lbC058728
 	MOVE.W	D7,$0002(A2)
 	BRA	lbC058736
@@ -16978,12 +16978,12 @@ initializeRenderBuffer:
 	RTS
 
 manageRenderBounds:
-	MOVE.B	#$FF,lbB00D47C
+	MOVE.B	#$FF,previousSegmentIndex
 	MOVE.W	renderDataPointer,D0
 lbC0588FE:
 	MOVE.L	#renderCommandQueue,A0
 	SUB.W	#$0020,D0
-	CMP.W	#$FF00,lbW0557DE
+	CMP.W	#$FF00,minBoundaryDistance
 	BLT	lbC058922
 	BTST	#$05,$1E(A1,D0.W)
 	BNE	lbC058922
@@ -17001,10 +17001,10 @@ processTrackSegments:
 	MOVE.B	lbB00D524,D4
 	ASL.B	#$02,D4
 lbC05894A:
-	MOVE.B	D4,lbB00D47C
+	MOVE.B	D4,previousSegmentIndex
 	MOVE.B	#$00,processedSegmentIndices1
 	MOVE.W	#$0030,renderDataPointer
-	MOVE.B	lbB00D460,D1
+	MOVE.B	renderingLoopIndex,D1
 	BEQ	lbC058A14
 	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.W	D1,D0
@@ -17032,8 +17032,8 @@ generateTrackEdgeLines:
 	MOVE.B	lbB00D524,D4
 	ASL.B	#$02,D4
 lbC0589C0:
-	MOVE.B	D4,lbB00D47C
-	TST.B	lbB00D47C
+	MOVE.B	D4,previousSegmentIndex
+	TST.B	previousSegmentIndex
 	BNE	lbC0589D6
 	JSR	manageRenderBounds
 lbC0589D6:
@@ -17044,7 +17044,7 @@ lbC0589E2:
 	BPL	lbC058A14
 lbC0589EA:
 	MOVE.B	#$80,$00(A3,D1.W)
-	CMP.B	lbB00D47C,D1
+	CMP.B	previousSegmentIndex,D1
 	BCS	lbC058A00
 	JSR	manageRenderBounds
 lbC058A00:
@@ -17578,9 +17578,9 @@ lbC0591B0:
 	MOVE.W	#$0000,renderDataPointer
 	MOVE.W	#$0004,D1
 	MOVE.W	#$0006,D2
-	MOVE.B	#$80,lbB00D477
+	MOVE.B	#$80,lineDrawingModeFlag
 	JSR	drawClippedLine
-	MOVE.B	#$00,lbB00D477
+	MOVE.B	#$00,lineDrawingModeFlag
 	MOVE.L	lineDrawingBufferPointer,A3
 	MOVE.L	A3,A4
 	MOVE.L	(A1),D0
@@ -17626,7 +17626,7 @@ lbC05925C:
 	BMI	lbC0592F2
 	MOVE.B	#$0D,D0
 	JSR	setupBitplaneMasks
-	JSR	lbC05938C
+	JSR	expandMasksToLongwords
 fillLoop1:
 	LEA	$1F40(A4),A0
 	LEA	$3E80(A4),A1
@@ -17668,7 +17668,7 @@ fillLoop1:
 lbC0592F2:
 	MOVE.B	#$07,D0
 	JSR	setupBitplaneMasks
-	JSR	lbC05938C
+	JSR	expandMasksToLongwords
 	MOVE.W	lbB00D558,D4
 	SUBQ.B	#$01,D4
 	BMI	lbC05936A
@@ -17723,7 +17723,7 @@ lbC05936A:
 lbC05938A:
 	RTS
 
-lbC05938C:
+expandMasksToLongwords:
 	MOVE.L	D6,D0
 	MOVE.L	D6,D1
 	SWAP	D1
@@ -17749,7 +17749,7 @@ renderPlayerCarModel:
 	MOVE.W	renderDataPointer,-(SP)
 	MOVE.W	#$05E0,renderDataPointer
 	JSR	clampAndSetupCoordinates
-	MOVE.B	#$80,lbB00D438
+	MOVE.B	#$80,trackRenderingEnableFlag
 	MOVE.W	#$05E0,renderDataPointer
 	TST.B	lbB00D4BA
 	BNE	lbC0594B8
@@ -18270,7 +18270,7 @@ lbC059A24:
 lbC059A2E:
 	JSR	renderQuadrilateral
 lbC059A34:
-	MOVE.B	#$00,lbB00D438
+	MOVE.B	#$00,trackRenderingEnableFlag
 	MOVE.W	(SP)+,renderDataPointer
 lbC059A42:
 	RTS
@@ -18574,7 +18574,7 @@ lbC059D9A:
 
 lbC059DAA:
 	MOVE.W	lbW05B3CC,D2
-	MOVE.L	#lbL05B4FC,A4
+	MOVE.L	#renderDataBuffer,A4
 lbC059DB6:
 	MOVE.W	$00(A4,D2.W),D0
 	BPL	lbC059DCC
@@ -18628,7 +18628,7 @@ lbC059E3C:
 	RTS
 
 lbC059E44:
-	MOVE.B	#$00,lbB05B3CA
+	MOVE.B	#$00,scanlineCounter
 	MOVE.L	A1,lbL05B3F4
 	MOVE.L	A2,lbL05B3F0
 	SUB.L	A2,A1
@@ -18638,8 +18638,8 @@ lbC059E44:
 	MOVE.B	lbB05B3EA,D6
 	AND.B	#$40,D6
 	EOR.B	#$40,D6
-	MOVE.L	#lbL05B4FC,A4
-	MOVE.L	#lbL05B47C,A0
+	MOVE.L	#renderDataBuffer,A4
+	MOVE.L	#edgeSortBuffer,A0
 	MOVE.L	(A0)+,A5
 	MOVE.L	A0,A3
 	BRA	lbC059F02
@@ -18650,7 +18650,7 @@ lbC059E8A:
 	MOVE.W	(A5),D0
 	CMP.W	$0002(A5),D0
 	BNE	lbC059EB2
-	CMP.L	#lbL05B47C,A3
+	CMP.L	#edgeSortBuffer,A3
 	BNE	lbC059F02
 	BTST	#$06,lbB05B3EA
 	BNE	lbC059EC8
@@ -18690,7 +18690,7 @@ lbC059F02:
 	BNE	lbC059F18
 	SUB.L	lbL05B3F8,A0
 lbC059F18:
-	CMP.L	#lbL05B47C,A3
+	CMP.L	#edgeSortBuffer,A3
 	BNE	lbC059E8A
 	SUB.W	#$000A,D7
 	BEQ	lbC059F8C
@@ -18715,8 +18715,8 @@ lbC059F52:
 	JSR	lbC059DAA
 	MOVE.W	D0,lbW05B3CE
 	BMI	lbC059F88
-	MOVE.L	$06(A4,D1.W),lbL05B3D0
-	MOVE.L	$02(A4,D1.W),lbL05B3D4
+	MOVE.L	$06(A4,D1.W),currentEdgePointer1
+	MOVE.L	$02(A4,D1.W),currentEdgePointer2
 lbC059F88:
 	BRA	lbC059F9C
 
@@ -18778,16 +18778,16 @@ lbC05A010:
 	MOVE.L	A6,-(SP)
 	MOVE.L	A3,-(SP)
 	MOVE.L	A2,-(SP)
-	MOVE.L	lbL05B3D0,-(SP)
-	ADDQ.B	#$01,lbB05B3CA
-	MOVE.L	lbL05B3D4,A2
+	MOVE.L	currentEdgePointer1,-(SP)
+	ADDQ.B	#$01,scanlineCounter
+	MOVE.L	currentEdgePointer2,A2
 	MOVE.L	(A2),A3
 	ADD.L	#$00000008,A3
 	JSR	lbC059DAA
 	MOVE.W	D0,lbW05B3CE
 	BMI	lbC05A066
-	MOVE.L	$06(A4,D1.W),lbL05B3D0
-	MOVE.L	$02(A4,D1.W),lbL05B3D4
+	MOVE.L	$06(A4,D1.W),currentEdgePointer1
+	MOVE.L	$02(A4,D1.W),currentEdgePointer2
 lbC05A066:
 	BRA	lbC05A010
 
@@ -18830,7 +18830,7 @@ lbC05A0D0:
 	CMP.W	D4,D5
 	BGT	lbC05A0E8
 	BEQ	lbC05A16C
-	TST.B	lbB00D438
+	TST.B	trackRenderingEnableFlag
 	BPL	lbC05A16C
 	BRA	lbC05A16C
 
@@ -18887,21 +18887,21 @@ lbC05A16C:
 	CMP.L	viewportTopAddress,A6
 	BGE	lbC05A010
 lbC05A182:
-	TST.B	lbB05B3CA
+	TST.B	scanlineCounter
 	BEQ	lbC05A1CC
 	MOVE.L	(SP)+,A1
 	MOVE.L	(SP)+,A2
 	MOVE.L	(SP)+,A3
 	MOVE.L	(SP)+,A6
 	MOVE.W	(SP)+,lbB00D55A
-	SUBQ.B	#$01,lbB05B3CA
+	SUBQ.B	#$01,scanlineCounter
 	MOVE.L	(A1),A0
 	ADD.L	#$00000008,A0
 	JSR	lbC059DAA
 	MOVE.W	D0,lbW05B3CE
 	BMI	lbC05A1C8
-	MOVE.L	$06(A4,D1.W),lbL05B3D0
-	MOVE.L	$02(A4,D1.W),lbL05B3D4
+	MOVE.L	$06(A4,D1.W),currentEdgePointer1
+	MOVE.L	$02(A4,D1.W),currentEdgePointer2
 lbC05A1C8:
 	BRA	lbC05A010
 
@@ -18911,14 +18911,14 @@ lbC05A1CC:
 	RTS
 
 lbC05A1D2:
-	TST.B	lbB05B3CA
+	TST.B	scanlineCounter
 	BEQ	lbC05A1CC
 	MOVE.L	(SP)+,A1
 	MOVE.L	(SP)+,A2
 	MOVE.L	(SP)+,A3
 	MOVE.L	(SP)+,A6
 	MOVE.W	(SP)+,lbB00D55A
-	SUBQ.B	#$01,lbB05B3CA
+	SUBQ.B	#$01,scanlineCounter
 	MOVE.L	(A1),A0
 	ADD.L	#$00000008,A0
 	BRA	lbC05A1D2
@@ -19046,7 +19046,7 @@ lbC05A380:
 	BRA	lbC05A36A
 
 lbC05A3A0:
-	MOVE.L	#lbL05B47C,A1
+	MOVE.L	#edgeSortBuffer,A1
 	MOVE.L	A1,A2
 	MOVE.B	#$0F,D5
 	BTST	#$00,$1C(A4,D3.W)
@@ -19154,7 +19154,7 @@ lbC05A516:
 	BRA	lbC05A500
 
 lbC05A536:
-	MOVE.L	#lbL05B47C,A1
+	MOVE.L	#edgeSortBuffer,A1
 	MOVE.L	A1,A2
 	MOVE.B	#$0F,D5
 	BTST	#$00,$1C(A4,D3.W)
@@ -19244,7 +19244,7 @@ lbC05A680:
 
 renderTrackSurface:
 	MOVE.B	#$00,renderingFlag
-	MOVE.B	#$00,lbB00D461
+	MOVE.B	#$00,segmentPropertyFlags
 	MOVE.B	#$80,lbB00D4D2
 	MOVE.L	#renderCommandQueue,A4
 	MOVE.W	renderDataPointer,D3
@@ -19253,15 +19253,15 @@ renderTrackSurface:
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
 	BEQ	lbC05A80C
-	MOVE.L	#lbL05B47C,A1
+	MOVE.L	#edgeSortBuffer,A1
 	MOVE.L	A1,A2
 	MOVE.B	#$01,D5
 	BTST	#$00,$1C(A4,D3.W)
 	BEQ	lbC05A6D6
 	MOVE.B	#$02,D5
 lbC05A6D6:
-	MOVE.B	$1E(A4,D3.W),lbB00D461
-	BTST	#$05,lbB00D461
+	MOVE.B	$1E(A4,D3.W),segmentPropertyFlags
+	BTST	#$05,segmentPropertyFlags
 	BEQ	lbC05A6EE
 	MOVE.B	#$00,D5
 lbC05A6EE:
@@ -19341,7 +19341,7 @@ lbC05A7FC:
 	JSR	lbC059E44
 lbC05A80C:
 	MOVE.B	#$00,lbB00D4D2
-	BTST	#$00,lbB00D461
+	BTST	#$00,segmentPropertyFlags
 	BEQ	lbC05A826
 	JSR	renderTrackSurfaceEdge
 lbC05A826:
@@ -19818,7 +19818,7 @@ renderMountainHorizon:
 	MOVE.W	lbW00D542,D0
 	ASR.W	#$03,D0
 	NEG.W	D0
-	MOVE.W	D0,mountainShapeData
+	MOVE.W	D0,mountainScreenY
 	MOVE.L	#mountainHorizontalAngles,A0
 	MOVE.B	cameraAngleY,D6
 	SUB.B	#$1C,D6
@@ -19853,7 +19853,7 @@ lbC05AE6A:
 	MOVE.L	#coordinateLookupTable,A4
 	MOVE.L	#transformedVertexBounds,A5
 	MOVE.W	mountainScreenX,D4
-	MOVE.W	mountainShapeData,D5
+	MOVE.W	mountainScreenY,D5
 lbC05AED2:
 	MOVE.W	(A6)+,D0
 	BPL	lbC05AEDA
@@ -19945,14 +19945,13 @@ lbC05AFF4:
 	RTS
 
 loadMountainData:
-	MOVE.B	currentTrackID,D1
+	;MOVE.B	currentTrackID,D1
 	MOVE.B	#$00,D1
 	MOVE.L	#trackMountainDataTable,A1
 	ASL.B	#$02,D1
 	MOVE.L	$00(A1,D1.W),A2
 	MOVE.B	(A2)+,D3
 	MOVE.B	D3,mountainSegmentCount
-	beq	loadMountainDataDone		; Fixed
 	MOVE.L	#mountainHorizontalAngles,A0
 	MOVE.L	#mountainShapeIndices,A1
 	MOVE.W	#$0000,D1
@@ -19977,9 +19976,9 @@ lbC05B61A:
 	CMP.W	#$0034,D4
 	BNE	lbC05B606
 	MOVE.L	A1,-(SP)
-	MOVE.L	#image0,A0
+	MOVE.L	#imageMainGameBackground,A0
 	MOVE.L	#bitplaneMaskTable,A1
-	JSR	decompressBlitterObjectToMask
+	JSR	decompressRLEObjectToMask
 	MOVE.L	(SP)+,A1
 	MOVE.W	#$000A,D4
 lbC05B63C:
@@ -20161,7 +20160,7 @@ lbC05B808:
 	BNE	lbC05B808
 	RTS
 
-configureDisplayMode:
+renderMaskedGraphicsObject:
 	MOVE.L	D5,-(SP)
 	MOVE.W	D1,-(SP)
 	MOVEM.L	A4-A6,-(SP)
@@ -20221,7 +20220,7 @@ lbC05B8A4:
 	MOVE.L	(SP)+,D5
 	RTS
 
-blitObjectColumn:
+renderObjectColumn:
 	MOVE.W	(A1)+,D0
 	SWAP	D0
 	MOVE.W	#$FFFF,D0
@@ -20258,7 +20257,7 @@ blitObjectColumn:
 	MOVE.W	D7,D5
 	MOVE.W	D0,D7
 	SWAP	D7
-	CMP.W	#$0010,lbW05BA68
+	CMP.W	#$0010,renderGraphicsCurrentX
 	BCC	lbC05B96E
 	MOVE.W	(A0),D0
 	SWAP	D0
@@ -20283,8 +20282,8 @@ lbC05B96E:
 lbC05B974:
 	MOVE.L	(SP)+,D4
 	MOVE.L	(SP)+,D6
-	ADDQ.W	#$01,lbW05BA68
-	CMP.W	#$0010,lbW05BA68
+	ADDQ.W	#$01,renderGraphicsCurrentX
+	CMP.W	#$0010,renderGraphicsCurrentX
 	BCC	lbC05B9B6
 	MOVE.W	(A0),D0
 	SWAP	D0
@@ -20303,10 +20302,10 @@ lbC05B974:
 	SWAP	D0
 	MOVE.W	D0,$3E80(A0)
 lbC05B9B6:
-	SUBQ.W	#$01,lbW05BA68
+	SUBQ.W	#$01,renderGraphicsCurrentX
 	RTS
 
-renderBlitterObjectAtPosition:
+renderGraphicsObjectAtPosition:
 	MOVE.W	D1,-(SP)
 	MOVE.W	D2,-(SP)
 	AND.W	#$00FF,D0
@@ -20336,23 +20335,23 @@ renderBlitterObjectAtPosition:
 	ASR.W	#$04,D0
 	SUBQ.W	#$02,D0
 	MOVE.W	D0,lbW05BA66
-	MOVE.W	D0,lbW05BA68
+	MOVE.W	D0,renderGraphicsCurrentX
 	MOVE.W	D5,D0
 	SUB.W	#$0010,D0
-	MOVE.W	D0,lbW05BA6A
+	MOVE.W	D0,renderGraphicsCurrentY
 lbC05BA28:
 	MOVE.L	A0,A2
 	MOVE.W	A6,D1
-	CMP.W	#$0080,lbW05BA6A
+	CMP.W	#$0080,renderGraphicsCurrentY
 	BCC	lbC05BA48
 lbC05BA38:
-	JSR	blitObjectColumn
-	ADDQ.W	#$01,lbW05BA68
+	JSR	renderObjectColumn
+	ADDQ.W	#$01,renderGraphicsCurrentX
 	DBRA	D1,lbC05BA38
 lbC05BA48:
-	MOVE.W	lbW05BA66,lbW05BA68
+	MOVE.W	lbW05BA66,renderGraphicsCurrentX
 	LEA	$0028(A2),A0
-	ADDQ.W	#$01,lbW05BA6A
+	ADDQ.W	#$01,renderGraphicsCurrentY
 	DBRA	D2,lbC05BA28
 	MOVE.W	(SP)+,D2
 	MOVE.W	(SP)+,D1
@@ -20792,10 +20791,10 @@ lbB011980:
 	dc.b	$00,$81,$81,$81,$81,$81,$81,$81,$81,$81,$81,$00,$00,$00
 	dc.b	$00,$00,$00,$81,$FF,$00,$00,$00,$00,$00,$00,$FF,$30,$18
 	dc.b	$0C,$06,$0C,$18,$30,$00,$80,$00
-image0Palette:
+imageMainGameBackgroundPalette:
 	dc.w	$0000,$0443,$0554,$0770,$0451,$0233,$0257,$0247,$0123,$0200
 	dc.w	$0311,$0422,$0644,$0332,$0555,$0777
-image0:	incbin	"image0"
+imageMainGameBackground:	incbin	"image0"
 imageMenuScreenPalette:
 	dc.w	$0000,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
 	dc.w	$0240,$0021,$0046,$0025,$0710,$0500,$0740
@@ -20803,27 +20802,24 @@ imageMenuScreen:
 	incbin	"imageMenuScreen"
 alternateFontBitmapData:
 	incbin	"alternateFontBitmapData"
-image2Palette:
+imageTrackPreviewBackgroundPalette:
 	dc.w	$0022,$0443,$0554,$0770,$0123,$0222,$0030,$0247,$0000
 	dc.w	$0200,$0311,$0050,$0555,$0332,$0333,$0777
-image2:	incbin	"image2"
-image3Palette:
+imageTrackPreviewBackground:	incbin	"image2"
+imageStandingsBackgroundPalette:
 	dc.w	$0000,$0221,$0332,$0443,$0034,$0110,$0030,$0770,$0000
 	dc.w	$0200,$0311,$0070,$0555,$0221,$0333,$0777
-image3:	incbin	"image3"
+imageStandingsBackground:	incbin	"image3"
 imagePlayersPalette:
 	dc.w	$0222,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
 	dc.w	$0240,$0030,$0035,$0025,$0710,$0500,$0740
 imagePlayers:
 	incbin	"imagePlayers"
-lbW0488F8:
-	dc.w	$0007,$8000,$0004,$477C,$0004,$AF3E,$0003,$D7B6,$0005
-	dc.w	$0E4C
-lbL049700:	; FIXME convert to strings
-	dc.l	$1F0E104C,$696E6B20,$6162616E,$646F6E65,$64FF1F0E
-	dc.l	$104C696E,$6B20636F,$6D706C65,$7465FF1F,$11104C69
-	dc.l	$6E6B696E,$67FF1F0F,$10506C65,$61736520,$77616974
-	dc.w	$FF00
+resultScreenPointerTable:
+	dc.l	$00078000,$0004477C,$0004AF3E,$0003D7B6,$00050E4C	; FIXME
+lbL049700:
+	dc.b	$1F,$0E,$10,"Link abandoned",$FF,$1F,$0E,$10,"Link complete",$FF,$1F,$11,$10
+	dc.b	"Linking",$FF,$1F,$0F,$10,"Please wait",$FF,$00
 lbW049A46:
 	dc.w	$0002,$040A,$162A,$4872
 lbW049A4E:
@@ -20906,7 +20902,7 @@ leagueStatisticsTextTable:
 	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced "
 	dc.b	$FF," Wins  ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First      Se"
 	dc.b	"cond        Third",$FF,$00
-lbB04ACF6:
+alternateEndScreenEnabledFlag:
 	dc.b	$80,$00
 coordinateTransformParameter:
 	ds.w	1
@@ -21043,8 +21039,7 @@ DDDDDDDD.MSG:
 LRHBSSBRHJRCS.MSG:
 	dc.b	"L"
 RHBSSBRHJRCSJ.MSG:
-	dc.b	"RHBSSBRHJRCSJDB",$4E,$B9,$00,$06,$77,$0A,$30,$3C,$0F,$9F,$20,$C6,$20
-	dc.b	$C7,$51,$C8,$FF,$FA,$4E,$75
+	dc.b	"RHBSSBRHJRCSJDB"
 lbL051E52:
 	dc.l	$04000408
 lbB051E56:
@@ -21061,9 +21056,9 @@ keycodeTable:
 	dc.b	$03
 	dc.b	$04
 	ds.b	1
-debrisObjectOffsetTable:
+dustCloudOffsetTable:
 	dc.l	$00200020,$00200028,$00180020,$00200020
-debrisObjectAnimSequence:
+dustCloudAnimSequence:
 	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06
 	dc.b	$02,$07
 steeringOffsetTable:
@@ -21163,56 +21158,111 @@ hudDisplayMode2:
 	dc.b	$0A
 hudDisplayMode1:
 	dc.b	$09
-mountainShapeData:
-	dc.w	$0000,$0004,$0000,$0000,$80C8,$0000,$804B,$8019,$8078
+mountainShape0Data:
+	dc.w	$0004,$0000,$0000,$80C8,$0000,$804B,$8019,$8078
 	dc.w	$801E,$0400,$0200,$0404,$0602,$0601,$0504,$0004,$080C
+mountainShape1Data:
 	dc.w	$0004,$0000,$0000,$80C8,$0000,$80FA,$0000,$8050,$801E
 	dc.w	$0500,$0202,$0400,$0602,$0604,$0602,$0403,$0008,$0C05
-	dc.w	$0304,$0C10,$0007,$0000,$0000,$81F4,$0000,$8348,$0000
+	dc.w	$0304,$0C10
+mountainShape2Data:
+	dc.w	$0007,$0000,$0000,$81F4,$0000,$8348,$0000
 	dc.w	$84A6,$0000,$8302,$805C,$8230,$8069,$833E,$80E6,$0A00
 	dc.w	$0202,$0404,$0600,$0A02,$0804,$0806,$0C08,$0A0A,$0C08
 	dc.w	$0C04,$0404,$000C,$1C10,$0503,$0410,$1405,$0408,$1424
-	dc.w	$180F,$031C,$2024,$0006,$0000,$0000,$805A,$0000,$808C
+	dc.w	$180F,$031C,$2024
+mountainShape3Data:
+	dc.w	$0006,$0000,$0000,$805A,$0000,$808C
 	dc.w	$0000,$0000,$8140,$805A,$8140,$808C,$8140,$0700,$0202
 	dc.w	$0400,$0602,$0804,$0A06,$0808,$0A02,$0F04,$0008,$140C
-	dc.w	$0E04,$040C,$1810,$0004,$0000,$0008,$0032,$0000,$028A
+	dc.w	$0E04,$040C,$1810
+mountainShape4Data:
+	dc.w	$0004,$0000,$0008,$0032,$0000,$028A
 	dc.w	$0000,$02BC,$0008,$0402,$0400,$0200,$0604,$0601,$0604
-	dc.w	$0004,$080C,$0180,$004B,$001C,$0104,$0010,$0100,$007D
-	dc.w	$0012,$00C0,$001E,$0180,$0064,$0014,$0136,$0025,$0100
-	dc.w	$0046,$0018,$00D8,$0024,$0180,$00C8,$0027,$00F0,$001F
-	dc.w	$0100,$0032,$000C,$00A8,$001A,$0172,$0070,$0019,$00E6
-	dc.w	$0014,$00FA,$0064,$000C,$00BB,$0012,$0180,$00C6,$001C
-	dc.w	$013B,$0018,$0100,$0023,$0028,$006E,$0037,$0159,$005C
-	dc.w	$002A,$00F0,$001E,$00FA,$002D,$000F,$0080,$000B,$017C
-	dc.w	$0088,$002B,$00D2,$0023,$0100,$004B,$0029,$009B,$0037
-	dc.w	$0064,$019A,$00FA,$002D,$004B,$023F,$00AA,$002D,$00B9
-	dc.w	$0145,$007D,$0046,$0032,$012C,$00A5,$0015,$00FA,$01A4
-	dc.w	$0253,$0181,$002E,$0118,$0034,$019F,$0073,$004B,$0127
-	dc.w	$01F4,$00AF,$0032,$0087,$003C,$00FF,$0048,$0087,$00C5
-	dc.w	$00FA,$0096,$0046,$0069,$0050,$00AA,$005F,$0087,$0113
-	dc.w	$01A9,$0091,$002A,$003C,$0032,$008C,$004D,$0010,$0018
-	dc.w	$0050,$0010,$0050,$0018,$0050,$0010,$0018,$003C,$0010
-	dc.w	$003C,$0018,$003C,$0028,$003C,$0039,$0028,$0039,$003C
-	dc.w	$0039,$0069,$007D,$002A,$0069,$002A,$007D,$002A,$0000
+	dc.w	$0004,$080C
+
+mountainData00:
+	dc.w	$0180,$004B,$001C,$0104,$0010
+mountainData01:
+	dc.w	$0100,$007D,$0012,$00C0,$001E
+mountainData02:
+	dc.w	$0180,$0064,$0014,$0136,$0025
+mountainData03:
+	dc.w	$0100,$0046,$0018,$00D8,$0024
+mountainData04:
+	dc.w	$0180,$00C8,$0027,$00F0,$001F
+mountainData05:
+	dc.w	$0100,$0032,$000C,$00A8,$001A
+mountainData06:
+	dc.w	$0172,$0070,$0019,$00E6,$0014
+mountainData07:
+	dc.w	$00FA,$0064,$000C,$00BB,$0012
+mountainData08:
+	dc.w	$0180,$00C6,$001C,$013B,$0018
+mountainData09:
+	dc.w	$0100,$0023,$0028,$006E,$0037
+mountainData0a:
+	dc.w	$0159,$005C,$002A,$00F0,$001E
+mountainData0b:
+	dc.w	$00FA,$002D,$000F,$0080,$000B
+mountainData0c:
+	dc.w	$017C,$0088,$002B,$00D2,$0023
+mountainData0d:
+	dc.w	$0100,$004B,$0029,$009B,$0037
+	dc.w	$0064,$019A,$00FA,$002D,$004B,$023F,$00AA,$002D
+	dc.w	$00B9,$0145,$007D,$0046,$0032,$012C,$00A5,$0015
+mountainData10:
+	dc.w	$00FA,$01A4,$0253,$0181,$002E,$0118,$0034,$019F,$0073
+mountainData11:
+	dc.w	$004B,$0127,$01F4,$00AF,$0032,$0087,$003C,$00FF,$0048
+mountainData12:
+	dc.w	$0087,$00C5,$00FA,$0096,$0046,$0069,$0050,$00AA,$005F
+mountainData13:
+	dc.w	$0087,$0113,$01A9,$0091,$002A,$003C,$0032,$008C,$004D
+mountainData20:
+	dc.w	$0010,$0018,$0050,$0010,$0050,$0018,$0050
+mountainData21:
+	dc.w	$0010,$0018,$003C,$0010,$003C,$0018,$003C
+mountainData22:
+	dc.w	$0028,$003C,$0039,$0028,$0039,$003C,$0039
+mountainData23:
+	dc.w	$0069,$007D,$002A,$0069,$002A,$007D,$002A
+mountainData30:
+	dc.w	$0000
+
 mountainSilhouetteTable:
-	dc.w	$0006,$979E,$0006,$988A,$0006,$979E,$0006,$9894,$0006
-	dc.w	$979E,$0006,$989E,$0006,$979E,$0006,$98A8,$0006,$979E
-	dc.w	$0006,$98B2,$0006,$979E,$0006,$98BC,$0006,$979E,$0006
-	dc.w	$98C6,$0006,$979E,$0006,$98D0,$0006,$979E,$0006,$98DA
-	dc.w	$0006,$979E,$0006,$98E4,$0006,$979E,$0006,$98EE,$0006
-	dc.w	$979E,$0006,$98F8,$0006,$979E,$0006,$9902,$0006,$979E
-	dc.w	$0006,$990C,$0006,$97C0,$0006,$9902,$0006,$97C0,$0006
-	dc.w	$990C,$0006,$97E8,$0006,$9936,$0006,$97E8,$0006,$9948
-	dc.w	$0006,$97E8,$0006,$995A,$0006,$97E8,$0006,$996C,$0006
-	dc.w	$9832,$0006,$997E,$0006,$9832,$0006,$998C,$0006,$9832
-	dc.w	$0006,$999A,$0006,$9832,$0006,$99A8,$0006,$9868,$0006
-	dc.w	$99B6
+	dc.l	mountainShape0Data,mountainData00
+	dc.l	mountainShape0Data,mountainData01
+	dc.l	mountainShape0Data,mountainData02
+	dc.l	mountainShape0Data,mountainData03
+	dc.l	mountainShape0Data,mountainData04
+	dc.l	mountainShape0Data,mountainData05
+	dc.l	mountainShape0Data,mountainData06
+	dc.l	mountainShape0Data,mountainData07
+	dc.l	mountainShape0Data,mountainData08
+	dc.l	mountainShape0Data,mountainData09
+	dc.l	mountainShape0Data,mountainData0a
+	dc.l	mountainShape0Data,mountainData0b
+	dc.l	mountainShape0Data,mountainData0c
+	dc.l	mountainShape0Data,mountainData0d
+	dc.l	mountainShape1Data,mountainData0c
+	dc.l	mountainShape1Data,mountainData0d
+	dc.l	mountainShape2Data,mountainData10
+	dc.l	mountainShape2Data,mountainData11
+	dc.l	mountainShape2Data,mountainData12
+	dc.l	mountainShape2Data,mountainData13
+	dc.l	mountainShape3Data,mountainData20
+	dc.l	mountainShape3Data,mountainData21
+	dc.l	mountainShape3Data,mountainData22
+	dc.l	mountainShape3Data,mountainData23
+	dc.l	mountainShape4Data,mountainData00
 trackMountainDataTable:
-	dc.w	$0006,$9A88,$0006,$9A88,$2005,$000F,$0D15,$0A1F,$0B25
-	dc.w	$0C2F,$0535,$023F,$0345,$004F,$0155,$045F,$0565,$026F
-	dc.w	$0175,$007F,$0585,$028F,$0395,$049F,$05A5,$00AF,$09B5
-	dc.w	$06BF,$07C5,$08CF,$05D5,$00DF,$03E5,$04EF,$01F5,$02FF
-	dc.w	$0500
+	dc.l	trackMountainCountsAnglesAndIndices,trackMountainCountsAnglesAndIndices
+trackMountainCountsAnglesAndIndices:
+	dc.b	$20,$05,$00,$0F,$0D,$15,$0A,$1F,$0B,$25,$0C,$2F,$05,$35
+	dc.b	$02,$3F,$03,$45,$00,$4F,$01,$55,$04,$5F,$05,$65,$02,$6F
+	dc.b	$01,$75,$00,$7F,$05,$85,$02,$8F,$03,$95,$04,$9F,$05,$A5
+	dc.b	$00,$AF,$09,$B5,$06,$BF,$07,$C5,$08,$CF,$05,$D5,$00,$DF,$03,$E5,$04,$EF,$01,$F5,$02,$FF,$05,$00
 lbL05B7B4:
 	dc.l	$00000000,$0FFF0C88,$00000000,$0FFF0C88
 lbW05B7C4:
@@ -21221,7 +21271,7 @@ gameLoopControl:
 	dc.w	$0020
 lbW05BA6C:
 	dc.w	$0000,$0000,$0001,$0039
-blitterObjectConfigTable:
+objectRenderingParameters:
 	dc.l	$00100077
 lbW05BA76:	EQU	*-2
 	dc.w	$0000,$0000,$0002,$0000,$0001,$0039,$0010,$0077,$0000
@@ -21243,7 +21293,7 @@ audioConfigurationData:
 	dc.w	$0010,$0000,$0007,$000D,$00BE,$0000,$0000,$000E,$0018
 	dc.w	$0000,$0007,$000D,$00BE,$0000,$0000,$000F,$0000,$0000
 	dc.w	$0007,$0004
-dynamicBlitterObjectConfigBuffer:
+wheelGraphicsConfigTable:
 	dc.w	$0010,$0000,$0000,$000F,$0008,$0000,$0007,$0004,$0018
 	dc.w	$0000,$0000,$000F,$0010,$0000,$0007,$000F,$0010,$0000
 	dc.w	$0000,$000F,$0018,$0000,$0007,$000F,$0018,$0000,$0000
@@ -21410,11 +21460,11 @@ lbB00D427:
 	ds.b	3
 lbB00D42A:
 	ds.b	1
-lbB00D42B:
+segmentDirectionTemp1:
 	ds.b	1
-lbB00D42C:
+segmentDirectionTemp2:
 	ds.b	1
-lbB00D42D:
+segmentDirectionSource:
 	ds.b	1
 lbB00D42E:
 	ds.b	4
@@ -21424,7 +21474,7 @@ lbW00D434:
 	ds.w	1
 lbW00D436:
 	ds.w	1
-lbB00D438:
+trackRenderingEnableFlag:
 	ds.b	4
 lbB00D43C:
 	ds.b	1
@@ -21440,15 +21490,15 @@ distanceCharacteristic:
 	ds.b	1
 aiEnabled:
 	ds.b	1
-lbB00D445:
+boundaryCollisionDirectionFlag:
 	ds.b	1
-lbB00D446:
+collisionActiveFlag:
 	ds.b	1
 inputStateFlags:
 	ds.b	1
 segmentRepeatCounter:
 	ds.b	2
-lbB00D44A:
+collisionDistanceTemp:
 	ds.b	3
 segmentSteeringFlags:
 	ds.b	2
@@ -21482,17 +21532,17 @@ displayRowOffset:
 	ds.b	1
 displayTrackID:
 	ds.b	1
-lbB00D460:
+renderingLoopIndex:
 	ds.b	1
-lbB00D461:
+segmentPropertyFlags:
 	ds.b	1
-lbB00D462:
+displayModeActiveFlag:
 	ds.b	1
 gameExitFlag:
 	ds.b	1
 playerInputState:
 	ds.b	1
-lbB00D465:
+networkSyncBitFlag:
 	ds.b	1
 segmentRenderingFlag:
 	ds.b	1
@@ -21504,7 +21554,7 @@ lbB00D469:
 	ds.b	1
 trackModeParameter:
 	ds.b	1
-lbB00D46B:
+networkPlayerStateCache:
 	ds.b	1
 wreckCountdownTimer:
 	ds.b	1
@@ -21528,15 +21578,15 @@ raceCompletionCheckFlag:
 	ds.b	1
 networkConnectionState:
 	ds.b	1
-lbB00D477:
+lineDrawingModeFlag:
 	ds.b	2
 geometryFormatFlag:
 	ds.b	1			; determines packed vs extended format
-lbB00D47A:
+segmentProcessingIndex:
 	ds.b	1
 segmentOrientationPrimary:
 	ds.b	1
-lbB00D47C:
+previousSegmentIndex:
 	ds.b	1
 offTrackCollisionFlag:
 	ds.b	1
@@ -21560,7 +21610,7 @@ maxMenuIndex:
 	ds.b	1
 lbB00D48E:
 	ds.b	1
-lbB00D48F:
+segmentConfigLoadedFlag:
 	ds.b	1
 renderModeFlag:
 	ds.b	1
@@ -21624,7 +21674,7 @@ displayFlags:
 	ds.b	1
 raceResultFlag:
 	ds.b	2
-displayModeParameter:
+raceOutcomeFlags:
 	ds.b	1
 lbB00D4B5:
 	ds.b	1
@@ -21722,9 +21772,9 @@ lbB00D4E6:
 	ds.b	2
 lbB00D4E8:
 	ds.b	1
-lbB00D4E9:
+wheelAnimationSpeed:
 	ds.b	1
-lbB00D4EA:
+wheelAnimationFrame:
 	ds.b	1
 engineEffectFlag:
 	ds.b	1
@@ -21839,11 +21889,11 @@ visualEffectFlags:
 	ds.w	1
 lbB00D558:
 	ds.b	1
-lbB00D559:
+maxRenderingIndex:
 	ds.b	1
 lbB00D55A:
 	ds.b	1
-lbB00D55B:
+trackBaseOffset:
 	ds.b	1
 offsetFromRoadCenter:
 	ds.w	1
@@ -22063,11 +22113,11 @@ lbB00D650:
 	ds.b	2
 lbB00D652:
 	ds.b	2
-lbW00D654:
+velocityAdjustment:
 	ds.w	1
 lbW00D656:
 	ds.w	1
-lbW00D658:
+speedDifferential:
 	ds.w	1
 segmentTargetAngle:
 	ds.w	1
@@ -22367,7 +22417,7 @@ obstacleCount:
 	ds.b	1
 trackFeatureCount:
 	ds.b	2
-lbB00E331:
+networkSyncStateFlag:
 	ds.b	1
 startingSegmentIndex:
 	ds.b	1
@@ -22391,7 +22441,7 @@ checksumAccumulator:
 	ds.w	1
 networkDataCounter1:
 	ds.w	1
-lbW049542:
+savedNetworkCounter:
 	ds.w	1
 networkDataCounter2:
 	ds.w	1
@@ -22437,7 +22487,7 @@ receivedPlayerCommand:
 	ds.b	1
 receivedPlayerState:
 	ds.b	1
-lbB049560:
+receivedInputState:
 	ds.b	1
 lbB049561:
 	ds.b	1
@@ -22445,15 +22495,15 @@ gameStateID:
 	ds.b	1
 gameInitFlag2:
 	ds.b	1
-lbB049564:
+networkProtocolState:
 	ds.b	1
-lbB049565:
+localPlayerStateCache:
 	ds.b	1
-lbB049566:
+localInputStateCache:
 	ds.b	1
 raceSeriesCounter:
 	ds.b	1
-lbB049568:
+localPlayerReadyFlag:
 	ds.b	1
 opponentVisibilityFlag:
 	ds.b	1
@@ -22559,7 +22609,7 @@ lbB0513DC:
 	ds.b	1
 lbB0513DD:
 	ds.b	1
-lbB0528BC:
+menuInitializedFlag:
 	ds.b	2
 vSyncFlag:
 	ds.b	2
@@ -22575,17 +22625,17 @@ lbB053EA5:
 	ds.b	1
 randomSeed3:
 	ds.b	2
-lbB0544B4:
+currentSaveSlotIndex:
 	ds.b	1
 disableDirectionalInputFlag:
 	ds.b	1
-lbB0544B6:
+selectedSaveSlotIndex:
 	ds.b	1
 lbB0544B7:
 	ds.b	1
 lbB0544BA:
 	ds.b	1
-lbB0544BB:
+saveSlotHighlightFlag:
 	ds.b	1
 lbB0544BC:
 	ds.b	2
@@ -22597,11 +22647,11 @@ lbB0555E1:
 	ds.b	1
 offTrackFrameThreshold:
 	ds.b	2
-lbW0557DE:
+minBoundaryDistance:
 	ds.w	1
 lbB0557E0:
 	ds.b	2
-lbB055E30:
+suppressMenuTextFlag:
 	ds.b	2
 trackPreviewParameters:
 	ds.b	80
@@ -22657,15 +22707,17 @@ mountainSegmentCount:
 	ds.b	1
 mountainScreenX:
 	ds.w	1
-lbB05B3CA:
+mountainScreenY:
+	ds.w	1
+scanlineCounter:
 	ds.b	2
 lbW05B3CC:
 	ds.w	1
 lbW05B3CE:
 	ds.w	1
-lbL05B3D0:
+currentEdgePointer1:
 	ds.l	1
-lbL05B3D4:
+currentEdgePointer2:
 	ds.l	1
 segmentAlternateRenderFlag:
 	ds.b	2
@@ -22693,9 +22745,9 @@ lbL05B3F8:
 	ds.l	1
 	ds.l	2			; Fixed
 	ds.l	32
-lbL05B47C:
+edgeSortBuffer:
 	ds.l	32
-lbL05B4FC:
+renderDataBuffer:
 	ds.l	64
 lbB05B840:
 	ds.b	1
@@ -22703,9 +22755,9 @@ lbB05B841:
 	ds.b	1
 lbW05BA66:
 	ds.w	1
-lbW05BA68:
+renderGraphicsCurrentX:
 	ds.w	1
-lbW05BA6A:
+renderGraphicsCurrentY:
 	ds.w	1
 graphicsDataTable:
 	ds.b	216
