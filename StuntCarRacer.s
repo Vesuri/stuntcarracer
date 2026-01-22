@@ -370,15 +370,15 @@ verticalBlankInterruptDone:
 	RTS
 
 copperInterrupt:
-	TST.B	lbB00D116
+	TST.B	copperlistUpdatePendingFlag
 	BEQ	lbC000A46
 	MOVEM.L	D0-D7/A0-A6,-(SP)
 	JSR	updateCopperlistPointers
-	CLR.B	lbB00D116
-	TST.B	lbB05B841
+	CLR.B	copperlistUpdatePendingFlag
+	TST.B	spriteUpdatePendingFlag
 	BEQ	lbC000A42
 	JSR	updateSpritePositions
-	CLR.B	lbB05B841
+	CLR.B	spriteUpdatePendingFlag
 lbC000A42:
 	MOVEM.L	(SP)+,D0-D7/A0-A6
 lbC000A46:
@@ -655,13 +655,13 @@ setupFrameBufferAddresses:
 	MOVE.L	currentFrameBuffer,D3
 	ADD.L	#$00000284,D3
 	MOVE.L	D3,viewportTopAddress
-	MOVE.L	secondaryFrameBuffer,lbL00D112
-	MOVE.B	#$80,lbB00D116
+	MOVE.L	secondaryFrameBuffer,visibleFrameBuffer
+	MOVE.B	#$80,copperlistUpdatePendingFlag
 	RTS
 
 updateCopperlistPointers:
 	MOVEM.L	D3/D4,-(SP)
-	MOVE.L	lbL00D112,D0
+	MOVE.L	visibleFrameBuffer,D0
 	MOVE.L	#copperlist,A0
 	MOVE.W	#$0003,D4
 lbC00D0F0:
@@ -2042,7 +2042,7 @@ lbC049EF8:
 	TST.B	localPlayerReadyFlag
 	RTS
 
-updateNetworkTiming:
+updateOpponentVisibility:
 	MOVE.B	#$00,opponentVisibilityFlag
 	TST.B	networkGameMode
 	BEQ	lbC049F40
@@ -6094,7 +6094,7 @@ lbC04E122:
 	BMI	lbC04E16A
 	MOVE.B	#$40,D0
 lbC04E16A:
-	MOVE.B	D0,audioPitchModifier
+	MOVE.B	D0,wheelBouncePhaseAccumulator
 	RTS
 
 lbC04E172:
@@ -6415,7 +6415,7 @@ lbC04ECA4:
 	MOVE.B	#$80,trackSideIndicator
 initializeGameSystemsAndMainLoop:
 	JSR	initializeAudioSystem
-	JSR	initializeDisplayBuffers
+	JSR	updateWheelSuspensionPosition
 	JSR	initializeDebrisParticlePositions
 	JSR	processGameFrame
 	JSR	updateGameTimingAndDirection
@@ -6473,7 +6473,7 @@ lbC04EE22:
 	JSR	setupGameDisplay2
 	MOVE.B	#$C0,raceOutcomeFlags
 lbC04EE34:
-	JSR	setDisplayMode51
+	JSR	renderMessagePanel
 	MOVE.B	#$3C,D2
 	MOVE.B	#$04,D0
 	JSR	displayGameMessage
@@ -6593,7 +6593,7 @@ lbC04F050:
 	CMP.B	#$0B,D2
 	BNE	lbC04F050
 	MOVE.W	#$007F,previousEffectParameter
-	MOVE.B	#$BA,visualEffectBaseValue
+	MOVE.B	#$BA,wheelBaseHeight
 	MOVE.B	#$02,D1
 lbC04F076:
 	MOVE.B	#$09,D0
@@ -6779,11 +6779,11 @@ lbC04F310:
 	MOVE.W	D0,-(SP)
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
-	JSR	setDisplayMode51
+	JSR	renderMessagePanel
 	MOVE.B	#$4C,D2
 	MOVE.B	#$02,D0
 	JSR	setMessageParameters
-	JSR	lbC04FE08
+	JSR	updateGameMessageDisplay
 	MOVE.L	(SP)+,currentFrameBuffer
 	JSR	lbC049486
 	MOVE.W	(SP)+,D0
@@ -7460,7 +7460,7 @@ setMessageParameters:
 
 displayGameMessage:
 	JSR	setMessageParameters
-lbC04FE08:
+updateGameMessageDisplay:
 	TST.B	lbB00D48E
 	BMI	lbC04FE14
 lbC04FE12:
@@ -7536,8 +7536,8 @@ lbC04FF14:
 	JSR	setBackgroundColor
 	RTS
 
-updateCarDirection:
-	MOVE.B	lbB00D4DB,D0
+advanceWheelRotationFrame:
+	MOVE.B	wheelRotationFrame,D0
 	TST.W	carVelocity
 	BPL	lbC050062
 	SUBQ.B	#$01,D0
@@ -7551,13 +7551,13 @@ lbC050062:
 	BCS	lbC050070
 	MOVE.B	#$00,D0
 lbC050070:
-	MOVE.B	D0,lbB00D4DB
+	MOVE.B	D0,wheelRotationFrame
 	RTS
 
-initializeDisplayBuffers:
+updateWheelSuspensionPosition:
 	MOVE.B	#$00,D1
 	MOVE.W	#$0030,D3
-	MOVE.L	#lbW05BA6C,A2
+	MOVE.L	#graphicsRenderingParameters,A2
 lbC050086:
 	MOVE.L	#clampedDistanceX,A0
 	MOVE.W	$00(A0,D1.W),D0
@@ -7577,10 +7577,10 @@ lbC0500A8:
 	ROL.W	#$05,D0
 	AND.B	#$1F,D0
 	NOT.B	D0
-	ADD.B	visualEffectBaseValue,D0
-	MOVE.B	audioPitchModifier,D4
+	ADD.B	wheelBaseHeight,D0
+	MOVE.B	wheelBouncePhaseAccumulator,D4
 	ASL.W	#$01,D4
-	MOVE.B	D4,audioPitchModifier
+	MOVE.B	D4,wheelBouncePhaseAccumulator
 	BTST	#$08,D4
 	BNE	lbC0500E4
 	CMP.B	#$BA,D0
@@ -7613,7 +7613,7 @@ lbC05011C:
 	ADDQ.B	#$02,D1
 	CMP.B	#$04,D1
 	BLT	lbC050086
-	MOVE.B	#$80,lbB05B841
+	MOVE.B	#$80,spriteUpdatePendingFlag
 	RTS
 
 initiateCarWreck:
@@ -7628,7 +7628,7 @@ lbC050174:
 	MOVE.B	#$02,D0
 	MOVE.B	D0,postWreckStateFlag
 	MOVE.B	#$92,D0
-	MOVE.B	D0,visualEffectBaseValue
+	MOVE.B	D0,wheelBaseHeight
 	MOVE.B	#$82,D0
 	MOVE.B	D0,visualEffectFlags
 	MOVE.B	#$3C,D0
@@ -8574,7 +8574,7 @@ lbC05128A:
 	MOVE.L	currentFrameBuffer,-(SP)
 	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
 lbC0512A8:
-	JSR	setDisplayMode51
+	JSR	renderMessagePanel
 	MOVE.B	#$64,D2
 	MOVE.B	#$04,D0
 	JSR	displayGameMessage
@@ -8584,7 +8584,7 @@ lbC0512C4:
 	JSR	delayWithParam
 	MOVE.B	#$04,D1
 lbC0512D2:
-	JSR	setDisplayMode51
+	JSR	renderMessagePanel
 	MOVE.B	D1,lbB0513DC
 	MOVE.L	#t.MSG,A1
 	MOVE.B	$00(A1,D1.W),D2
@@ -8605,7 +8605,7 @@ lbC0512F6:
 	BNE	lbC051358
 	CMP.B	$00(A2,D2.W),D0
 	BEQ	lbC05135C
-	JSR	setDisplayMode51
+	JSR	renderMessagePanel
 	MOVE.B	#$D4,D2
 	MOVE.B	#$04,D0
 	JSR	displayGameMessage
@@ -8636,7 +8636,7 @@ lbC051396:
 	MOVE.B	lbB0513DC,D1
 	SUBQ.B	#$01,D1
 	BPL	lbC0512D2
-	JSR	setDisplayMode51
+	JSR	renderMessagePanel
 	SUBQ.B	#$01,lbB0513DD
 	BMI	lbC0513C6
 	MOVE.B	#$C4,D2
@@ -8652,7 +8652,7 @@ lbC0513C6:
 lbC0513DA:
 	RTS
 
-setDisplayMode51:
+renderMessagePanel:
 	MOVE.B	#$33,D0
 	JMP	renderMaskedGraphicsObject
 
@@ -9235,7 +9235,7 @@ lbC051D4C:
 	ADD.W	#$0010,renderDataPointer
 	MOVE.L	#memory_3D80,lineDrawingBufferPointer
 	JSR	drawTrackSegmentWireframe
-	JSR	processSecondaryRendering
+	JSR	renderTrackNear
 lbC051DA6:
 	MOVE.B	currentTrackCoordinate,D1
 	MOVE.B	maxMenuIndex,D2
@@ -9386,8 +9386,8 @@ lbC05202C:
 	MOVE.L	#$00000000,previousDistanceX
 	MOVE.W	#$0000,previousDistanceZ
 	JSR	calculate3DProjection1
-	MOVE.B	#$B0,wheelAnimationFrame
-	MOVE.B	#$08,wheelAnimationSpeed
+	MOVE.B	#$B0,chainVerticalPosition
+	MOVE.B	#$08,chainLiftVelocity
 	RTS
 
 calculatePlayerDistance:
@@ -9490,12 +9490,12 @@ lbC0521CC:
 	MOVE.B	#$99,D0
 	JSR	lbC052124
 lbC052200:
-	MOVE.B	#$80,displayModeActiveFlag
+	MOVE.B	#$80,boostActiveFlag
 	ASL.W	gasOutputAccumulatorValue
 	RTS
 
 lbC052210:
-	MOVE.B	#$00,displayModeActiveFlag
+	MOVE.B	#$00,boostActiveFlag
 	RTS
 
 displayLapCompletionGraphics:
@@ -9510,7 +9510,7 @@ displayGameObjectDigit:
 	MOVE.B	#$1B,D1
 lbC05222E:
 	MOVE.W	D1,-(SP)
-	MOVE.L	#objectRenderingParameters,A0
+	MOVE.L	#rightWheelWidth,A0
 	MOVE.B	D2,D0
 	ASL.B	#$01,D0
 	ADD.B	D2,D0
@@ -9786,7 +9786,7 @@ lbC0525E6:
 
 processCollisionState:
 	MOVE.B	#$01,crashAudioSampleID		; Set audio sample #1 (crash sound)
-	MOVE.B	audioPitchModifier,D0		; Check audio pitch modifier
+	MOVE.B	wheelBouncePhaseAccumulator,D0		; Check audio pitch modifier
 	BNE	lbC052614		; Skip if non-zero
 	MOVE.B	postWreckStateFlag,D0	; Check if in wreck state
 	BEQ	lbC0525DC		; Exit if no collision
@@ -10507,7 +10507,7 @@ lbC053000:
 	BPL	lbC05301A
 	TST.B	lbB00D4B9
 	BNE	lbC05301A
-	JSR	updateEngineAudio
+	JSR	updateWheelGraphics
 lbC05301A:
 	MOVE.W	gameLoopControl,_custom+dmacon
 	MOVE.W	lbW00D534,D0
@@ -14297,10 +14297,10 @@ lbC0567BC:
 	MOVE.B	lbB00D49E,segmentDepthCounter
 	BRA	lbC056880
 
-	JSR	busyWaitDelay
-	JSR	initializeViewport
-	JSR	renderMountainHorizon
-	JMP	lbC0569E2
+;	JSR	busyWaitDelay
+;	JSR	renderHorizon
+;	JSR	renderMountainHorizon
+;	JMP	lbC0569E2
 
 lbC0567F6:
 	MOVE.B	D0,currentSegmentIndex
@@ -14382,13 +14382,13 @@ lbC05699E:
 	JSR	handleNetworkProtocol
 lbC0569AE:
 	MOVE.W	renderDataPointer,-(SP)
-	JSR	initializeViewport
+	JSR	renderHorizon
 	JSR	renderMountainHorizon
 	MOVE.W	(SP)+,renderDataPointer
-	JSR	updateNetworkTiming
-	JSR	processRenderingPipeline
+	JSR	updateOpponentVisibility
+	JSR	renderTrackFar
 	MOVE.W	lbW05AC2C,renderDataPointer
-	JSR	processSecondaryRendering
+	JSR	renderTrackNear
 lbC0569E2:
 	TST.B	raceStartTimer
 	BNE	lbC0569FC
@@ -14397,71 +14397,71 @@ lbC0569E2:
 	JSR	handleCollisionEffects
 lbC0569FC:
 	JSR	processCollisionState
-	JSR	updateWheelAnimation
-	MOVE.B	#$0D,D0
+	JSR	updateChainAnimation
+	MOVE.B	#$0D,D0				; left top
 	JSR	renderMaskedGraphicsObject
-	MOVE.B	#$0E,D0
+	MOVE.B	#$0E,D0				; right top
 	JSR	renderMaskedGraphicsObject
-	JSR	initializeDisplayBuffers
-	MOVE.B	lbB00D4DB,D0
+	JSR	updateWheelSuspensionPosition
+	MOVE.B	wheelRotationFrame,D0		; right wheel
 	JSR	renderMaskedGraphicsObject
-	MOVE.B	#$05,D0
-	SUB.B	lbB00D4DB,D0
+	MOVE.B	#$05,D0				; left wheel
+	SUB.B	wheelRotationFrame,D0
 	JSR	renderMaskedGraphicsObject
-	MOVE.B	#$0A,D0
+	MOVE.B	#$0A,D0				; engine
 	JSR	renderMaskedGraphicsObject
-	MOVE.B	#$0B,D0
+	MOVE.B	#$0B,D0				; left exhaust
 	JSR	renderMaskedGraphicsObject
-	MOVE.B	#$0C,D0
+	MOVE.B	#$0C,D0				; right exhaust
 	JSR	renderMaskedGraphicsObject
-	TST.B	displayModeActiveFlag
-	BEQ	lbC056AB0
-	MOVE.B	lbB00D469,D0
+	TST.B	boostActiveFlag
+	BEQ	finishHUDRendering
+	MOVE.B	flameAnimationFrame,D0
 	ADDQ.B	#$01,D0
 	CMP.B	#$03,D0
 	BLT	lbC056A7A
 	MOVE.B	#$00,D0
 lbC056A7A:
-	MOVE.B	D0,lbB00D469
+	MOVE.B	D0,flameAnimationFrame
 	MOVE.W	D0,-(SP)
 	ADD.B	#$06,D0
 	CMP.B	#$08,D0
 	BNE	lbC056A92
-	MOVE.B	#$31,D0
+	MOVE.B	#$31,D0				; left flames
 lbC056A92:
 	JSR	renderMaskedGraphicsObject
 	MOVE.W	(SP)+,D0
 	ADD.B	#$08,D0
 	CMP.B	#$0A,D0
 	BNE	lbC056AAA
-	MOVE.B	#$32,D0
+	MOVE.B	#$32,D0				; right flames
 lbC056AAA:
 	JSR	renderMaskedGraphicsObject
-lbC056AB0:
-	JSR	lbC04FE08
+finishHUDRendering:
+	JSR	updateGameMessageDisplay
 	RTS
 
-updateEngineAudio:
+updateWheelGraphics:
 	MOVE.B	wheelSpeed,D0
-	ADD.B	D0,lbB00D4E3
-	BCC	lbC056ACE
-	JSR	updateCarDirection
-lbC056ACE:
-	MOVE.B	lbB00D4DB,D0
+	ADD.B	D0,wheelAnimationAccumulator
+	BCC	selectWheelSprites
+	JSR	advanceWheelRotationFrame
+selectWheelSprites:
+	MOVE.B	wheelRotationFrame,D0
 	ADD.B	#$25,D0
-	CMP.W	#$007E,lbW05BA76
-	BGE	lbC056AE8
+	CMP.W	#$007E,rightWheelHeight
+	BGE	setRightWheelSprite
 	ADD.B	#$06,D0
-lbC056AE8:
+setRightWheelSprite:
 	MOVE.W	#$0000,D1
 	JSR	setSpriteFromTable
 	MOVE.B	#$05,D0
-	SUB.B	lbB00D4DB,D0
+	SUB.B	wheelRotationFrame,D0
 	ADD.B	#$25,D0
-	CMP.W	#$007E,audioConfigurationData
-	BGE	lbC056B10
+	CMP.W	#$007E,leftWheelHeight
+	BGE	setLeftWheelSprite
 	ADD.B	#$06,D0
-lbC056B10:
+setLeftWheelSprite:
 	MOVE.W	#$0001,D1
 	JSR	setSpriteFromTable
 	RTS
@@ -15573,19 +15573,19 @@ lbC057B86:
 	AND.L	$00(A3,D3.W),D0
 	RTS
 
-updateWheelAnimation:
+updateChainAnimation:
 	MOVE.B	raceStartTimer,D0
-	BNE	renderWheels
-	MOVE.B	wheelAnimationFrame,D0
+	BNE	renderChains
+	MOVE.B	chainVerticalPosition,D0
 	CMP.B	#$60,D0
-	BEQ	wheelAnimationDone
-	SUB.B	wheelAnimationSpeed,D0
-	MOVE.B	D0,wheelAnimationFrame
-	ADD.B	#$08,wheelAnimationSpeed
-renderWheels:
-	MOVE.B	wheelAnimationFrame,D2
-renderWheelStrip:
-	MOVE.L	#wheelGraphicsConfigTable,A3
+	BEQ	chainAnimationComplete
+	SUB.B	chainLiftVelocity,D0
+	MOVE.B	D0,chainVerticalPosition
+	ADD.B	#$08,chainLiftVelocity
+renderChains:
+	MOVE.B	chainVerticalPosition,D2
+renderChainSegment:
+	MOVE.L	#chainRenderParams,A3
 	MOVE.W	D2,D3
 	SUB.W	#$0030,D3
 	MOVE.W	D3,(A3)
@@ -15594,21 +15594,21 @@ renderWheelStrip:
 	MOVE.W	D3,$0010(A3)
 	MOVE.W	D3,$0030(A3)
 	CMP.W	#$0010,$0010(A3)
-	BLT	wheelAnimationDone
+	BLT	chainAnimationComplete
 	MOVE.B	#$14,D0
 	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$16,D0
 	JSR	renderMaskedGraphicsObject
 	CMP.W	#$0010,(A3)
-	BLT	wheelAnimationDone
+	BLT	chainAnimationComplete
 	MOVE.B	#$13,D0
 	JSR	renderMaskedGraphicsObject
 	MOVE.B	#$15,D0
 	JSR	renderMaskedGraphicsObject
 	SUB.B	#$10,D2
-	BRA	renderWheelStrip
+	BRA	renderChainSegment
 
-wheelAnimationDone:
+chainAnimationComplete:
 	RTS
 
 setPixelColor:
@@ -17366,7 +17366,7 @@ lbC05917A:
 lbC059186:
 	RTS
 
-initializeViewport:
+renderHorizon:
 	MOVE.W	#$0500,D0
 	MOVE.W	D0,lbW00D8B6
 	NEG.W	D0
@@ -19156,7 +19156,7 @@ lbC05A80C:
 lbC05A826:
 	RTS
 
-processSecondaryRendering:
+renderTrackNear:
 	SUB.W	#$0020,renderDataPointer
 	CMP.W	#$0040,renderDataPointer
 	BLT	lbC05A9BA
@@ -19244,7 +19244,7 @@ lbC05A9AC:
 lbC05A9BA:
 	RTS
 
-processRenderingPipeline:
+renderTrackFar:
 	SUB.W	#$0020,renderDataPointer
 	MOVE.W	renderDataPointer,D3
 	CMP.W	lbW05AC2C,D3
@@ -19280,7 +19280,7 @@ lbC05AA42:
 	JSR	renderLeftTrackSidePanel
 	JSR	renderPlayerCarIfOpponentAhead
 lbC05AA66:
-	BRA	processRenderingPipeline
+	BRA	renderTrackFar
 
 lbC05AA6A:
 	RTS
@@ -19773,7 +19773,7 @@ loadMountainDataDone:
 	RTS
 
 initializeGraphicsData:
-	MOVE.L	#memory_6490,A1
+	MOVE.L	#memory_6490,A1				; cbits
 	MOVE.W	#$0000,D4
 lbC05B606:
 	JSR	loadGraphicsElement
@@ -19798,19 +19798,19 @@ lbC05B63C:
 	RTS
 
 loadGraphicsElement:
-	CLR.B	lbB05B840
-	CMP.W	#$0025,D4
+	CLR.B	loadingHardwareSprite
+	CMP.W	#$0025,D4		; skip hardware sprite graphics at indices 37-48
 	BLT	lbC05B66C
 	CMP.W	#$0030,D4
 	BGT	lbC05B66C
-	MOVE.B	#$80,lbB05B840
+	MOVE.B	#$80,loadingHardwareSprite
 lbC05B66C:
 	MOVE.W	D4,D0
 	ASL.W	#$02,D0
-	MOVE.L	#graphicsDataTable,A5
+	MOVE.L	#graphicsDataTable,A5			; graphic.pointers
 	MOVE.L	A1,$00(A5,D0.W)
 	ASL.W	#$02,D0
-	MOVE.L	#lbW05BA6C,A3
+	MOVE.L	#graphicsRenderingParameters,A3
 	LEA	$00(A3,D0.W),A3
 	MOVE.W	(A3)+,D1
 	MOVE.W	(A3)+,D2
@@ -19826,9 +19826,9 @@ lbC05B66C:
 	ADD.L	D2,A4
 	MOVE.W	(A3)+,D1
 	MOVE.W	(A3)+,D2
-	TST.B	lbB05B840
+	TST.B	loadingHardwareSprite
 	BEQ	lbC05B6BE
-	JMP	lbC05B730
+	JMP	loadHardwareSprite
 
 lbC05B6BE:
 	MOVE.W	D1,D3
@@ -19877,7 +19877,7 @@ lbC05B708:
 	DBRA	D2,lbC05B6BE
 	RTS
 
-lbC05B730:
+loadHardwareSprite:
 	MOVE.W	D2,D6
 	MOVE.W	(A3),D0
 	ASL.W	#$04,D0
@@ -19956,7 +19956,7 @@ lbC05B808:
 	MOVE.L	$00(A0,D1.W),A0
 	MOVE.W	D1,D0
 	ASL.W	#$02,D0
-	MOVE.L	#lbW05BA6C,A1
+	MOVE.L	#graphicsRenderingParameters,A1
 	MOVE.W	$0A(A1,D0.W),D0
 	ADD.W	lbW05B7C4,D0
 	MOVE.B	$0002(A0),D3
@@ -19978,7 +19978,7 @@ renderMaskedGraphicsObject:
 	MOVE.L	#graphicsDataTable,A1
 	MOVE.L	$00(A1,D0.W),A1
 	ASL.W	#$02,D0
-	MOVE.L	#lbW05BA6C,A2
+	MOVE.L	#graphicsRenderingParameters,A2
 	LEA	$04(A2,D0.W),A2
 	MOVE.W	$0004(A2),D0
 	MOVE.W	$0006(A2),D3
@@ -20122,7 +20122,7 @@ renderGraphicsObjectAtPosition:
 	MOVE.L	#graphicsDataTable,A1
 	MOVE.L	$00(A1,D0.W),A1
 	ASL.W	#$02,D0
-	MOVE.L	#lbW05BA6C,A2
+	MOVE.L	#graphicsRenderingParameters,A2
 	LEA	$04(A2,D0.W),A2
 	MOVE.L	currentFrameBuffer,A0
 	MOVE.W	D4,D0
@@ -20624,8 +20624,12 @@ imagePlayersPalette:
 	dc.w	$0240,$0030,$0035,$0025,$0710,$0500,$0740
 imagePlayers:
 	incbin	"imagePlayers"
-resultScreenPointerTable:
-	dc.l	$00078000,$0004477C,$0004AF3E,$0003D7B6,$00050E4C	; FIXME
+resultScreenPointerTable:	; fixme; data missing
+	dc.l	frameBuffer1
+	dc.l	imagePlayersPalette-2	; won
+	dc.l	imagePlayersPalette-2	; lost
+	dc.l	imagePlayersPalette-2	; wreck
+	dc.l	imagePlayersPalette-2	; promotion
 lbL049700:
 	dc.b	$1F,$0E,$10,"Link abandoned",$FF,$1F,$0E,$10,"Link complete",$FF,$1F,$11,$10
 	dc.b	"Linking",$FF,$1F,$0F,$10,"Please wait",$FF,$00
@@ -20773,11 +20777,22 @@ gameMessageMode:
 gameMessageIndex:
 	ds.b	1
 gameMessageTable:
-	dc.b	$03,"<WRCECK",$03," RACCE ",$21,"< WaON aT  ",$03," RACCE ! LOaST "
-	dc.b	$03," DRCOP ",$21,"<STaART",$03,"<PRCESS! FIaRE ",$03,"PAUSCED"
-	dc.b	$03," LACPS ! OVaER ",$03,"DECFINE! KEaYS ",$03,"<STCEER! LEaFT "
-	dc.b	$03,"<STCEER",$21,"<RIaGHT",$03,"<AHCEAD!+BOaOST",$03," BACCK !+BOaOST"
-	dc.b	$03," BACCK !   a   ",$03,"VECRIFY! KEaYS ",$03,"<FACULT",$21,"<FOaUND<T",$06,$1A
+	dc.b	$03,'<WRCECK'
+	dc.b	$03,' RACCE !< WaON aT  '
+	dc.b	$03,' RACCE ! LOaST '
+	dc.b	$03,' DRCOP !<STaART'
+	dc.b	$03,'<PRCESS! FIaRE '
+	dc.b	$03,'PAUCSED'
+	dc.b	$03,' LACPS ! OVaER '
+	dc.b	$03,'DEFCINE! KEaYS '
+	dc.b	$03,'<STCEER! LEaFT '
+	dc.b	$03,'<STCEER!<RIaGHT'
+	dc.b	$03,'<AHCEAD!+BOaOST'
+	dc.b	$03,' BACCK !+BOaOST'
+	dc.b	$03,' BACCK !   a   '
+	dc.b	$03,'VERCIFY! KEaYS '
+	dc.b	$03,'<FACULT!<FOaUND<T'
+	dc.b	$06,$1A
 divisionRowPositions:
 	dc.b	$0C
 	dc.b	$0C
@@ -21078,62 +21093,70 @@ lbW05B7C4:
 	dc.w	$002C
 gameLoopControl:
 	dc.w	$0020
-lbW05BA6C:
+graphicsRenderingParameters:      ; structs of 8 words, only 3-6 used (size, position)
 	dc.w	$0000,$0000,$0001,$0039
-objectRenderingParameters:      ; structs of 8 words, only 3-6 used (size, position)
-	dc.l	$00100077
-lbW05BA76:	EQU	*-2
-	dc.w	$0000,$0000,$0002,$0000,$0001,$0039,$0010,$0077,$0000
-	dc.w	$0000,$0004,$0000,$0001,$0039,$0010,$0077,$0000,$0000
+rightWheelWidth:
+	dc.w	$0010
+rightWheelHeight:
+	dc.w	$0077
+	dc.w	$0000,$0000
+	dc.w	$0002,$0000,$0001,$0039,$0010,$0077,$0000,$0000
+	dc.w	$0004,$0000,$0001,$0039,$0010,$0077,$0000,$0000
 	dc.w	$0008,$0000,$0001,$0039,$0002
-audioConfigurationData: ; fixme wrong name
-	dc.w	$0077,$0000,$0000,$000A,$0000,$0001,$0039,$0002,$0077
-	dc.w	$0000,$0000,$000C,$0000,$0001,$0039,$0002,$0077,$0000
-	dc.w	$0000,$0000,$0044,$0003,$001B,$0002,$007B,$0000,$0000
-	dc.w	$0004,$0044,$0003,$001B,$0002,$007B,$0000,$0000,$0008
-	dc.w	$0044,$0003,$001B,$000E,$007B,$0000,$0000,$000C,$0044
-	dc.w	$0003,$001B,$000E,$007B,$0000,$0000,$0002,$007B,$000F
-	dc.w	$0014,$0002,$007B,$0000,$0000,$0002,$0090,$0001,$000E
-	dc.w	$0002,$0090,$0000,$0000,$0010,$0090,$0001,$000E,$0010
-	dc.w	$0090,$0000,$0000,$0002,$0010,$0000,$0005,$0002,$0010
-	dc.w	$0000,$0000,$0011,$0010,$0000,$0005,$0011,$0010,$0000
-	dc.w	$0000,$000E,$0000,$0000,$0007,$0006,$00BE,$0000,$0000
-	dc.w	$000E,$0008,$0000,$0007,$0006,$00BE,$0000,$0000,$000E
-	dc.w	$0010,$0000,$0007,$000D,$00BE,$0000,$0000,$000E,$0018
-	dc.w	$0000,$0007,$000D,$00BE,$0000,$0000,$000F,$0000,$0000
-	dc.w	$0007,$0004
-wheelGraphicsConfigTable:       ; fixme wrong name 
-	dc.w	$0010,$0000,$0000,$000F,$0008,$0000,$0007,$0004,$0018
-	dc.w	$0000,$0000,$000F,$0010,$0000,$0007,$000F,$0010,$0000
-	dc.w	$0000,$000F,$0018,$0000,$0007,$000F,$0018,$0000,$0000
-	dc.w	$0010,$0000,$0001,$0007,$0004,$0000,$0000,$0000,$0010
-	dc.w	$0008,$0001,$0007,$0004,$0000,$0000,$0000,$0010,$0010
-	dc.w	$0001,$0007,$0004,$0000,$0000,$0000,$0010,$0018,$0001
-	dc.w	$0007,$0004,$0000,$0000,$0000,$0010,$0020,$0001,$0007
-	dc.w	$0004,$0000,$0000,$0000,$0010,$0028,$0001,$0007,$0004
-	dc.w	$0000,$0000,$0000,$0000,$0060,$0003,$0021,$0000,$0000
-	dc.w	$0000,$0000,$0005,$0060,$0003,$001E,$0000,$0000,$0000
-	dc.w	$0000,$0009,$0060,$0003,$0025,$0000,$0000,$0000,$0000
-	dc.w	$000D,$0060,$0004,$0023,$0000,$0000,$0000,$0000,$0000
-	dc.w	$0086,$0002,$001B,$0000,$0000,$0000,$0000,$0003,$0086
-	dc.w	$0003,$0021,$0000,$0000,$0000,$0000,$0007,$0086,$0003
-	dc.w	$0021,$0000,$0000,$0000,$0000,$000B,$0086,$0003,$0023
-	dc.w	$0000,$0000,$0000,$0000,$0001,$00B0,$0000,$000F,$0011
-	dc.w	$0077,$0000,$0000,$0003,$00B0,$0000,$000F,$0011,$0077
-	dc.w	$0000,$0000,$0005,$00B0,$0000,$000F,$0011,$0077,$0000
-	dc.w	$0000,$0008,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
-	dc.w	$000A,$00B0,$0000,$000F,$0002,$0077,$0000,$0000,$000C
-	dc.w	$00B0,$0000,$000F,$0002,$0077,$0000,$0000,$0000,$00B0
-	dc.w	$0000,$000F,$0011,$0077,$0000,$0000,$0002,$00B0,$0000
-	dc.w	$000F,$0011,$0077,$0000,$0000,$0004,$00B0,$0000,$000F
-	dc.w	$0011,$0077,$0000,$0000,$0007,$00B0,$0000,$000F,$0002
-	dc.w	$0077,$0000,$0000,$0009,$00B0,$0000,$000F,$0002,$0077
-	dc.w	$0000,$0000,$000B,$00B0,$0000,$000F,$0002,$0077,$0000
-	dc.w	$0000,$0010,$0044,$0003,$001B,$0002,$007B,$0000,$0000
-	dc.w	$0010,$00AC,$0003,$001B,$000E,$007B,$0000,$0000,$0010
-	dc.w	$0086,$0003,$001B,$0008,$001B,$0000,$0000
+leftWheelHeight:
+	dc.w	$0077,$0000,$0000
+	dc.w	$000A,$0000,$0001,$0039,$0002,$0077,$0000,$0000
+	dc.w	$000C,$0000,$0001,$0039,$0002,$0077,$0000,$0000
+	dc.w	$0000,$0044,$0003,$001B,$0002,$007B,$0000,$0000
+	dc.w	$0004,$0044,$0003,$001B,$0002,$007B,$0000,$0000
+	dc.w	$0008,$0044,$0003,$001B,$000E,$007B,$0000,$0000
+	dc.w	$000C,$0044,$0003,$001B,$000E,$007B,$0000,$0000
+	dc.w	$0002,$007B,$000F,$0014,$0002,$007B,$0000,$0000
+	dc.w	$0002,$0090,$0001,$000E,$0002,$0090,$0000,$0000
+	dc.w	$0010,$0090,$0001,$000E,$0010,$0090,$0000,$0000
+	dc.w	$0002,$0010,$0000,$0005,$0002,$0010,$0000,$0000
+	dc.w	$0011,$0010,$0000,$0005,$0011,$0010,$0000,$0000
+	dc.w	$000E,$0000,$0000,$0007,$0006,$00BE,$0000,$0000
+	dc.w	$000E,$0008,$0000,$0007,$0006,$00BE,$0000,$0000
+	dc.w	$000E,$0010,$0000,$0007,$000D,$00BE,$0000,$0000
+	dc.w	$000E,$0018,$0000,$0007,$000D,$00BE,$0000,$0000
+	dc.w	$000F,$0000,$0000,$0007,$0004
+chainRenderParams:
+	dc.w	$0010,$0000,$0000
+	dc.w	$000F,$0008,$0000,$0007,$0004,$0018,$0000,$0000
+	dc.w	$000F,$0010,$0000,$0007,$000F,$0010,$0000,$0000
+	dc.w	$000F,$0018,$0000,$0007,$000F,$0018,$0000,$0000
+	dc.w	$0010,$0000,$0001,$0007,$0004,$0000,$0000,$0000
+	dc.w	$0010,$0008,$0001,$0007,$0004,$0000,$0000,$0000
+	dc.w	$0010,$0010,$0001,$0007,$0004,$0000,$0000,$0000
+	dc.w	$0010,$0018,$0001,$0007,$0004,$0000,$0000,$0000
+	dc.w	$0010,$0020,$0001,$0007,$0004,$0000,$0000,$0000
+	dc.w	$0010,$0028,$0001,$0007,$0004,$0000,$0000,$0000
+	dc.w	$0000,$0060,$0003,$0021,$0000,$0000,$0000,$0000
+	dc.w	$0005,$0060,$0003,$001E,$0000,$0000,$0000,$0000
+	dc.w	$0009,$0060,$0003,$0025,$0000,$0000,$0000,$0000
+	dc.w	$000D,$0060,$0004,$0023,$0000,$0000,$0000,$0000
+	dc.w	$0000,$0086,$0002,$001B,$0000,$0000,$0000,$0000
+	dc.w	$0003,$0086,$0003,$0021,$0000,$0000,$0000,$0000
+	dc.w	$0007,$0086,$0003,$0021,$0000,$0000,$0000,$0000
+	dc.w	$000B,$0086,$0003,$0023,$0000,$0000,$0000,$0000
+	dc.w	$0001,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
+	dc.w	$0003,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
+	dc.w	$0005,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
+	dc.w	$0008,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
+	dc.w	$000A,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
+	dc.w	$000C,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
+	dc.w	$0000,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
+	dc.w	$0002,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
+	dc.w	$0004,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
+	dc.w	$0007,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
+	dc.w	$0009,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
+	dc.w	$000B,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
+	dc.w	$0010,$0044,$0003,$001B,$0002,$007B,$0000,$0000
+	dc.w	$0010,$00AC,$0003,$001B,$000E,$007B,$0000,$0000
+	dc.w	$0010,$0086,$0003,$001B,$0008,$001B,$0000,$0000
 
-bitplaneMaskTable:      ; fixme - these might be pointers + data
+bitplaneMaskTable:      ; fixme - the last couple of kilobytes are corrupt
 	incbin	"bitplaneMaskTable"
 
 name_graphics:	dc.b	"graphics.library",0
@@ -21192,9 +21215,9 @@ crashAudioSampleID:
 	ds.b	2
 audioDMAEnableGuard:
 	ds.w	1
-lbL00D112:
+visibleFrameBuffer:
 	ds.l	1
-lbB00D116:
+copperlistUpdatePendingFlag:
 	ds.b	2
 lbW00D3F8:
 	ds.w	1
@@ -21340,7 +21363,7 @@ renderingLoopIndex:
 	ds.b	1
 segmentPropertyFlags:
 	ds.b	1
-displayModeActiveFlag:
+boostActiveFlag:
 	ds.b	1
 gameExitFlag:
 	ds.b	1
@@ -21354,7 +21377,7 @@ lbB00D467:
 	ds.b	1
 lbB00D468:
 	ds.b	1
-lbB00D469:
+flameAnimationFrame:
 	ds.b	1
 trackModeParameter:
 	ds.b	1
@@ -21548,13 +21571,13 @@ collisionImpactLevel:
 	ds.b	2
 segmentOrientationAlternate:
 	ds.b	1
-audioPitchModifier:
+wheelBouncePhaseAccumulator:
 	ds.b	1
-lbB00D4DB:
+wheelRotationFrame:
 	ds.b	1
 segmentAlternateFlag:
 	ds.b	1
-visualEffectBaseValue:
+wheelBaseHeight:
 	ds.b	1
 displayModeFlag1:
 	ds.b	1
@@ -21566,7 +21589,7 @@ trackSideIndicator:
 	ds.b	1
 gameModeStateFlags:
 	ds.b	1
-lbB00D4E3:
+wheelAnimationAccumulator:
 	ds.b	1
 savedPlayerIndex:
 	ds.b	1
@@ -21576,9 +21599,9 @@ lbB00D4E6:
 	ds.b	2
 lbB00D4E8:
 	ds.b	1
-wheelAnimationSpeed:
+chainLiftVelocity:
 	ds.b	1
-wheelAnimationFrame:
+chainVerticalPosition:
 	ds.b	1
 engineEffectFlag:
 	ds.b	1
@@ -22553,9 +22576,9 @@ edgeSortBuffer:
 	ds.l	32
 renderDataBuffer:
 	ds.l	64
-lbB05B840:
+loadingHardwareSprite:
 	ds.b	1
-lbB05B841:
+spriteUpdatePendingFlag:
 	ds.b	1
 lbW05BA66:
 	ds.w	1
@@ -22564,7 +22587,7 @@ renderGraphicsCurrentX:
 renderGraphicsCurrentY:
 	ds.w	1
 graphicsDataTable:
-	ds.b	216
+	ds.l	54
 primaryFrameBuffer:
 	ds.l	1
 secondaryFrameBuffer:
