@@ -166,10 +166,10 @@ initialize:
 ;	MOVE.W	#$2000,SR
 ;	MOVE.L	#lbL05BE94,D0
         move.l  #frameBuffer1,d0
-	MOVE.L	D0,primaryFrameBuffer
-	MOVE.L	D0,currentFrameBuffer
+	MOVE.L	D0,frameBuffers
+	MOVE.L	D0,renderFrameBuffer
 	ADD.L	#$00007D00,D0
-	MOVE.L	D0,secondaryFrameBuffer
+	MOVE.L	D0,displayFrameBuffer
 	JSR	setupFrameBufferAddresses
 	JSR	initializeSpritePointers
 	JSR	loadPaletteColors
@@ -375,6 +375,9 @@ copperInterrupt:
 	MOVEM.L	D0-D7/A0-A6,-(SP)
 	JSR	updateCopperlistPointers
 	CLR.B	copperlistUpdatePendingFlag
+	move.b	framesSinceCopperlistUpdateAccumulator,framesSinceCopperlistUpdate
+	sub.b	#2,framesSinceCopperlistUpdate
+	clr.b	framesSinceCopperlistUpdateAccumulator
 	TST.B	spriteUpdatePendingFlag
 	BEQ	lbC000A42
 	JSR	updateSpritePositions
@@ -652,16 +655,16 @@ lbC00D0A6:
 	RTS
 
 setupFrameBufferAddresses:
-	MOVE.L	currentFrameBuffer,D3
+	MOVE.L	renderFrameBuffer,D3
 	ADD.L	#$00000284,D3
 	MOVE.L	D3,viewportTopAddress
-	MOVE.L	secondaryFrameBuffer,visibleFrameBuffer
+	MOVE.L	displayFrameBuffer,bitplane1Pointer
 	MOVE.B	#$80,copperlistUpdatePendingFlag
 	RTS
 
 updateCopperlistPointers:
 	MOVEM.L	D3/D4,-(SP)
-	MOVE.L	visibleFrameBuffer,D0
+	MOVE.L	bitplane1Pointer,D0
 	MOVE.L	#copperlist,A0
 	MOVE.W	#$0003,D4
 lbC00D0F0:
@@ -686,8 +689,8 @@ displayMessageWithColors:
 	MOVE.B	textTransparencyMode,D0
 	MOVE.W	D0,-(SP)
 	MOVE.W	textCursorColumn,-(SP)
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	MOVE.W	D1,-(SP)
 	MOVE.B	#$00,textTransparencyMode
 	MOVE.B	#$01,D0
@@ -698,7 +701,7 @@ displayMessageWithColors:
 	JSR	displayMessage
 	MOVE.W	(SP)+,D1
 	JSR	displayMessage
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	MOVE.W	(SP)+,textCursorColumn
 	MOVE.W	(SP)+,D0
 	MOVE.B	D0,textTransparencyMode
@@ -757,10 +760,10 @@ copyPaletteR:
 	RTS
 
 copyMainGameBackground:
-	MOVE.L	primaryFrameBuffer,A1
+	MOVE.L	frameBuffers,A1
 	MOVE.L	#imageMainGameBackground,A0
 	JSR	decompressRLEImage
-	MOVE.L	primaryFrameBuffer,A0
+	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A1
 	ADD.W	#$7D00,A1
 	MOVE.W	#$7CFF,D3
@@ -1527,8 +1530,8 @@ checkSpaceKeyPressed:
 
 establishComputerLink:
 	JSR	initializeNetworking
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	JSR	drawScreenFrame
 	MOVE.B	#$01,currentMenuItem
 	JSR	renderMenuCursor
@@ -1574,7 +1577,7 @@ lbC04963C:
 	JSR	displayNetworkMessage
 	MOVE.B	#$80,gameInitFlag1
 	JSR	waitForDisplaySync
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	resetTextYOffset
 	TST.B	networkGameMode
 	BMI	lbC04967E
@@ -1591,17 +1594,17 @@ lbC04968A:
 	MOVE.W	#$0000,D3
 	JSR	displayNetworkMessage
 	JSR	waitForDisplaySync
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	resetTextYOffset
 	ORI.B	#$01,CCR
 	RTS
 
 displayNetworkMessage:
 	MOVE.L	#lbL049700,A0
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	JSR	renderNetworkString
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	RTS
 
 renderNetworkString:
@@ -1813,15 +1816,15 @@ lbC049A32:
 	RTS
 
 displayNetworkWaitMessage:
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	JSR	drawScreenFrame
 	MOVE.B	#$01,currentMenuItem
 	JSR	renderMenuCursor
 	MOVE.W	#$002E,D3
 	JSR	displayNetworkMessage
 	JSR	resetTextYOffset
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	RTS
 
 synchronizeNetworkGame:
@@ -2214,7 +2217,7 @@ displaySinglePlayerResults:
 	MOVE.L	#imagePlayersPalette,A1
 	JSR	copyPalette
 	MOVE.L	#imagePlayers,A1
-	MOVE.L	secondaryFrameBuffer,A0
+	MOVE.L	displayFrameBuffer,A0
 	MOVE.L	A0,A3
 	ADD.L	#$00001F40,A3
 lbC04A1B4:
@@ -2224,8 +2227,8 @@ lbC04A1B4:
 	MOVE.W	(A1)+,$5DBE(A0)
 	CMP.L	A3,A0
 	BNE	lbC04A1B4
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	MOVE.L	#lbL00E2C2,A6
 	MOVE.W	#$0000,D6
 lbC04A1E2:
@@ -2236,7 +2239,7 @@ lbC04A1E2:
 	ADDQ.B	#$01,D6
 	CMP.B	#$0C,D6
 	BLT	lbC04A1E2
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	animatePaletteToTarget
 	JSR	waitForDisplaySync
 	JMP	displayMenuScreen
@@ -2279,7 +2282,7 @@ lbC04A27A:
 	AND.W	#$000F,D0
 	MOVE.B	$00(A0,D0.W),D0
 	MOVE.L	#imagePlayers,A0
-	MOVE.L	currentFrameBuffer,A3
+	MOVE.L	renderFrameBuffer,A3
 	MOVE.L	#lbW04A3A4,A1
 	AND.W	#$00FF,D0
 	AND.W	#$00FF,D3
@@ -2690,7 +2693,7 @@ displayResultScreen:
 	LEA	$0002(A6),A1
 	JSR	copyPalette
 	LEA	$0022(A6),A0
-	MOVE.L	secondaryFrameBuffer,A1
+	MOVE.L	displayFrameBuffer,A1
 	TST.B	(A6)
 	BPL	lbC04AC90
 	JSR	decompressRLEImage
@@ -2712,8 +2715,8 @@ lbC04ACAC:
 	RTS
 
 copyTrackPreviewRegion:
-	MOVE.L	primaryFrameBuffer,A0
-	MOVE.L	secondaryFrameBuffer,A3
+	MOVE.L	frameBuffers,A0
+	MOVE.L	displayFrameBuffer,A3
 	ADD.L	#$00000140,A0
 	ADD.L	#$00000140,A3
 	MOVE.L	A0,A2
@@ -2889,11 +2892,11 @@ calculateCharacterScreenAddress:
 	ASL.L	#$02,D4
 	ADD.L	D4,D0
 	ASL.L	#$03,D0
-	MOVE.L	primaryFrameBuffer,A1
+	MOVE.L	frameBuffers,A1
 	ADD.L	#$00007D00,A1
 	TST.B	singleBufferRenderMode
 	BPL	lbC04AF02
-	MOVE.L	currentFrameBuffer,A1
+	MOVE.L	renderFrameBuffer,A1
 lbC04AF02:
 	TST.B	useAlternateFontFlag
 	BEQ	lbC04AF12
@@ -4790,7 +4793,7 @@ updateCarStartRotation:
 	MOVE.B	#$F0,D4
 lbC04CDBC:
 	ASL.W	#$08,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC04CDCA
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -4918,8 +4921,8 @@ lbC04CF62:
 	MOVE.W	#$0085,D5
 	JSR	drawHorizontalLine
 	JSR	copyGraphicsRegion
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 lbC04CF94:
 	MOVE.B	#$02,D0
 	JSR	setForegroundColor
@@ -4934,7 +4937,7 @@ lbC04CF94:
 	JSR	resetTextYOffset
 	MOVE.B	#$03,D0
 	JSR	setForegroundColor
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	RTS
 
 inputPlayerName:
@@ -5665,7 +5668,7 @@ lbC04DAEE:
 	MOVE.B	trackBoostThresholdCopy,D1
 lbC04DB18:
 	MOVE.B	segmentOrientationPrimary,segmentDirectionFlags
-	MOVE.L	#lbW00D602,A1
+	MOVE.L	#wheelCornerXFrontLeft,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$04,D0
 	ADD.W	lateralRoadPosition,D0
@@ -5706,7 +5709,7 @@ lbC04DB9A:
 	MOVE.B	D0,lbB00D4A1
 lbC04DBA8:
 	MOVE.B	segmentOrientationAlternate,segmentDirectionFlags
-	MOVE.L	#lbW00D608,A1
+	MOVE.L	#wheelCornerYFrontLeft,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$03,D0
 	MOVE.B	segmentDirectionFlags,D3
@@ -6323,12 +6326,12 @@ displayTrackPreviewBackground:
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
 	MOVE.L	#imageTrackPreviewBackground,A0
-	MOVE.L	primaryFrameBuffer,A1
+	MOVE.L	frameBuffers,A1
 	JSR	decompressRLEImage
-	MOVE.L	primaryFrameBuffer,A1
-	MOVE.L	secondaryFrameBuffer,A0
-	MOVE.L	A0,currentFrameBuffer
-	MOVE.L	currentFrameBuffer,D3
+	MOVE.L	frameBuffers,A1
+	MOVE.L	displayFrameBuffer,A0
+	MOVE.L	A0,renderFrameBuffer
+	MOVE.L	renderFrameBuffer,D3
 	ADD.L	#$00000284,D3
 	MOVE.L	D3,viewportTopAddress
 	MOVE.L	A0,A3
@@ -6768,7 +6771,7 @@ lbC04F2FC:
 lbC04F310:
 	MOVE.B	#$00,networkTimeoutFlag
 	MOVE.B	#$80,gameInitFlag1
-	MOVE.B	#$80,lbB00D4B9
+	MOVE.B	#$80,gameInitFlag3
 	JSR	disableAudio
 	MOVE.W	#$0000,lbW00D4F4
 	MOVE.B	lbB00D48E,D0
@@ -6777,14 +6780,14 @@ lbC04F310:
 	MOVE.W	D0,-(SP)
 	MOVE.B	gameMessageMode,D0
 	MOVE.W	D0,-(SP)
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	JSR	renderMessagePanel
 	MOVE.B	#$4C,D2
 	MOVE.B	#$02,D0
 	JSR	setMessageParameters
 	JSR	updateGameMessageDisplay
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	lbC049486
 	MOVE.W	(SP)+,D0
 	MOVE.B	D0,gameMessageMode
@@ -6793,7 +6796,7 @@ lbC04F310:
 	MOVE.W	(SP)+,D0
 	MOVE.B	D0,lbB00D48E
 	MOVE.B	#$00,gameInitFlag1
-	MOVE.B	#$00,lbB00D4B9
+	MOVE.B	#$00,gameInitFlag3
 initializeGameLoop:
 	MOVE.B	#$07,D0
 	JSR	playAudioSample
@@ -6801,13 +6804,13 @@ initializeGameLoop:
 	RTS
 
 swapDisplayBuffers:
-	TST.B	vSyncFlag
+	TST.B	framesToWait
 	BNE	swapDisplayBuffers
 	EOR.B	#$01,bufferSelector
 	MOVE.B	bufferSelector,D0
 	ADD.B	#$05,D0
-	MOVE.B	#$06,vSyncFlag
-	MOVE.L	primaryFrameBuffer,D0
+	MOVE.B	#$00,framesToWait	; fixed 06
+	MOVE.L	frameBuffers,D0
 	MOVE.L	D0,D3
 	MOVE.B	displayStateFlag,D4
 	EOR.B	#$80,D4
@@ -6821,14 +6824,17 @@ lbC04F414:
 	MOVE.B	#$00,lbB00D5C8
 	ADD.L	#$00007D00,D3
 lbC04F422:
-	MOVE.L	D0,secondaryFrameBuffer
-	MOVE.L	D3,currentFrameBuffer
-	JMP	setupFrameBufferAddresses
+	MOVE.L	D0,displayFrameBuffer
+	MOVE.L	D3,renderFrameBuffer
+	JSR	setupFrameBufferAddresses
+.wait:	tst.b   copperlistUpdatePendingFlag	; fixed
+	bmi	.wait
+	RTS
 
 updateGameTimingAndDirection:
 	ADDQ.B	#$01,gameTimingCounter	; Increment frame counter
 	MOVE.B	#$00,D2			; Assume forward direction
-	MOVE.B	#$EE,D0			; Direction adjustment value
+	MOVE.B	#TIMESTEP_FACTOR,D0			; Direction adjustment value
 	BEQ	lbC04F452		; Skip if zero
 	ADD.B	D0,directionCalculation	; Add to direction accumulator
 	BCS	lbC04F452		; If carry, direction is forward
@@ -7091,7 +7097,10 @@ clearGameDataSlot:
 	RTS
 
 updateLapTimer:
-	MOVE.B	#$13,D0			; Add 0.13 seconds (60Hz frame = ~0.0167s)
+	move.b	framesSinceCopperlistUpdate,d0	; fixed
+	addq	#1,d0
+	add.b	d0,d0
+	;MOVE.B	#$13,D0			; Add 19 milliseconds
 lbC04F832:
 	MOVE.L	#lapTimeSubseconds,A0
 	MOVE.L	#lapTimeSeconds,A1
@@ -7218,16 +7227,16 @@ setupGameDisplay1:
 	MOVE.B	#$10,D0
 lbC04F9EC:
 	MOVE.W	D2,-(SP)
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	primaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	frameBuffers,renderFrameBuffer
 	MOVE.W	D0,-(SP)
 	JSR	renderMaskedGraphicsObject
 	MOVE.W	(SP)+,D0
-	MOVE.L	currentFrameBuffer,D3
+	MOVE.L	renderFrameBuffer,D3
 	ADD.L	#$00007D00,D3
-	MOVE.L	D3,currentFrameBuffer
+	MOVE.L	D3,renderFrameBuffer
 	JSR	renderMaskedGraphicsObject
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	MOVE.W	(SP)+,D2
 	RTS
 
@@ -7324,7 +7333,7 @@ lbC04FB66:
 	JMP	lbC04FC1A
 
 lbC04FB7C:
-	MOVE.L	primaryFrameBuffer,A6
+	MOVE.L	frameBuffers,A6
 	ADD.L	#$00001B3C,A6
 	MOVE.W	previousEffectParameter,D4
 	MOVE.W	trackEffectParameter,D5
@@ -8571,8 +8580,8 @@ lbC05128A:
 	MOVE.B	#$50,D1
 	JSR	checkKeyPressed
 	BNE	lbC0513DA
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 lbC0512A8:
 	JSR	renderMessagePanel
 	MOVE.B	#$64,D2
@@ -8648,7 +8657,7 @@ lbC0513C6:
 	MOVE.B	#$4C,D2
 	MOVE.B	#$02,D0
 	JSR	displayGameMessage
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 lbC0513DA:
 	RTS
 
@@ -8704,8 +8713,8 @@ displayStandings:
 	MOVE.B	#$42,displayUpdateFlag
 	MOVE.W	imageStandingsBackgroundPalette,D0
 	JSR	fadeToColor
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	MOVE.B	#$7F,D1
 	MOVE.B	#$7F,D2
 	MOVE.B	currentPlayerContext,D0
@@ -8729,7 +8738,7 @@ lbC051500:
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
 	MOVE.L	#imageStandingsBackground,A0
-	MOVE.L	secondaryFrameBuffer,A1
+	MOVE.L	displayFrameBuffer,A1
 	JSR	decompressRLEImage
 	MOVE.B	#$02,textHorizontalOffset
 	MOVE.B	#$3B,D1
@@ -8810,7 +8819,7 @@ lbC0516B4:
 	MOVE.B	D0,textHorizontalOffset
 	JSR	animatePaletteToTarget
 	JSR	waitForDisplaySync
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	JMP	displayMenuScreen
 
 lookupDataTable:
@@ -9523,15 +9532,15 @@ lbC052246:
 	MOVE.W	D1,D3
 	ASL.W	#$04,D3
 	MOVE.W	D0,$00(A0,D3.W)
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	primaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	frameBuffers,renderFrameBuffer
 	MOVE.B	D1,D0
 	JSR	renderMaskedGraphicsObject
 	MOVE.L	#$00007D00,D0
-	ADD.L	D0,currentFrameBuffer
+	ADD.L	D0,renderFrameBuffer
 	MOVE.B	D1,D0
 	JSR	renderMaskedGraphicsObject
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	MOVE.W	(SP)+,D1
 	RTS
 
@@ -9684,9 +9693,9 @@ lbC052482:
 	ORI.B	#$01,CCR
 	RTS
 
-	MOVE.B	#$03,lbB052FDA
+	MOVE.B	#$03,framesToWaitWhenFading
 lbC0524A2:
-	TST.B	lbB052FDA
+	TST.B	framesToWaitWhenFading
 	BNE.L	lbC0524A2
 	RTS
 
@@ -9986,7 +9995,7 @@ lbC0528CA:
 	MOVE.B	playerStateFlag,D1
 	BNE	lbC0528EA
 	MOVE.W	wheelSpeed,D0
-	LSR.W	#$02,D0
+	LSR.W	#$04,D0			; fixed $02
 	SUB.W	D0,wheelSpeed
 	RTS
 
@@ -10493,19 +10502,20 @@ lbC052F82:
 	RTS
 
 verticalBlank:
+	add.b	#1,framesSinceCopperlistUpdateAccumulator
 	CLR.W	D1
 	CLR.W	D2
-	TST.B	vSyncFlag
+	TST.B	framesToWait
 	BEQ	lbC052FF0
-	SUBQ.B	#$01,vSyncFlag
+	SUBQ.B	#$01,framesToWait
 lbC052FF0:
-	TST.B	lbB052FDA
+	TST.B	framesToWaitWhenFading
 	BEQ	lbC053000
-	SUBQ.B	#$01,lbB052FDA
+	SUBQ.B	#$01,framesToWaitWhenFading
 lbC053000:
 	TST.B	displayUpdateFlag
 	BPL	lbC05301A
-	TST.B	lbB00D4B9
+	TST.B	gameInitFlag3
 	BNE	lbC05301A
 	JSR	updateWheelGraphics
 lbC05301A:
@@ -10608,8 +10618,10 @@ lbC05315A:
 	RTS
 
 updateGamePhysics:
+	move.b	framesSinceCopperlistUpdate,physicsUpdateCount
+updateGamePhysicsLoop:
 	JSR	calculateTransformMatrices
-	JSR	lbC0531CE
+	JSR	calculateWheelCornerPositions
 	JSR	calculateSegmentPhysics
 	JSR	calculateTrackPositions
 	JSR	transformWorldCoordinates
@@ -10628,42 +10640,44 @@ updateGamePhysics:
 lbC0531C0:
 	JSR	applyVelocityIntegration
 	JSR	updateWorldPosition
+	sub.b	#1,physicsUpdateCount
+	bpl.s	updateGamePhysicsLoop
 	RTS
 
-lbC0531CE:
-	MOVE.W	lbW00DB6E,D4
-	MOVE.W	lbW00DB64,D0
+calculateWheelCornerPositions:
+	MOVE.W	transformMatrix3E,D4
+	MOVE.W	transformMatrix34,D0
 	ASR.W	#$01,D4
 	ASR.W	#$01,D0
 	SUB.W	D0,D4
-	MOVE.W	lbW00DB68,D5
-	MOVE.W	lbW00DB72,D0
+	MOVE.W	transformMatrix38,D5
+	MOVE.W	transformMatrix44,D0
 	ASR.W	#$01,D5
 	ASR.W	#$01,D0
 	SUB.W	D0,D5
-	MOVE.W	lbW00DB74,D0
-	MOVE.W	lbW00DB76,D3
+	MOVE.W	transformMatrix46,D0
+	MOVE.W	transformMatrix48,D3
 	ASR.W	#$05,D4
 	ASR.W	#$05,D5
 	ASR.W	#$05,D0
 	ASR.W	#$05,D3
-	MOVE.W	D0,lbW00D606
-	NEG.W	lbW00D606
-	MOVE.W	D3,lbW00D60C
-	NEG.W	lbW00D60C
-	MOVE.W	D0,lbW00D602
-	MOVE.W	D0,lbW00D604
-	MOVE.W	D3,lbW00D608
-	MOVE.W	D3,lbW00D60A
-	SUB.W	D4,lbW00D602
-	SUB.W	D5,lbW00D608
-	ADD.W	D4,lbW00D604
-	ADD.W	D5,lbW00D60A
+	MOVE.W	D0,wheelCornerXRearCenter
+	NEG.W	wheelCornerXRearCenter
+	MOVE.W	D3,wheelCornerYRearCenter
+	NEG.W	wheelCornerYRearCenter
+	MOVE.W	D0,wheelCornerXFrontLeft
+	MOVE.W	D0,wheelCornerXFrontRight
+	MOVE.W	D3,wheelCornerYFrontLeft
+	MOVE.W	D3,wheelCornerYFrontRight
+	SUB.W	D4,wheelCornerXFrontLeft
+	SUB.W	D5,wheelCornerYFrontLeft
+	ADD.W	D4,wheelCornerXFrontRight
+	ADD.W	D5,wheelCornerYFrontRight
 	RTS
 
 updateWorldPosition:
 	MOVE.W	worldXSpeed,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC053262
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -10672,7 +10686,7 @@ lbC053262:
 	ASL.L	#$06,D0
 	ADD.L	D0,lbB00D5D8
 	MOVE.W	worldYSpeed,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC05327E
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -10681,7 +10695,7 @@ lbC05327E:
 	ASL.L	#$07,D0
 	ADD.L	D0,lbB00D5DC
 	MOVE.W	worldZSpeed,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC05329A
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -10695,21 +10709,21 @@ lbC05329A:
 	MOVE.W	#$03E8,lbB00D5DC
 lbC0532BA:
 	MOVE.W	lbW00D63A,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC0532CC
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC0532CC:
 	ADD.W	D0,cameraAngleX
 	MOVE.W	lbW00D63C,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC0532E4
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC0532E4:
 	ADD.W	D0,cameraAngleY
 	MOVE.W	lbW00D63E,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC0532FC
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -10776,21 +10790,21 @@ lbC0533C2:
 
 applyVelocityIntegration:
 	MOVE.W	lbW00D5F6,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC0533EE
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC0533EE:
 	ADD.W	D0,worldXSpeed
 	MOVE.W	lbW00D5F8,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC053406
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC053406:
 	ADD.W	D0,worldYSpeed
 	MOVE.W	lbW00D5FA,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC05341E
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -10800,21 +10814,21 @@ lbC05341E:
 
 integrateVelocityComponents:
 	MOVE.W	lbW00D5FC,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC053438
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC053438:
 	ADD.W	D0,rotationSpeedX
 	MOVE.W	steeringYawRate,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC053450
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC053450:
 	ADD.W	D0,rotationSpeedY
 	MOVE.W	lbW00D600,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC053468
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -11198,7 +11212,7 @@ lbC053A18:
 
 updateVelocityDamping:
 	MOVE.W	rotationSpeedX,D3
-	ASR.W	#$04,D3
+	ASR.W	#$01,D3			; fixed $04
 	MOVE.W	verticalMotion,D0
 	SUB.W	D3,D0
 	TST.B	playerStateFlag
@@ -11209,7 +11223,7 @@ updateVelocityDamping:
 lbC053A5C:
 	MOVE.W	D0,lbW00D5FC
 	MOVE.W	rotationSpeedZ,D3
-	ASR.W	#$04,D3
+	ASR.W	#$01,D3			; fixed $04
 	MOVE.W	lateralMotion,D0
 	SUB.W	D3,D0
 	MOVE.W	D0,lbW00D600
@@ -11543,14 +11557,14 @@ displaySeasonSelection:
 lbC054086:
 	JSR	displayMessage
 	JSR	copyGraphicsRegion
-	MOVE.L	currentFrameBuffer,-(SP)
-	MOVE.L	secondaryFrameBuffer,currentFrameBuffer
+	MOVE.L	renderFrameBuffer,-(SP)
+	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	MOVE.B	#$80,disableDirectionalInputFlag
 	JSR	handleSeasonSelectionDisplay
 	MOVE.B	#$00,disableDirectionalInputFlag
 	MOVE.B	#$03,D0
 	JSR	setForegroundColor
-	MOVE.L	(SP)+,currentFrameBuffer
+	MOVE.L	(SP)+,renderFrameBuffer
 	RTS
 
 handleSeasonSelectionDisplay:
@@ -12937,7 +12951,7 @@ processOpponentLogic:
 	MULS	D3,D0
 	ASL.L	#$01,D0
 	SWAP	D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC055304
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -13073,7 +13087,7 @@ lbC0554D2:
 lbC0554E2:
 	ADD.W	D5,D0
 lbC0554E4:
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC0554F0
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -13408,14 +13422,14 @@ lbC05592A:
 	MOVE.W	#$00A0,lbW00D67A
 lbC0559EC:
 	MOVE.W	lbW00D67E,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC0559FE
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC0559FE:
 	ADD.W	lbW00D676,D0
 	MOVE.W	D0,lbW00D676
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC055A16
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -13423,14 +13437,14 @@ lbC055A16:
 	ASR.W	#$01,D0
 	ADD.W	D0,lbL00D666
 	MOVE.W	lbW00D680,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC055A30
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC055A30:
 	ADD.W	lbW00D678,D0
 	MOVE.W	D0,lbW00D678
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC055A48
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -13438,14 +13452,14 @@ lbC055A48:
 	ASR.W	#$01,D0
 	ADD.W	D0,lbW00D668
 	MOVE.W	lbW00D682,D0
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC055A62
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC055A62:
 	ADD.W	lbW00D67A,D0
 	MOVE.W	D0,lbW00D67A
-	MOVE.B	#$EE,D2
+	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC055A7A
 	MULS	D2,D0
 	ASR.L	#$08,D0
@@ -13582,7 +13596,7 @@ renderLeagueText:
 
 fadeToColor:
 	MOVE.W	D0,palette
-	MOVE.B	#$1E,lbB052FDA
+	MOVE.B	#$1E,framesToWaitWhenFading
 	MOVE.L	#palette,A0
 	MOVE.W	#$001E,D4
 lbC055D66:
@@ -13645,14 +13659,14 @@ lbC055DEE:
 	TST.B	D7
 	BEQ	lbC055E24
 	JSR	copyPaletteToCopperlist
-	MOVE.B	#$02,vSyncFlag
+	MOVE.B	#$02,framesToWait
 lbC055E16:
-	TST.B	vSyncFlag
+	TST.B	framesToWait
 	BNE	lbC055E16
 	BRA	animatePaletteToTarget
 
 lbC055E24:
-	TST.B	lbB052FDA
+	TST.B	framesToWaitWhenFading
 	BNE	lbC055E24
 	RTS
 
@@ -13660,18 +13674,18 @@ displayMenuScreen:
 	MOVE.W	imageMenuScreenPalette,D0
 	JSR	fadeToColor
 	MOVE.B	#$80,singleBufferRenderMode
-	MOVE.L	primaryFrameBuffer,D0
-	MOVE.L	D0,currentFrameBuffer
+	MOVE.L	frameBuffers,D0
+	MOVE.L	D0,renderFrameBuffer
 	ADD.L	#$00007D00,D0
-	MOVE.L	D0,secondaryFrameBuffer
+	MOVE.L	D0,displayFrameBuffer
 	JSR	setupFrameBufferAddresses
 	MOVE.L	#imageMenuScreenPalette,A1
 	JSR	copyPalette
 	MOVE.L	#imageMenuScreen,A1
-	MOVE.L	primaryFrameBuffer,A0
+	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A3
 	ADD.L	#$00001F40,A3
-	MOVE.L	secondaryFrameBuffer,A4
+	MOVE.L	displayFrameBuffer,A4
 lbC055E8A:
 	MOVE.W	(A1),(A4)+
 	MOVE.W	(A1)+,(A0)+
@@ -13841,7 +13855,7 @@ resetTextYOffset:
 	RTS
 
 copyGraphicsRegion:
-	MOVE.L	primaryFrameBuffer,A0
+	MOVE.L	frameBuffers,A0
 	ADD.L	#$00000B6C,A0
 	ADD.L	#$FFFFFEC0,A0
 	MOVE.L	A0,A3
@@ -14027,7 +14041,7 @@ lbC056412:
 	SUB.L	#$00000500,A0
 	MOVE.L	#lbL05651A,A1
 	ADD.L	$00(A1,D4.W),A0
-	MOVE.L	currentFrameBuffer,A3
+	MOVE.L	renderFrameBuffer,A3
 	ADD.L	#$FFFFFEC0,A3
 	MOVE.W	#$0028,D3
 	AND.W	#$00FF,D0
@@ -14099,7 +14113,7 @@ drawScreenFrame:
 	MOVE.B	#$03,D0
 	JSR	setForegroundColor
 	MOVE.B	#$80,textTransparencyMode
-	MOVE.L	currentFrameBuffer,A0
+	MOVE.L	renderFrameBuffer,A0
 	ADD.L	#$FFFFFEC0,A0
 	ADD.L	#$00000B6C,A0
 	MOVE.L	A0,A3
@@ -15506,7 +15520,7 @@ lbC057AA4:
 	JMP	initiateCarWreck
 
 lbC057AAA:
-	MOVE.L	primaryFrameBuffer,A0
+	MOVE.L	frameBuffers,A0
 	ADD.L	#$00000004,A0
 	MOVE.B	lbB00D455,D4
 	AND.W	#$00FF,D4
@@ -15686,7 +15700,7 @@ lbB057D25:
 
 drawHorizontalLine:
 	JSR	setPixelColor
-	MOVE.L	currentFrameBuffer,A0
+	MOVE.L	renderFrameBuffer,A0
 	MOVE.W	D4,D0
 	EXT.L	D0
 	EXT.L	D5
@@ -19982,7 +19996,7 @@ renderMaskedGraphicsObject:
 	LEA	$04(A2,D0.W),A2
 	MOVE.W	$0004(A2),D0
 	MOVE.W	$0006(A2),D3
-	MOVE.L	currentFrameBuffer,A0
+	MOVE.L	renderFrameBuffer,A0
 	AND.L	#$000000FF,D0
 	AND.L	#$000000FF,D3
 	ASL.L	#$01,D0
@@ -20124,7 +20138,7 @@ renderGraphicsObjectAtPosition:
 	ASL.W	#$02,D0
 	MOVE.L	#graphicsRenderingParameters,A2
 	LEA	$04(A2,D0.W),A2
-	MOVE.L	currentFrameBuffer,A0
+	MOVE.L	renderFrameBuffer,A0
 	MOVE.W	D4,D0
 	EXT.L	D0
 	EXT.L	D5
@@ -21215,10 +21229,12 @@ crashAudioSampleID:
 	ds.b	2
 audioDMAEnableGuard:
 	ds.w	1
-visibleFrameBuffer:
+bitplane1Pointer:
 	ds.l	1
 copperlistUpdatePendingFlag:
-	ds.b	2
+	ds.b	1
+framesSinceCopperlistUpdateAccumulator:
+	ds.b	1
 lbW00D3F8:
 	ds.w	1
 gasInputIntensityValue:
@@ -21244,7 +21260,7 @@ lbB00D409:
 trackProgressionByte:
 	ds.w	1
 gameStateCounter:
-	ds.b	2
+	ds.w	1
 lbB00D40E:
 	ds.b	1
 lbB00D40F:
@@ -21312,7 +21328,9 @@ trackEffectFlag:
 trackDirection:
 	ds.b	1
 restartTimerCountdown:
-	ds.b	2
+	ds.b	1
+physicsUpdateCount:
+	ds.b	1
 distanceCharacteristic:
 	ds.b	1
 aiEnabled:
@@ -21482,7 +21500,9 @@ lbB00D4A6:
 currentDataIndex:
 	ds.b	1
 accelerationStateFlag:
-	ds.b	2
+	ds.b	1
+framesSinceCopperlistUpdate:
+	ds.b	1
 lbB00D4AA:
 	ds.b	1
 lbB00D4AB:
@@ -21509,7 +21529,7 @@ performanceStylePoints:
 	ds.b	2
 carCrashedFlag:
 	ds.b	1
-lbB00D4B9:
+gameInitFlag3:
 	ds.b	1
 lbB00D4BA:
 	ds.b	1
@@ -21855,17 +21875,17 @@ steeringYawRate:
 	ds.w	1
 lbW00D600:
 	ds.w	1
-lbW00D602:
+wheelCornerXFrontLeft:
 	ds.w	1
-lbW00D604:
+wheelCornerXFrontRight:
 	ds.w	1
-lbW00D606:
+wheelCornerXRearCenter:
 	ds.w	1
-lbW00D608:
+wheelCornerYFrontLeft:
 	ds.w	1
-lbW00D60A:
+wheelCornerYFrontRight:
 	ds.w	1
-lbW00D60C:
+wheelCornerYRearCenter:
 	ds.w	1
 baseTargetRoll:
 	ds.w	1
@@ -22093,17 +22113,17 @@ lbW00DB0E:
 	ds.w	17
 lbL00DB30:
 	ds.l	13
-lbW00DB64:
+transformMatrix34:
 	ds.w	2
-lbW00DB68:
+transformMatrix38:
 	ds.w	3
-lbW00DB6E:
+transformMatrix3E:
 	ds.w	2
-lbW00DB72:
+transformMatrix44:
 	ds.w	1
-lbW00DB74:
+transformMatrix46:
 	ds.w	1
-lbW00DB76:
+transformMatrix48:
 	ds.w	5
 trackSegmentGrid:
 	ds.b	16*16
@@ -22438,9 +22458,11 @@ lbB0513DD:
 	ds.b	1
 menuInitializedFlag:
 	ds.b	2
-vSyncFlag:
-	ds.b	2
-lbB052FDA:
+framesToWait:
+	ds.b	1
+framesToWaitForJotain:
+	ds.b	1
+framesToWaitWhenFading:
 	ds.b	2
 crashSoundCooldownTimer:
 	ds.b	2
@@ -22588,11 +22610,11 @@ renderGraphicsCurrentY:
 	ds.w	1
 graphicsDataTable:
 	ds.l	54
-primaryFrameBuffer:
+frameBuffers:
 	ds.l	1
-secondaryFrameBuffer:
+displayFrameBuffer:
 	ds.l	1
-currentFrameBuffer:
+renderFrameBuffer:
 	ds.l	1
 viewportTopAddress:
 	ds.l	1
@@ -22843,3 +22865,4 @@ CACR_CopyBack		equ	$80000000
 gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
+TIMESTEP_FACTOR		equ	$30 ; fixed $EE
