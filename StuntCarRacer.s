@@ -1,5 +1,194 @@
 	incdir	"scr:"
 
+dsksync:	EQU	$0000007E
+CIAF_PRTRBUSY:	EQU	$00000001
+copjmp1:	EQU	$00000088
+ciasdr:	EQU	$00000C00
+DMAF_BLTNZERO:	EQU	$00002000
+adkcon:	EQU	$0000009E
+serdat:	EQU	$00000030
+tv_UserIntVects:	EQU	$00000100
+DMAF_MASTER:	EQU	$00000200
+INTF_EXTER:	EQU	$00002000
+CIACRBF_RUNMODE:	EQU	$00000008
+_custom:	EQU	$00DFF000
+CIACRAF_RUNMODE:	EQU	$00000008
+ddfstop:	EQU	$00000094
+bplcon2:	EQU	$00000104
+diwstrt:	EQU	$0000008E
+ac_per:	EQU	$00000006
+intreq:	EQU	$0000009C
+bplcon0:	EQU	$00000100
+bplcon1:	EQU	$00000102
+INTF_AUD1:	EQU	$00000100
+INTB_AUD0:	EQU	$00000007
+INTF_AUD0:	EQU	$00000080
+INTF_AUD3:	EQU	$00000400
+INTF_BLIT:	EQU	$00000040
+INTF_AUD2:	EQU	$00000200
+INTF_SOFTINT:	EQU	$00000004
+INTF_DSKBLK:	EQU	$00000002
+INTB_DSKBLK:	EQU	$00000001
+aud0:	EQU	$000000A0
+diwstop:	EQU	$00000090
+INTF_RBF:	EQU	$00000800
+CIAICRF_SETCLR:	EQU	$00000080
+ddfstrt:	EQU	$00000092
+CIAF_COMCTS:	EQU	$00000010
+dmaconr:	EQU	$00000002
+DMAF_BLITHOG:	EQU	$00000400
+CIAF_COMCD:	EQU	$00000020
+CIAICRF_ALRM:	EQU	$00000004
+INTF_TBE:	EQU	$00000001
+ciapra:	EQU	$00000000
+ciaprb:	EQU	$00000100
+CIAF_COMDTR:	EQU	$00000080
+CIAICRF_FLG:	EQU	$00000010
+CIAF_COMDSR:	EQU	$00000008
+DMAF_COPPER:	EQU	$00000080
+CIAF_DSKSEL0:	EQU	$00000008
+intena:	EQU	$0000009A
+INTB_SETCLR:	EQU	$0000000F
+INTF_PORTS:	EQU	$00000008
+INTF_SETCLR:	EQU	$00008000
+bltafwm:	EQU	$00000044
+intreqr:	EQU	$0000001E
+tv_Lev7IntVect:	EQU	$0000007C
+tv_Lev6IntVect:	EQU	$00000078
+tv_Lev5IntVect:	EQU	$00000074
+tv_Lev4IntVect:	EQU	$00000070
+CIAICRF_SP:	EQU	$00000008
+tv_Lev3IntVect:	EQU	$0000006C
+tv_Lev2IntVect:	EQU	$00000068
+tv_Lev1IntVect:	EQU	$00000064
+joy1dat:	EQU	$0000000C
+bltbmod:	EQU	$00000062
+bpl2mod:	EQU	$0000010A
+serper:	EQU	$00000032
+ciaddra:	EQU	$00000200
+CIAICRF_TB:	EQU	$00000002
+CIAF_PRTRSEL:	EQU	$00000004
+bltamod:	EQU	$00000064
+bpl1mod:	EQU	$00000108
+CIAICRF_TA:	EQU	$00000001
+INTB_COPER:	EQU	$00000004
+DMAF_BLITTER:	EQU	$00000040
+INTF_COPER:	EQU	$00000010
+INTF_DSKSYNC:	EQU	$00001000
+DMAB_BLITTER:	EQU	$00000006
+INTF_VERTB:	EQU	$00000020
+ciaicr:	EQU	$00000D00
+INTB_VERTB:	EQU	$00000005
+dskpt:	EQU	$00000020
+DMAF_SETCLR:	EQU	$00008000
+DMAF_DISK:	EQU	$00000010
+cop1lc:	EQU	$00000080
+DMAF_BLTDONE:	EQU	$00004000
+DMAF_AUD0:	EQU	$00000001
+_ciaa:	EQU	$00BFE001
+DMAF_AUD1:	EQU	$00000002
+DMAF_AUD2:	EQU	$00000004
+DMAF_AUD3:	EQU	$00000008
+serdatr:	EQU	$00000018
+_ciab:	EQU	$00BFD000
+dmacon:	EQU	$00000096
+DMAF_AUDIO:	EQU	$0000000F
+bltcdat:	EQU	$00000070
+ciatbhi:	EQU	$00000700
+DMAF_RASTER:	EQU	$00000100
+INTB_TBE:	EQU	$00000000
+CIAICRB_TB:	EQU	$00000001
+ac_len:	EQU	$00000004
+dsklen:	EQU	$00000024
+ciacra:	EQU	$00000E00
+ciacrb:	EQU	$00000F00
+CIAF_PRTRPOUT:	EQU	$00000002
+ciatblo:	EQU	$00000600
+bltdmod:	EQU	$00000066
+INTF_INTEN:	EQU	$00004000
+bpl1pth = $0e0
+bpl1ptl = $0e2
+bpl2pth = $0e4
+bpl2ptl = $0e6
+bpl3pth = $0e8
+bpl3ptl = $0ea
+bpl4pth = $0ec
+bpl4ptl = $0ee
+color00  = $180
+color01  = $182
+color02  = $184
+color03  = $186
+color04  = $188
+color05  = $18a
+color06  = $18c
+color07  = $18e
+color08  = $190
+color09  = $192
+color10 = $194
+color11 = $196
+color12 = $198
+color13 = $19a
+color14 = $19c
+color15 = $19e
+color16 = $1a0
+color17 = $1a2
+color18 = $1a4
+color19 = $1a6
+color20 = $1a8
+color21 = $1aa
+color22 = $1ac
+color23 = $1ae
+color24 = $1b0
+color25 = $1b2
+color26 = $1b4
+color27 = $1b6
+color28 = $1b8
+color29 = $1ba
+color30 = $1bc
+color31 = $1be
+cop1lch = $080
+intenar = $01c 
+spr0pth = $120
+spr0ptl = $122
+spr1pth = $124
+spr1ptl = $126
+spr2pth = $128
+spr2ptl = $12a
+spr3pth = $12c
+spr3ptl = $12e
+spr4pth = $130
+spr4ptl = $132
+spr5pth = $134
+spr5ptl = $136
+spr6pth = $138
+spr6ptl = $13a
+spr7pth = $13c
+spr7ptl = $13e
+_LVOOpenLibrary		equ	-$228
+_LVOCloseLibrary	equ	-$19e
+_LVOForbid		equ	-$84
+_LVOPermit		equ	-$8a
+_LVOSuperVisor		equ	-$1e
+_LVOCacheControl	equ	-$288
+_LVOLoadView		equ	-$de
+_LVOWaitTOF		equ	-$10e
+AttnFlags		equ	$128
+CACR_EnableI		equ	$00000001
+CACR_FreezeI		equ	$00000002
+CACR_ClearI		equ	$00000008
+CACR_IBE		equ	$00000010
+CACR_EnableD		equ	$00000100
+CACR_FreezeD		equ	$00000200
+CACR_ClearD		equ	$00000800
+CACR_DBE		equ	$00001000
+CACR_WriteAllocate	equ	$00002000
+CACR_EnableE		equ	$40000000
+CACR_CopyBack		equ	$80000000
+gb_ActiView		equ	34
+gb_copinit		equ	38
+DMAF_ALL		equ	$01FF
+TIMESTEP_FACTOR		equ	$30 ; fixed $EE
+
 	section	Code,code
 startup:
 ;	moveq	#0,d2
@@ -183,7 +372,7 @@ initialize:
 	MOVE.W	#$0000,_custom+bpl2mod
 	MOVE.W	#$0000,_custom+bplcon1
 	MOVE.W	#$0024,_custom+bplcon2
-	MOVE.L	#copperlist,A0
+	MOVE.L	#copperlistStart,A0
 	MOVE.L	A0,_custom+cop1lc
 	MOVE.W	_custom+copjmp1,D0
 	MOVE.W	#(DMAF_COPPER|DMAF_RASTER|DMAF_MASTER|DMAF_SETCLR),_custom+dmacon
@@ -355,6 +544,7 @@ ciaBInterruptDone:
 	RTS
 
 verticalBlankInterrupt:
+	bsr	copperInterrupt
 	MOVEM.L	D0-D7/A0-A6,-(SP)
 	CLR.W	D1
 	CLR.W	D2
@@ -654,7 +844,8 @@ lbC00D0A6:
 	RTS
 
 setupFrameBufferAddresses:
-	MOVE.L	renderFrameBuffer,D3
+	;MOVE.L	#fastRenderBuffer,D3		; fixed renderFrameBuffer
+	move.l	renderFrameBuffer,d3
 	ADD.L	#$00000284,D3
 	MOVE.L	D3,viewportTopAddress
 	MOVE.L	displayFrameBuffer,bitplane1Pointer
@@ -6511,9 +6702,10 @@ continueGameLoop:
 lbC04EEDC:
 	MOVE.B	D2,raceCompletionCheckFlag
 lbC04EEE2:
-	SUBQ.B	#$01,restartTimerCountdown
+	move.b	framesSinceCopperlistUpdate,d0
+	SUB.B	d0,restartTimerCountdown		; fixed #$01
 	BPL	lbC04EF0E
-	ADDQ.B	#$01,restartTimerCountdown
+	ADD.B	d0,restartTimerCountdown		; fixed #$01
 	MOVE.B	wreckCountdownTimer,D0
 	BNE	lbC04EF0E
 	JSR	disableAudio
@@ -9133,7 +9325,7 @@ lbC051B92:
 	BMI	lbC051BC4
 	MOVE.B	#$80,collisionStateFlags
 	MOVE.B	offsetFromRoadCenter,trackSideIndicator
-	MOVE.B	#$10,restartTimerCountdown
+	MOVE.B	#$60,restartTimerCountdown			; fixed $10
 	JSR	initializeDebrisParticlePositions
 lbC051BC4:
 	RTS
@@ -14452,7 +14644,33 @@ lbC056AAA:
 	JSR	renderMaskedGraphicsObject
 finishHUDRendering:
 	JSR	updateGameMessageDisplay
+;	JSR	copyFastRenderBuffer
 	RTS
+
+copyFastRenderBuffer:
+	lea	fastRenderBuffer,a0
+	move.l	renderFrameBuffer,a1
+	lea	16*40+4(a0),a0
+	lea	16*40+4(a1),a1
+	moveq	#4-1,d1
+.copyBitplane:
+	move.w	#128-1,d0
+.copyLine:
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	lea	8(a0),a0
+	lea	8(a1),a1
+	dbra	d0,.copyLine
+	lea	72*40(a0),a0
+	lea	72*40(a1),a1
+	dbra	d1,.copyBitplane
+	rts
 
 updateWheelGraphics:
 	MOVE.B	wheelSpeed,D0
@@ -21175,6 +21393,8 @@ bitplaneMaskTable:      ; fixme - the last couple of kilobytes are corrupt
 name_graphics:	dc.b	"graphics.library",0
 
 	section	ChipData,data_c
+copperlistStart:
+	dc.w	$0801,$fffe
 copperlist:
 	dc.w	bpl1pth,$0007,bpl1ptl,$8000,bpl2pth,$0007,bpl2ptl,$A000,bpl3pth
 	dc.w	$0007,bpl3ptl,$C000,bpl4pth,$0007,bpl4ptl,$E000,color00
@@ -21192,7 +21412,7 @@ copperlistSprite0:
 	dc.w	$0000,spr0ptl,$0000,$0124,$0000,$0126,$0000,$0128,$0000
 	dc.w	$012A,$0000,$012C,$0000,$012E,$0000,$0130,$0000,$0132
 	dc.w	$0000,$0134,$0000,$0136,$0000,$0138,$0000,$013A,$0000
-	dc.w	$013C,$0000,$013E,$0000,$FA01,$FF00,intreq,$8010,$FFFF
+	dc.w	$013C,$0000,$013E,$0000,$FFFF				; fixed $FA01,$FF00,intreq,$8010,
 	dc.w	$FFFE
 
 sampleData:
@@ -22617,6 +22837,8 @@ renderFrameBuffer:
 	ds.l	1
 viewportTopAddress:
 	ds.l	1
+fastRenderBuffer:
+	ds.l	40*200
 
 sp_quit:	ds.l	1
 base_vector:	ds.l	1
@@ -22676,192 +22898,3 @@ memory_7AB5A	equ	(memory_70000+$AB5A)
 previewDataBuffer	equ	(memory_70000+$ABDA)
 renderCommandQueue	equ	(memory_70000+$B08A)
 memory_7B6FA	equ	(memory_70000+$B6FA)
-
-dsksync:	EQU	$0000007E
-CIAF_PRTRBUSY:	EQU	$00000001
-copjmp1:	EQU	$00000088
-ciasdr:	EQU	$00000C00
-DMAF_BLTNZERO:	EQU	$00002000
-adkcon:	EQU	$0000009E
-serdat:	EQU	$00000030
-tv_UserIntVects:	EQU	$00000100
-DMAF_MASTER:	EQU	$00000200
-INTF_EXTER:	EQU	$00002000
-CIACRBF_RUNMODE:	EQU	$00000008
-_custom:	EQU	$00DFF000
-CIACRAF_RUNMODE:	EQU	$00000008
-ddfstop:	EQU	$00000094
-bplcon2:	EQU	$00000104
-diwstrt:	EQU	$0000008E
-ac_per:	EQU	$00000006
-intreq:	EQU	$0000009C
-bplcon0:	EQU	$00000100
-bplcon1:	EQU	$00000102
-INTF_AUD1:	EQU	$00000100
-INTB_AUD0:	EQU	$00000007
-INTF_AUD0:	EQU	$00000080
-INTF_AUD3:	EQU	$00000400
-INTF_BLIT:	EQU	$00000040
-INTF_AUD2:	EQU	$00000200
-INTF_SOFTINT:	EQU	$00000004
-INTF_DSKBLK:	EQU	$00000002
-INTB_DSKBLK:	EQU	$00000001
-aud0:	EQU	$000000A0
-diwstop:	EQU	$00000090
-INTF_RBF:	EQU	$00000800
-CIAICRF_SETCLR:	EQU	$00000080
-ddfstrt:	EQU	$00000092
-CIAF_COMCTS:	EQU	$00000010
-dmaconr:	EQU	$00000002
-DMAF_BLITHOG:	EQU	$00000400
-CIAF_COMCD:	EQU	$00000020
-CIAICRF_ALRM:	EQU	$00000004
-INTF_TBE:	EQU	$00000001
-ciapra:	EQU	$00000000
-ciaprb:	EQU	$00000100
-CIAF_COMDTR:	EQU	$00000080
-CIAICRF_FLG:	EQU	$00000010
-CIAF_COMDSR:	EQU	$00000008
-DMAF_COPPER:	EQU	$00000080
-CIAF_DSKSEL0:	EQU	$00000008
-intena:	EQU	$0000009A
-INTB_SETCLR:	EQU	$0000000F
-INTF_PORTS:	EQU	$00000008
-INTF_SETCLR:	EQU	$00008000
-bltafwm:	EQU	$00000044
-intreqr:	EQU	$0000001E
-tv_Lev7IntVect:	EQU	$0000007C
-tv_Lev6IntVect:	EQU	$00000078
-tv_Lev5IntVect:	EQU	$00000074
-tv_Lev4IntVect:	EQU	$00000070
-CIAICRF_SP:	EQU	$00000008
-tv_Lev3IntVect:	EQU	$0000006C
-tv_Lev2IntVect:	EQU	$00000068
-tv_Lev1IntVect:	EQU	$00000064
-joy1dat:	EQU	$0000000C
-bltbmod:	EQU	$00000062
-bpl2mod:	EQU	$0000010A
-serper:	EQU	$00000032
-ciaddra:	EQU	$00000200
-CIAICRF_TB:	EQU	$00000002
-CIAF_PRTRSEL:	EQU	$00000004
-bltamod:	EQU	$00000064
-bpl1mod:	EQU	$00000108
-CIAICRF_TA:	EQU	$00000001
-INTB_COPER:	EQU	$00000004
-DMAF_BLITTER:	EQU	$00000040
-INTF_COPER:	EQU	$00000010
-INTF_DSKSYNC:	EQU	$00001000
-DMAB_BLITTER:	EQU	$00000006
-INTF_VERTB:	EQU	$00000020
-ciaicr:	EQU	$00000D00
-INTB_VERTB:	EQU	$00000005
-dskpt:	EQU	$00000020
-DMAF_SETCLR:	EQU	$00008000
-DMAF_DISK:	EQU	$00000010
-cop1lc:	EQU	$00000080
-DMAF_BLTDONE:	EQU	$00004000
-DMAF_AUD0:	EQU	$00000001
-_ciaa:	EQU	$00BFE001
-DMAF_AUD1:	EQU	$00000002
-DMAF_AUD2:	EQU	$00000004
-DMAF_AUD3:	EQU	$00000008
-serdatr:	EQU	$00000018
-_ciab:	EQU	$00BFD000
-dmacon:	EQU	$00000096
-DMAF_AUDIO:	EQU	$0000000F
-bltcdat:	EQU	$00000070
-ciatbhi:	EQU	$00000700
-DMAF_RASTER:	EQU	$00000100
-INTB_TBE:	EQU	$00000000
-CIAICRB_TB:	EQU	$00000001
-ac_len:	EQU	$00000004
-dsklen:	EQU	$00000024
-ciacra:	EQU	$00000E00
-ciacrb:	EQU	$00000F00
-CIAF_PRTRPOUT:	EQU	$00000002
-ciatblo:	EQU	$00000600
-bltdmod:	EQU	$00000066
-INTF_INTEN:	EQU	$00004000
-bpl1pth = $0e0
-bpl1ptl = $0e2
-bpl2pth = $0e4
-bpl2ptl = $0e6
-bpl3pth = $0e8
-bpl3ptl = $0ea
-bpl4pth = $0ec
-bpl4ptl = $0ee
-color00  = $180
-color01  = $182
-color02  = $184
-color03  = $186
-color04  = $188
-color05  = $18a
-color06  = $18c
-color07  = $18e
-color08  = $190
-color09  = $192
-color10 = $194
-color11 = $196
-color12 = $198
-color13 = $19a
-color14 = $19c
-color15 = $19e
-color16 = $1a0
-color17 = $1a2
-color18 = $1a4
-color19 = $1a6
-color20 = $1a8
-color21 = $1aa
-color22 = $1ac
-color23 = $1ae
-color24 = $1b0
-color25 = $1b2
-color26 = $1b4
-color27 = $1b6
-color28 = $1b8
-color29 = $1ba
-color30 = $1bc
-color31 = $1be
-cop1lch = $080
-intenar = $01c 
-spr0pth = $120
-spr0ptl = $122
-spr1pth = $124
-spr1ptl = $126
-spr2pth = $128
-spr2ptl = $12a
-spr3pth = $12c
-spr3ptl = $12e
-spr4pth = $130
-spr4ptl = $132
-spr5pth = $134
-spr5ptl = $136
-spr6pth = $138
-spr6ptl = $13a
-spr7pth = $13c
-spr7ptl = $13e
-_LVOOpenLibrary		equ	-$228
-_LVOCloseLibrary	equ	-$19e
-_LVOForbid		equ	-$84
-_LVOPermit		equ	-$8a
-_LVOSuperVisor		equ	-$1e
-_LVOCacheControl	equ	-$288
-_LVOLoadView		equ	-$de
-_LVOWaitTOF		equ	-$10e
-AttnFlags		equ	$128
-CACR_EnableI		equ	$00000001
-CACR_FreezeI		equ	$00000002
-CACR_ClearI		equ	$00000008
-CACR_IBE		equ	$00000010
-CACR_EnableD		equ	$00000100
-CACR_FreezeD		equ	$00000200
-CACR_ClearD		equ	$00000800
-CACR_DBE		equ	$00001000
-CACR_WriteAllocate	equ	$00002000
-CACR_EnableE		equ	$40000000
-CACR_CopyBack		equ	$80000000
-gb_ActiView		equ	34
-gb_copinit		equ	38
-DMAF_ALL		equ	$01FF
-TIMESTEP_FACTOR		equ	$30 ; fixed $EE
