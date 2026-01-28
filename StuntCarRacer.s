@@ -376,7 +376,6 @@ copperInterrupt:
 	JSR	updateCopperlistPointers
 	CLR.B	copperlistUpdatePendingFlag
 	move.b	framesSinceCopperlistUpdateAccumulator,framesSinceCopperlistUpdate
-	sub.b	#2,framesSinceCopperlistUpdate
 	clr.b	framesSinceCopperlistUpdateAccumulator
 	TST.B	spriteUpdatePendingFlag
 	BEQ	lbC000A42
@@ -933,7 +932,7 @@ lbC048ACC:
 synchronizeNetworkState:
 	MOVE.B	#$00,networkPacketReadyFlag
 	CLR.W	checksumAccumulator
-	MOVE.B	gameParameter1,D0
+	MOVE.B	playerSegmentIndex,D0
 	JSR	sendSerialByteWithChecksum
 	MOVE.W	trackProgressionByte,D0
 	JSR	sendSerialWordWithChecksum
@@ -1049,18 +1048,18 @@ lbC048C74:
 	JSR	sendSerialWordWithChecksum
 	TST.B	lbB04956E
 	BNE	lbC048D30
-	MOVE.B	gameParameter2,lbB04956A
+	MOVE.B	opponentSegmentIndex,lbB04956A
 	MOVE.W	gameStateCounter,lbW049576
 	TST.B	lbB04956E
 	BNE	lbC048D30
 	CLR.W	networkDataCounter1
 	JSR	waitForNetworkByte
-	MOVE.B	D0,gameParameter2
+	MOVE.B	D0,opponentSegmentIndex
 	JSR	waitForNetworkWord
 	MOVE.W	D0,gameStateCounter
 	TST.B	selectedRaceType
 	BPL	lbC048D2E
-	MOVE.B	gameParameter2,D0
+	MOVE.B	opponentSegmentIndex,D0
 	CMP.B	numTrackSegments,D0
 	BCC	lbC048D30
 	MOVE.W	#$00FF,D0
@@ -1204,7 +1203,7 @@ lbC048FEE:
 	JSR	lbC04903A
 	JSR	networkHandshakeLoop
 lbC049004:
-	MOVE.B	lbB04956A,gameParameter2
+	MOVE.B	lbB04956A,opponentSegmentIndex
 	MOVE.W	lbW049576,gameStateCounter
 	TST.B	networkConnectionState
 	BEQ	lbC049028
@@ -2140,8 +2139,8 @@ checkMultiplayerTrackSwap:
 	MOVE.B	multiplayerSyncFlag,D0
 	BPL	lbC04A09C
 	ASL.B	#$01,D0
-	MOVE.B	gameParameter1,D3
-	CMP.B	gameParameter2,D3
+	MOVE.B	playerSegmentIndex,D3
+	CMP.B	opponentSegmentIndex,D3
 	BNE	lbC04A09C
 	MOVE.B	trackSideIndicator,D3
 	EOR.B	D3,D0
@@ -3187,7 +3186,7 @@ lbC04B292:
 
 updateCoordinateTransforms:
 	MOVE.L	#trackCoordinatesX,A0
-	MOVE.W	$00(A0,D2.W),trackIncrementValue
+	MOVE.W	$00(A0,D2.W),lateralVelocity
 	MOVE.W	$20(A0,D2.W),lbW00D4F8
 	JSR	calculate3DProjection
 	JSR	transformCoordinate
@@ -3775,7 +3774,7 @@ lbC04BCF8:
 lbC04BD08:
 	MOVE.W	#$00FF,D0
 calculateDistanceOrAngle:
-	MOVE.B	gameParameter2,D1
+	MOVE.B	opponentSegmentIndex,D1
 	MOVE.B	D1,currentSegmentIndex
 	MOVE.W	gameStateCounter,D3
 	SUB.W	D3,D0
@@ -3873,7 +3872,7 @@ processCoordinateTransformation:
 
 lbC04BE8E:
 	MOVE.L	#trackCoordinatesX,A0
-	MOVE.W	$00(A0,D2.W),trackIncrementValue
+	MOVE.W	$00(A0,D2.W),lateralVelocity
 	MOVE.W	$20(A0,D2.W),lbW00D4F8
 	JSR	calculate3DProjection
 	JSR	transformCoordinate
@@ -3919,7 +3918,7 @@ lbC04BF1C:
 storeTrackCoordinates:
 	JSR	calculateTrackCoordinatesFromData
 	MOVE.L	#trackCoordinatesX,A1
-	MOVE.W	trackIncrementValue,$00(A1,D1.W)
+	MOVE.W	lateralVelocity,$00(A1,D1.W)
 	MOVE.L	#trackCoordinatesY,A1
 	MOVE.W	lbW00D4F8,$00(A1,D1.W)
 	RTS
@@ -3953,18 +3952,18 @@ generateDrawBridge:
 	RTS
 
 generateTrackSegment:
-	CMP.B	#$38,gameParameter1
+	CMP.B	#$38,playerSegmentIndex
 	BCC	lbC04C0BC
-	CMP.B	#$33,gameParameter1
+	CMP.B	#$33,playerSegmentIndex
 	BCC	lbC04C0EA
 lbC04C0BC:
-	CMP.B	#$38,gameParameter2
+	CMP.B	#$38,opponentSegmentIndex
 	BCC	lbC04C0FE
-	CMP.B	#$33,gameParameter2
+	CMP.B	#$33,opponentSegmentIndex
 	BCC	lbC04C0EA
 	TST.B	trackEffectFlag
 	BEQ	lbC04C0FE
-	CMP.B	#$30,gameParameter2
+	CMP.B	#$30,opponentSegmentIndex
 	BCS	lbC04C0FE
 lbC04C0EA:
 	MOVE.B	#$0C,D0
@@ -3977,7 +3976,7 @@ lbC04C0FE:
 	BMI	lbC04C10E
 	ADDQ.B	#$01,trackVariationSeed
 lbC04C10E:
-	MOVE.W	#$0000,trackProgressionValue
+	MOVE.W	#$0000,segmentProgressDistance
 	MOVE.B	#$00,trackEffectFlag
 	MOVE.B	trackVariationSeed,D0
 	AND.W	#$001F,D0
@@ -3991,7 +3990,7 @@ lbC04C132:
 	MOVE.B	$00(A0,D2.W),lbB00E285
 	MOVE.B	$00(A0,D2.W),lbB00E286
 	ASL.W	#$05,D0
-	MOVE.W	D0,trackIncrementValue
+	MOVE.W	D0,lateralVelocity
 	MOVE.B	#$02,D2
 	MOVE.B	#$BE,D1
 	MOVE.L	#segmentGeometryOffsetTable,A1
@@ -4004,11 +4003,11 @@ lbC04C132:
 	MOVE.L	D0,A0
 	MOVE.B	#$0F,D1
 lbC04C188:
-	MOVE.W	trackProgressionValue,D0
-	ADD.W	trackIncrementValue,D0
-	MOVE.W	D0,trackProgressionValue
+	MOVE.W	segmentProgressDistance,D0
+	ADD.W	lateralVelocity,D0
+	MOVE.W	D0,segmentProgressDistance
 lbC04C19A:
-	MOVE.B	trackProgressionValue,D0
+	MOVE.B	segmentProgressDistance,D0
 	CMP.B	#$20,D2
 	BNE	lbC04C1AC
 	OR.B	#$80,D0
@@ -4053,7 +4052,7 @@ lbC04C1AC:
 	MOVE.W	D0,$0044(A1)
 lbC04C24A:
 	MOVE.B	#$80,graphicsUpdateFlag
-	MOVE.B	gameParameter2,D0
+	MOVE.B	opponentSegmentIndex,D0
 	CMP.B	#$2F,D0
 	BNE	lbC04C294
 	MOVE.B	trackVariationSeed,D0
@@ -4321,11 +4320,11 @@ lbC04C6AC:
 	LSR.B	#$01,D0
 	BCC	lbC04C6DA
 lbC04C6B8:
-	MOVE.B	D2,segmentDirectionFlags
+	MOVE.B	D2,curveMagnitude
 	MOVE.B	currentMenuItemCopy,D2
 	MOVE.B	D1,D0
 	MOVE.B	D0,$01(A3,D2.W)
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	MOVE.B	D0,$00(A3,D2.W)
 	ADDQ.B	#$01,savedSegmentIndex
 lbC04C6DA:
@@ -4349,9 +4348,9 @@ readTrackDataByte:
 	RTS
 
 applyDirectionalOffset:
-	TST.B	segmentDirectionFlags
+	TST.B	curveMagnitude
 	BMI	lbC04C72E
-	BTST	#$06,segmentDirectionFlags
+	BTST	#$06,curveMagnitude
 	BNE	lbC04C728
 	ADD.B	#$10,D0
 	RTS
@@ -4361,7 +4360,7 @@ lbC04C728:
 	RTS
 
 lbC04C72E:
-	BTST	#$06,segmentDirectionFlags
+	BTST	#$06,curveMagnitude
 	BNE	lbC04C740
 	SUB.B	#$10,D0
 	RTS
@@ -4393,26 +4392,26 @@ lbC04C778:
 	MOVE.B	D0,trackBoostThreshold
 	MOVE.B	D0,trackBoostThresholdCopy
 	JSR	readTrackDataByte
-	MOVE.B	D0,trackIncrementValue
+	MOVE.B	D0,lateralVelocity
 	MOVE.B	D0,lbW00D4F8
 	MOVE.B	#$00,D1
 	MOVE.B	D1,segmentAlternateFlag
 	MOVE.B	D1,trackDataComponent
-	MOVE.B	D1,trackProgressionValue
+	MOVE.B	D1,segmentProgressDistance
 	MOVE.B	D1,segmentRepeatCounter
 lbC04C7D0:
 	MOVE.B	segmentRepeatCounter,D0
 	BEQ	lbC04C820
 	SUBQ.B	#$01,segmentRepeatCounter
 	MOVE.B	previousSegmentProperties,D0
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$10,D0
 	BEQ	lbC04C80E
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	EOR.B	#$C0,D0
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 lbC04C80E:
 	MOVE.B	currentTrackCoordinate,D0
 	JSR	applyDirectionalOffset
@@ -4420,13 +4419,13 @@ lbC04C80E:
 
 lbC04C820:
 	JSR	readTrackDataByte
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$0F,D0
 	CMP.B	#$0F,D0
 	BNE	lbC04C856
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	LSR.B	#$04,D0
 	MOVE.B	D0,segmentRepeatCounter
 	JMP	lbC04C7D0
@@ -4444,7 +4443,7 @@ lbC04C86C:
 	LSR.B	#$02,D0
 	ROXR.B	#$01,D0
 	MOVE.B	D0,temp
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	AND.B	#$0F,D0
 	CMP.B	#$0C,D0
 	BLT	lbC04C8DC
@@ -4466,7 +4465,7 @@ lbC04C8DC:
 	JSR	readTrackDataByte
 	MOVE.L	#segmentGeometryIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	AND.B	#$20,D0
 	BEQ	lbC04C90A
 	MOVE.L	#segmentGeometryIndices,A1
@@ -4484,7 +4483,7 @@ lbC04C910:
 	MOVE.B	D0,-(SP)
 	ASL.B	#$01,D1
 	MOVE.L	#segmentWorldPositions,A1
-	MOVE.W	trackProgressionValue,D0
+	MOVE.W	segmentProgressDistance,D0
 	ASL.W	#$05,D0
 	MOVE.W	D0,$00(A1,D1.W)
 	LSR.B	#$01,D1
@@ -4496,30 +4495,30 @@ lbC04C910:
 	MOVE.B	D0,segmentAlternateFlag
 	MOVE.B	trackModeParameter,D0
 	AND.W	#$00FF,D0
-	ADD.W	D0,trackProgressionValue
+	ADD.W	D0,segmentProgressDistance
 	MOVE.B	#$00,D2
 	JSR	readSegmentInterpolationValue
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.L	#segmentInterpolationPoint1,A3
 	MOVE.L	#segmentInterpolationPoint2,A4
-	MOVE.W	trackIncrementValue,D4
-	SUB.W	segmentDirectionFlags,D4
+	MOVE.W	lateralVelocity,D4
+	SUB.W	curveMagnitude,D4
 	MOVE.W	D4,$00(A3,D1.W)
 	MOVE.B	trackModeParameter,D2
 	JSR	readSegmentInterpolationValue
-	MOVE.B	D0,segmentDirectionFlags
-	ADD.W	segmentDirectionFlags,D4
-	MOVE.W	D4,trackIncrementValue
+	MOVE.B	D0,curveMagnitude
+	ADD.W	curveMagnitude,D4
+	MOVE.W	D4,lateralVelocity
 	MOVE.B	#$00,D2
 	JSR	switchToAlternateGeometryAndReadSegmentInterpolationValue
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.W	lbW00D4F8,D4
-	SUB.W	segmentDirectionFlags,D4
+	SUB.W	curveMagnitude,D4
 	MOVE.W	D4,$00(A4,D1.W)
 	MOVE.B	trackModeParameter,D2
 	JSR	switchToAlternateGeometryAndReadSegmentInterpolationValue
-	MOVE.B	D0,segmentDirectionFlags
-	ADD.W	segmentDirectionFlags,D4
+	MOVE.B	D0,curveMagnitude
+	ADD.W	curveMagnitude,D4
 	MOVE.W	D4,lbW00D4F8
 	LSR.B	#$01,D1
 	MOVE.B	(SP)+,D0
@@ -4537,7 +4536,7 @@ lbC04CA0C:
 	MOVE.B	#$00,D1
 lbC04CA22:
 	MOVE.B	D1,startingSegmentIndex
-	MOVE.W	trackProgressionValue,D0
+	MOVE.W	segmentProgressDistance,D0
 	ASL.W	#$05,D0
 	MOVE.W	D0,startWorldPosition
 	MOVE.B	#$00,D1
@@ -4826,8 +4825,8 @@ lbC04CE14:
 	NEG.W	D0
 lbC04CE28:
 	MOVE.B	trackSideIndicator,trackSideIndicatorCopy
-	MOVE.B	#$A0,segmentDirectionFlags
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	#$A0,curveMagnitude
+	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	lbC04CE50
@@ -5162,11 +5161,11 @@ delayRoutine:
 	MOVE.B	#$14,D2
 delayWithParam:
 	MOVE.B	#$14,D0
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 lbC04D34C:
 	SUBQ.B	#$01,temp
 	BNE	lbC04D34C
-	SUBQ.B	#$01,segmentDirectionFlags
+	SUBQ.B	#$01,curveMagnitude
 	BNE	lbC04D34C
 	SUBQ.B	#$01,D2
 	BNE	delayWithParam
@@ -5365,7 +5364,7 @@ lbC04D680:
 	JMP	lbC04D71C
 
 lbC04D6A6:
-	MOVE.B	gameParameter2,D2
+	MOVE.B	opponentSegmentIndex,D2
 	MOVE.L	#segmentVisibilityData,A0
 	TST.B	$00(A0,D2.W)
 	BMI	lbC04D71C
@@ -5420,7 +5419,7 @@ applyTrackSegmentGeometry:
 	MOVE.B	$0003(A5),D3
 	ASL.W	#$08,D3
 	MOVE.B	$0002(A5),D3
-	MOVE.W	trackIncrementValue,D0
+	MOVE.W	lateralVelocity,D0
 lbC04D7B0:
 	SUB.W	D3,D0
 	MOVE.W	D0,lateralRoadPosition
@@ -5430,10 +5429,10 @@ lbC04D7B0:
 
 lbC04D7CE:
 	JSR	lbC04DCDA
-	MOVE.B	#$B5,segmentDirectionFlags
-	MOVE.W	trackIncrementValue,D0
+	MOVE.B	#$B5,curveMagnitude
+	MOVE.W	lateralVelocity,D0
 	SUB.W	lbW00D4F8,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5444,10 +5443,10 @@ lbC04D7CE:
 	MOVE.B	$0002(A5),D3
 	SUB.W	D3,D0
 	MOVE.W	D0,lateralRoadPosition
-	MOVE.B	$0007(A5),segmentDirectionFlags
-	MOVE.W	trackIncrementValue,D0
+	MOVE.B	$0007(A5),curveMagnitude
+	MOVE.W	lateralVelocity,D0
 	ADD.W	lbW00D4F8,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5464,7 +5463,7 @@ lbC04D7CE:
 lbC04D850:
 	MOVE.B	#$02,D2
 	JSR	calculateTrackCoordinatesFromData
-	MOVE.W	trackIncrementValue,D0
+	MOVE.W	lateralVelocity,D0
 	MOVE.W	lbW00D4F8,D3
 	JSR	calculateDivision
 	MOVE.W	D0,-(SP)
@@ -5497,8 +5496,8 @@ lbC04D892:
 	BPL	lbC04D8D6
 	NEG.W	D0
 lbC04D8D6:
-	MOVE.B	$0008(A5),segmentDirectionFlags
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	$0008(A5),curveMagnitude
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5652,14 +5651,14 @@ lbC04DABE:
 	RTS
 
 calculateSegmentPhysics:
-	MOVE.B	gameParameter1,D1
+	MOVE.B	playerSegmentIndex,D1
 	MOVE.B	D1,currentSegmentIndex
 	JSR	loadTrackSegmentConfiguration
 	MOVE.B	#$00,lbB00D49A
 	MOVE.B	#$04,D1
 lbC04DAEE:
 	MOVE.B	D1,trackBoostThresholdCopy
-	MOVE.B	gameParameter1,D0
+	MOVE.B	playerSegmentIndex,D0
 	CMP.B	currentSegmentIndex,D0
 	BEQ	lbC04DB18
 	MOVE.B	D0,D1
@@ -5667,7 +5666,7 @@ lbC04DAEE:
 	JSR	loadTrackSegmentConfiguration
 	MOVE.B	trackBoostThresholdCopy,D1
 lbC04DB18:
-	MOVE.B	segmentOrientationPrimary,segmentDirectionFlags
+	MOVE.B	segmentOrientationPrimary,curveMagnitude
 	MOVE.L	#wheelCornerXFrontLeft,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$04,D0
@@ -5689,7 +5688,7 @@ lbC04DB5E:
 	BPL	lbC04DB66
 	NEG.W	D0
 lbC04DB66:
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5708,11 +5707,11 @@ lbC04DB9A:
 	BNE	lbC04DBA8
 	MOVE.B	D0,lbB00D4A1
 lbC04DBA8:
-	MOVE.B	segmentOrientationAlternate,segmentDirectionFlags
+	MOVE.B	segmentOrientationAlternate,curveMagnitude
 	MOVE.L	#wheelCornerYFrontLeft,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$03,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5788,7 +5787,7 @@ lbC04DCDA:
 	BNE	lbC04DD12
 	MOVE.W	#$0000,D0
 	SUB.W	baseCoordinateX,D0
-	MOVE.W	D0,trackIncrementValue
+	MOVE.W	D0,lateralVelocity
 	MOVE.W	#$0000,D0
 	SUB.W	baseCoordinateY,D0
 	MOVE.W	D0,lbW00D4F8
@@ -5797,7 +5796,7 @@ lbC04DCDA:
 lbC04DD12:
 	MOVE.W	#$0000,D0
 	SUB.W	baseCoordinateY,D0
-	MOVE.W	D0,trackIncrementValue
+	MOVE.W	D0,lateralVelocity
 	MOVE.W	#$0800,D0
 	ADD.W	baseCoordinateX,D0
 	MOVE.W	D0,lbW00D4F8
@@ -5808,7 +5807,7 @@ lbC04DD34:
 	BNE	lbC04DD62
 	MOVE.W	#$0800,D0
 	ADD.W	baseCoordinateX,D0
-	MOVE.W	D0,trackIncrementValue
+	MOVE.W	D0,lateralVelocity
 	MOVE.W	#$0800,D0
 	ADD.W	baseCoordinateY,D0
 	MOVE.W	D0,lbW00D4F8
@@ -5817,7 +5816,7 @@ lbC04DD34:
 lbC04DD62:
 	MOVE.W	#$0800,D0
 	ADD.W	baseCoordinateY,D0
-	MOVE.W	D0,trackIncrementValue
+	MOVE.W	D0,lateralVelocity
 	MOVE.W	#$0000,D0
 	SUB.W	baseCoordinateX,D0
 	MOVE.W	D0,lbW00D4F8
@@ -5971,7 +5970,7 @@ lbC04DF3E:
 	RTS
 
 lbC04DF5A:
-	MOVE.W	trackIncrementValue,D0
+	MOVE.W	lateralVelocity,D0
 	JSR	lbC052C5A
 	MOVE.L	D0,D4
 	MOVE.W	lbW00D4F8,D0
@@ -5981,11 +5980,11 @@ lbC04DF5A:
 	JSR	lbC052C5A
 	MOVE.B	trackGeometryTypeIndex,D2
 	MOVE.L	#lbL04DFB8,A0
-	MOVE.B	$00(A0,D2.W),segmentDirectionFlags
+	MOVE.B	$00(A0,D2.W),curveMagnitude
 	SUB.L	D0,D4
 	LSR.L	#$08,D4
 	MOVE.W	D4,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -6010,8 +6009,8 @@ calculateTrackCoordinatesFromData:
 	ASL.W	#$08,D3
 	MOVE.B	$00(A5,D2.W),D3
 	ADDQ.B	#$02,D2
-	MOVE.W	baseCoordinateX,trackIncrementValue
-	ADD.W	D3,trackIncrementValue
+	MOVE.W	baseCoordinateX,lateralVelocity
+	ADD.W	D3,lateralVelocity
 	MOVE.B	$01(A5,D2.W),D3
 	ASL.W	#$08,D3
 	MOVE.B	$00(A5,D2.W),D3
@@ -6031,9 +6030,9 @@ lbC04E02E:
 	ASL.W	#$08,D3
 	MOVE.B	$00(A5,D2.W),D3
 	ADDQ.B	#$02,D2
-	MOVE.W	baseCoordinateX,trackIncrementValue
-	SUB.W	D3,trackIncrementValue
-	ADD.W	#$0800,trackIncrementValue
+	MOVE.W	baseCoordinateX,lateralVelocity
+	SUB.W	D3,lateralVelocity
+	ADD.W	#$0800,lateralVelocity
 	RTS
 
 lbC04E070:
@@ -6043,9 +6042,9 @@ lbC04E070:
 	ASL.W	#$08,D3
 	MOVE.B	$00(A5,D2.W),D3
 	ADDQ.B	#$02,D2
-	MOVE.W	baseCoordinateX,trackIncrementValue
-	SUB.W	D3,trackIncrementValue
-	ADD.W	#$0800,trackIncrementValue
+	MOVE.W	baseCoordinateX,lateralVelocity
+	SUB.W	D3,lateralVelocity
+	ADD.W	#$0800,lateralVelocity
 	MOVE.B	$01(A5,D2.W),D3
 	ASL.W	#$08,D3
 	MOVE.B	$00(A5,D2.W),D3
@@ -6067,8 +6066,8 @@ lbC04E0C6:
 	ASL.W	#$08,D3
 	MOVE.B	$00(A5,D2.W),D3
 	ADDQ.B	#$02,D2
-	MOVE.W	baseCoordinateX,trackIncrementValue
-	ADD.W	D3,trackIncrementValue
+	MOVE.W	baseCoordinateX,lateralVelocity
+	ADD.W	D3,lateralVelocity
 	RTS
 
 lbC04E108:
@@ -6408,7 +6407,7 @@ lbC04ECA4:
 	JSR	setupGameDisplay1
 	JSR	setupGameDisplay2
 	MOVE.B	lbB00E31B,D1
-	MOVE.B	D1,gameParameter2
+	MOVE.B	D1,opponentSegmentIndex
 	MOVE.B	#$04,gameStateCounter
 	MOVE.B	#$4C,previousDataIndex
 	JSR	initializeTrackCoordinates
@@ -6684,7 +6683,7 @@ processPlayerInput:
 lbC04F1DA:
 	MOVE.B	#$F1,D0
 lbC04F1DE:
-	MOVE.B	D0,controlResponseValue
+	MOVE.B	D0,steeringInputDirection
 	MOVE.B	inputStateFlags,D0
 	AND.B	#$10,D0
 	EOR.B	#$10,D0
@@ -6942,7 +6941,7 @@ checkLapCompletion:
 	BTST	#$06,collisionStateFlags
 	BNE	lbC04F602
 lbC04F5DA:
-	MOVE.L	#gameParameter1,A1
+	MOVE.L	#playerSegmentIndex,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lapCrossingDetectionFlag,A1
 	MOVE.B	$00(A1,D1.W),D2
@@ -7098,7 +7097,6 @@ clearGameDataSlot:
 
 updateLapTimer:
 	move.b	framesSinceCopperlistUpdate,d0	; fixed
-	addq	#1,d0
 	add.b	d0,d0
 	;MOVE.B	#$13,D0			; Add 19 milliseconds
 lbC04F832:
@@ -7280,7 +7278,7 @@ lbC04FA86:
 	CMP.B	#$0A,D0
 	BGE	lbC04FA80
 	MOVE.B	D0,currentMenuItemCopy
-	MOVE.B	D1,segmentDirectionFlags
+	MOVE.B	D1,curveMagnitude
 	MOVE.B	D2,savedSegmentIndex
 	MOVE.B	D5,speedDisplayThousands
 	MOVE.B	#$01,textHorizontalOffset
@@ -7301,7 +7299,7 @@ lbC04FAE6:
 	JSR	renderDigitAndAdvance
 	MOVE.B	savedSegmentIndex,D0
 	JSR	renderDigitAndAdvance
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	JSR	renderDigitAndAdvance
 	MOVE.B	currentMenuItemCopy,D0
 	JSR	renderDigitAndAdvance
@@ -7827,7 +7825,7 @@ renderStatsText:
 	BNE	lbC050576
 	RTS
 
-lbC050640:
+renderLapTime:
 	MOVE.L	#playerStatsArray,A1
 	MOVE.B	$00(A1,D1.W),D0
 	CMP.B	#$09,D0
@@ -7925,7 +7923,7 @@ randomizeCarAssignments:
 	MOVE.B	#$01,D1
 	MOVE.B	#$01,remainingRaces
 lbC050782:
-	MOVE.B	D1,segmentDirectionFlags
+	MOVE.B	D1,curveMagnitude
 	MOVE.B	D1,D0
 	MOVE.B	selectedTrack,D2
 	BEQ	lbC0507B6
@@ -7957,7 +7955,7 @@ lbC0507F2:
 	ADDQ.B	#$01,D1
 	ADDQ.B	#$01,D2
 	DBRA	D3,lbC0507F2
-	MOVE.B	segmentDirectionFlags,D1
+	MOVE.B	curveMagnitude,D1
 	SUBQ.B	#$01,D1
 	BPL	lbC050782
 	MOVE.B	additionalPlayerCount,D1
@@ -8103,7 +8101,7 @@ lbC0509E6:
 	JSR	renderMenuString
 	JSR	renderSpace
 	MOVE.B	#$0F,D1
-	JSR	lbC050640
+	JSR	renderLapTime
 lbC050A28:
 	BTST	#$06,displayFlags
 	BEQ	lbC050A6A
@@ -8117,7 +8115,7 @@ lbC050A28:
 	JSR	renderMenuString
 	JSR	renderSpace
 	MOVE.B	#$0E,D1
-	JMP	lbC050640
+	JMP	renderLapTime
 
 lbC050A6A:
 	RTS
@@ -8802,7 +8800,7 @@ lbC051634:
 	MOVE.B	$01(A1,D1.W),lapTimeSeconds
 	MOVE.B	$02(A1,D1.W),lapTimeSubseconds
 	MOVE.B	#$00,D1
-	JSR	lbC050640
+	JSR	renderLapTime
 	MOVE.B	segmentRepeatCounter,D0
 	EOR.B	#$80,D0
 	MOVE.B	D0,segmentRepeatCounter
@@ -8915,7 +8913,7 @@ loadTrackSegmentConfiguration:
 	ADDQ.B	#$01,D2
 	MOVE.B	$00(A0,D2.W),segmentOrientationAlternate
 	ADDQ.B	#$03,D2
-	MOVE.B	$00(A0,D2.W),trackControlParameter
+	MOVE.B	$00(A0,D2.W),segmentBaseSteeringOffset
 	ADDQ.B	#$01,D2
 	RTS
 
@@ -8959,10 +8957,10 @@ lbC0518F2:
 
 adjustNetworkCoordinates:
 	MOVE.B	D0,temp
-	MOVE.B	D2,segmentDirectionFlags
+	MOVE.B	D2,curveMagnitude
 	CMP.B	temp,D2
 	BCC	lbC051966
-	ADD.B	segmentDirectionFlags,D0
+	ADD.B	curveMagnitude,D0
 	BCC	lbC051952
 	MOVE.B	D1,D0
 	AND.B	#$0F,D0
@@ -8979,7 +8977,7 @@ lbC051952:
 	JMP	lbC051994
 
 lbC051966:
-	ADD.B	segmentDirectionFlags,D0
+	ADD.B	curveMagnitude,D0
 	BCC	lbC051988
 	MOVE.B	D1,D0
 	AND.B	#$F0,D0
@@ -9304,7 +9302,7 @@ lbC051EB0:
 	JSR	retreatToPreviousSegment
 initializeAudioSystem:
 	MOVE.B	D1,currentSegmentIndex
-	MOVE.B	D1,gameParameter1
+	MOVE.B	D1,playerSegmentIndex
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
@@ -9396,15 +9394,15 @@ lbC05202C:
 	MOVE.W	#$0000,previousDistanceZ
 	JSR	calculate3DProjection1
 	MOVE.B	#$B0,chainVerticalPosition
-	MOVE.B	#$08,chainLiftVelocity
+	MOVE.B	#$01,chainLiftVelocity		; fixed $08
 	RTS
 
 calculatePlayerDistance:
 	MOVE.W	gameStateCounter,D0
 	SUB.W	trackProgressionByte,D0
 	ASR.W	#$03,D0
-	MOVE.B	gameParameter2,D1
-	MOVE.B	gameParameter1,D2
+	MOVE.B	opponentSegmentIndex,D1
+	MOVE.B	playerSegmentIndex,D2
 	MOVE.L	#segmentWorldPositions,A0
 	ASL.B	#$01,D1
 	ASL.B	#$01,D2
@@ -9433,12 +9431,12 @@ validateGameState:
 	MOVE.B	player2LapCounter,D0
 	SUB.B	player1LapCounter,D0
 	BNE	lbC052122
-	MOVE.B	gameParameter1,D0
+	MOVE.B	playerSegmentIndex,D0
 	SUB.B	startingSegmentIndex,D0
 	BCC	lbC0520F6
 	ADD.B	numTrackSegments,D0
 lbC0520F6:
-	MOVE.B	gameParameter2,D3
+	MOVE.B	opponentSegmentIndex,D3
 	SUB.B	startingSegmentIndex,D3
 	BCC	lbC05210C
 	ADD.B	numTrackSegments,D3
@@ -9605,9 +9603,9 @@ lbC052322:
 	MOVE.B	D0,savedSegmentIndex
 lbC05234C:
 	MOVE.B	#$00,D2
-	MOVE.B	D2,segmentDirectionFlags
+	MOVE.B	D2,curveMagnitude
 lbC052356:
-	ADDQ.B	#$01,segmentDirectionFlags
+	ADDQ.B	#$01,curveMagnitude
 	BNE	lbC052366
 	ADDQ.B	#$01,D2
 	BMI	lbC052482
@@ -9622,7 +9620,7 @@ lbC052366:
 	MOVE.B	D2,D0
 	MOVE.L	#memory_7A01A,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	MOVE.L	#memory_7A03F,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	JMP	lbC0523D6
@@ -9630,7 +9628,7 @@ lbC052366:
 lbC0523AC:
 	CMP.B	currentMenuItemCopy,D2
 	BNE	lbC052356
-	MOVE.B	segmentDirectionFlags,D0
+	MOVE.B	curveMagnitude,D0
 	CMP.B	savedSegmentIndex,D0
 	BNE	lbC052356
 	MOVE.B	speedDisplayThousands,D0
@@ -10016,7 +10014,7 @@ lbC05290A:
 	RTS
 
 calculateSteeringResponse:
-	MOVE.B	gameParameter1,D1
+	MOVE.B	playerSegmentIndex,D1
 	MOVE.B	D1,currentSegmentIndex
 	JSR	loadTrackSegmentConfiguration
 	MOVE.W	segmentTargetAngle,D4
@@ -10038,8 +10036,8 @@ lbC052956:
 	BPL	lbC052968
 	NEG.W	D0
 lbC052968:
-	MOVE.W	D0,trackProgressionValue
-	MOVE.W	D4,trackIncrementValue
+	MOVE.W	D0,segmentProgressDistance
+	MOVE.W	D4,lateralVelocity
 	CMP.W	#$0800,D0
 	BCS	lbC052984
 	MOVE.W	#$7FFF,D0
@@ -10058,31 +10056,31 @@ lbC0529AC:
 	MOVE.B	trackDirectionInversionFlag,D0
 	MOVE.B	reverseDirectionFlag,D3
 	EOR.B	D3,D0
-	MOVE.B	D0,trackDirectionSign
-	MOVE.B	controlResponseValue,D0
+	MOVE.B	D0,trackDirectionMultiplier
+	MOVE.B	steeringInputDirection,D0
 	BEQ	lbC052A3C
-	MOVE.B	trackIncrementValue,D3
+	MOVE.B	lateralVelocity,D3
 	EOR.B	D3,D0
 	MOVE.B	D0,temp
 	MOVE.B	segmentSteeringFlags,D0
 	BPL	lbC052A20
-	MOVE.B	controlResponseValue,D0
-	MOVE.B	trackDirectionSign,D3
+	MOVE.B	steeringInputDirection,D0
+	MOVE.B	trackDirectionMultiplier,D3
 	EOR.B	D3,D0
 	BMI	lbC052A04
-	MOVE.B	trackControlParameter,D0
+	MOVE.B	segmentBaseSteeringOffset,D0
 	ADD.B	#$2D,D0
 	JMP	lbC052A26
 
 lbC052A04:
-	MOVE.B	trackDirectionSign,D0
-	MOVE.B	D0,controlResponseValue
-	MOVE.B	trackControlParameter,D0
+	MOVE.B	trackDirectionMultiplier,D0
+	MOVE.B	D0,steeringInputDirection
+	MOVE.B	segmentBaseSteeringOffset,D0
 	SUB.B	#$23,D0
 	JMP	lbC052A36
 
 lbC052A20:
-	MOVE.B	trackControlParameter,D0
+	MOVE.B	segmentBaseSteeringOffset,D0
 lbC052A26:
 	TST.B	temp
 	BMI	lbC052A36
@@ -10094,21 +10092,21 @@ lbC052A3C:
 	MOVE.W	#$0000,D4
 	MOVE.B	segmentSteeringFlags,D0
 	BPL	lbC052A60
-	MOVE.B	trackDirectionSign,controlResponseValue
-	MOVE.B	trackControlParameter,D0
+	MOVE.B	trackDirectionMultiplier,steeringInputDirection
+	MOVE.B	segmentBaseSteeringOffset,D0
 	JMP	lbC052B1C
 
 lbC052A60:
-	MOVE.B	trackIncrementValue,controlResponseValue
-	MOVE.W	trackProgressionValue,D0
+	MOVE.B	lateralVelocity,steeringInputDirection
+	MOVE.W	segmentProgressDistance,D0
 	MOVE.B	D0,D2
-	MOVE.B	trackProgressionValue,D3
+	MOVE.B	segmentProgressDistance,D3
 	BEQ	lbC052A88
 	SUB.W	#$1E00,D0
 	BPL	lbC052AC2
 	MOVE.B	#$FF,D2
 lbC052A88:
-	MOVE.B	D2,segmentDirectionFlags
+	MOVE.B	D2,curveMagnitude
 	MOVE.W	carVelocity,D0
 	BPL	lbC052A9A
 	NEG.W	D0
@@ -10117,7 +10115,7 @@ lbC052A9A:
 	BPL	lbC052AA6
 	MOVE.W	#$7F00,D0
 lbC052AA6:
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -10128,7 +10126,7 @@ lbC052AA6:
 	BNE	lbC052AC2
 	ADDQ.B	#$01,D0
 lbC052AC2:
-	TST.B	trackIncrementValue
+	TST.B	lateralVelocity
 	BPL	lbC052ACE
 	NEG.W	D0
 lbC052ACE:
@@ -10150,25 +10148,25 @@ lbC052AD4:
 lbC052B10:
 	MOVE.W	#$0000,D4
 lbC052B14:
-	MOVE.W	D4,steeringYawRate
+	MOVE.W	D4,yawRotationRate
 	RTS
 
 lbC052B1C:
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.W	carVelocity,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
 	ASL.L	#$01,D0
 	SWAP	D0
-	TST.B	controlResponseValue
+	TST.B	steeringInputDirection
 	BPL	lbC052B46
 	NEG.W	D0
 lbC052B46:
 	ASR.W	#$03,D0
 	MOVE.W	D0,D4
-	CMP.B	#$1E,trackProgressionValue
+	CMP.B	#$1E,segmentProgressDistance
 	BCS	lbC052AD4
 	BRA	lbC052A60
 
@@ -10187,7 +10185,7 @@ displayTrackHeader:
 
 multiplyAndRandomize:
 	AND.W	#$00FF,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
 	MULU	D0,D3
 	MOVE.W	D3,D0
@@ -10223,7 +10221,7 @@ lbC052BEE:
 	BCLR	#$07,trackSideIndicatorCopy
 	ASL.W	#$08,D0
 	OR.B	temp,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	lbC052C28
@@ -10606,7 +10604,7 @@ updateOpponentLapTime:
 	BNE	lbC05315A
 	MOVE.B	$01(A0,D3.W),D0			; Load opponent time modifier
 	EOR.B	#$FF,D0				; Invert bits
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.B	#$0D,D0				; Multiplier
 	JSR	multiplyAndRandomize		; Add randomness
 	CMP.B	#$0A,D0
@@ -10619,6 +10617,7 @@ lbC05315A:
 
 updateGamePhysics:
 	move.b	framesSinceCopperlistUpdate,physicsUpdateCount
+	sub.b	#2,physicsUpdateCount
 updateGamePhysicsLoop:
 	JSR	calculateTransformMatrices
 	JSR	calculateWheelCornerPositions
@@ -10820,7 +10819,7 @@ integrateVelocityComponents:
 	ASR.L	#$08,D0
 lbC053438:
 	ADD.W	D0,rotationSpeedX
-	MOVE.W	steeringYawRate,D0
+	MOVE.W	yawRotationRate,D0
 	MOVE.B	#TIMESTEP_FACTOR,D2
 	BEQ	lbC053450
 	MULS	D2,D0
@@ -10839,12 +10838,12 @@ lbC053468:
 calculateTrackPositions:
 	MOVE.W	cameraAngleX,D0
 	JSR	calculateSine
-	MOVE.W	D0,trackIncrementValue
+	MOVE.W	D0,lateralVelocity
 	MOVE.W	cameraAngleZ,D0
 	JSR	calculateSine
 	EXT.L	D0
 	ASL.L	#$03,D0
-	MOVE.W	trackIncrementValue,D3
+	MOVE.W	lateralVelocity,D3
 	EXT.L	D3
 	ASL.L	#$04,D3
 	MOVE.L	lbB00D5DC,D4
@@ -11090,7 +11089,7 @@ lbC05384A:
 	MOVE.W	lateralVelocityX,D0
 	ADD.W	lateralVelocityY,D0
 	ASR.W	#$01,D0
-	MOVE.W	D0,trackIncrementValue
+	MOVE.W	D0,lateralVelocity
 	ADD.W	lateralVelocityZ,D0
 	ASR.W	#$01,D0
 	MOVE.W	D0,collisionStateFlags1
@@ -11112,7 +11111,7 @@ lbC0538A0:
 	NEG.W	D0
 lbC0538A8:
 	MOVE.W	D0,lateralMotion
-	MOVE.W	trackIncrementValue,D0
+	MOVE.W	lateralVelocity,D0
 	SUB.W	lateralVelocityZ,D0
 	MOVE.W	D0,verticalMotion
 	MOVE.B	collisionStateFlags1,D0
@@ -11357,17 +11356,17 @@ calculateSpatialDistortion:
 	ASR.L	#$03,D0
 	MOVE.W	D0,lbW00D648
 	JSR	lbC053D24
-	MOVE.B	segmentDirectionTemp2,segmentDirectionFlags
+	MOVE.B	segmentDirectionTemp2,curveMagnitude
 	MOVE.B	segmentDirectionSource,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,lbB00D650
 	MOVE.B	segmentDirectionTemp1,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,lbB00D64E
-	MOVE.B	lbB00D64E,segmentDirectionFlags
+	MOVE.B	lbB00D64E,curveMagnitude
 	MOVE.B	lbW00D648,trackSideIndicatorCopy
 	MOVE.W	collisionStateFlags1,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	lbC053C98
@@ -11378,10 +11377,10 @@ lbC053C98:
 	ASL.L	#$01,D0
 	SWAP	D0
 	MOVE.W	D0,rollAngleModifier
-	MOVE.B	lbB00D650,segmentDirectionFlags
+	MOVE.B	lbB00D650,curveMagnitude
 	MOVE.B	lbW00D64A,trackSideIndicatorCopy
 	MOVE.W	collisionStateFlags1,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	lbC053CD6
@@ -11392,10 +11391,10 @@ lbC053CD6:
 	ASL.L	#$01,D0
 	SWAP	D0
 	MOVE.W	D0,carPitchAdjustment
-	MOVE.B	lbB00D652,segmentDirectionFlags
+	MOVE.B	lbB00D652,curveMagnitude
 	MOVE.B	lbW00D64C,trackSideIndicatorCopy
 	MOVE.W	collisionStateFlags1,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	lbC053D14
@@ -11426,7 +11425,7 @@ lbC053D3A:
 	RTS
 
 calculate3DProjection:
-	MOVE.W	trackIncrementValue,D0
+	MOVE.W	lateralVelocity,D0
 	MOVE.W	lbW00D4F8,D3
 	TST.B	segmentConfigLoadedFlag
 	BPL	lbC053D9C
@@ -12052,7 +12051,7 @@ lbC0547EC:
 	MOVE.W	-$0020(A6),D1
 lbC0547FE:
 	MOVE.W	D1,-$000E(A6)
-	BSR	lbC05487A
+	BSR	readDiskSectorWithRetry
 	BNE.S	readDiskTrack
 	CMP.W	#$0001,-$001E(A6)
 	BNE.S	lbC05481A
@@ -12095,7 +12094,7 @@ lbC054870:
 	MOVEM.L	(SP)+,D1-D7/A0-A5
 	RTS
 
-lbC05487A:
+readDiskSectorWithRetry:
 	MOVEQ	#$04,D4
 lbC05487C:
 	CLR.W	-$0004(A6)
@@ -12162,7 +12161,7 @@ lbC054944:
 lbC054952:
 	DBRA	D4,lbC05487C
 lbC054956:
-	BSR	lbC054DFC
+	BSR	stopDiskDMA
 	RTS
 
 writeBufferToDiskTrack:
@@ -12293,7 +12292,7 @@ lbC054A4E:
 	BNE	lbC054B56
 	LEA	$0040(A5),A0
 	MOVE.W	#$0400,D1
-	BSR	lbC054BE0
+	BSR	calculateMFMChecksumWithParams
 	LEA	$0038(A5),A0
 	BSR	writeMFMEncodedLongword
 	BSR	markSectorAsRead
@@ -12302,7 +12301,7 @@ lbC054A4E:
 lbC054B06:
 	LEA	$0040(A5),A0
 	MOVE.W	#$0400,D1
-	BSR	lbC054BE0
+	BSR	calculateMFMChecksumWithParams
 	MOVE.L	D0,-(SP)
 	LEA	$0038(A5),A0
 	BSR	decodeMFMLongwords
@@ -12389,7 +12388,7 @@ validateSectorHeaderChecksum:
 calculateMFMChecksum:
 	LEA	$0008(A5),A0
 	MOVEQ	#$28,D1
-lbC054BE0:
+calculateMFMChecksumWithParams:
 	MOVE.L	D2,-(SP)
 	LSR.W	#$02,D1
 	SUBQ.W	#$01,D1
@@ -12570,11 +12569,11 @@ lbC054DE8:
 	BSR	checkTimeoutExpired
 	BNE.S	lbC054DE8
 	MOVEQ	#-$01,D0
-	BRA.S	lbC054DFC
+	BRA.S	stopDiskDMA
 
 lbC054DFA:
 	MOVEQ	#$00,D0
-lbC054DFC:
+stopDiskDMA:
 	MOVE.W	#$0002,_custom+intreq
 	MOVE.W	#$4000,_custom+dsklen
 	TST.L	D0
@@ -12747,7 +12746,7 @@ updateEngineState:
 	SUBQ.B	#$01,D2
 lbC054FEA:
 	MOVE.B	D0,trackBoostThreshold
-	MOVE.B	D2,trackIncrementValue
+	MOVE.B	D2,lateralVelocity
 	MOVE.B	carRenderDistance,D0
 	BEQ	updateEngineAndSound
 	JMP	lbC05513E
@@ -12849,7 +12848,7 @@ lbC055164:
 lbC05516A:
 	MOVE.B	#$02,D0
 	MOVE.B	D0,savedSegmentIndex
-	MOVE.B	gameParameter2,D1
+	MOVE.B	opponentSegmentIndex,D1
 	MOVE.B	D1,currentSegmentIndex
 lbC055180:
 	MOVE.L	#trackSegmentPropertiesTable,A1
@@ -12899,7 +12898,7 @@ updateEnginePerformanceHigh:
 	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$38,D0
 	BCC	lbC055286
-	TST.B	trackIncrementValue
+	TST.B	lateralVelocity
 	BMI	lbC05527C
 	BPL	lbC055268
 updateEnginePerformanceStandard:
@@ -12907,7 +12906,7 @@ updateEnginePerformanceStandard:
 	CMP.B	#$38,D0
 	BCC	lbC055286
 	MOVE.B	lbB00D4A1,D0
-	TST.B	trackIncrementValue
+	TST.B	lateralVelocity
 	BMI	lbC055274
 	CMP.B	#$A0,D0
 	BCC	lbC05527C
@@ -12935,7 +12934,7 @@ processOpponentLogic:
 	BEQ	lbC055356
 	MOVE.B	crashRecoveryTimer,D0
 	BNE	lbC055356
-	MOVE.B	gameParameter2,D1
+	MOVE.B	opponentSegmentIndex,D1
 	JSR	loadTrackSegmentConfiguration
 	JSR	lbC0557E2
 	JSR	processOpponentAI
@@ -12943,9 +12942,9 @@ processOpponentLogic:
 	JSR	lbC05553C
 	JSR	lbC055408
 	MOVE.B	segmentOrientationAlternate,D0
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.W	lbW00D4EE,D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -12970,13 +12969,13 @@ lbC055318:
 	BCS	lbC055356
 	SUB.B	trackModeParameter,D0
 	MOVE.B	D0,gameStateCounter
-	MOVE.B	gameParameter2,D1
+	MOVE.B	opponentSegmentIndex,D1
 	ADDQ.B	#$01,D1
 	CMP.B	numTrackSegments,D1
 	BCS	lbC055350
 	MOVE.B	#$00,D1
 lbC055350:
-	MOVE.B	D1,gameParameter2
+	MOVE.B	D1,opponentSegmentIndex
 lbC055356:
 	RTS
 
@@ -13042,7 +13041,7 @@ lbC055408:
 	BCC	lbC055444
 	MOVE.B	#$00,D0
 lbC055444:
-	MOVE.B	D0,segmentDirectionFlags
+	MOVE.B	D0,curveMagnitude
 	MOVE.B	lbW00D4EE,D0
 	JSR	multiplyAndRandomize
 	ASR.W	#$06,D3
@@ -13120,7 +13119,7 @@ lbC05553C:
 	RTS
 
 lbC055548:
-	MOVE.B	gameParameter2,D1
+	MOVE.B	opponentSegmentIndex,D1
 	MOVE.L	#segmentVisibilityData,A0
 	MOVE.B	$00(A0,D1.W),D0
 	BMI	lbC05556C
@@ -13201,7 +13200,7 @@ lbC055654:
 	CMP.B	#$08,D0
 	BCC	lbC055688
 	MOVE.B	#$08,D0
-	TST.B	trackIncrementValue
+	TST.B	lateralVelocity
 	BMI	lbC055682
 	MOVE.B	#$F8,D0
 lbC055682:
@@ -13466,11 +13465,11 @@ lbC055A62:
 lbC055A7A:
 	ASR.W	#$01,D0
 	ADD.W	D0,lbW00D66A
-	MOVE.W	#$0128,trackIncrementValue
+	MOVE.W	#$0128,lateralVelocity
 	MOVE.B	#$00,D1
 	MOVE.B	#$02,D2
 	JSR	lbC055B32
-	MOVE.W	#$0170,trackIncrementValue
+	MOVE.W	#$0170,lateralVelocity
 	MOVE.B	#$00,D1
 	TST.W	D4
 	BPL	lbC055AAC
@@ -13511,7 +13510,7 @@ lbC055B32:
 	MOVE.L	#lbW00D676,A4
 	MOVE.B	D1,trackBoostThresholdCopy
 	JSR	lbC055B18
-	MOVE.W	trackIncrementValue,D3
+	MOVE.W	lateralVelocity,D3
 	SUB.W	D0,D3
 	BPL	lbC055BA0
 	TST.W	D4
@@ -13803,10 +13802,10 @@ lbC056018:
 	MOVE.B	savedPlayerIndex,D1
 	TST.B	multiplayerRaceDisplayFlag
 	BPL	lbC05606E
-	JSR	lbC050640
+	JSR	renderLapTime
 	JSR	lbC05082E
 	ADD.B	#$0C,D1
-	JSR	lbC050640
+	JSR	renderLapTime
 	BRA	lbC0560B4
 
 lbC05606E:
@@ -14321,7 +14320,7 @@ lbC0567F6:
 	JSR	applyTrackSegmentGeometry
 	JSR	checkRoadBoundaries
 	MOVE.B	currentSegmentIndex,D0
-	MOVE.B	D0,gameParameter1
+	MOVE.B	D0,playerSegmentIndex
 	BTST	#$06,collisionStateFlags
 	BNE	lbC056826
 	MOVE.B	D0,lbB00D49B
@@ -14346,7 +14345,7 @@ lbC056880:
 	MOVE.B	#$80,D0
 	MOVE.B	D0,processedSegmentIndices1
 	MOVE.B	D0,processedSegmentIndices2
-	MOVE.B	gameParameter1,currentSegmentIndex
+	MOVE.B	playerSegmentIndex,currentSegmentIndex
 	MOVE.B	#$00,segmentDataStartIndex
 	MOVE.B	lbB00D40E,D0
 	BPL	lbC0568BA
@@ -15111,10 +15110,10 @@ lbC057414:
 	CMP.W	#$0078,D1
 	BGE	lbC057474
 	MOVE.B	#$00,D0
-	MOVE.B	lbB00D40F,segmentDirectionFlags
+	MOVE.B	lbB00D40F,curveMagnitude
 	MOVE.W	$00(A6,D1.W),D0
 	SUB.W	-$04(A6,D1.W),D0
-	MOVE.B	segmentDirectionFlags,D3
+	MOVE.B	curveMagnitude,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -15272,7 +15271,7 @@ lbC057696:
 	ADD.B	trackOffsetBase,D2
 lbC0576A0:
 	JSR	calculateTrackCoordinatesFromData
-	MOVE.W	trackIncrementValue,(A4)+
+	MOVE.W	lateralVelocity,(A4)+
 	MOVE.W	lbW00D4F8,(A4)+
 	MOVE.W	$00(A6,D1.W),(A4)+
 	ADDQ.B	#$02,D1
@@ -15592,10 +15591,10 @@ updateChainAnimation:
 	BNE	renderChains
 	MOVE.B	chainVerticalPosition,D0
 	CMP.B	#$60,D0
-	BEQ	chainAnimationComplete
+	BLS	chainAnimationComplete		; fixed BEQ
 	SUB.B	chainLiftVelocity,D0
 	MOVE.B	D0,chainVerticalPosition
-	ADD.B	#$08,chainLiftVelocity
+	ADD.B	#$01,chainLiftVelocity		; fixed $08
 renderChains:
 	MOVE.B	chainVerticalPosition,D2
 renderChainSegment:
@@ -17211,10 +17210,10 @@ lbC058F9A:
 	MOVE.L	#renderCommandQueue,A0
 	MOVE.W	renderDataPointer,D3
 	MOVE.L	#memory_7AB5A,A3
-	MOVE.W	$00(A3,D1.W),segmentDirectionFlags
+	MOVE.W	$00(A3,D1.W),curveMagnitude
 	MOVE.B	temp,D0
 	MOVE.B	D0,$00(A0,D3.W)
-	MOVE.B	segmentDirectionFlags,$02(A0,D3.W)
+	MOVE.B	curveMagnitude,$02(A0,D3.W)
 	TST.B	lbB00D467
 	BNE	lbC058FF4
 	CMP.B	lbB00D4A6,D0
@@ -18395,7 +18394,7 @@ lbC059D9A:
 	ORI.B	#$01,CCR
 	RTS
 
-lbC059DAA:
+findActiveEdgesForScanline:
 	MOVE.W	lbW05B3CC,D2
 	MOVE.L	#renderDataBuffer,A4
 lbC059DB6:
@@ -18450,7 +18449,7 @@ lbC059E3C:
 	MOVE.W	#$8000,$00(A4,D1.W)
 	RTS
 
-lbC059E44:
+initializeEdgeSortBuffers:
 	MOVE.B	#$00,scanlineCounter
 	MOVE.L	A1,lbL05B3F4
 	MOVE.L	A2,lbL05B3F0
@@ -18535,7 +18534,7 @@ lbC059F52:
 	MOVE.W	#$8000,$00(A4,D1.W)
 	MOVE.L	$06(A4,D1.W),A1
 	MOVE.L	$02(A4,D1.W),A2
-	JSR	lbC059DAA
+	JSR	findActiveEdgesForScanline
 	MOVE.W	D0,lbW05B3CE
 	BMI	lbC059F88
 	MOVE.L	$06(A4,D1.W),currentEdgePointer1
@@ -18606,7 +18605,7 @@ lbC05A010:
 	MOVE.L	currentEdgePointer2,A2
 	MOVE.L	(A2),A3
 	ADD.L	#$00000008,A3
-	JSR	lbC059DAA
+	JSR	findActiveEdgesForScanline
 	MOVE.W	D0,lbW05B3CE
 	BMI	lbC05A066
 	MOVE.L	$06(A4,D1.W),currentEdgePointer1
@@ -18720,7 +18719,7 @@ lbC05A182:
 	SUBQ.B	#$01,scanlineCounter
 	MOVE.L	(A1),A0
 	ADD.L	#$00000008,A0
-	JSR	lbC059DAA
+	JSR	findActiveEdgesForScanline
 	MOVE.W	D0,lbW05B3CE
 	BMI	lbC05A1C8
 	MOVE.L	$06(A4,D1.W),currentEdgePointer1
@@ -18953,7 +18952,7 @@ lbC05A4BA:
 lbC05A4DA:
 	AND.L	#$0F000000,D4
 	BNE	lbC05A4EA
-	JSR	lbC059E44
+	JSR	initializeEdgeSortBuffers
 lbC05A4EA:
 	RTS
 
@@ -19061,7 +19060,7 @@ lbC05A650:
 lbC05A670:
 	AND.L	#$0F000000,D4
 	BNE	lbC05A680
-	JSR	lbC059E44
+	JSR	initializeEdgeSortBuffers
 lbC05A680:
 	RTS
 
@@ -19161,7 +19160,7 @@ lbC05A7DC:
 lbC05A7FC:
 	AND.L	#$0F000000,D4
 	BNE	lbC05A80C
-	JSR	lbC059E44
+	JSR	initializeEdgeSortBuffers
 lbC05A80C:
 	MOVE.B	#$00,lbB00D4D2
 	BTST	#$00,segmentPropertyFlags
@@ -21279,13 +21278,13 @@ currentMenuItemCopy:
 	ds.b	1
 savedSegmentIndex:
 	ds.b	1
-segmentDirectionFlags:
+curveMagnitude:
 	ds.b	1
 temp:
 	ds.b	1
-gameParameter1:
+playerSegmentIndex:
 	ds.b	1
-gameParameter2:
+opponentSegmentIndex:
 	ds.b	1
 lapCrossingDetectionFlag:
 	ds.w	1
@@ -21340,7 +21339,7 @@ boundaryCollisionDirectionFlag:
 collisionActiveFlag:
 	ds.b	1
 inputStateFlags:
-	ds.b	1
+	ds.b	1		; Bits: 0=accelerate, 1=brake, 2=left, 3=right, 4=boost
 segmentRepeatCounter:
 	ds.b	2
 collisionDistanceTemp:
@@ -21371,7 +21370,7 @@ raceMode:
 	ds.b	1
 lbB00D45C:
 	ds.b	1
-trackDirectionSign:
+trackDirectionMultiplier:
 	ds.b	1
 displayRowOffset:
 	ds.b	1
@@ -21555,8 +21554,8 @@ raceStartComplete:
 	ds.b	1
 segmentDataStartIndex:
 	ds.b	1
-controlResponseValue:
-	ds.b	1
+steeringInputDirection:
+	ds.b	1			; 0=no steering, -15=left,15=right
 engineTimer:
 	ds.b	1
 displayStateFlag:
@@ -21581,7 +21580,7 @@ lbB00D4D2:
 	ds.b	1
 textTransparencyMode:
 	ds.b	1
-trackControlParameter:
+segmentBaseSteeringOffset:
 	ds.b	1
 currentPlayerNameOffset:
 	ds.b	1
@@ -21640,7 +21639,7 @@ trackHeightDifference:
 enginePitchDelta:
 	ds.w	1
 enginePitchDeltaLow:	EQU	*-1
-trackIncrementValue:
+lateralVelocity:
 	ds.w	1
 trackBoostThreshold:	EQU	*-1
 raceSetupFlags:  EQU    *-1
@@ -21691,7 +21690,7 @@ visibilityAccumulator:
 	ds.w	1
 lbW00D528:
 	ds.w	1
-trackProgressionValue:
+segmentProgressDistance:
 	ds.w	1
 trackDataComponent:	EQU	*-1
 	ds.b	2
@@ -21871,7 +21870,7 @@ lbW00D5FA:
 	ds.w	1
 lbW00D5FC:
 	ds.w	1
-steeringYawRate:
+yawRotationRate:
 	ds.w	1
 lbW00D600:
 	ds.w	1
