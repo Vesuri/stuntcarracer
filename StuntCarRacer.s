@@ -850,6 +850,8 @@ setupFrameBufferAddresses:
 	MOVE.L	D3,viewportTopAddress
 	MOVE.L	displayFrameBuffer,bitplane1Pointer
 	MOVE.B	#$80,copperlistUpdatePendingFlag
+.wait:	tst.b   copperlistUpdatePendingFlag	; fixed
+	bmi	.wait
 	RTS
 
 updateCopperlistPointers:
@@ -956,9 +958,15 @@ copyMainGameBackground:
 	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A1
 	ADD.W	#$7D00,A1
-	MOVE.W	#$7CFF,D3
+;	MOVE.W	#$7CFF,D3
+;copyMainGameBackgroundLoop:
+;	MOVE.B	(A0)+,(A1)+
+	lea	fastRenderBuffer,a2
+	MOVE.W	#$7D00/4-1,D3
 copyMainGameBackgroundLoop:
-	MOVE.B	(A0)+,(A1)+
+	MOVE.L	(A0)+,d0
+	move.l	d0,(A1)+
+	move.l	d0,(A2)+
 	DBRA	D3,copyMainGameBackgroundLoop
 	RTS
 
@@ -2285,8 +2293,8 @@ lbC049FB6:
 	MOVE.B	(A6)+,raceOutcomeFlags
 	EOR.B	#$C0,raceOutcomeFlags
 	MOVE.B	(A6)+,displayFlags
-	MOVE.B	(A6)+,raceFlag1
-	MOVE.B	(A6)+,raceFlag2
+	MOVE.B	(A6)+,bestLapRecordHolder
+	MOVE.B	(A6)+,bestRaceRecordHolder
 	MOVE.L	#lbL050548,A0
 	MOVE.W	#$000B,D7
 lbC049FE6:
@@ -2304,8 +2312,8 @@ copyGameStateData:
 	DBRA	D7,copyGameStateData
 	MOVE.B	raceOutcomeFlags,(A6)+
 	MOVE.B	displayFlags,(A6)+
-	MOVE.B	raceFlag1,(A6)+
-	MOVE.B	raceFlag2,(A6)+
+	MOVE.B	bestLapRecordHolder,(A6)+
+	MOVE.B	bestRaceRecordHolder,(A6)+
 	MOVE.L	#lbL050548,A0
 	MOVE.W	#$000B,D7
 lbC04A02C:
@@ -3086,7 +3094,11 @@ calculateCharacterScreenAddress:
 	ADD.L	#$00007D00,A1
 	TST.B	singleBufferRenderMode
 	BPL	lbC04AF02
+	tst.b	frameProcessingFlag		; fixed
+	bmi.s	.fast
 	MOVE.L	renderFrameBuffer,A1
+	bra.s	lbC04AF02
+.fast:	lea	fastRenderBuffer,a1
 lbC04AF02:
 	TST.B	useAlternateFontFlag
 	BEQ	lbC04AF12
@@ -3995,9 +4007,9 @@ calculateRoadEdgeControlPoints:
 	MOVE.L	#trackCoordinatesX,A0
 	MOVE.W	$000E(A0),D0
 	SUB.W	$000A(A0),D0
-	MOVE.W	D0,segmentDirectionTemp2
+	MOVE.W	D0,tempAttenuatedValue
 	ASR.W	#$01,D0
-	ADD.W	D0,segmentDirectionTemp2
+	ADD.W	D0,tempAttenuatedValue
 	MOVE.W	$002E(A0),D0
 	SUB.W	$002A(A0),D0
 	MOVE.W	D0,perpendicularOffsetY
@@ -4007,13 +4019,13 @@ calculateRoadEdgeControlPoints:
 	SUB.W	perpendicularOffsetY,D0
 	MOVE.W	D0,$0010(A0)
 	MOVE.W	$002A(A0),D0
-	ADD.W	segmentDirectionTemp2,D0
+	ADD.W	tempAttenuatedValue,D0
 	MOVE.W	D0,$0030(A0)
 	MOVE.W	$000E(A0),D0
 	SUB.W	perpendicularOffsetY,D0
 	MOVE.W	D0,$0014(A0)
 	MOVE.W	$002E(A0),D0
-	ADD.W	segmentDirectionTemp2,D0
+	ADD.W	tempAttenuatedValue,D0
 	MOVE.W	D0,$0034(A0)
 	MOVE.B	trackDistanceHigh,D0
 	ADD.B	#$80,D0
@@ -4720,13 +4732,13 @@ lbC04C910:
 	JMP	lbC04C7D0
 
 lbC04CA0C:
-	MOVE.B	trackParameter3,D1
+	MOVE.B	lapApproachSegment,D1
 	ADDQ.B	#$01,D1
 	CMP.B	numTrackSegments,D1
 	BLT	lbC04CA22
 	MOVE.B	#$00,D1
 lbC04CA22:
-	MOVE.B	D1,startingSegmentIndex
+	MOVE.B	D1,lapLineSegment
 	MOVE.W	segmentProgressDistance,D0
 	ASL.W	#$05,D0
 	MOVE.W	D0,startWorldPosition
@@ -6416,8 +6428,8 @@ lbC04E93C:
 lbC04E956:
 	SUBQ.B	#$01,D1
 	BPL	lbC04E93C
-	CLR.B	raceFlag1
-	CLR.B	raceFlag2
+	CLR.B	bestLapRecordHolder
+	CLR.B	bestRaceRecordHolder
 lbC04E968:
 	MOVE.B	selectedTrack,displayTrackID
 	JSR	configurePlayersAndCars
@@ -6597,12 +6609,12 @@ lbC04ECA4:
 	MOVE.B	#$0B,D2
 	JSR	setupGameDisplay1
 	JSR	setupGameDisplay2
-	MOVE.B	initialSegmentIndex,D1
+	MOVE.B	playerSpawnSegment,D1
 	MOVE.B	D1,opponentSegmentIndex
 	MOVE.B	#$04,gameStateCounter
 	MOVE.B	#$4C,previousDataIndex
 	JSR	initializeTrackCoordinates
-	MOVE.B	initialSegmentIndex,D1
+	MOVE.B	playerSpawnSegment,D1
 	CMP.B	#$40,networkGameMode
 	BNE	initializeGameSystemsAndMainLoop
 	MOVE.B	#$80,trackSideIndicator
@@ -6629,7 +6641,6 @@ initializeGameSystemsAndMainLoop:
 	MOVE.W	#$8020,gameLoopControl
 	JSR	initializeGameLoop
 mainGameLoop:
-	move.w	#$f00,$dff180
 	SUBQ.B	#$01,frameCounter
 	JSR	processPlayerInput
 	JSR	updateGamePhysics
@@ -6655,6 +6666,7 @@ checkGameEndConditions:
 	MOVE.B	playerStateFlag,D0
 	BEQ	continueGameLoop
 lbC04EDFC:
+	clr.b	frameProcessingFlag		; fixed
 	TST.B	gameEndModeFlag
 	BNE	lbC04EE34
 	MOVE.B	networkGameMode,D0
@@ -6679,7 +6691,6 @@ lbC04EE34:
 	BEQ	lbC04EE74
 	JSR	displayLapCompletionGraphics
 lbC04EE74:
-	move.w	#$000,$dff180
 	JSR	swapDisplayBuffers
 	MOVE.B	#$80,gameExitFlag
 	MOVE.B	#$80,gameInitFlag1
@@ -6688,7 +6699,21 @@ lbC04EE74:
 	JSR	waitForDisplaySync
 	BRA	lbC04EF74
 
+showFramerate:
+	MOVE.B	#$1F,D0
+	JSR	renderCharacter
+	MOVE.B	#$06,D0
+	JSR	renderCharacter
+	MOVE.B	#$16,D0
+	JSR	renderCharacter
+	MOVE.B	#$02,textHorizontalOffset
+	MOVE.B	#$02,textYOffset
+	move.b	framesSinceCopperlistUpdate,d0
+	JSR	renderDigitAndAdvance
+	rts
+
 continueGameLoop:
+	jsr	showFramerate
 	JSR	swapDisplayBuffers
 	JSR	checkNetworkTimeout
 	MOVE.B	raceStartTimer,D0
@@ -7020,8 +7045,6 @@ lbC04F422:
 	MOVE.L	D0,displayFrameBuffer
 	MOVE.L	D3,renderFrameBuffer
 	JSR	setupFrameBufferAddresses
-.wait:	tst.b   copperlistUpdatePendingFlag	; fixed
-	bmi	.wait
 	RTS
 
 updateGameTimingAndDirection:
@@ -7042,7 +7065,7 @@ lbC04F452:
 lbC04F472:
 	TST.B	selectedRaceType
 	BPL	lbC04F4AA
-	MOVE.B	#$01,D1
+	MOVEQ	#$01,D1			; fixed MOVE.B
 	TST.B	networkGameMode
 	BEQ	lbC04F49E
 	TST.B	networkPacketReadyFlag
@@ -7054,7 +7077,7 @@ lbC04F49E:
 lbC04F4A4:
 	JSR	checkLapCompletion
 lbC04F4AA:
-	MOVE.B	#$00,D1
+	MOVEQ	#$00,D1			; fixed MOVE.B
 	JSR	updateLapTimer
 	JSR	saveLapTimeToBuffer
 	JSR	checkLapCompletion
@@ -7147,7 +7170,7 @@ lbC04F602:
 	RTS
 
 lbC04F604:
-	CMP.B	startingSegmentIndex,D0
+	CMP.B	lapLineSegment,D0
 	BNE	lbC04F602
 	MOVE.B	#$80,$00(A1,D1.W)
 	MOVE.L	#player1LapCounter,A1
@@ -7398,7 +7421,7 @@ processGameStateTransition:
 	BNE	setupGameDisplay2
 	MOVE.B	#$07,D2
 setupGameDisplay2:
-	MOVE.B	D2,displayModeFlag2
+	MOVE.B	D2,unusedDisplayFlag2
 	MOVE.B	#$11,D0
 	CMP.B	#$07,D2
 	BEQ	lbC04F9C0
@@ -7412,7 +7435,7 @@ setupRaceDisplayMode:
 	BPL	setupGameDisplay1
 	MOVE.B	#$07,D2
 setupGameDisplay1:
-	MOVE.B	D2,displayModeFlag1
+	MOVE.B	D2,unusedDisplayFlag1
 	MOVE.B	#$0F,D0
 	CMP.B	#$07,D2
 	BEQ	lbC04F9EC
@@ -8200,7 +8223,7 @@ lbC05088E:
 	JSR	lbC056412
 	MOVE.B	#$23,D1
 	JSR	renderStatsText
-	MOVE.B	raceFlag2,D1
+	MOVE.B	bestRaceRecordHolder,D1
 	BEQ	lbC0508E2
 	MOVE.L	#lbL00E2DE,A1
 	ADDQ.B	#$01,$00(A1,D1.W)
@@ -8214,7 +8237,7 @@ lbC0508E2:
 	JSR	setTextPosition
 	MOVE.B	#$2F,D1
 	JSR	renderStatsText
-	MOVE.B	raceFlag1,D1
+	MOVE.B	bestLapRecordHolder,D1
 	BEQ	lbC050922
 	MOVE.L	#lbL00E2EA,A1
 	ADDQ.B	#$01,$00(A1,D1.W)
@@ -8320,7 +8343,7 @@ updateRaceRecords:
 	JSR	compareAndCopyPlayerStats
 	BCS	lbC050A88
 	MOVE.B	currentPlayerID,D0
-	MOVE.B	D0,raceFlag1
+	MOVE.B	D0,bestLapRecordHolder
 lbC050A88:
 	MOVE.B	#$0E,D2
 	JSR	compareAndCopyPlayerStats
@@ -8344,7 +8367,7 @@ lbC050AB0:
 	JSR	compareAndCopyPlayerStats
 	BCS	lbC050AF2
 	MOVE.B	currentPlayerID,D0
-	MOVE.B	D0,raceFlag2
+	MOVE.B	D0,bestRaceRecordHolder
 lbC050AF2:
 	MOVE.B	#$0F,D2
 	JSR	compareAndCopyPlayerStats
@@ -9626,12 +9649,12 @@ validateGameState:
 	SUB.B	player1LapCounter,D0
 	BNE	lbC052122
 	MOVE.B	playerSegmentIndex,D0
-	SUB.B	startingSegmentIndex,D0
+	SUB.B	lapLineSegment,D0
 	BCC	lbC0520F6
 	ADD.B	numTrackSegments,D0
 lbC0520F6:
 	MOVE.B	opponentSegmentIndex,D3
-	SUB.B	startingSegmentIndex,D3
+	SUB.B	lapLineSegment,D3
 	BCC	lbC05210C
 	ADD.B	numTrackSegments,D3
 lbC05210C:
@@ -10811,7 +10834,7 @@ lbC05315A:
 
 updateGamePhysics:
 	move.b	framesSinceCopperlistUpdate,physicsUpdateCount
-	sub.b	#2,physicsUpdateCount
+	sub.b	#1,physicsUpdateCount
 updateGamePhysicsLoop:
 	JSR	calculateTransformMatrices
 	JSR	calculateWheelCornerPositions
@@ -11287,7 +11310,7 @@ lbC05384A:
 	ADD.W	lateralVelocityZ,D0
 	ASR.W	#$01,D0
 	MOVE.W	D0,offTrackVelocityMagnitude
-	JSR	calculateSpatialDistortion
+	JSR	calculateSuspensionSpringForces
 	MOVE.W	lateralVelocityX,D0
 	SUB.W	lateralVelocityY,D0
 	MOVE.W	D0,D3
@@ -11532,8 +11555,8 @@ lbC053BA4:
 	SUB.W	D3,worldAccelerationZ
 	RTS
 
-calculateSpatialDistortion:
-	MOVE.W	#$0000,lbW00D64A
+calculateSuspensionSpringForces:
+	MOVE.W	#$0000,pitchReferenceZero
 	MOVE.L	distanceFromTrackX,D0
 	ADD.L	distanceFromTrackY,D0
 	ASR.L	#$01,D0
@@ -11541,24 +11564,24 @@ calculateSpatialDistortion:
 	ASR.L	#$04,D0
 	MOVE.W	D0,D3
 	EOR.W	#$8000,D3
-	MOVE.W	D3,lbW00D64C
-	JSR	lbC053D24
-	MOVE.B	segmentDirectionSource,segmentDirectionTemp2
-	MOVE.B	segmentDirectionTemp1,lbB00D652
+	MOVE.W	D3,verticalDisplacementInverted
+	JSR	attenuateDisplacementValue
+	MOVE.B	attenuatedDisplacementValue,tempAttenuatedValue
+	MOVE.B	rawDisplacementValue,yawSpringComponent
 	MOVE.L	distanceFromTrackX,D0
 	SUB.L	distanceFromTrackY,D0
 	ASR.L	#$03,D0
-	MOVE.W	D0,lbW00D648
-	JSR	lbC053D24
-	MOVE.B	segmentDirectionTemp2,curveMagnitude
-	MOVE.B	segmentDirectionSource,D0
+	MOVE.W	D0,lateralDisplacementDelta
+	JSR	attenuateDisplacementValue
+	MOVE.B	tempAttenuatedValue,curveMagnitude
+	MOVE.B	attenuatedDisplacementValue,D0
 	JSR	multiplyAndRandomize
-	MOVE.B	D0,lbB00D650
-	MOVE.B	segmentDirectionTemp1,D0
+	MOVE.B	D0,pitchSpringComponent
+	MOVE.B	rawDisplacementValue,D0
 	JSR	multiplyAndRandomize
-	MOVE.B	D0,lbB00D64E
-	MOVE.B	lbB00D64E,curveMagnitude
-	MOVE.B	lbW00D648,trackSideIndicatorCopy
+	MOVE.B	D0,rollSpringComponent
+	MOVE.B	rollSpringComponent,curveMagnitude
+	MOVE.B	lateralDisplacementDelta,trackSideIndicatorCopy
 	MOVE.W	offTrackVelocityMagnitude,D0
 	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
@@ -11568,11 +11591,11 @@ calculateSpatialDistortion:
 lbC053C98:
 	ASL.W	#$07,D3
 	MULS	D3,D0
-	ASL.L	#$01,D0
+	ASL.L	#$03,D0				; fixed $01
 	SWAP	D0
 	MOVE.W	D0,rollAngleModifier
-	MOVE.B	lbB00D650,curveMagnitude
-	MOVE.B	lbW00D64A,trackSideIndicatorCopy
+	MOVE.B	pitchSpringComponent,curveMagnitude
+	MOVE.B	pitchReferenceZero,trackSideIndicatorCopy
 	MOVE.W	offTrackVelocityMagnitude,D0
 	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
@@ -11582,11 +11605,11 @@ lbC053C98:
 lbC053CD6:
 	ASL.W	#$07,D3
 	MULS	D3,D0
-	ASL.L	#$01,D0
+	ASL.L	#$03,D0				; fixed $01
 	SWAP	D0
 	MOVE.W	D0,carPitchAdjustment
-	MOVE.B	lbB00D652,curveMagnitude
-	MOVE.B	lbW00D64C,trackSideIndicatorCopy
+	MOVE.B	yawSpringComponent,curveMagnitude
+	MOVE.B	verticalDisplacementInverted,trackSideIndicatorCopy
 	MOVE.W	offTrackVelocityMagnitude,D0
 	MOVE.B	curveMagnitude,D3
 	AND.W	#$00FF,D3
@@ -11596,12 +11619,12 @@ lbC053CD6:
 lbC053D14:
 	ASL.W	#$07,D3
 	MULS	D3,D0
-	ASL.L	#$01,D0
+	ASL.L	#$03,D0				; fixed $01
 	SWAP	D0
 	MOVE.W	D0,yawAngleOffset
 	RTS
 
-lbC053D24:
+attenuateDisplacementValue:
 	TST.W	D0
 	BPL	lbC053D2C
 	NEG.W	D0
@@ -11611,11 +11634,11 @@ lbC053D2C:
 	BGE	lbC053D3A
 	MOVE.B	D0,D1
 lbC053D3A:
-	MOVE.B	D1,segmentDirectionTemp1
+	MOVE.B	D1,rawDisplacementValue
 	LSR.B	#$01,D1
 	MOVE.L	#attenuationTable,A0
 	MOVE.B	$00(A0,D1.W),D0
-	MOVE.B	D0,segmentDirectionSource
+	MOVE.B	D0,attenuatedDisplacementValue
 	RTS
 
 calculate3DProjection:
@@ -13864,6 +13887,7 @@ lbC055E24:
 	RTS
 
 displayMenuScreen:
+	clr.b	frameProcessingFlag		; fixed
 	MOVE.W	imageMenuScreenPalette,D0
 	JSR	fadeToColor
 	MOVE.B	#$80,singleBufferRenderMode
@@ -14657,7 +14681,7 @@ copyFastRenderBuffer:
 	moveq	#4-1,d1
 .copyBitplane:
 	move.w	#128-1,d0
-.copyLine:
+.copyMain:
 	move.l	(a0)+,(a1)+
 	move.l	(a0)+,(a1)+
 	move.l	(a0)+,(a1)+
@@ -14668,9 +14692,16 @@ copyFastRenderBuffer:
 	move.l	(a0)+,(a1)+
 	lea	8(a0),a0
 	lea	8(a1),a1
-	dbra	d0,.copyLine
-	lea	72*40(a0),a0
-	lea	72*40(a1),a1
+	dbra	d0,.copyMain	
+	moveq	#16-1,d0
+.copyBottom:
+	move.l	(a0),(a1)
+	move.l	28(a0),28(a1)
+	lea	40(a0),a0
+	lea	40(a1),a1
+	dbra	d0,.copyBottom
+	lea	(200-128-16)*40(a0),a0
+	lea	(200-128-16)*40(a1),a1
 	dbra	d1,.copyBitplane
 	rts
 
@@ -15071,7 +15102,7 @@ lbC0570A2:
 	MOVE.B	maxSegmentIndex,D1
 	ASL.W	#$01,D1
 	MOVE.B	currentSegmentIndex,D2
-	CMP.B	trackParameter3,D2
+	CMP.B	lapApproachSegment,D2
 	BNE	lbC0570D0
 	MOVE.B	#$01,D0
 lbC0570D0:
@@ -20215,7 +20246,8 @@ renderMaskedGraphicsObject:
 	LEA	$04(A2,D0.W),A2
 	MOVE.W	$0004(A2),D0
 	MOVE.W	$0006(A2),D3
-	MOVE.L	renderFrameBuffer,A0
+;	MOVE.L	renderFrameBuffer,A0
+	lea	fastRenderBuffer,a0
 	AND.L	#$000000FF,D0
 	AND.L	#$000000FF,D3
 	ASL.L	#$01,D0
@@ -20357,7 +20389,8 @@ renderGraphicsObjectAtPosition:
 	ASL.W	#$02,D0
 	MOVE.L	#graphicsRenderingParameters,A2
 	LEA	$04(A2,D0.W),A2
-	MOVE.L	renderFrameBuffer,A0
+	;MOVE.L	renderFrameBuffer,A0
+	lea	fastRenderBuffer,a0
 	MOVE.W	D4,D0
 	EXT.L	D0
 	EXT.L	D5
@@ -21524,11 +21557,11 @@ lbB00D427:
 	ds.b	3
 perpendicularOffsetY:
 	ds.b	1
-segmentDirectionTemp1:
+rawDisplacementValue:
 	ds.b	1
-segmentDirectionTemp2:
+tempAttenuatedValue:
 	ds.b	1
-segmentDirectionSource:
+attenuatedDisplacementValue:
 	ds.b	1
 lbB00D42E:
 	ds.b	4
@@ -21670,7 +21703,7 @@ lbB00D489:
 	ds.b	2
 currentTrackCoordinate:
 	ds.b	1
-displayModeFlag2:
+unusedDisplayFlag2:
 	ds.b	1
 maxMenuIndex:
 	ds.b	1
@@ -21820,7 +21853,7 @@ segmentAlternateFlag:
 	ds.b	1
 wheelBaseHeight:
 	ds.b	1
-displayModeFlag1:
+unusedDisplayFlag1:
 	ds.b	1
 raceStartTimer:
 	ds.b	1
@@ -22169,17 +22202,17 @@ yawAngleOffset:
 	ds.w	1
 lbW00D646:
 	ds.w	1
-lbW00D648:
+lateralDisplacementDelta:
 	ds.w	1
-lbW00D64A:
+pitchReferenceZero:
 	ds.w	1
-lbW00D64C:
+verticalDisplacementInverted:
 	ds.w	1
-lbB00D64E:
+rollSpringComponent:
 	ds.b	2
-lbB00D650:
+pitchSpringComponent:
 	ds.b	2
-lbB00D652:
+yawSpringComponent:
 	ds.b	2
 velocityAdjustment:
 	ds.w	1
@@ -22445,9 +22478,9 @@ trackDataBuffer:
 	ds.b	1		; unused
 numTrackSegments:
 	ds.b	1
-initialSegmentIndex:
+playerSpawnSegment:
 	ds.b	1
-trackParameter3:
+lapApproachSegment:
 	ds.b	1
 finishLineSegmentIndex:
 	ds.b	1
@@ -22459,9 +22492,9 @@ raceConfigValue:
 	ds.b	1
 selectedRaceType:
 	ds.b	1
-raceFlag1:
+bestLapRecordHolder:
 	ds.b	1
-raceFlag2:
+bestRaceRecordHolder:
 	ds.b	1
 lbB00E325:
 	ds.b	1
@@ -22487,7 +22520,7 @@ trackFeatureCount:
 	ds.b	2
 networkSyncStateFlag:
 	ds.b	1
-startingSegmentIndex:
+lapLineSegment:
 	ds.b	1
 currentTrackID:
 	ds.b	1
