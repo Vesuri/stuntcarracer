@@ -1,9 +1,7 @@
 ; Known issues
 ; - some graphics are missing
-; - damage is not applied correctly
-; - grinding/cloud samples play on every frame
-; - keyboard controls broken in race mode
 ; - standings display incorrect
+; - AI physics are messed up
 	incdir	"scr:"
 
 dsksync:	EQU	$0000007E
@@ -741,7 +739,7 @@ audioInterruptDone:
 	MOVEM.L	(SP)+,D0/A0
 	RTS
 
-playAudioSample:
+playSample:
 	MOVEM.L	D0/D3/D4/A0/A1,-(SP)
 	AND.W	#$0007,D0		; Mask to 0-7 (8 samples)
 	ASL.W	#$04,D0			; Multiply by 16 (entry size)
@@ -811,7 +809,7 @@ copySampleLoop:
 	MOVE.L	sampleParameters,baseSamplePointer
 	MOVE.L	downsampledSampleTable,D0
 	ASL.L	#$01,D0
-	MOVE.L	D0,sampleSizeTable
+	MOVE.L	D0,sampleEngineSize
 	RTS
 
 readJoystickState:
@@ -1689,7 +1687,7 @@ lbC049480:
 	MOVE.B	#$80,D0			; Return $80 with negative flag
 	RTS
 
-lbC049486:
+handleNetworkAbortScreen:
 	TST.B	networkGameMode
 	BEQ	lbC0494F6
 	MOVE.B	#$01,networkInitPhase
@@ -1697,7 +1695,7 @@ lbC049486:
 	JSR	waitForNetworkHandshake
 	BCS	lbC04950A
 lbC0494AA:
-	JSR	lbC05128A
+	JSR	displayControlConfigurationScreen
 	MOVE.B	#$18,D1
 	JSR	checkKeyPressed
 	BEQ	lbC0494E4
@@ -1714,7 +1712,7 @@ lbC0494E4:
 	BRA	lbC04950A
 
 lbC0494F6:
-	JSR	lbC05128A
+	JSR	displayControlConfigurationScreen
 	MOVE.B	#$18,D1
 	JSR	checkKeyPressed
 	BNE	lbC0494F6
@@ -1780,7 +1778,7 @@ lbC04963C:
 	MOVE.W	#$0012,D3
 	JSR	displayNetworkMessage
 	MOVE.B	#$80,networkInputSyncEnabled
-	JSR	waitForDisplaySync
+	JSR	waitForFireButtonPress
 	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	resetTextYOffset
 	TST.B	networkGameMode
@@ -1797,7 +1795,7 @@ lbC04968A:
 	JSR	renderMenuCursor
 	MOVE.W	#$0000,D3
 	JSR	displayNetworkMessage
-	JSR	waitForDisplaySync
+	JSR	waitForFireButtonPress
 	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	resetTextYOffset
 	ORI.B	#$01,CCR
@@ -2445,10 +2443,10 @@ lbC04A1E2:
 	BLT	lbC04A1E2
 	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	animatePaletteToTarget
-	JSR	waitForDisplaySync
+	JSR	waitForFireButtonPress
 	JMP	displayMenuScreen
 
-lbC04A214:
+renderRaceMatchupPortraits:
 	JSR	configurePlayersAndCars
 	MOVE.B	player1ID,D0
 	MOVE.B	#$0C,D3
@@ -2603,7 +2601,7 @@ applyBitplaneMask2:
 	OR.L	D6,D0
 	RTS
 
-lbC04A730:
+displaySeriesProgressIndicator:
 	MOVE.B	D0,lbB055C63
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
@@ -2611,7 +2609,7 @@ lbC04A730:
 	JSR	renderLeagueText
 	MOVE.B	raceSeriesProgress,D0
 	ADDQ.B	#$01,D0
-	JSR	lbC0506CA
+	JSR	renderDecimalCompact
 	MOVE.B	#$F4,D1
 	JSR	renderLeagueText
 	MOVE.B	raceCount,D0
@@ -2619,17 +2617,17 @@ lbC04A730:
 	BEQ	lbC04A774
 	ASL.B	#$01,D0
 lbC04A774:
-	JMP	lbC0506CA
+	JMP	renderDecimalCompact
 
 lbC04A77A:
 	TST.B	lbB00D4AA
 	BMI	lbC04A7D4
 	JSR	resetTextYOffset
 	MOVE.B	#$0B,D0
-	JSR	lbC04A730
+	JSR	displaySeriesProgressIndicator
 	MOVE.W	#$0000,D3
 	JSR	renderTextFromTable
-	JSR	lbC04A214
+	JSR	renderRaceMatchupPortraits
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	JSR	resetTextYOffset
@@ -2637,13 +2635,13 @@ lbC04A77A:
 	JSR	renderTrackInfoDisplay
 	MOVE.B	#$80,D0
 	JSR	transferLapRecords
-	JSR	lbC050974
-	JMP	lbC056128
+	JSR	displayRecordAchievements
+	JMP	presentFrameBufferAndWaitForFire
 
 lbC04A7D4:
 	JSR	setTextYOffset4
 	MOVE.B	#$0A,D0
-	JSR	lbC04A730
+	JSR	displaySeriesProgressIndicator
 	JSR	configurePlayersAndCars
 	MOVE.B	#$11,D0
 	JSR	displayPlayerMatchupScreen
@@ -2661,12 +2659,12 @@ lbC04A7D4:
 	MOVE.B	lbB00E326,D0
 	MOVE.B	#$0F,D3
 	JSR	renderPlayerDisplay
-	JMP	lbC056128
+	JMP	presentFrameBufferAndWaitForFire
 
 lbC04A844:
 	MOVE.L	#lbB00E30E,A6
 	CLR.W	D6
-	MOVE.B	lbB00D4E8,D6
+	MOVE.B	renderingIndex,D6
 	MOVE.B	#$0E,lbB04A4BA
 	MOVE.B	$00(A6,D6.W),D0
 	MOVE.B	#$10,D3
@@ -2691,7 +2689,7 @@ lbC04A844:
 	JSR	setBackgroundColor
 	MOVE.B	#$04,lbB04AA3E
 lbC04A8D6:
-	MOVE.B	lbB00D4E8,D2
+	MOVE.B	renderingIndex,D2
 	MOVE.L	#lbB00E30E,A2
 	MOVE.B	$00(A2,D2.W),savedPlayerIndex
 	MOVE.B	#$0F,D0
@@ -2755,11 +2753,11 @@ lbC04A8D6:
 	MOVE.B	$00(A1,D0.W),D0
 	JSR	renderDecimal
 	ADD.B	#$0B,lbB04AA3E
-	ADDQ.B	#$01,lbB00D4E8
-	MOVE.B	lbB00D4E8,D0
+	ADDQ.B	#$01,renderingIndex
+	MOVE.B	renderingIndex,D0
 	CMP.B	maxRenderingIndex,D0
 	BNE	lbC04A8D6
-	JMP	lbC056128
+	JMP	presentFrameBufferAndWaitForFire
 
 lbC04AA42:
 	JSR	renderCharacter
@@ -2915,7 +2913,7 @@ lbC04AC98:
 	BNE	lbC04AC98
 lbC04ACAC:
 	JSR	animatePaletteToTarget
-	JSR	waitForDisplaySync
+	JSR	waitForFireButtonPress
 	RTS
 
 copyTrackPreviewRegion:
@@ -5128,7 +5126,7 @@ lbC04CF62:
 	MOVE.W	#$00BE,D6
 	MOVE.W	#$0085,D5
 	JSR	drawHorizontalLine
-	JSR	copyGraphicsRegion
+	JSR	copyFirstFrameBufferToSecond
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	displayFrameBuffer,renderFrameBuffer
 lbC04CF94:
@@ -5246,7 +5244,7 @@ displayMenu:
 	MOVE.B	D2,maxMenuIndex
 	MOVE.B	D1,currentTrackCoordinate
 	MOVE.B	D0,selectedMenuItem
-	JSR	setupDisplayMode
+	JSR	renderDivisionHeader
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$00,D1
@@ -5306,7 +5304,7 @@ lbC04D214:
 	JMP	lbC04D188
 
 lbC04D262:
-	JSR	copyGraphicsRegion
+	JSR	copyFirstFrameBufferToSecond
 	MOVE.B	#$0F,D2
 	JSR	delayWithParam
 	MOVE.B	menuHighlightMode,D0
@@ -5441,7 +5439,7 @@ lbC04D40E:
 	JSR	initializeGameTables
 	MOVE.B	#$50,D1
 	JSR	checkKeyPressed
-	BNE	startNewGame
+	BNE	startNewSeason
 	TST.B	networkGameMode
 	BPL	lbC04D48C
 	MOVE.B	#$C0,localInputStateCache
@@ -5450,7 +5448,7 @@ lbC04D40E:
 lbC04D48C:
 	JMP	enterMenuSystemLoop
 
-startNewGame:
+startNewSeason:
 	TST.B	networkGameMode
 	BPL	lbC04D4B2
 	MOVE.B	#$80,localInputStateCache
@@ -6349,12 +6347,12 @@ dividerIndexOk:
 ;	BRA	cleanupInitializationAndStartGame
 ;
 ;cleanupInitializationAndStartGame:
-	JSR	finalizeGraphicsRendering
+	JSR	completeInitialization
 	BRA	validateSaveDataChecksum
 
-finalizeGraphicsRendering:
+completeInitialization:
 	BTST	#DMAB_BLITTER,_custom+dmaconr
-	BNE	finalizeGraphicsRendering
+	BNE	completeInitialization
 	OR.B	#CIAF_DSKSEL0,_ciab+ciaprb
 	MOVE.W	#(DMAF_DISK|DMAF_BLITTER|DMAF_BLITHOG),_custom+dmacon
 	CLR.W	D1
@@ -6404,7 +6402,7 @@ menuSystemLoop:
 	TST.B	selectedRaceType		; Check for game start
 	BMI	gameStateTransition	; Transition to race if set
 	MOVE.B	#$12,gameStateID	; Otherwise, show intermediate screens and loop back
-	JSR	displayTrackPreviewBackground
+	JSR	runTrackPreviewScreen
 	MOVE.B	#$00,gameStateID
 	JSR	loadMainGameScreen
 	JSR	displayMenuScreen
@@ -6458,13 +6456,13 @@ startCompetitiveRace:
 	MOVE.B	D2,opponentID
 	MOVE.B	#$C0,displayFlags
 	MOVE.B	#$11,gameStateID
-	JSR	setupGameplayDisplay
+	JSR	displayRaceMatchupScreen
 	JSR	checkRaceStartReady
 	BEQ	lbC04E900
 	MOVE.B	#$00,D0
 	JSR	displayRacePositions
 	MOVE.B	#$12,gameStateID
-	JSR	displayTrackPreviewBackground
+	JSR	runTrackPreviewScreen
 	MOVE.B	#$80,D0
 	JSR	transmitNetworkMessage
 	MOVE.B	#$00,gameStateID
@@ -6482,11 +6480,11 @@ startCompetitiveRace:
 	TST.B	displayFlags
 	BEQ	lbC04EA60
 	MOVE.B	#$01,gameStateID
-	JSR	setupGameplayDisplay
+	JSR	displayRaceMatchupScreen
 	CLR.B	displayFlags
 lbC04EA60:
 	MOVE.B	#$02,gameStateID
-	JSR	setupGameplayDisplayAlt
+	JSR	displayRaceMatchupScreenAlt
 	MOVE.B	#$03,gameStateID
 	JSR	configureRaceSetup
 	TST.B	additionalPlayerCount
@@ -6522,7 +6520,7 @@ lbC04EAF6:
 	BCC	lbC04EAD0
 	BRA	menuSystemLoop
 
-displayTrackPreviewBackground:
+runTrackPreviewScreen:
 	JSR	loadPlayerConfiguration
 	MOVE.W	imageTrackPreviewBackgroundPalette,D0
 	JSR	fadeToColor
@@ -6571,6 +6569,10 @@ debug:	; StuntCarRacer.s:10188
 	JSR	renderTrackPreview
 	MOVE.B	#$2C,D1
 	JSR	renderLeagueText
+	tst.b	ciaBTimerBSet				; fixed
+	beq.s	lbC04EBFC
+	bclr	#6,_ciaa+ciacra
+	clr.b	ciaBTimerBSet
 lbC04EBFC:
 	JSR	waitForTrackPreviewInput
 	BCC	lbC04EC12
@@ -6691,7 +6693,7 @@ lbC04EE34:
 	JSR	displayGameMessage
 	MOVE.W	#$FFF8,enginePitchDelta
 	MOVE.B	#$00,wheelSpeed
-	CMP.B	#$45,gameTimerCountdown
+	CMP.B	#$45,sustainedDamageThreshold
 	BNE	lbC04EE74
 	MOVE.B	visualDamageCounter,D2
 	BEQ	lbC04EE74
@@ -6702,7 +6704,7 @@ lbC04EE74:
 	MOVE.B	#$80,networkInputSyncEnabled
 	JSR	updateNetworkGameFlags
 	JSR	disableAudio
-	JSR	waitForDisplaySync
+	JSR	waitForFireButtonPress
 	BRA	lbC04EF74
 
 showFramerate:
@@ -7012,7 +7014,7 @@ lbC04F310:
 	JSR	setMessageParameters
 	JSR	updateGameMessageDisplay
 	MOVE.L	(SP)+,renderFrameBuffer
-	JSR	lbC049486
+	JSR	handleNetworkAbortScreen
 	MOVE.W	(SP)+,D0
 	MOVE.B	D0,gameMessageMode
 	MOVE.W	(SP)+,D0
@@ -7022,8 +7024,8 @@ lbC04F310:
 	MOVE.B	#$00,networkInputSyncEnabled
 	MOVE.B	#$00,gameInitFlag3
 initializeGameLoop:
-	MOVE.B	#$07,D0
-	JSR	playAudioSample
+	MOVE.B	#$07,D0			; engine
+	JSR	playSample
 	JSR	updateEngineAudioPitch
 	RTS
 
@@ -7160,24 +7162,24 @@ handleLapCompletionTiming:
 
 checkLapCompletion:
 	TST.B	D1
-	BNE	lbC04F5DA
+	BNE	.offTrackStateChecked
 	BTST	#$06,offTrackStateFlags
-	BNE	lbC04F602
-lbC04F5DA:
+	BNE	.lapCompletionChecked
+.offTrackStateChecked:
 	MOVE.L	#playerSegmentIndex,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.L	#lapCrossingDetectionFlag,A1
 	MOVE.B	$00(A1,D1.W),D2
-	BPL	lbC04F604
+	BPL	.checkLapLineCrossing
 	CMP.B	finishLineSegmentIndex,D0
-	BNE	lbC04F602
+	BNE	.lapCompletionChecked
 	MOVE.B	#$00,$00(A1,D1.W)
-lbC04F602:
+.lapCompletionChecked:
 	RTS
 
-lbC04F604:
+.checkLapLineCrossing:
 	CMP.B	lapLineSegment,D0
-	BNE	lbC04F602
+	BNE	.lapCompletionChecked
 	MOVE.B	#$80,$00(A1,D1.W)
 	MOVE.L	#player1LapCounter,A1
 	ADDQ.B	#$01,$00(A1,D1.W)
@@ -7371,9 +7373,9 @@ updateDamageAndTimers:
 	MOVE.B	D0,targetDamageLevel
 	JSR	updateDamageBarHUD
 lbC04F8E0:
-	MOVE.B	gameTimerCountdown,D0
+	MOVE.B	sustainedDamageThreshold,D0
 	BEQ	lbC04F916
-	SUBQ.B	#$01,gameTimerCountdown
+	SUBQ.B	#$01,sustainedDamageThreshold
 	CMP.B	#$45,D0
 	BEQ	triggerLapCompletion
 	MOVE.B	damageAccumulationActive,D0
@@ -7397,9 +7399,9 @@ lbC04F916:
 	MOVE.B	D2,visualDamageCounter
 	JSR	displayLapCounterGraphics
 	MOVE.B	#$45,D0
-	MOVE.B	D0,gameTimerCountdown
-	MOVE.B	#$0A,D0
-	MOVE.B	#$05,D0
+	MOVE.B	D0,sustainedDamageThreshold
+;	MOVE.B	#$0A,D0					; fixed unnecessary code
+	MOVE.B	#$05,D0					; major impact
 	BNE	lbC04F986
 lbC04F95C:
 	MOVE.B	maxDistanceFromTrack,D0
@@ -7413,9 +7415,9 @@ lbC04F96E:
 	MOVE.B	#$40,D0
 lbC04F97C:
 	MOVE.B	D0,audioSample4Volume
-	MOVE.B	#$04,D0
+	MOVE.B	#$04,D0					; creaking
 lbC04F986:
-	JSR	playAudioSample
+	JSR	playSample
 	MOVE.B	#$00,D0
 	MOVE.B	D0,damageAccumulationActive
 lbC04F996:
@@ -7596,7 +7598,7 @@ lbC04FC1A:
 	RTS
 
 renderLapTimeDisplay:
-	MOVE.B	D2,lbB00D4E8
+	MOVE.B	D2,renderingIndex
 	MOVE.B	D0,lapTimeSubsecondVisibility
 	MOVE.L	#lbL04FD6C,A1
 	MOVE.B	$04(A1,D1.W),textYOffset
@@ -7625,18 +7627,18 @@ renderLapTimeDisplay:
 	JSR	renderDigit
 	ADDQ.B	#$01,textCursorColumn
 	MOVE.B	#$03,textHorizontalOffset
-	MOVE.B	lbB00D4E8,D2
+	MOVE.B	renderingIndex,D2
 	MOVE.L	#lapTimeSeconds,A2
 	MOVE.B	$00(A2,D2.W),D0
 	LSR.B	#$04,D0
 	JSR	renderDigit
-	MOVE.B	lbB00D4E8,D2
+	MOVE.B	renderingIndex,D2
 	MOVE.L	#lapTimeSeconds,A2
 	MOVE.B	$00(A2,D2.W),D0
 	AND.B	#$0F,D0
 	JSR	renderDigit
 	ADDQ.B	#$04,textHorizontalOffset
-	MOVE.B	lbB00D4E8,D2
+	MOVE.B	renderingIndex,D2
 	MOVE.L	#lapTimeSubseconds,A2
 	MOVE.B	$00(A2,D2.W),D0
 	LSR.B	#$04,D0
@@ -7645,7 +7647,7 @@ renderLapTimeDisplay:
 	MOVE.B	#$F0,D0
 lbC04FD2C:
 	JSR	renderDigit
-	MOVE.B	lbB00D4E8,D2
+	MOVE.B	renderingIndex,D2
 	MOVE.L	#lapTimeSubseconds,A2
 	MOVE.B	$00(A2,D2.W),D0
 	AND.B	#$0F,D0
@@ -7962,7 +7964,7 @@ lbC050318:
 	JMP	lbC050384
 
 lbC050324:				; === SIMPLE RESULTS DISPLAY PATH ===
-	JSR	setupDisplayMode
+	JSR	renderDivisionHeader
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
 	TST.B	multiplayerRaceDisplayFlag		; Check multiplayer flag
@@ -7996,7 +7998,7 @@ lbC050398:
 lbC0503B0:
 	JSR	lbC0503C8
 	ADDQ.B	#$01,displayRowOffset
-	JSR	lbC056018
+	JSR	renderStandingsEntry
 	BNE	lbC0503B0
 	RTS
 
@@ -8079,13 +8081,13 @@ lbC0506AC:
 	BNE	lbC0506AC
 	RTS
 
-lbC0506BA:
+renderPaddedDecimal:
 	MOVE.B	D0,-(SP)
-	JSR	lbC05082E
+	JSR	renderTwoSpaces
 	MOVE.B	(SP)+,D0
 	JMP	renderDecimal
 
-lbC0506CA:
+renderDecimalCompact:
 	CMP.B	#$0A,D0
 	BCS	lbC0506FE
 renderDecimal:
@@ -8188,10 +8190,10 @@ lbC050814:
 	MOVE.B	#$00,raceSeriesProgress
 	RTS
 
-lbC050824:
+renderThreeSpaces:
 	MOVE.B	#$20,D0
 	JSR	renderCharacter
-lbC05082E:
+renderTwoSpaces:
 	MOVE.B	#$20,D0
 	JSR	renderCharacter
 renderSpace:
@@ -8287,7 +8289,7 @@ lbC05096C:
 	DBRA	D0,lbC05096C
 	RTS
 
-lbC050974:
+displayRecordAchievements:
 	MOVE.B	displayFlags,D0
 	BEQ	lbC050A6A
 	MOVE.B	#$01,D0
@@ -8797,7 +8799,7 @@ lbC051276:
 lbC051288:
 	RTS
 
-lbC05128A:
+displayControlConfigurationScreen:
 	MOVE.B	#$50,D1
 	JSR	checkKeyPressed
 	BNE	lbC0513DA
@@ -8846,8 +8848,8 @@ lbC0512F6:
 lbC051358:
 	MOVE.B	D0,$00(A2,D2.W)
 lbC05135C:
-	MOVE.B	#$00,D0
-	JSR	playAudioSample
+	MOVE.B	#$00,D0				; chime
+	JSR	playSample
 lbC051366:
 	MOVE.B	interpolatedPosition,D1
 	JSR	checkKeyPressed
@@ -9028,7 +9030,7 @@ lbC051634:
 	EOR.B	#$80,D0
 	MOVE.B	D0,segmentRepeatCounter
 	BPL	lbC0516B4
-	JSR	lbC05082E
+	JSR	renderTwoSpaces
 	MOVE.B	#$02,D0
 	MOVE.B	D0,textHorizontalOffset
 	JMP	lbC051616
@@ -9039,7 +9041,7 @@ lbC0516B4:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,textHorizontalOffset
 	JSR	animatePaletteToTarget
-	JSR	waitForDisplaySync
+	JSR	waitForFireButtonPress
 	MOVE.L	(SP)+,renderFrameBuffer
 	JMP	displayMenuScreen
 
@@ -9351,19 +9353,19 @@ lbC051B70:
 	MOVE.B	#$02,offRoadSideFlags
 lbC051B92:
 	CMP.W	#$0100,D0
-	BLT	lbC051BC6
+	BLT	.edgeGrind
 	TST.B	offTrackStateFlags
-	BMI	lbC051BC4
+	BMI	.offTrackStateOk
 	MOVE.B	#$80,offTrackStateFlags
 	MOVE.B	offsetFromRoadCenter,trackSideIndicator
-	MOVE.B	#$60,restartTimerCountdown			; fixed $10
+	MOVE.B	#$10*5,restartTimerCountdown			; fixed $10
 	JSR	initializeDebrisParticlePositions
-lbC051BC4:
+.offTrackStateOk:
 	RTS
 
-lbC051BC6:
+.edgeGrind:
 	BTST	#$06,offTrackStateFlags
-	BNE	lbC051BC4
+	BNE	.offTrackStateOk
 	MOVE.B	#$00,offTrackStateFlags
 	MOVE.B	#$00,raceCompletionCheckFlag
 	RTS
@@ -9982,14 +9984,14 @@ lbC05257E:
 	MOVE.B	D0,inputStateFlags
 	RTS
 
-handleCollisionEffects:
-	MOVE.B	#$06,crashAudioSampleID		; Set audio sample #6 (collision sound)
+handleGroundCollision:
+	MOVE.B	#$06,grindSampleID	; ground grind
 	MOVE.B	carSpeedMagnitude,D0
 	CMP.B	#$10,D0			; Cap at 16 (decimal)
 	BLT	lbC0525AC
 	MOVE.B	#$10,D0
 lbC0525AC:
-	MOVE.B	D0,collisionImpactLevel		; Store severity
+	MOVE.B	D0,collisionImpactLevel
 	MOVE.B	#$0F,D1			; Only 16 particles (0-15)
 	TST.B	networkGameMode
 	BEQ	lbC0525C4
@@ -9998,34 +10000,37 @@ lbC0525C4:
 	JSR	generateRandomNumber
 	AND.W	#$001C,D0		; Random 0-28 (multiples of 4)
 	ADD.W	#$01C2,D0		; Add 450 (range 450-478)
-	MOVE.W	D0,sampleGroundCollisionPeriod		; Store audio parameter
-	BRA	lbC0526A2		; Jump to particle update loop
+	MOVE.W	D0,sampleGroundCollisionPeriod
+	BRA	setParticleCountAndPlayGrindSound
 
-lbC0525DC:
+noEdgeCollision:
+	tst.b	offTrackStateFlags	; fixed
+	bmi.s	.cooldownOk
+	clr.b	grindSoundCooldownTimer
+.cooldownOk:
 	RTS
 
 initializeDebrisParticlePositions:
-	MOVE.W	#$003E,D1		; D1 = 62 (32 particles * 2)
-	MOVE.W	#$00D4,D0		; D0 = 212 (off-screen Y position)
-lbC0525E6:
+	MOVE.W	#$003E,D1
+	MOVE.W	#$00D4,D0
 	MOVE.L	#debrisParticleYPositions,A1
-	MOVE.W	D0,$00(A1,D1.W)		; Set Y position to 212
-	SUBQ.B	#$02,D1			; Previous particle
-	BPL	lbC0525E6		; Loop for all 32
+.loop:	MOVE.W	D0,$00(A1,D1.W)			; fixed shorter loop
+	SUBQ.B	#$02,D1
+	BPL	.loop
 	RTS
 
-processCollisionState:
-	MOVE.B	#$01,crashAudioSampleID		; Set audio sample #1 (crash sound)
+handleEdgeCollision:
+	MOVE.B	#$01,grindSampleID		; egde grind
 	MOVE.B	wheelBouncePhaseAccumulator,D0		; Check audio pitch modifier
 	BNE	lbC052614		; Skip if non-zero
 	MOVE.B	postWreckStateFlag,D0	; Check if in wreck state
-	BEQ	lbC0525DC		; Exit if no collision
+	BEQ	noEdgeCollision		; Exit if no collision
 lbC052614:				; Continue if collision detected
 	TST.B	offTrackStateFlags	; Check collision flag
-	BMI	lbC0525DC		; Exit if MSB set
+	BMI	noEdgeCollision		; Exit if MSB set
 	MOVE.B	carSpeedMagnitude,D0	; Get impact severity (0-255)
 	CMP.B	#$01,D0
-	BLT	lbC0525DC		; Exit if too low
+	BLT	noEdgeCollision		; Exit if too low
 	CMP.B	#$32,D0			; Cap at 50 (decimal)
 	BLT	lbC052638
 	MOVE.B	#$32,D0
@@ -10036,14 +10041,14 @@ lbC052638:
 	AND.B	#$07,D0			; Mask to 0-7
 	MOVE.B	D0,D2			; Save random value
 	MOVE.B	collisionImpactLevel,D0		; Reload severity
-	LSR.B	#$01,D0			; Divide by 2
+	LSR.B	#$01,D0
 	BRA	lbC052682
 
-	CMP.B	#$08,D0
-	BGE	lbC05266A
-	MOVE.B	#$08,D0
-	BNE	lbC052682
-lbC05266A:
+;	CMP.B	#$08,D0			; fixed dead code
+;	BGE	lbC05266A
+;	MOVE.B	#$08,D0
+;	BNE	lbC052682
+;lbC05266A:
 	CMP.B	#$06,D2
 	BLT	lbC052682
 	MOVE.B	#$0D,D0
@@ -10060,13 +10065,21 @@ lbC05268E:
 	ASL.W	#$02,D0
 	ADD.W	#$00AA,D0
 	MOVE.W	D0,sampleEnginePeriod
-lbC0526A2:
+setParticleCountAndPlayGrindSound:
 	ASL.B	#$01,D1			; D1 = 62 (particle index * 2)
 	MOVE.B	D1,currentDataIndex	; Store particle count
 	MOVE.B	offTrackMovementFlag,D0
 	BEQ	initializeDebrisParticlePositions	; If no crash, init positions
-	MOVE.B	crashAudioSampleID,D0		; Load audio sample ID
-	JSR	playAudioSample		; Play crash sound
+	tst.b	grindSoundCooldownTimer	; fixed
+	bne.s	.soundDone
+	MOVE.B	grindSampleID,D0
+	JSR	playSample
+.soundDone:
+	add.b	#1,grindSoundCooldownTimer
+	cmp.b	#6,grindSoundCooldownTimer
+	bcs.s	.cooldownDone
+	clr.b	grindSoundCooldownTimer
+.cooldownDone:
 	MOVE.L	#debrisParticleXPositions,A4
 	MOVE.L	#debrisParticleXVelocities,A5
 	MOVE.B	currentDataIndex,D1	; D1 = 62 (start at last particle)
@@ -11375,9 +11388,9 @@ lbC053942:
 	JSR	handleRaceStartCountdown
 	MOVE.W	yawAngleOffset,lbW00D646
 	JSR	handleCollisionBetweenCars
-	TST.B	crashSoundCooldownTimer
+	TST.B	impactSoundCooldownTimer
 	BEQ	lbC053968
-	SUBQ.B	#$01,crashSoundCooldownTimer
+	SUBQ.B	#$01,impactSoundCooldownTimer
 lbC053968:
 	TST.B	offTrackCollisionFlag
 	BEQ	lbC0539B4
@@ -11391,12 +11404,12 @@ lbC053984:
 	BCS	lbC053992
 	MOVE.B	#$40,D0
 lbC053992:
-	MOVE.B	D0,sampleCrashVolume
-	TST.B	crashSoundCooldownTimer
+	MOVE.B	D0,sampleImpactVolume
+	TST.B	impactSoundCooldownTimer
 	BNE	lbC0539B4
-	MOVE.B	#$03,D0
-	JSR	playAudioSample
-	MOVE.B	#$05*5,crashSoundCooldownTimer		; fixed $05
+	MOVE.B	#$03,D0					; impact
+	JSR	playSample
+	MOVE.B	#$05*5,impactSoundCooldownTimer		; fixed $05
 lbC0539B4:
 	RTS
 
@@ -11765,7 +11778,7 @@ lbC053EBA:
 
 displaySeasonSelection:
 	JSR	drawScreenFrame
-	JSR	copyGraphicsRegion
+	JSR	copyFirstFrameBufferToSecond
 	MOVE.W	#$012A,D1
 	JSR	displayMessageWithColors
 	JSR	waitForInputPress
@@ -11778,7 +11791,7 @@ displaySeasonSelection:
 	MOVE.W	#$0016,D1
 lbC054086:
 	JSR	displayMessage
-	JSR	copyGraphicsRegion
+	JSR	copyFirstFrameBufferToSecond
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	MOVE.B	#$80,disableDirectionalInputFlag
@@ -12230,7 +12243,7 @@ lbC054766:
 
 renderSlotGraphics:
 	JSR	setupSlotRenderingParams
-	JMP	finalizeGraphicsRendering
+	JMP	completeInitialization
 
 ;	ds.w	1
 
@@ -13511,8 +13524,8 @@ lbC055764:
 	MOVE.W	#$0000,speedDifferential
 	TST.B	lbB0557E0
 	BNE	lbC0557DC
-	MOVE.B	#$02,D0
-	JSR	playAudioSample
+	MOVE.B	#$02,D0				; car collision
+	JSR	playSample
 	MOVE.B	#$05,lbB0557E0
 lbC0557DC:
 	RTS
@@ -13924,11 +13937,11 @@ lbC055E8A:
 	CMP.L	A3,A0
 	BNE	lbC055E8A
 	MOVE.B	#$41,displayUpdateFlag
-	JSR	setupDisplayMode
-	JSR	copyGraphicsRegion
+	JSR	renderDivisionHeader
+	JSR	copyFirstFrameBufferToSecond
 	JMP	animatePaletteToTarget
 
-setupDisplayMode:
+renderDivisionHeader:
 	MOVE.B	selectedTrack,D0
 	MOVE.B	D0,displayTrackID
 	JSR	drawScreenFrame
@@ -13968,15 +13981,15 @@ lbC055F52:
 	MOVE.B	#$A0,D1
 	JMP	renderMenuString
 
-setupGameplayDisplayAlt:
+displayRaceMatchupScreenAlt:
 	MOVE.B	#$80,D0
 	BRA	lbC055F68
 
-setupGameplayDisplay:
+displayRaceMatchupScreen:
 	MOVE.B	#$00,D0
 lbC055F68:
 	MOVE.B	D0,lbB00D4AA
-	JSR	setupDisplayMode
+	JSR	renderDivisionHeader
 	MOVE.B	displayTrackID,D0
 	ASL.B	#$01,D0
 	MOVE.B	D0,temp
@@ -13997,30 +14010,30 @@ lbC055F9C:
 lbC055FC0:
 	MOVE.B	#$0B,D2
 	JSR	renderTrackInfoDisplay
-	JSR	lbC050974
-	JMP	lbC056128
+	JSR	displayRecordAchievements
+	JMP	presentFrameBufferAndWaitForFire
 
 finalizeRaceDisplay:
-	JSR	setupDisplayMode
+	JSR	renderDivisionHeader
 	JSR	updateLeagueStandingsAfterRace
-	JMP	lbC056128
+	JMP	presentFrameBufferAndWaitForFire
 
 configureRaceSetup:
 	JSR	setupGameConfiguration
-	MOVE.B	trackBaseOffset,lbB00D4E8
+	MOVE.B	trackBaseOffset,renderingIndex
 	TST.B	additionalPlayerCount
 	BEQ	lbC05600C
 	JSR	displayLeagueRaceResults
-	BRA	lbC056128
+	BRA	presentFrameBufferAndWaitForFire
 
 lbC05600C:
-	JSR	setupDisplayMode
+	JSR	renderDivisionHeader
 	JMP	lbC04A844
 
-lbC056018:
+renderStandingsEntry:
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
-	MOVE.B	lbB00D4E8,D2
+	MOVE.B	renderingIndex,D2
 	MOVE.L	#lbB00E30E,A2
 	MOVE.B	$00(A2,D2.W),D1
 	MOVE.B	D1,savedPlayerIndex
@@ -14030,7 +14043,7 @@ lbC056018:
 	TST.B	multiplayerRaceDisplayFlag
 	BPL	lbC05606E
 	JSR	renderLapTime
-	JSR	lbC05082E
+	JSR	renderTwoSpaces
 	ADD.B	#$0C,D1
 	JSR	renderLapTime
 	BRA	lbC0560B4
@@ -14041,69 +14054,67 @@ lbC05606E:
 	JSR	renderDecimal
 	MOVE.L	#lbL00E2DE,A1
 	MOVE.B	$00(A1,D1.W),D0
-	JSR	lbC0506BA
+	JSR	renderPaddedDecimal
 	MOVE.L	#lbL00E2EA,A1
 	MOVE.B	$00(A1,D1.W),D0
-	JSR	lbC0506BA
-	JSR	lbC050824
+	JSR	renderPaddedDecimal
+	JSR	renderThreeSpaces
 	MOVE.L	#lbL00E302,A1
 	MOVE.B	$00(A1,D1.W),D0
 	JSR	renderDecimal
 lbC0560B4:
-	ADDQ.B	#$01,lbB00D4E8
-	MOVE.B	lbB00D4E8,D0
+	ADDQ.B	#$01,renderingIndex
+	MOVE.B	renderingIndex,D0
 	CMP.B	maxRenderingIndex,D0
 	RTS
 
-	MOVE.B	#$07,D0
-	JSR	displayPlayerMatchupScreen
-	MOVE.B	#$60,D1
-	JSR	renderLeagueText
-	JSR	renderMenuCursor
-	MOVE.B	#$6A,D1
-	JSR	renderLeagueText
-	MOVE.B	lbB00E325,D1
-	JSR	renderPlayerName
-	MOVE.B	#$E9,D1
-	JSR	renderLeagueText
-	JSR	renderMenuCursor
-	MOVE.B	#$78,D1
-	JSR	renderLeagueText
-	MOVE.B	lbB00E326,D1
-	JSR	renderPlayerName
-	MOVE.B	#$EF,D1
-	JSR	renderLeagueText
-lbC056128:
-	JSR	copyGraphicsRegion
-	JSR	waitForDisplaySync
+;	MOVE.B	#$07,D0					; fixed dead code
+;	JSR	displayPlayerMatchupScreen
+;	MOVE.B	#$60,D1
+;	JSR	renderLeagueText
+;	JSR	renderMenuCursor
+;	MOVE.B	#$6A,D1
+;	JSR	renderLeagueText
+;	MOVE.B	lbB00E325,D1
+;	JSR	renderPlayerName
+;	MOVE.B	#$E9,D1
+;	JSR	renderLeagueText
+;	JSR	renderMenuCursor
+;	MOVE.B	#$78,D1
+;	JSR	renderLeagueText
+;	MOVE.B	lbB00E326,D1
+;	JSR	renderPlayerName
+;	MOVE.B	#$EF,D1
+;	JSR	renderLeagueText
+presentFrameBufferAndWaitForFire:
+	JSR	copyFirstFrameBufferToSecond
+	JSR	waitForFireButtonPress
 resetTextYOffset:
 	MOVE.B	#$00,textYOffset
 	RTS
 
-copyGraphicsRegion:
+copyFirstFrameBufferToSecond:
 	MOVE.L	frameBuffers,A0
 	ADD.L	#$00000B6C,A0
 	ADD.L	#$FFFFFEC0,A0
 	MOVE.L	A0,A3
 	ADD.L	#$00007D00,A3
 	MOVE.W	#$007E,D4
-lbC05615C:
-	MOVE.W	#$000D,D3
-lbC056160:
-	MOVE.W	(A0)+,(A3)+
+.yLoop:	MOVE.W	#$000D,D3
+.xLoop:	MOVE.W	(A0)+,(A3)+
 	MOVE.W	$1F3E(A0),$1F3E(A3)
 	MOVE.W	$3E7E(A0),$3E7E(A3)
 	MOVE.W	$5DBE(A0),$5DBE(A3)
-	DBRA	D3,lbC056160
+	DBRA	D3,.xLoop
 	ADD.L	#$0000000C,A0
 	ADD.L	#$0000000C,A3
-	DBRA	D4,lbC05615C
+	DBRA	D4,.yLoop
 	RTS
 
-waitForDisplaySync:
+waitForFireButtonPress:
 	JSR	readControllerInput
 	AND.B	#$10,D0
-	BNE	waitForDisplaySync
+	BNE	waitForFireButtonPress
 	MOVE.B	#$05,D2
 	JSR	delayWithParam
 lbC0561A2:
@@ -14631,12 +14642,12 @@ lbC0569AE:
 	JSR	renderTrackNear
 lbC0569E2:
 	TST.B	raceStartTimer
-	BNE	lbC0569FC
+	BNE	.groundCollisionHandled
 	TST.B	offTrackStateFlags
-	BPL	lbC0569FC
-	JSR	handleCollisionEffects
-lbC0569FC:
-	JSR	processCollisionState
+	BPL	.groundCollisionHandled
+	JSR	handleGroundCollision
+.groundCollisionHandled:
+	JSR	handleEdgeCollision
 	JSR	updateChainAnimation
 	MOVE.B	#$0D,D0				; left top
 	JSR	renderMaskedGraphicsObject
@@ -14655,29 +14666,29 @@ lbC0569FC:
 	MOVE.B	#$0C,D0				; right exhaust
 	JSR	renderMaskedGraphicsObject
 	TST.B	boostActiveFlag
-	BEQ	finishHUDRendering
+	BEQ	.flameRenderingDone
 	MOVE.B	flameAnimationFrame,D0
 	ADDQ.B	#$01,D0
 	CMP.B	#$03,D0
-	BLT	lbC056A7A
+	BLT	.flameAnimationFrameOk
 	MOVE.B	#$00,D0
-lbC056A7A:
+.flameAnimationFrameOk:
 	MOVE.B	D0,flameAnimationFrame
 	MOVE.W	D0,-(SP)
 	ADD.B	#$06,D0
 	CMP.B	#$08,D0
-	BNE	lbC056A92
+	BNE	.leftFlameObjectIdOk
 	MOVE.B	#$31,D0				; left flames
-lbC056A92:
+.leftFlameObjectIdOk:
 	JSR	renderMaskedGraphicsObject
 	MOVE.W	(SP)+,D0
 	ADD.B	#$08,D0
 	CMP.B	#$0A,D0
-	BNE	lbC056AAA
+	BNE	.rightFlameObjectIdOk
 	MOVE.B	#$32,D0				; right flames
-lbC056AAA:
+.rightFlameObjectIdOk:
 	JSR	renderMaskedGraphicsObject
-finishHUDRendering:
+.flameRenderingDone:
 	JSR	updateGameMessageDisplay
 	JSR	copyFastRenderBuffer
 	RTS
@@ -14717,24 +14728,24 @@ copyFastRenderBuffer:
 updateWheelGraphics:
 	MOVE.B	wheelSpeed,D0
 	ADD.B	D0,wheelAnimationAccumulator
-	BCC	selectWheelSprites
+	BCC	.wheelRotationFrameOk
 	JSR	advanceWheelRotationFrame
-selectWheelSprites:
+.wheelRotationFrameOk:
 	MOVE.B	wheelRotationFrame,D0
 	ADD.B	#$25,D0
 	CMP.W	#$007E,rightWheelHeight
-	BGE	setRightWheelSprite
+	BGE	.rightWheelSpriteIdOk
 	ADD.B	#$06,D0
-setRightWheelSprite:
+.rightWheelSpriteIdOk:
 	MOVE.W	#$0000,D1
 	JSR	setSpriteFromTable
 	MOVE.B	#$05,D0
 	SUB.B	wheelRotationFrame,D0
 	ADD.B	#$25,D0
 	CMP.W	#$007E,leftWheelHeight
-	BGE	setLeftWheelSprite
+	BGE	.leftWheelSpriteIdOk
 	ADD.B	#$06,D0
-setLeftWheelSprite:
+.leftWheelSpriteIdOk:
 	MOVE.W	#$0001,D1
 	JSR	setSpriteFromTable
 	RTS
@@ -15348,7 +15359,7 @@ lbC0573E2:
 	MOVE.B	D1,savedPlayerIndex
 	MOVE.B	D1,D0
 	AND.B	#$02,D0
-	MOVE.B	D0,lbB00D4E8
+	MOVE.B	D0,renderingIndex
 	MOVE.B	D0,D2
 	CMP.W	#$0078,D1
 	BLT	lbC057408
@@ -15361,7 +15372,7 @@ lbC057408:
 lbC057414:
 	MOVE.B	lbB00D40E,D0
 	JSR	processTrackCharacteristics
-	MOVE.B	lbB00D4E8,D1
+	MOVE.B	renderingIndex,D1
 	MOVE.B	#$08,D2
 	MOVE.B	lbB00D40F,D0
 	AND.W	#$00FF,D0
@@ -20255,8 +20266,11 @@ renderMaskedGraphicsObject:
 	LEA	$04(A2,D0.W),A2
 	MOVE.W	$0004(A2),D0
 	MOVE.W	$0006(A2),D3
-;	MOVE.L	renderFrameBuffer,A0
+	MOVE.L	renderFrameBuffer,A0
+	cmp.w	#16,d3					; fixed
+	bcs.s	.copyChip
 	lea	fastRenderBuffer,a0
+.copyChip:
 	AND.L	#$000000FF,D0
 	AND.L	#$000000FF,D3
 	ASL.L	#$01,D0
@@ -20453,40 +20467,41 @@ downsampledSampleTable:
 lbL000DB4:
 	ds.l	1
 sampleParameterTable:
-	; sample 0: $0000F4B8, 2436 bytes, period 150, volume 30, channel 1, Short sound effect
+	; sample 0: $0000F4B8, 2436 bytes, period 150, volume 30, channel 1, chime
 	dc.l	$0000F4B8,$00000984
 	dc.w	$0096,$001E,$0001,$0000
-	; sample 1: $0000FE3C, 9032 bytes, period 180, volume 64, channel 1, engine
+	; sample 1: $0000FE3C, 9032 bytes, period 180, volume 64, channel 1, edge grind
 	dc.l	$0000FE3C,$00002348
 sampleEnginePeriod:
 	dc.w	$00B4,$0040,$0001,$0000
-	; sample 2: $00012184, 8014 bytes, period 238, volume 56, channel 1, Crash/collision
+	; sample 2: $00012184, 8014 bytes, period 238, volume 56, channel 1, car collision
 	dc.l	$00012184,$00001F4E
 	dc.w	$00EE,$0038,$0001,$0000
-	; sample 3: $000140D2, 3108 bytes, period 400, volume 50, channel 1, Impact sound
+	; sample 3: $000140D2, 3108 bytes, period 400, volume 50, channel 1, impact
 	dc.l	$000140D2,$00000C24
 	dc.w	$0190
 	ds.b	1
-sampleCrashVolume:
+sampleImpactVolume:
 	dc.b	$32
 	dc.w	$0001,$0000
-	; sample 4: $00014CF6, 5170 bytes, period 238, volume 64, channel 2, Secondary sound 
+	; sample 4: $00014CF6, 5170 bytes, period 238, volume 64, channel 2, creaking
 	dc.l	$00014CF6,$00001432
 	dc.w	$00EE
 	ds.b	1
 audioSample4Volume:
 	dc.b	$40
 	dc.w	$0002,$0000
-	; sample 5: $00016128, 8430 bytes, period 280, volume 64, channel 3, Background audio
+	; sample 5: $00016128, 8430 bytes, period 280, volume 64, channel 3, major impact
 	dc.l	$00016128,$000020EE
 	dc.w	$0118,$0040,$0003,$0000
-	; sample 6: $00018216, 7120 bytes, period 500, volume 64, channel 1, ground collision
+	; sample 6: $00018216, 7120 bytes, period 500, volume 64, channel 1, ground grind
 	dc.l	$00018216,$00001BD0
 sampleGroundCollisionPeriod:
 	dc.w	$01F4,$0040,$0001,$0000
 baseSamplePointer:
+	; sample 7: engine
 	dc.l	sampleEngineData
-sampleSizeTable:
+sampleEngineSize:
 	dc.w	$0000,$0C64,$012C,$0030,$0000,$0000
 joystickState:
 	dc.w	$FFFF
@@ -21488,7 +21503,7 @@ lbB000B58:
 	ds.b	2
 lbW000B5A:
 	ds.w	1
-crashAudioSampleID:
+grindSampleID:
 	ds.b	2
 audioDMAEnableGuard:
 	ds.w	1
@@ -21678,7 +21693,7 @@ graphicsUpdateFlag:
 	ds.b	1
 frameProcessingFlag:
 	ds.b	1
-gameTimerCountdown:
+sustainedDamageThreshold:
 	ds.b	1
 crashRecoveryTimer:
 	ds.b	1
@@ -21880,7 +21895,7 @@ lbB00D4E5:
 	ds.b	1
 coordinateTransformFlags:
 	ds.b	2
-lbB00D4E8:
+renderingIndex:
 	ds.b	1
 chainLiftVelocity:
 	ds.b	1
@@ -22727,8 +22742,10 @@ framesToWaitForJotain:
 	ds.b	1
 framesToWaitWhenFading:
 	ds.b	2
-crashSoundCooldownTimer:
-	ds.b	2
+impactSoundCooldownTimer:
+	ds.b	1
+grindSoundCooldownTimer:
+	ds.b	1
 randomSeed1:
 	ds.w	1
 randomSeed2:
