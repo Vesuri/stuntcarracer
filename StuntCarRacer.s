@@ -1,6 +1,9 @@
 ; Known issues
-; - some graphics are missing
+; - post race graphics are missing (resultScreenPointerTable)
 ; - AI physics are messed up
+; - damage accumulates a bit too easily
+; - press fire background plate missing
+; - sometimes right wheel falls down while in air
 	incdir	"scr:"
 
 dsksync:	EQU	$0000007E
@@ -1225,7 +1228,7 @@ lbC048C22:
 	JSR	sendSerialByteWithChecksum
 	MOVE.B	raceStartTimer,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	visualDamageCounter,D0
+	MOVE.B	holeRenderingPosition,D0
 	TST.B	raceStartTimer
 	BEQ	lbC048C66
 	BSET	#$07,D0
@@ -1394,7 +1397,7 @@ lbC048FCA:
 	BPL	lbC048FEC
 	JSR	convertOpponentWheelsToCarFootprint
 	JSR	calculatePlayerDistance
-	JSR	updateEngineState
+	JSR	calculateOpponentRelativePosition
 	JSR	setupTrackGeometryForFrame
 lbC048FEC:
 	RTS
@@ -4296,7 +4299,7 @@ lbC04C2DC:
 	SUBQ.B	#$01,D1
 	BPL	lbC04C2DC
 	JSR	initializeGameTables
-	MOVE.B	#$0A,visualDamageCounter
+	MOVE.B	#$0A,holeRenderingPosition
 	MOVE.B	#$00,lbB0117F7
 	MOVE.B	#$10,lbB0117F8
 	MOVE.B	#$7E,lbB0117ED
@@ -5552,7 +5555,7 @@ processOpponentAI:
 	SUBQ.B	#$01,aiActionTimer
 lbC04D662:
 	ADD.B	aiPatternOffset,D0
-	AND.B	#$0F,D0
+	AND.B	#$3F,D0				; fixed $0F
 	MOVE.B	D0,D2
 	MOVE.L	#aiMovementPatterns,A2
 	MOVE.B	$00(A2,D2.W),D0
@@ -5563,7 +5566,7 @@ lbC04D680:
 	MOVE.L	#aiLateralOffset2,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$05,D2
-	AND.B	#$0F,D2
+	AND.B	#$3F,D2				; fixed $0F
 	MOVE.L	#aiMovementPatterns,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.B	D0,aiLateralOffset1
@@ -5578,12 +5581,12 @@ lbC04D6A6:
 	BMI	lbC04D71C
 	TST.B	segmentSteeringFlags
 	BMI	lbC04D71C
-	MOVE.B	#$08,D2
+	MOVE.B	#$20,D2				; fixed $08
 	TST.B	lbB00D49D
 	BPL	lbC04D71C
 	BTST	#$06,lbB00D49D
 	BEQ	lbC04D6EC
-	MOVE.B	#$10,D2
+	MOVE.B	#$40,D2				; fixed $10
 lbC04D6EC:
 	MOVE.B	D2,aiPatternOffset
 	JSR	generateRandomNumber
@@ -5592,7 +5595,7 @@ lbC04D6EC:
 	MOVE.B	opponentID,D0
 	CMP.B	temp,D0
 	BLT	lbC04D71C
-	MOVE.B	#$10,D0
+	MOVE.B	#$40,D0				; fixed $10
 	MOVE.B	D0,aiActionTimer
 lbC04D71C:
 	MOVE.B	reverseDirectionFlag,D0
@@ -5911,7 +5914,7 @@ lbC04DB86:
 lbC04DB9A:
 	CMP.B	#$04,D1
 	BNE	lbC04DBA8
-	MOVE.B	D0,lbB00D4A1
+	MOVE.B	D0,playerTrackPositionIndex
 lbC04DBA8:
 	MOVE.B	segmentOrientationAlternate,curveMagnitude
 	MOVE.L	#wheelCornerYFrontLeft,A1
@@ -6602,7 +6605,7 @@ lbC04EC48:
 	JSR	setForegroundColor
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
-	JSR	initializeMultiplayerSettings
+	JSR	setupDamageBar
 	MOVE.B	#$09,D3
 	MOVE.B	#$0A,D0
 	TST.B	currentPlayerContext
@@ -6694,9 +6697,9 @@ lbC04EE34:
 	MOVE.B	#$00,wheelSpeed
 	CMP.B	#$45,sustainedDamageThreshold
 	BNE	lbC04EE74
-	MOVE.B	visualDamageCounter,D2
+	MOVE.B	holeRenderingPosition,D2
 	BEQ	lbC04EE74
-	JSR	displayLapCompletionGraphics
+	JSR	renderExistingHole
 lbC04EE74:
 	JSR	swapDisplayBuffers
 	MOVE.B	#$80,gameExitFlag
@@ -6720,7 +6723,7 @@ showFramerate:
 	rts
 
 continueGameLoop:
-	jsr	showFramerate
+;	jsr	showFramerate
 	JSR	swapDisplayBuffers
 	JSR	checkNetworkTimeout
 	MOVE.B	raceStartTimer,D0
@@ -6782,7 +6785,7 @@ lbC04EF74:
 	BEQ	lbC04F014
 	MOVE.B	currentPlayerID,D1
 	MOVE.L	#lbL00E336,A0
-	MOVE.B	visualDamageCounter,$00(A0,D1.W)
+	MOVE.B	holeRenderingPosition,$00(A0,D1.W)
 	TST.B	networkGameMode
 	BEQ	lbC04EFEE
 	MOVE.B	opponentID,D1
@@ -6798,7 +6801,7 @@ lbC04EFEE:
 	ADD.B	#$0C,D1
 	JSR	clearGameDataSlot
 lbC04F00A:
-	MOVE.B	savedObjectDisplayThreshold,visualDamageCounter
+	MOVE.B	savedHoleRenderingPosition,holeRenderingPosition
 lbC04F014:
 	JSR	saveRandomState
 	MOVE.B	#$80,networkInputSyncEnabled
@@ -6859,7 +6862,7 @@ lbC04F108:
 	BNE	lbC04F108
 	MOVE.B	D0,boostFuelLevel
 	MOVE.B	D0,maxBoostFuel
-	MOVE.B	visualDamageCounter,savedObjectDisplayThreshold
+	MOVE.B	holeRenderingPosition,savedHoleRenderingPosition
 	MOVE.L	#keyboardState,A0
 	MOVE.W	#$007F,D0
 lbC04F130:
@@ -6884,14 +6887,14 @@ lbC04F16A:
 	BPL	lbC04F16A
 	RTS
 
-initializeMultiplayerSettings:
+setupDamageBar:
 	TST.B	additionalPlayerCount
-	BEQ	lbC04F19C
+	BEQ	.playerOk
 	MOVE.B	currentPlayerID,D1
 	MOVE.L	#lbL00E336,A0
-	MOVE.B	$00(A0,D1.W),visualDamageCounter
-lbC04F19C:
-	JMP	initializeGameObjects
+	MOVE.B	$00(A0,D1.W),holeRenderingPosition
+.playerOk:
+	JMP	renderAllDamage
 
 processPlayerInput:
 	JSR	readControllerInput
@@ -7072,7 +7075,7 @@ lbC04F452:
 lbC04F472:
 	TST.B	selectedRaceType
 	BPL	lbC04F4AA
-	MOVEQ	#$01,D1			; fixed MOVE.B
+	MOVE.B	#$01,D1
 	TST.B	networkGameMode
 	BEQ	lbC04F49E
 	TST.B	networkPacketReadyFlag
@@ -7084,7 +7087,7 @@ lbC04F49E:
 lbC04F4A4:
 	JSR	checkLapCompletion
 lbC04F4AA:
-	MOVEQ	#$00,D1			; fixed MOVE.B
+	MOVE.B	#$00,D1
 	JSR	updateLapTimer
 	JSR	saveLapTimeToBuffer
 	JSR	checkLapCompletion
@@ -7152,7 +7155,7 @@ handleLapCompletionTiming:
 	MOVE.B	D0,-(SP)
 	JSR	setupResultScreenDisplay
 	MOVE.B	#$02,D2
-	MOVEQ	#$03,D1				; fixed MOVE.B
+	MOVE.B	#$03,D1
 	MOVE.B	#$80,D0
 	JSR	renderLapTimeDisplay
 	MOVE.B	(SP)+,D0
@@ -7376,14 +7379,14 @@ lbC04F8E0:
 	BEQ	lbC04F916
 	SUBQ.B	#$01,sustainedDamageThreshold
 	CMP.B	#$45,D0
-	BEQ	triggerLapCompletion
+	BEQ	majorImpact
 	MOVE.B	damageAccumulationActive,D0
 	BNE	lbC04F95C
 	RTS
 
-triggerLapCompletion:
-	MOVE.B	visualDamageCounter,D2
-	JSR	displayLapCompletionGraphics
+majorImpact:
+	MOVE.B	holeRenderingPosition,D2
+	JSR	renderExistingHole
 	JMP	lbC04F95C
 
 lbC04F916:
@@ -7392,16 +7395,16 @@ lbC04F916:
 	MOVE.W	maxDistanceFromTrack,D0
 	CMP.W	#$1400/4,D0				; fixed $1400
 	BCS	lbC04F95C
-	MOVE.B	visualDamageCounter,D2
+	MOVE.B	holeRenderingPosition,D2
 	BEQ	lbC04F95C
 	SUBQ.B	#$01,D2
-	MOVE.B	D2,visualDamageCounter
-	JSR	displayLapCounterGraphics
+	MOVE.B	D2,holeRenderingPosition
+	JSR	renderNewHole
 	MOVE.B	#$45,D0
 	MOVE.B	D0,sustainedDamageThreshold
 ;	MOVE.B	#$0A,D0					; fixed unnecessary code
 	MOVE.B	#$05,D0					; major impact
-	BNE	lbC04F986
+	BRA	lbC04F986				; fixed BNE
 lbC04F95C:
 	MOVE.B	maxDistanceFromTrack,D0
 	CMP.B	#$07,D0
@@ -8163,7 +8166,7 @@ lbC0507B0:
 lbC0507B6:
 	MOVE.L	#lbL04C442,A0
 	MOVE.L	#memory_7A9FA,A1
-	MOVE.L	#engineCharacteristics,A2
+	MOVE.L	#opponentBehaviorTraits,A2
 	MOVE.L	#memory_7A91A,A3
 	MOVE.L	#playerNamesWithSpaces,A4
 	MOVE.L	#lbW04AA40,A5
@@ -9729,19 +9732,19 @@ lbC052210:
 	MOVE.B	#$00,boostActiveFlag
 	RTS
 
-displayLapCompletionGraphics:
+renderExistingHole:
 	MOVE.B	#$17,D1
-	BRA	lbC05222E
+	BRA	renderDamageBarSegment
 
-displayLapCounterGraphics:
+renderNewHole:
 	MOVE.B	#$19,D1
-	BRA	lbC05222E
+	BRA	renderDamageBarSegment
 
-displayGameObjectDigit:
+renderUndamagedSegment:
 	MOVE.B	#$1B,D1
-lbC05222E:
+renderDamageBarSegment:
 	MOVE.W	D1,-(SP)
-	MOVE.L	#rightWheelWidth,A0
+	MOVE.L	#graphicsRenderingParameters+8,A0
 	MOVE.B	D2,D0
 	ASL.B	#$01,D0
 	ADD.B	D2,D0
@@ -9766,19 +9769,18 @@ lbC052246:
 	MOVE.W	(SP)+,D1
 	RTS
 
-initializeGameObjects:
+renderAllDamage:
 	MOVE.B	#$09,D2
-lbC05228C:
-	CMP.B	visualDamageCounter,D2
-	BGE	lbC0522A0
-	JSR	displayGameObjectDigit
-	BRA	lbC0522A6
+.damageLoop:
+	CMP.B	holeRenderingPosition,D2
+	BGE	.renderDamage
+	JSR	renderUndamagedSegment
+	BRA	.next
 
-lbC0522A0:
-	JSR	displayLapCompletionGraphics
-lbC0522A6:
-	SUBQ.B	#$01,D2
-	BPL	lbC05228C
+.renderDamage:
+	JSR	renderExistingHole
+.next:	SUBQ.B	#$01,D2
+	BPL	.damageLoop
 	RTS
 
 saveLoadGameData:
@@ -11386,7 +11388,7 @@ lbC05393C:
 lbC053942:
 	JSR	handleRaceStartCountdown
 	MOVE.W	yawAngleOffset,lbW00D646
-	JSR	handleCollisionBetweenCars
+	JSR	applyProximityCollisionEffects
 	TST.B	impactSoundCooldownTimer
 	BEQ	lbC053968
 	SUBQ.B	#$01,impactSoundCooldownTimer
@@ -11546,7 +11548,7 @@ lbC053B72:
 	MOVE.W	D3,D0
 lbC053B7A:
 	MOVE.L	#$00000005,D7
-	TST.B	engineTimer
+	TST.B	proximityEffectTimer
 	BPL	lbC053BA4
 	TST.B	carCrashedFlag
 	BMI	lbC053BA4
@@ -12960,22 +12962,22 @@ lbC054F82:
 	RTS
 
 saveRandomState:
-	MOVE.L	randomSeed1,lbL054FB8
-	MOVE.B	randomSeed3,lbB054FB9
+	MOVE.L	randomSeed1,savedRandomSeed1
+	MOVE.B	randomSeed3,savedRandomSeed3
 	RTS
 
 initializeRandomSeeds:
-	MOVE.L	lbL054FB8,randomSeed1
-	MOVE.B	lbB054FB9,randomSeed3
+	MOVE.L	savedRandomSeed1,randomSeed1
+	MOVE.B	savedRandomSeed3,randomSeed3
 	RTS
 
-updateEngineState:
+calculateOpponentRelativePosition:
 	MOVE.B	opponentID,D1
 	MOVE.B	#$00,D2
-	MOVE.B	D2,engineTimer
+	MOVE.B	D2,proximityEffectTimer
 	MOVE.B	previousDataIndex,D0
 	MOVE.B	D0,currentDataIndex
-	SUB.B	lbB00D4A1,D0
+	SUB.B	playerTrackPositionIndex,D0
 	BCC	lbC054FEA
 	NEG.B	D0
 	SUBQ.B	#$01,D2
@@ -12983,11 +12985,11 @@ lbC054FEA:
 	MOVE.B	D0,trackBoostThreshold
 	MOVE.B	D2,lateralVelocity
 	MOVE.B	carRenderDistance,D0
-	BEQ	updateEngineAndSound
+	BEQ	handleProximityEffects
 	JMP	lbC05513E
 
-updateEngineAndSound:
-	MOVE.B	engineState,D0
+handleProximityEffects:
+	MOVE.B	carRenderDistanceLow,D0
 	CMP.B	#$40,D0
 	BCC	lbC055030
 	TST.B	carCrashedFlag
@@ -12995,48 +12997,48 @@ updateEngineAndSound:
 	CMP.B	#$32,trackBoostThreshold
 	BCC	lbC055030
 lbC05502A:
-	SUBQ.B	#$01,engineTimer
+	SUBQ.B	#$01,proximityEffectTimer
 lbC055030:
 	CMP.B	#$10,D0
-	BCC	processEngineSoundAndEffects
+	BCC	handleDistantOpponent
 	TST.B	networkGameMode
 	BEQ	lbC05504C
 	TST.B	networkEngineFlag
-	BNE	processEngineSoundAndEffects
+	BNE	handleDistantOpponent
 lbC05504C:
 	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$32,D0
-	BCC	processEngineSoundAndEffects
+	BCC	handleDistantOpponent
 	MOVE.B	lateralRoadPosition,D0
 	CMP.B	#$01,D0
 	BCS	lbC05507A
-	BNE	processEngineSoundAndEffects
+	BNE	handleDistantOpponent
 	MOVE.B	speedMinor,D0
 	CMP.B	#$80,D0
-	BCC	processEngineSoundAndEffects
+	BCC	handleDistantOpponent
 lbC05507A:
-	JSR	processEngineSound
+	JSR	calculateProximityCollisionForces
 	JMP	lbC0550A6
 
-processEngineSoundAndEffects:
+handleDistantOpponent:
 	MOVE.B	#$00,D0
-	MOVE.B	D0,engineSoundType
-	MOVE.B	#$00,engineEffectFlag
-	MOVE.B	engineState,D0
+	MOVE.B	D0,proximityCollisionTimer
+	MOVE.B	#$00,proximityCollisionActive
+	MOVE.B	carRenderDistanceLow,D0
 	CMP.B	#$18,D0
 	BCC	lbC0550DC
 lbC0550A6:
-	MOVE.L	#engineCharacteristics,A1
+	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$08,D0
 	BEQ	lbC0550D0
 	TST.B	carCrashedFlag
 	BMI	lbC0550D0
-	MOVE.B	engineState,D0
+	MOVE.B	carRenderDistanceLow,D0
 	CMP.B	#$0E,D0
 	BCC	lbC05513E
 lbC0550D0:
-	JSR	updateEnginePerformanceHigh
+	JSR	adjustOpponentPositionAggressive
 	JMP	lbC0551B6
 
 lbC0550DC:
@@ -13044,31 +13046,31 @@ lbC0550DC:
 	BMI	lbC055132
 	CMP.B	#$32,D0
 	BCC	lbC05510C
-	MOVE.L	#engineCharacteristics,A1
+	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$02,D0
 	BEQ	lbC055126
-	JSR	setEngineParameters
+	JSR	copyPlayerToOpponentPosition
 	JMP	lbC05516A
 
 lbC05510C:
 	CMP.B	#$C8,D0
 	BCC	lbC05513E
-	MOVE.L	#engineCharacteristics,A1
+	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$20,D0
 	BEQ	lbC05513E
 lbC055126:
-	JSR	updateEnginePerformanceStandard
+	JSR	adjustOpponentPositionStandard
 	JMP	lbC05516A
 
 lbC055132:
-	JSR	updateEnginePerformanceStandard
+	JSR	adjustOpponentPositionStandard
 	JMP	lbC0551B6
 
 lbC05513E:
 	MOVE.B	#$40,D2
-	MOVE.L	#engineCharacteristics,A1
+	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$08,D0
 	BEQ	lbC055158
@@ -13129,18 +13131,18 @@ lbC0551F4:
 lbC055224:
 	RTS
 
-updateEnginePerformanceHigh:
+adjustOpponentPositionAggressive:
 	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$38,D0
 	BCC	lbC055286
 	TST.B	lateralVelocity
 	BMI	lbC05527C
 	BPL	lbC055268
-updateEnginePerformanceStandard:
+adjustOpponentPositionStandard:
 	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$38,D0
 	BCC	lbC055286
-	MOVE.B	lbB00D4A1,D0
+	MOVE.B	playerTrackPositionIndex,D0
 	TST.B	lateralVelocity
 	BMI	lbC055274
 	CMP.B	#$A0,D0
@@ -13159,8 +13161,8 @@ lbC05527C:
 lbC055286:
 	RTS
 
-setEngineParameters:
-	MOVE.B	lbB00D4A1,D0
+copyPlayerToOpponentPosition:
+	MOVE.B	playerTrackPositionIndex,D0
 	MOVE.B	D0,currentDataIndex
 	RTS
 
@@ -13249,7 +13251,7 @@ lbC0553A6:
 	MOVE.B	trackOffTrackFrameThreshold,D2
 lbC0553D2:
 	MOVE.B	D2,offTrackFrameThreshold
-	add.b	d2,d2				; fixed
+	add.b	d2,d2				; fixed x5
 	add.b	d2,d2
 	add.b	d2,offTrackFrameThreshold
 	JSR	generateRandomNumber
@@ -13271,7 +13273,7 @@ updateOpponentAcceleration:
 	MOVE.B	aiCurrentSpeed,D0
 	BMI	lbC055494
 	ROXL.B	#$01,D0
-	TST.B	engineTimer
+	TST.B	proximityEffectTimer
 	BPL	lbC055444
 	TST.B	carCrashedFlag
 	BPL	lbC055444
@@ -13395,13 +13397,13 @@ lbC0555D6:
 	MOVE.B	#$80,boundaryCollisionDirectionFlag
 	RTS
 
-processEngineSound:
+calculateProximityCollisionForces:
 	MOVE.B	raceStartComplete,D0
 	BNE	lbC0555FA
 	RTS
 
 lbC0555F0:
-	MOVE.B	#$03,engineSoundType
+	MOVE.B	#$03,proximityCollisionTimer
 	RTS
 
 lbC0555FA:
@@ -13419,9 +13421,9 @@ lbC05560E:
 lbC055626:
 	CMP.W	#$00C0,D0
 	BGE	lbC0555F0
-	TST.B	engineSoundType
+	TST.B	proximityCollisionTimer
 	BEQ	lbC055654
-	SUBQ.B	#$01,engineSoundType
+	SUBQ.B	#$01,proximityCollisionTimer
 	MOVE.W	#$0100,D3
 	SUB.W	D0,D3
 	TST.W	D4
@@ -13429,12 +13431,12 @@ lbC055626:
 	NEG.W	D3
 lbC05564C:
 	ASL.W	#$04,D3
-	MOVE.W	D3,lbW00D656
+	MOVE.W	D3,verticalProximityForce
 lbC055654:
 	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$2D,D0
 	BCC	lbC055688
-	MOVE.B	engineState,D0
+	MOVE.B	carRenderDistanceLow,D0
 	CMP.B	#$08,D0
 	BCC	lbC055688
 	MOVE.B	#$08,D0
@@ -13442,9 +13444,9 @@ lbC055654:
 	BMI	lbC055682
 	MOVE.B	#$F8,D0
 lbC055682:
-	MOVE.B	D0,velocityAdjustment
+	MOVE.B	D0,lateralProximityForce
 lbC055688:
-	TST.B	engineEffectFlag
+	TST.B	proximityCollisionActive
 	BMI	lbC0556C2
 	MOVE.W	#$0003,D3
 	MOVE.W	#$0000,D0
@@ -13458,22 +13460,22 @@ lbC0556AA:
 lbC0556B8:
 	ASR.W	#$01,D0
 	ADD.W	D3,D0
-	MOVE.W	D0,speedDifferential
+	MOVE.W	D0,forwardProximityForce
 lbC0556C2:
 	MOVE.B	#$80,collisionActiveFlag
-	MOVE.B	#$80,engineEffectFlag
+	MOVE.B	#$80,proximityCollisionActive
 	MOVE.W	#$0200,D3
-	MOVE.W	velocityAdjustment,D0
+	MOVE.W	lateralProximityForce,D0
 	BPL	lbC0556E2
 	NEG.W	D0
 lbC0556E2:
 	ADD.W	D0,D3
-	MOVE.W	lbW00D656,D0
+	MOVE.W	verticalProximityForce,D0
 	BPL	lbC0556F0
 	NEG.W	D0
 lbC0556F0:
 	ADD.W	D0,D3
-	MOVE.W	speedDifferential,D0
+	MOVE.W	forwardProximityForce,D0
 	BPL	lbC0556FE
 	NEG.W	D0
 lbC0556FE:
@@ -13493,39 +13495,39 @@ lbC05571A:
 	MOVE.B	#$80,damageAccumulationActive
 	RTS
 
-handleCollisionBetweenCars:
-	TST.B	lbB0557E0
+applyProximityCollisionEffects:
+	TST.B	collisionSoundCooldown
 	BEQ	lbC05573E
-	SUBQ.B	#$01,lbB0557E0
+	SUBQ.B	#$01,collisionSoundCooldown
 lbC05573E:
 	TST.B	collisionActiveFlag
 	BEQ	lbC0557DC
 	MOVE.B	#$00,collisionActiveFlag
 	MOVE.W	aiCurrentSpeed,D0
-	SUB.W	speedDifferential,D0
+	SUB.W	forwardProximityForce,D0
 	BPL	lbC055764
 	MOVE.W	#$0000,D0
 lbC055764:
 	MOVE.W	D0,aiCurrentSpeed
-	MOVE.W	lbW00D656,D0
+	MOVE.W	verticalProximityForce,D0
 	ASR.W	#$04,D0
 	SUB.W	D0,opponentWheelVelocities
 	SUB.W	D0,opponentRearLeftWheelVelocity
 	SUB.W	D0,opponentRearRightWheelVelocity
-	MOVE.W	velocityAdjustment,D0
+	MOVE.W	lateralProximityForce,D0
 	ADD.W	D0,rollAngleModifier
-	MOVE.W	lbW00D656,D0
+	MOVE.W	verticalProximityForce,D0
 	ADD.W	D0,carPitchAdjustment
-	MOVE.W	speedDifferential,D0
+	MOVE.W	forwardProximityForce,D0
 	ADD.W	D0,yawAngleOffset
-	MOVE.W	#$0000,velocityAdjustment
-	MOVE.W	#$0000,lbW00D656
-	MOVE.W	#$0000,speedDifferential
-	TST.B	lbB0557E0
+	MOVE.W	#$0000,lateralProximityForce
+	MOVE.W	#$0000,verticalProximityForce
+	MOVE.W	#$0000,forwardProximityForce
+	TST.B	collisionSoundCooldown
 	BNE	lbC0557DC
 	MOVE.B	#$02,D0				; car collision
 	JSR	playSample
-	MOVE.B	#$05,lbB0557E0
+	MOVE.B	#$05,collisionSoundCooldown
 lbC0557DC:
 	RTS
 
@@ -13645,7 +13647,7 @@ lbC05592A:
 	ASR.W	#$03,D0
 	MOVE.W	D0,opponentWheelForceRR
 	MOVE.B	opponentID,D1
-	MOVE.L	#engineCharacteristics,A0
+	MOVE.L	#opponentBehaviorTraits,A0
 	MOVE.B	$00(A0,D1.W),D0
 	AND.B	#$04,D0
 	BEQ	lbC0559EC
@@ -14246,10 +14248,11 @@ updateLeagueStandingsAfterRace:
 	RTS
 
 .handleChampionshipWon:
-	MOVE.B	#$06,D0
-	ASL.B	#$01,D0
-	SUBQ.B	#$02,D0
-	MOVE.B	D0,visualDamageCounter
+;	MOVE.B	#$06,D0				; fixed unnecessarily complex way to set a value to 10
+;	ASL.B	#$01,D0
+;	SUBQ.B	#$02,D0
+;	MOVE.B	D0,holeRenderingPosition
+	MOVE.B	#$0A,holeRenderingPosition
 	RTS
 
 findPlayerInStandings:
@@ -14583,7 +14586,7 @@ lbC05685E:
 	BPL	lbC056880
 	JSR	processOpponentLogic
 	JSR	calculatePlayerDistance
-	JSR	updateEngineState
+	JSR	calculateOpponentRelativePosition
 	JSR	setupTrackGeometryForFrame
 lbC056880:
 	MOVE.B	#$80,D0
@@ -14704,9 +14707,9 @@ copyFastRenderBuffer:
 	move.l	renderFrameBuffer,a1
 	lea	16*40+4(a0),a0
 	lea	16*40+4(a1),a1
-	moveq	#4-1,d1
+	moveq	#4-1,d7
 .copyBitplane:
-	move.w	#128-1,d0
+	move.w	#128-1,d6
 .copyMain:
 	move.l	(a0)+,(a1)+
 	move.l	(a0)+,(a1)+
@@ -14718,17 +14721,17 @@ copyFastRenderBuffer:
 	move.l	(a0)+,(a1)+
 	lea	8(a0),a0
 	lea	8(a1),a1
-	dbra	d0,.copyMain	
-	moveq	#16-1,d0
+	dbra	d6,.copyMain	
+	moveq	#16-1,d6
 .copyBottom:
 	move.l	(a0),(a1)
 	move.l	28(a0),28(a1)
 	lea	40(a0),a0
 	lea	40(a1),a1
-	dbra	d0,.copyBottom
+	dbra	d6,.copyBottom
 	lea	(200-128-16)*40(a0),a0
 	lea	(200-128-16)*40(a1),a1
-	dbra	d1,.copyBitplane
+	dbra	d7,.copyBitplane
 	rts
 
 updateWheelGraphics:
@@ -20291,11 +20294,9 @@ renderMaskedGraphicsObject:
 	LEA	$5DC0(A0),A6
 	MOVE.W	(A2),D1
 	MOVE.W	$0002(A2),D4
-lbC05B8A0:
-	MOVE.L	A0,A2
+.yLoop:	MOVE.L	A0,A2
 	MOVE.W	D1,D3
-lbC05B8A4:
-	MOVE.W	(A1)+,D5
+.xLoop:	MOVE.W	(A1)+,D5
 	MOVE.W	(A0),D0
 	AND.W	D5,D0
 	OR.W	(A1)+,D0
@@ -20312,12 +20313,12 @@ lbC05B8A4:
 	AND.W	D5,D0
 	OR.W	(A1)+,D0
 	MOVE.W	D0,(A6)+
-	DBRA	D3,lbC05B8A4
+	DBRA	D3,.xLoop
 	LEA	$0028(A2),A0
 	LEA	$1F68(A2),A4
 	LEA	$3EA8(A2),A5
 	LEA	$5DE8(A2),A6
-	DBRA	D4,lbC05B8A0
+	DBRA	D4,.yLoop
 	MOVEM.L	(SP)+,A4-A6
 	MOVE.W	(SP)+,D1
 	MOVE.L	(SP)+,D5
@@ -20570,10 +20571,10 @@ ascii.MSG3:
 	dc.b	$09
 lbB01066B:
 	dc.b	$0D,$09,$0D,"GTRACK",$0D,$09,$0D,$09,"move.b",$09,"d1,d0",$0D,$09,"asl."
-engineCharacteristics:
-	dc.l	$22206220,$3E043014,$4A100800
-	dc.b	"e.b",$09,"d0,d"
-	dc.b	"2",$0D,$09,"movea.l",$09,"#"
+opponentBehaviorTraits:
+	dc.b	$22,$20,$62,$20,$3E,$04,$30,$14,$4A,$10,$08,$00
+;	dc.b	"e.b",$09,"d0,d"
+;	dc.b	"2",$0D,$09,"movea.l",$09,"#"
 levelNames:
 	dc.b	'LITTLE RAMP     '
 	dc.b	'STEPPING STONES '
@@ -21008,9 +21009,9 @@ playerGraphicsMask:
 lbW04AA40:
 	ds.w	1
 leagueStatisticsTextTable:
-	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced "
-	dc.b	$FF," Wins  ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First      Se"
-	dc.b	"cond        Third",$FF,$00
+	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced  "
+	dc.b	$FF," Wins   ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First     Se"
+	dc.b	"cond     Third",$FF,$00
 alternateEndScreenEnabledFlag:
 	dc.b	$80,$00
 interpolationBlendFactor:
@@ -21044,13 +21045,14 @@ menuStringOffsetTable:
 	dc.l	$EC0A142C,$44494E55,$5C6B5500,$7A875500,$0A1F7100
 	dc.l	$2B400000,$49494949,$0A0A5500
 aiMovementPatterns:
-	dc.b	$20,$50,$60,$70
-lbB04D738:
-	dc.b	$70,$60,$50,$20,$E0,$B0
-lbB04D73E:
-	dc.b	$A0,$90
-lbC04D740:
-	dc.b	$90,$A0,$B0,$E0
+	dc.b	32,54,63,69,74,79,83,87,91,94,97,100,103,106,109,111
+	dc.b	111,109,106,103,100,97,94,91,87,83,79,74,69,63,54,32
+	dc.b	-32,-54,-63,-69,-74,-79,-83,-87,-91,-94,-97,-100,-103,-106,-109,-111
+	dc.b	-111,-109,-106,-103,-100,-97,-94,-91,-87,-83,-79,-74,-69,-63,-54,-32
+;	dc.b	$20,$50,$60,$70
+;	dc.b	$70,$60,$50,$20
+;	dc.b	$E0,$B0,$A0,$90
+;	dc.b	$90,$A0,$B0,$E0
 lbL04DFB8:
 	dc.l	$00D480D4,$0000ABAB,$40400000
 lbB04E1F4:
@@ -21209,9 +21211,9 @@ lbW054632:
 	dc.w	$8000
 lbW054F84:
 	dc.w	$FFFF,$FFFF,$FFFF,$FFFF
-lbL054FB8:
+savedRandomSeed1:
 	dc.l	$3B3B1E49
-lbB054FB9:	EQU	*-3
+savedRandomSeed3:	EQU	*-3
 	dc.b	$3B,$3B,$35,$62
 opponentSuspensionDampingTable:
 	dc.w	$0014,$0014,$FFEC		       ; fixed $0004,$0004,$FFFC
@@ -21389,68 +21391,67 @@ lbW05B7C4:
 	dc.w	$002C
 gameLoopControl:
 	dc.w	$0020
-graphicsRenderingParameters:      ; structs of 8 words, only 3-6 used (size, position)
-	dc.w	$0000,$0000,$0001,$0039
-rightWheelWidth:
+graphicsRenderingParameters:      ; structs of 8 words, only 2-5 used (size, position)
+	dc.w	$0000,$0000,$0001,$0039					; 00 right wheel 1
 	dc.w	$0010
 rightWheelHeight:
 	dc.w	$0077
 	dc.w	$0000,$0000
-	dc.w	$0002,$0000,$0001,$0039,$0010,$0077,$0000,$0000
-	dc.w	$0004,$0000,$0001,$0039,$0010,$0077,$0000,$0000
-	dc.w	$0008,$0000,$0001,$0039,$0002
+	dc.w	$0002,$0000,$0001,$0039,$0010,$0077,$0000,$0000		; 01 right wheel 2
+	dc.w	$0004,$0000,$0001,$0039,$0010,$0077,$0000,$0000		; 02 right wheel 3
+	dc.w	$0008,$0000,$0001,$0039,$0002				; 03 left wheel 1
 leftWheelHeight:
 	dc.w	$0077,$0000,$0000
-	dc.w	$000A,$0000,$0001,$0039,$0002,$0077,$0000,$0000
-	dc.w	$000C,$0000,$0001,$0039,$0002,$0077,$0000,$0000
-	dc.w	$0000,$0044,$0003,$001B,$0002,$007B,$0000,$0000
-	dc.w	$0004,$0044,$0003,$001B,$0002,$007B,$0000,$0000
-	dc.w	$0008,$0044,$0003,$001B,$000E,$007B,$0000,$0000
-	dc.w	$000C,$0044,$0003,$001B,$000E,$007B,$0000,$0000
-	dc.w	$0002,$007B,$000F,$0014,$0002,$007B,$0000,$0000
-	dc.w	$0002,$0090,$0001,$000E,$0002,$0090,$0000,$0000
-	dc.w	$0010,$0090,$0001,$000E,$0010,$0090,$0000,$0000
-	dc.w	$0002,$0010,$0000,$0005,$0002,$0010,$0000,$0000
-	dc.w	$0011,$0010,$0000,$0005,$0011,$0010,$0000,$0000
-	dc.w	$000E,$0000,$0000,$0007,$0006,$00BE,$0000,$0000
-	dc.w	$000E,$0008,$0000,$0007,$0006,$00BE,$0000,$0000
-	dc.w	$000E,$0010,$0000,$0007,$000D,$00BE,$0000,$0000
-	dc.w	$000E,$0018,$0000,$0007,$000D,$00BE,$0000,$0000
-	dc.w	$000F,$0000,$0000,$0007,$0004
+	dc.w	$000A,$0000,$0001,$0039,$0002,$0077,$0000,$0000		; 04 left wheel 2
+	dc.w	$000C,$0000,$0001,$0039,$0002,$0077,$0000,$0000		; 05 left wheel 3
+	dc.w	$0000,$0044,$0003,$001B,$0002,$007B,$0000,$0000		; 06 left flame 1
+	dc.w	$0004,$0044,$0003,$001B,$0002,$007B,$0000,$0000		; 07 left flame 2
+	dc.w	$0008,$0044,$0003,$001B,$000E,$007B,$0000,$0000		; 08 right flame 1
+	dc.w	$000C,$0044,$0003,$001B,$000E,$007B,$0000,$0000		; 09 right flame 2
+	dc.w	$0002,$007B,$000F,$0014,$0002,$007B,$0000,$0000		; 0a engine
+	dc.w	$0002,$0090,$0001,$000E,$0002,$0090,$0000,$0000		; 0b left exhaust
+	dc.w	$0010,$0090,$0001,$000E,$0010,$0090,$0000,$0000		; 0c right exhaust
+	dc.w	$0002,$0010,$0000,$0005,$0002,$0010,$0000,$0000		; 0d left top corner
+	dc.w	$0011,$0010,$0000,$0005,$0011,$0010,$0000,$0000		; 0e right top corner
+	dc.w	$000E,$0000,$0000,$0007,$0006,$00BE,$0000,$0000		; 0f chequered flag
+	dc.w	$000E,$0008,$0000,$0007,$0006,$00BE,$0000,$0000		; 10 chequered flag dark
+	dc.w	$000E,$0010,$0000,$0007,$000D,$00BE,$0000,$0000		; 11 stopwatch
+	dc.w	$000E,$0018,$0000,$0007,$000D,$00BE,$0000,$0000		; 12 stopwatch dark
+	dc.w	$000F,$0000,$0000,$0007,$0004				; 13 left chain top
 chainRenderParams:
 	dc.w	$0010,$0000,$0000
-	dc.w	$000F,$0008,$0000,$0007,$0004,$0018,$0000,$0000
-	dc.w	$000F,$0010,$0000,$0007,$000F,$0010,$0000,$0000
-	dc.w	$000F,$0018,$0000,$0007,$000F,$0018,$0000,$0000
-	dc.w	$0010,$0000,$0001,$0007,$0004,$0000,$0000,$0000
-	dc.w	$0010,$0008,$0001,$0007,$0004,$0000,$0000,$0000
-	dc.w	$0010,$0010,$0001,$0007,$0004,$0000,$0000,$0000
-	dc.w	$0010,$0018,$0001,$0007,$0004,$0000,$0000,$0000
-	dc.w	$0010,$0020,$0001,$0007,$0004,$0000,$0000,$0000
-	dc.w	$0010,$0028,$0001,$0007,$0004,$0000,$0000,$0000
-	dc.w	$0000,$0060,$0003,$0021,$0000,$0000,$0000,$0000
-	dc.w	$0005,$0060,$0003,$001E,$0000,$0000,$0000,$0000
-	dc.w	$0009,$0060,$0003,$0025,$0000,$0000,$0000,$0000
-	dc.w	$000D,$0060,$0004,$0023,$0000,$0000,$0000,$0000
-	dc.w	$0000,$0086,$0002,$001B,$0000,$0000,$0000,$0000
-	dc.w	$0003,$0086,$0003,$0021,$0000,$0000,$0000,$0000
-	dc.w	$0007,$0086,$0003,$0021,$0000,$0000,$0000,$0000
-	dc.w	$000B,$0086,$0003,$0023,$0000,$0000,$0000,$0000
-	dc.w	$0001,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
-	dc.w	$0003,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
-	dc.w	$0005,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
-	dc.w	$0008,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
-	dc.w	$000A,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
-	dc.w	$000C,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
-	dc.w	$0000,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
-	dc.w	$0002,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
-	dc.w	$0004,$00B0,$0000,$000F,$0011,$0077,$0000,$0000
-	dc.w	$0007,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
-	dc.w	$0009,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
-	dc.w	$000B,$00B0,$0000,$000F,$0002,$0077,$0000,$0000
-	dc.w	$0010,$0044,$0003,$001B,$0002,$007B,$0000,$0000
-	dc.w	$0010,$00AC,$0003,$001B,$000E,$007B,$0000,$0000
-	dc.w	$0010,$0086,$0003,$001B,$0008,$001B,$0000,$0000
+	dc.w	$000F,$0008,$0000,$0007,$0004,$0018,$0000,$0000		; 14 left chain bottom
+	dc.w	$000F,$0010,$0000,$0007,$000F,$0010,$0000,$0000		; 15 right chain top
+	dc.w	$000F,$0018,$0000,$0007,$000F,$0018,$0000,$0000		; 16 right chain bottom
+	dc.w	$0010,$0000,$0001,$0007,$0004,$0000,$0000,$0000		; 17 existing hole 1
+	dc.w	$0010,$0008,$0001,$0007,$0004,$0000,$0000,$0000		; 18 existing hole 2
+	dc.w	$0010,$0010,$0001,$0007,$0004,$0000,$0000,$0000		; 19 new hole 1
+	dc.w	$0010,$0018,$0001,$0007,$0004,$0000,$0000,$0000		; 1a new hole 2
+	dc.w	$0010,$0020,$0001,$0007,$0004,$0000,$0000,$0000		; 1b undamaged 1
+	dc.w	$0010,$0028,$0001,$0007,$0004,$0000,$0000,$0000		; 1c undamaged 2
+	dc.w	$0000,$0060,$0003,$0021,$0000,$0000,$0000,$0000		; 1d dust cloud 1
+	dc.w	$0005,$0060,$0003,$001E,$0000,$0000,$0000,$0000		; 1e dust cloud 2
+	dc.w	$0009,$0060,$0003,$0025,$0000,$0000,$0000,$0000		; 1f dust cloud 3
+	dc.w	$000D,$0060,$0004,$0023,$0000,$0000,$0000,$0000		; 20 dust cloud 4
+	dc.w	$0000,$0086,$0002,$001B,$0000,$0000,$0000,$0000		; 21 dust cloud 5
+	dc.w	$0003,$0086,$0003,$0021,$0000,$0000,$0000,$0000		; 22 dust cloud 6
+	dc.w	$0007,$0086,$0003,$0021,$0000,$0000,$0000,$0000		; 23 dust cloud 7
+	dc.w	$000B,$0086,$0003,$0023,$0000,$0000,$0000,$0000		; 24 dust cloud 8
+	dc.w	$0001,$00B0,$0000,$000F,$0011,$0077,$0000,$0000		; 25 sprite 1
+	dc.w	$0003,$00B0,$0000,$000F,$0011,$0077,$0000,$0000		; 26 sprite 2
+	dc.w	$0005,$00B0,$0000,$000F,$0011,$0077,$0000,$0000		; 27 sprite 3
+	dc.w	$0008,$00B0,$0000,$000F,$0002,$0077,$0000,$0000		; 28 sprite 4
+	dc.w	$000A,$00B0,$0000,$000F,$0002,$0077,$0000,$0000		; 29 sprite 5
+	dc.w	$000C,$00B0,$0000,$000F,$0002,$0077,$0000,$0000		; 2a sprite 6
+	dc.w	$0000,$00B0,$0000,$000F,$0011,$0077,$0000,$0000		; 2b sprite 7
+	dc.w	$0002,$00B0,$0000,$000F,$0011,$0077,$0000,$0000		; 2c sprite 8
+	dc.w	$0004,$00B0,$0000,$000F,$0011,$0077,$0000,$0000		; 2d sprite 9
+	dc.w	$0007,$00B0,$0000,$000F,$0002,$0077,$0000,$0000		; 2e sprite 10
+	dc.w	$0009,$00B0,$0000,$000F,$0002,$0077,$0000,$0000		; 2f sprite 11
+	dc.w	$000B,$00B0,$0000,$000F,$0002,$0077,$0000,$0000		; 30 sprite 12
+	dc.w	$0010,$0044,$0003,$001B,$0002,$007B,$0000,$0000		; 31 left flame 3
+	dc.w	$0010,$00AC,$0003,$001B,$000E,$007B,$0000,$0000		; 32 right flame 3
+	dc.w	$0010,$0086,$0003,$001B,$0008,$001B,$0000,$0000		; 33 message
 
 bitplaneMaskTable:      ; fixme - the last couple of kilobytes are corrupt
 	incbin	"bitplaneMaskTable"
@@ -21773,7 +21774,7 @@ lbB00D49E:
 	ds.b	1
 lbB00D49F:
 	ds.b	2
-lbB00D4A1:
+playerTrackPositionIndex:
 	ds.b	2
 lbB00D4A3:
 	ds.b	1
@@ -21809,7 +21810,7 @@ raceWinnerBits:
 	ds.b	2
 raceOutcomeFlags:
 	ds.b	1
-savedObjectDisplayThreshold:
+savedHoleRenderingPosition:
 	ds.b	1
 targetDamageLevel:
 	ds.b	2
@@ -21835,7 +21836,7 @@ rollTransitionFlag:
 	ds.b	1
 aiPatternOffset:
 	ds.b	1
-engineSoundType:
+proximityCollisionTimer:
 	ds.b	1
 raceStartComplete:
 	ds.b	1
@@ -21843,7 +21844,7 @@ segmentDataStartIndex:
 	ds.b	1
 steeringInputDirection:
 	ds.b	1			; 0=no steering, -15=left,15=right
-engineTimer:
+proximityEffectTimer:
 	ds.b	1
 displayStateFlag:
 	ds.b	1
@@ -21909,7 +21910,7 @@ chainLiftVelocity:
 	ds.b	1
 chainVerticalPosition:
 	ds.b	1
-engineEffectFlag:
+proximityCollisionActive:
 	ds.b	1
 networkEngineFlag:
 	ds.b	1
@@ -21993,7 +21994,7 @@ perspectiveDepthDivisor:
 	ds.w	1
 carRenderDistance:
 	ds.w	1
-engineState:	EQU	*-1
+carRenderDistanceLow:	EQU	*-1
 maxDistanceFromTrack:
 	ds.w	1
 steeringScaleFactor:
@@ -22246,11 +22247,11 @@ pitchSpringComponent:
 	ds.b	2
 yawSpringComponent:
 	ds.b	2
-velocityAdjustment:
+lateralProximityForce:
 	ds.w	1
-lbW00D656:
+verticalProximityForce:
 	ds.w	1
-speedDifferential:
+forwardProximityForce:
 	ds.w	1
 segmentTargetAngle:
 	ds.w	1
@@ -22490,7 +22491,7 @@ lbL00E2C2:
 	ds.l	3
 selectedTrack:
 	ds.b	1
-visualDamageCounter:
+holeRenderingPosition:
 	ds.b	1
 currentPlayerContext:
 	ds.b	2
@@ -22786,7 +22787,7 @@ offTrackFrameThreshold:
 	ds.b	2
 minBoundaryDistance:
 	ds.w	1
-lbB0557E0:
+collisionSoundCooldown:
 	ds.b	2
 suppressMenuTextFlag:
 	ds.b	2
