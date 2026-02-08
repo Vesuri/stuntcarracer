@@ -1,8 +1,7 @@
 ; Known issues
-; - post race graphics are missing (resultScreenPointerTable)
 ; - AI physics are messed up
+; - suspension is too bouncy
 ; - damage accumulates a bit too easily
-; - press fire background plate missing
 ; - sometimes right wheel falls down while in air
 	incdir	"scr:"
 
@@ -112,6 +111,7 @@ CIAF_PRTRPOUT:	EQU	$00000002
 ciatblo:	EQU	$00000600
 bltdmod:	EQU	$00000066
 INTF_INTEN:	EQU	$00004000
+beamcon0 = $1dc
 bpl1pth = $0e0
 bpl1ptl = $0e2
 bpl2pth = $0e4
@@ -193,7 +193,8 @@ CACR_CopyBack		equ	$80000000
 gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
-TIMESTEP_FACTOR		equ	$30 ; fixed $EE
+FRAMERATE_MULTIPLIER	equ	6		; 10FPS -> 60FPS
+TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; fixed $EE
 
 	section	Code,code
 startup:
@@ -378,6 +379,7 @@ initialize:
 	MOVE.W	#$0000,_custom+bpl2mod
 	MOVE.W	#$0000,_custom+bplcon1
 	MOVE.W	#$0024,_custom+bplcon2
+	move.w	#$0000,_custom+beamcon0
 	MOVE.L	#copperlistStart,A0
 	MOVE.L	A0,_custom+cop1lc
 	MOVE.W	_custom+copjmp1,D0
@@ -910,51 +912,48 @@ initializeGameMemoryAndState:
 	CLR.L	D2
 	MOVE.L	#keyboardState,A0
 	MOVE.W	#$007F,D1
-clearKeyboardStateLoop:
+.clearKeyboardStateLoop:
 	MOVE.B	#$00,$00(A0,D1.W)
 	SUBQ.B	#$01,D1
-	BPL	clearKeyboardStateLoop
+	BPL	.clearKeyboardStateLoop
 	MOVE.L	#memory_7A01A,A0
-clearPlayerStatsMemory:
+.clearPlayerStatsMemory:
 	MOVE.B	#$00,(A0)+
 	CMP.L	#memory_7B6FA,A0
-	BLT	clearPlayerStatsMemory
+	BLT	.clearPlayerStatsMemory
 	JSR	initializeGraphicsData
 	JMP	loadMenuDataToRAM
 
 copyPalette:
 	MOVE.L	#sourcePalette,A0
 	MOVE.W	#$000F,D0
-lbC00D37A:
+.copyLoop:
 	MOVE.W	(A1)+,(A0)+
-	DBRA	D0,lbC00D37A
+	DBRA	D0,.copyLoop
 	RTS
 
 copyPaletteToCopperlist:
 	MOVE.L	#palette,A1
 	MOVE.L	#copperlistColor0,A0
 	MOVE.W	#$000F,D4
-copyPaletteToCopperlistLoop:
+.copyLoop:
 	MOVE.W	(A1)+,D3
 	ASL.W	#$01,D3
 	MOVE.B	D3,D0
 	AND.B	#$0F,D0
-	BEQ	copyPaletteB
+	BEQ	.bOk
 	OR.B	#$01,D3
-copyPaletteB:
-	MOVE.B	D3,D0
+.bOk:	MOVE.B	D3,D0
 	AND.B	#$F0,D0
-	BEQ	copyPaletteG
+	BEQ	.gOk
 	OR.B	#$10,D3
-copyPaletteG:
-	MOVE.W	D3,D0
+.gOk:	MOVE.W	D3,D0
 	AND.W	#$0F00,D0
-	BEQ	copyPaletteR
+	BEQ	.rOk
 	OR.W	#$0100,D3
-copyPaletteR:
-	MOVE.W	D3,(A0)+
+.rOk:	MOVE.W	D3,(A0)+
 	ADD.L	#$00000002,A0
-	DBRA	D4,copyPaletteToCopperlistLoop
+	DBRA	D4,.copyLoop
 	RTS
 
 copyMainGameBackground:
@@ -965,15 +964,15 @@ copyMainGameBackground:
 	MOVE.L	A0,A1
 	ADD.W	#$7D00,A1
 ;	MOVE.W	#$7CFF,D3
-;copyMainGameBackgroundLoop:
+;.copyLoop:
 ;	MOVE.B	(A0)+,(A1)+
 	lea	fastRenderBuffer,a2
 	MOVE.W	#$7D00/4-1,D3
-copyMainGameBackgroundLoop:
+.copyLoop:
 	MOVE.L	(A0)+,d0
 	move.l	d0,(A1)+
 	move.l	d0,(A2)+
-	DBRA	D3,copyMainGameBackgroundLoop
+	DBRA	D3,.copyLoop
 	RTS
 
 sendSerialByteWithChecksum:
@@ -2899,21 +2898,21 @@ displayResultScreen:
 	LEA	$0022(A6),A0
 	MOVE.L	displayFrameBuffer,A1
 	TST.B	(A6)
-	BPL	lbC04AC90
+	BPL	.copyRawImage
 	JSR	decompressRLEImage
-	BRA	lbC04ACAC
+	BRA	.imageOk
 
-lbC04AC90:
+.copyRawImage:
 	MOVE.L	A1,A3
 	ADD.L	#$00001F40,A3
-lbC04AC98:
+.copyLoop:
 	MOVE.W	(A0)+,(A1)+
 	MOVE.W	(A0)+,$1F3E(A1)
 	MOVE.W	(A0)+,$3E7E(A1)
 	MOVE.W	(A0)+,$5DBE(A1)
 	CMP.L	A3,A1
-	BNE	lbC04AC98
-lbC04ACAC:
+	BNE	.copyLoop
+.imageOk:
 	JSR	animatePaletteToTarget
 	JSR	waitForFireButtonPress
 	RTS
@@ -2925,13 +2924,13 @@ copyTrackPreviewRegion:
 	ADD.L	#$00000140,A3
 	MOVE.L	A0,A2
 	ADD.L	#$00001540,A2
-lbC04ACDA:
+.copyLoop:
 	MOVE.W	(A0)+,(A3)+
 	MOVE.W	$1F3E(A0),$1F3E(A3)
 	MOVE.W	$3E7E(A0),$3E7E(A3)
 	MOVE.W	$5DBE(A0),$5DBE(A3)
 	CMP.L	A2,A0
-	BLT	lbC04ACDA
+	BLT	.copyLoop
 	RTS
 
 decompressRLEImage:
@@ -4920,28 +4919,28 @@ lbC04CC90:
 	JSR	adjustCarHeightToTrack
 	MOVE.B	#$FF,D0
 	JSR	updateCarStartRotation
-	BNE	lbC04CD00
+	BNE	.done
 	JSR	generateRandomNumber
 	AND.B	#$1F,D0
 	ADD.B	#$A0,D0
 	MOVE.B	#$2C,D2				; DROP START
 	TST.B	raceStartComplete
-	BPL	lbC04CCD0
+	BPL	.messageIndexOk
 	MOVE.B	#$3C,D2				; PRESS FIRE
-lbC04CCD0:
+.messageIndexOk:
 	TST.B	selectedRaceType
-	BMI	lbC04CCDE
+	BMI	.raceStartTimerOk
 	MOVE.B	#$8C,D0
-lbC04CCDE:
+.raceStartTimerOk:
 	MOVE.B	D0,raceStartTimer
 	TST.B	crashRecoveryTimer
-	BEQ	lbC04CCF6
+	BEQ	.crashRecoveryTimerOk
 	MOVE.B	#$32,crashRecoveryTimer
-lbC04CCF6:
+.crashRecoveryTimerOk:
 	MOVE.B	#$04,D0
 	JMP	setMessageParameters
 
-lbC04CD00:
+.done:
 	RTS
 
 lbC04CD02:
@@ -6406,7 +6405,7 @@ menuSystemLoop:
 	MOVE.B	#$12,gameStateID	; Otherwise, show intermediate screens and loop back
 	JSR	runTrackPreviewScreen
 	MOVE.B	#$00,gameStateID
-	JSR	loadMainGameScreen
+	JSR	runMainGame
 	JSR	displayMenuScreen
 	JMP	menuSystemLoop
 
@@ -6468,7 +6467,7 @@ startCompetitiveRace:
 	MOVE.B	#$80,D0
 	JSR	transmitNetworkMessage
 	MOVE.B	#$00,gameStateID
-	JSR	loadMainGameScreen
+	JSR	runMainGame
 	MOVE.B	#$80,D0
 	JSR	displayRacePositions
 	JSR	synchronizeRaceData
@@ -6587,7 +6586,7 @@ lbC04EC12:
 	MOVE.B	#$00,displayUpdateFlag
 	RTS
 
-loadMainGameScreen:
+runMainGame:
 	TST.B	networkGameMode
 	BEQ	lbC04EC48
 	JSR	networkTimingSync1
@@ -7323,9 +7322,13 @@ clearGameDataSlot:
 	RTS
 
 updateLapTimer:
-	move.b	framesSinceCopperlistUpdate,d0	; fixed
-	add.b	d0,d0
 	;MOVE.B	#$13,D0			; Add 19 milliseconds
+	move.b	framesSinceCopperlistUpdate,d0	; fixed
+	tst.b	lapTimerDelay
+	beq.s	.timeDeltaOk
+	add.b	d0,d0
+.timeDeltaOk:
+	eor.b	#1,lapTimerDelay
 lbC04F832:
 	MOVE.L	#lapTimeSubseconds,A0
 	MOVE.L	#lapTimeSeconds,A1
@@ -7381,22 +7384,22 @@ lbC04F8E0:
 	CMP.B	#$45,D0
 	BEQ	majorImpact
 	MOVE.B	damageAccumulationActive,D0
-	BNE	lbC04F95C
+	BNE	majorImpactHandled
 	RTS
 
 majorImpact:
 	MOVE.B	holeRenderingPosition,D2
 	JSR	renderExistingHole
-	JMP	lbC04F95C
+	JMP	majorImpactHandled
 
 lbC04F916:
 	MOVE.B	damageAccumulationActive,D0
 	BEQ	lbC04F996
 	MOVE.W	maxDistanceFromTrack,D0
-	CMP.W	#$1400/4,D0				; fixed $1400
-	BCS	lbC04F95C
+	CMP.W	#$1400,D0				; TODO check threshold for major impact
+	BCS	majorImpactHandled
 	MOVE.B	holeRenderingPosition,D2
-	BEQ	lbC04F95C
+	BEQ	majorImpactHandled
 	SUBQ.B	#$01,D2
 	MOVE.B	D2,holeRenderingPosition
 	JSR	renderNewHole
@@ -7405,7 +7408,7 @@ lbC04F916:
 ;	MOVE.B	#$0A,D0					; fixed unnecessary code
 	MOVE.B	#$05,D0					; major impact
 	BRA	lbC04F986				; fixed BNE
-lbC04F95C:
+majorImpactHandled:
 	MOVE.B	maxDistanceFromTrack,D0
 	CMP.B	#$07,D0
 	BCC	lbC04F96E
@@ -7696,29 +7699,29 @@ displayGameMessage:
 	JSR	setMessageParameters
 updateGameMessageDisplay:
 	TST.B	lbB00D48E
-	BMI	lbC04FE14
-lbC04FE12:
+	BMI	.displayMessage
+.done:
 	RTS
 
-lbC04FE14:
+.displayMessage:
 	MOVE.B	blinkCountdownTimer,D0
-	BEQ	lbC04FE36
-	BMI	lbC04FE2A
+	BEQ	.setupMessage
+	BMI	.checkIfPressFire
 	CMP.B	#$03,D0
-	BGE	lbC04FE36
-lbC04FE2A:
+	BGE	.setupMessage
+.checkIfPressFire:
 	CMP.B	#$3C,gameMessageIndex
-	BNE	lbC04FE12
-lbC04FE36:
+	BNE	.done
+.setupMessage:
 	TST.B	networkTimeoutFlag
-	BMI	lbC04FE12
+	BMI	.done
 	MOVE.B	#$80,textTransparencyMode
 	MOVE.B	#$80,singleBufferRenderMode
 	MOVE.B	#$00,D0
 	TST.B	wreckBlinkFlag
-	BEQ	lbC04FE62
+	BEQ	.colorOk
 	MOVE.B	#$0F,D0
-lbC04FE62:
+.colorOk:
 	JSR	setBackgroundColor
 	MOVE.B	gameMessageMode,renderModeFlag
 	MOVE.B	gameMessageIndex,D2
@@ -7852,13 +7855,13 @@ lbC05011C:
 
 initiateCarWreck:
 	MOVE.B	blinkCountdownTimer,D0
-	BNE	lbC0501AA
+	BNE	.done
 	CMP.B	#$40,gameModeStateFlags
-	BEQ	lbC050174
+	BEQ	.gameModeStateFlagsSet
 	CMP.B	#$80,gameModeStateFlags
-	BEQ	lbC050174
+	BEQ	.gameModeStateFlagsSet
 	MOVE.B	networkGameMode,gameModeStateFlags
-lbC050174:
+.gameModeStateFlagsSet:
 	MOVE.B	#$02,D0
 	MOVE.B	D0,postWreckStateFlag
 	MOVE.B	#$92,D0
@@ -7870,7 +7873,7 @@ lbC050174:
 	MOVE.B	#$02,D0
 	MOVE.B	#$00,D2
 	JSR	setMessageParameters
-lbC0501AA:
+.done:
 	RTS
 
 selectGameMode:
@@ -9360,7 +9363,7 @@ lbC051B92:
 	BMI	.offTrackStateOk
 	MOVE.B	#$80,offTrackStateFlags
 	MOVE.B	offsetFromRoadCenter,trackSideIndicator
-	MOVE.B	#$10*5,restartTimerCountdown			; fixed $10
+	MOVE.B	#$10*FRAMERATE_MULTIPLIER,restartTimerCountdown			; fixed $10
 	JSR	initializeDebrisParticlePositions
 .offTrackStateOk:
 	RTS
@@ -9621,7 +9624,7 @@ lbC05202C:
 	MOVE.W	#$0000,previousDistanceZ
 	JSR	initializePerspectiveTransform
 	MOVE.B	#$B0,chainVerticalPosition
-	MOVE.B	#$01,chainLiftVelocity		; fixed $08
+	MOVE.B	#$08/FRAMERATE_MULTIPLIER,chainLiftVelocity		; fixed $08
 	RTS
 
 calculatePlayerDistance:
@@ -10230,7 +10233,7 @@ lbC0528CA:
 	MOVE.B	offTrackMovementFlag,D1
 	BNE	lbC0528EA
 	MOVE.W	wheelSpeed,D0
-	LSR.W	#$04,D0			; fixed $02
+	LSR.W	#$05,D0			; fixed $02
 	SUB.W	D0,wheelSpeed
 	RTS
 
@@ -11127,9 +11130,9 @@ applyDistanceClamps:
 	BMI	resetTrackPosition
 	MOVE.W	lateralVelocityX,D4
 	MOVE.W	D0,lateralVelocityX
-	CMP.W	#$0400/5,D0			; fixed $0400
+	CMP.W	#$0400/FRAMERATE_MULTIPLIER,D0			; fixed $0400
 	BLT	checkTrackThreshold
-	CMP.W	#$0200/5,D4			; fixed $0200
+	CMP.W	#$0200/FRAMERATE_MULTIPLIER,D4			; fixed $0200
 	BGE	checkTrackThreshold
 	ADDQ.B	#$01,offTrackCollisionFlag
 checkTrackThreshold:
@@ -11138,13 +11141,13 @@ checkTrackThreshold:
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	clearTrackCounters
-	CMP.W	#$0700/5,D0			; fixed $0700
+	CMP.W	#$0700/FRAMERATE_MULTIPLIER,D0			; fixed $0700
 	BLT	clearTrackCounters
 	CMP.W	maxDistanceFromTrack,D0
 	BCS	updateMaxTrackPosition
 	MOVE.W	D0,maxDistanceFromTrack
 updateMaxTrackPosition:
-	SUB.W	#$0600/5,D0			; fixed $0600
+	SUB.W	#$0600/FRAMERATE_MULTIPLIER,D0			; fixed $0600
 	TST.B	trackDirectionFlag
 	BMI	processTrackDirection
 	ADDQ.B	#$01,offTrackFrameCounter
@@ -11163,9 +11166,9 @@ preventSpeedOverflow:
 	MOVE.B	#$80,damageAccumulationActive
 processTrackDirection:
 	MOVE.W	lateralVelocityX,D0
-	CMP.W	#$1200/5,D0				; fixed $1200
+	CMP.W	#$1200/FRAMERATE_MULTIPLIER,D0				; fixed $1200
 	BCS	enforceTrackBounds
-	MOVE.W	#$1200/5-1,lateralVelocityX		; fixed $11FF
+	MOVE.W	#$1200/FRAMERATE_MULTIPLIER-1,lateralVelocityX		; fixed $11FF
 enforceTrackBounds:
 	BRA	finalizeTrackUpdate
 
@@ -11201,9 +11204,9 @@ applyYDistanceClamps:
 	BMI	resetYTrackPosition
 	MOVE.W	lateralVelocityY,D4
 	MOVE.W	D0,lateralVelocityY
-	CMP.W	#$0400/5,D0				; fixed $0400
+	CMP.W	#$0400/FRAMERATE_MULTIPLIER,D0				; fixed $0400
 	BLT	checkYTrackThreshold
-	CMP.W	#$0200/5,D4				; fixed $0200
+	CMP.W	#$0200/FRAMERATE_MULTIPLIER,D4				; fixed $0200
 	BGE	checkYTrackThreshold
 	ADDQ.B	#$01,offTrackCollisionFlag
 checkYTrackThreshold:
@@ -11212,13 +11215,13 @@ checkYTrackThreshold:
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	lbC05371A
-	CMP.W	#$0700/5,D0				; fixed $0700
+	CMP.W	#$0700/FRAMERATE_MULTIPLIER,D0				; fixed $0700
 	BLT	lbC05371A
 	CMP.W	maxDistanceFromTrack,D0
 	BCS	lbC0536B0
 	MOVE.W	D0,maxDistanceFromTrack
 lbC0536B0:
-	SUB.W	#$0600/5,D0				; fixed $0600
+	SUB.W	#$0600/FRAMERATE_MULTIPLIER,D0				; fixed $0600
 	TST.B	trackDirectionFlag
 	BMI	lbC0536F8
 	ADDQ.B	#$01,offTrackFrameCounter
@@ -11237,9 +11240,9 @@ lbC0536EA:
 	MOVE.B	#$80,damageAccumulationActive
 lbC0536F8:
 	MOVE.W	lateralVelocityY,D0
-	CMP.W	#$1200/5,D0				; fixed $1200
+	CMP.W	#$1200/FRAMERATE_MULTIPLIER,D0				; fixed $1200
 	BCS	lbC05370E
-	MOVE.W	#$1200/5-1,lateralVelocityY		; fixed $11FF
+	MOVE.W	#$1200/FRAMERATE_MULTIPLIER-1,lateralVelocityY		; fixed $11FF
 lbC05370E:
 	BRA	lbC053722
 
@@ -11275,9 +11278,9 @@ lbC053770:
 	BMI	lbC05383A
 	MOVE.W	lateralVelocityZ,D4
 	MOVE.W	D0,lateralVelocityZ
-	CMP.W	#$0400/5,D0				; fixed $0400
+	CMP.W	#$0400/FRAMERATE_MULTIPLIER,D0				; fixed $0400
 	BLT	lbC0537AC
-	CMP.W	#$0200/5,D4				; fixed $0200
+	CMP.W	#$0200/FRAMERATE_MULTIPLIER,D4				; fixed $0200
 	BGE	lbC0537AC
 	ADDQ.B	#$01,offTrackCollisionFlag
 lbC0537AC:
@@ -11286,13 +11289,13 @@ lbC0537AC:
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	lbC053842
-	CMP.W	#$0700/5,D0				; fixed $0700
+	CMP.W	#$0700/FRAMERATE_MULTIPLIER,D0				; fixed $0700
 	BLT	lbC053842
 	CMP.W	maxDistanceFromTrack,D0
 	BCS	lbC0537D8
 	MOVE.W	D0,maxDistanceFromTrack
 lbC0537D8:
-	SUB.W	#$0600/5,D0				; fixed $0600
+	SUB.W	#$0600/FRAMERATE_MULTIPLIER,D0				; fixed $0600
 	TST.B	trackDirectionFlag
 	BMI	lbC053820
 	ADDQ.B	#$01,offTrackFrameCounter
@@ -11339,9 +11342,9 @@ lbC05384A:
 	BPL	lbC053894
 	NEG.W	D0
 lbC053894:
-	CMP.W	#$1000,D0			; fixed $1000
+	CMP.W	#$1000,D0
 	BLT	lbC0538A0
-	MOVE.W	#$1000,D0			; fixed $1000
+	MOVE.W	#$1000,D0
 lbC0538A0:
 	TST.W	D3
 	BPL	lbC0538A8
@@ -11410,7 +11413,7 @@ lbC053992:
 	BNE	lbC0539B4
 	MOVE.B	#$03,D0					; impact
 	JSR	playSample
-	MOVE.B	#$05*5,impactSoundCooldownTimer		; fixed $05
+	MOVE.B	#$05*FRAMERATE_MULTIPLIER,impactSoundCooldownTimer		; fixed $05
 lbC0539B4:
 	RTS
 
@@ -13251,7 +13254,8 @@ lbC0553A6:
 	MOVE.B	trackOffTrackFrameThreshold,D2
 lbC0553D2:
 	MOVE.B	D2,offTrackFrameThreshold
-	add.b	d2,d2				; fixed x5
+	add.b	d2,offTrackFrameThreshold
+	add.b	d2,d2				; fixed x6
 	add.b	d2,d2
 	add.b	d2,offTrackFrameThreshold
 	JSR	generateRandomNumber
@@ -15874,7 +15878,7 @@ updateChainAnimation:
 	BLS	chainAnimationComplete		; fixed BEQ
 	SUB.B	chainLiftVelocity,D0
 	MOVE.B	D0,chainVerticalPosition
-	ADD.B	#$01,chainLiftVelocity		; fixed $08
+	ADD.B	#$08/FRAMERATE_MULTIPLIER,chainLiftVelocity		; fixed $08
 renderChains:
 	MOVE.B	chainVerticalPosition,D2
 renderChainSegment:
@@ -20079,8 +20083,10 @@ lbC05B61A:
 	BNE	lbC05B606
 	MOVE.L	A1,-(SP)
 	MOVE.L	#imageMainGameBackground,A0
+prutku:
 	MOVE.L	#bitplaneMaskTable,A1
 	JSR	decompressRLEObjectToMask
+kutku:
 	MOVE.L	(SP)+,A1
 	MOVE.W	#$000A,D4
 lbC05B63C:
@@ -20267,6 +20273,7 @@ renderMaskedGraphicsObject:
 	MOVE.W	D1,-(SP)
 	MOVEM.L	A4-A6,-(SP)
 	AND.W	#$00FF,D0
+	move.w	d0,d5
 	ASL.W	#$02,D0
 	MOVE.L	#graphicsDataTable,A1
 	MOVE.L	$00(A1,D0.W),A1
@@ -20276,7 +20283,9 @@ renderMaskedGraphicsObject:
 	MOVE.W	$0004(A2),D0
 	MOVE.W	$0006(A2),D3
 	MOVE.L	renderFrameBuffer,A0
-	cmp.w	#16,d3					; fixed
+	cmp.w	#$33,d5					; fixed render directly to chip if message background or top bar
+	beq.s	.copyChip
+	cmp.w	#16,d3
 	bcs.s	.copyChip
 	lea	fastRenderBuffer,a0
 .copyChip:
@@ -20900,7 +20909,7 @@ lbB011980:
 imageMainGameBackgroundPalette:
 	dc.w	$0000,$0443,$0554,$0770,$0451,$0233,$0257,$0247,$0123,$0200
 	dc.w	$0311,$0422,$0644,$0332,$0555,$0777
-imageMainGameBackground:	incbin	"image0"
+imageMainGameBackground:	incbin	"imageMainGameBackground"
 imageMenuScreenPalette:
 	dc.w	$0000,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
 	dc.w	$0240,$0021,$0046,$0025,$0710,$0500,$0740
@@ -20911,22 +20920,30 @@ alternateFontBitmapData:
 imageTrackPreviewBackgroundPalette:
 	dc.w	$0022,$0443,$0554,$0770,$0123,$0222,$0030,$0247,$0000
 	dc.w	$0200,$0311,$0050,$0555,$0332,$0333,$0777
-imageTrackPreviewBackground:	incbin	"image2"
+imageTrackPreviewBackground:	incbin	"imageTrackPreviewBackground"
 imageStandingsBackgroundPalette:
 	dc.w	$0000,$0221,$0332,$0443,$0034,$0110,$0030,$0770,$0000
 	dc.w	$0200,$0311,$0070,$0555,$0221,$0333,$0777
-imageStandingsBackground:	incbin	"image3"
+imageStandingsBackground:	incbin	"imageStandingsBackground"
 imagePlayersPalette:
 	dc.w	$0222,$0777,$0555,$0222,$0000,$0743,$0632,$0421,$0310
 	dc.w	$0240,$0030,$0035,$0025,$0710,$0500,$0740
 imagePlayers:
 	incbin	"imagePlayers"
 resultScreenPointerTable:	; fixme; data missing
-	dc.l	frameBuffer1
-	dc.l	imagePlayersPalette-2	; won
-	dc.l	imagePlayersPalette-2	; lost
-	dc.l	imagePlayersPalette-2	; wreck
-	dc.l	imagePlayersPalette-2	; promotion
+	dc.l	frameBuffer1		; $78000
+	dc.l	imageWon		; $4477C won
+	dc.l	imageLost		; $4AF3E lost
+	dc.l	imageWreck		; $3D786 wreck
+	dc.l	imagePromotion		; $50E4C promotion
+imageWon:
+	incbin	"imageWon"
+imageLost:
+	incbin	"imageLost"
+imageWreck:
+	incbin	"imageWreck"
+imagePromotion:
+	incbin	"imagePromotion"
 lbL049700:
 	dc.b	$1F,$0E,$10,"Link abandoned",$FF,$1F,$0E,$10,"Link complete",$FF,$1F,$11,$10
 	dc.b	"Linking",$FF,$1F,$0F,$10,"Please wait",$FF,$00
@@ -21216,7 +21233,7 @@ savedRandomSeed1:
 savedRandomSeed3:	EQU	*-3
 	dc.b	$3B,$3B,$35,$62
 opponentSuspensionDampingTable:
-	dc.w	$0014,$0014,$FFEC		       ; fixed $0004,$0004,$FFFC
+	dc.w	$0001,$0001,$FFFF		       ; fixed $0004,$0004,$FFFC
 leagueTextTable:
 	dc.w	$1F0F
 lbB055C56:
@@ -21775,7 +21792,9 @@ lbB00D49E:
 lbB00D49F:
 	ds.b	2
 playerTrackPositionIndex:
-	ds.b	2
+	ds.b	1
+lapTimerDelay:
+	ds.b	1
 lbB00D4A3:
 	ds.b	1
 networkTimeoutFlag:
@@ -22909,6 +22928,7 @@ viewportTopAddress:
 	ds.l	1
 fastRenderBuffer:
 	ds.l	40*200
+jorma:	ds.l	1
 
 sp_quit:	ds.l	1
 base_vector:	ds.l	1
