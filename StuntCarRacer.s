@@ -20930,12 +20930,12 @@ imagePlayersPalette:
 	dc.w	$0240,$0030,$0035,$0025,$0710,$0500,$0740
 imagePlayers:
 	incbin	"imagePlayers"
-resultScreenPointerTable:	; fixme; data missing
-	dc.l	frameBuffer1		; $78000
-	dc.l	imageWon		; $4477C won
-	dc.l	imageLost		; $4AF3E lost
-	dc.l	imageWreck		; $3D786 wreck
-	dc.l	imagePromotion		; $50E4C promotion
+resultScreenPointerTable:
+	dc.l	frameBuffer1
+	dc.l	imageWon
+	dc.l	imageLost
+	dc.l	imageWreck
+	dc.l	imagePromotion
 imageWon:
 	incbin	"imageWon"
 imageLost:
@@ -21128,7 +21128,7 @@ lbB05047E:
 SELECTSingleP.MSG:
 	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
 	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
-	dc.b	" S.",$FF,"        s",$FF,"Computer Link",$FF,"ssssssssssssssssssssTrack:  The ",$FF
+	dc.b	" S.",$FF,"        s",$FF,"Build 260209 ",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; fixed Computer Link
 	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
 lbL050548:
 	dc.b	"------------",$FF
@@ -21470,7 +21470,7 @@ chainRenderParams:
 	dc.w	$0010,$00AC,$0003,$001B,$000E,$007B,$0000,$0000		; 32 right flame 3
 	dc.w	$0010,$0086,$0003,$001B,$0008,$001B,$0000,$0000		; 33 message
 
-bitplaneMaskTable:      ; fixme - the last couple of kilobytes are corrupt
+bitplaneMaskTable:
 	incbin	"bitplaneMaskTable"
 
 name_graphics:	dc.b	"graphics.library",0
