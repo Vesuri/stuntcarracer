@@ -1,8 +1,9 @@
 ; Known issues
 ; - AI physics are messed up
-; - suspension is too bouncy
 ; - damage accumulates a bit too easily
+; - car angle incorrect when cornering
 ; - sometimes right wheel falls down while in air
+; - paused text not rendered
 	incdir	"scr:"
 
 dsksync:	EQU	$0000007E
@@ -4156,10 +4157,10 @@ renderMenuString:
 generateDrawBridge:
 	MOVE.B	currentTrackID,D0
 	CMP.B	#$05,D0
-	BEQ	generateTrackSegment
+	BEQ	.generateTrackSegment
 	RTS
 
-generateTrackSegment:
+.generateTrackSegment:
 	CMP.B	#$38,playerSegmentIndex
 	BCC	lbC04C0BC
 	CMP.B	#$33,playerSegmentIndex
@@ -5001,7 +5002,7 @@ updateCarStartRotation:
 lbC04CDBC:
 	ASL.W	#$08,D0
 	MOVE.B	#TIMESTEP_FACTOR,D2
-	BEQ	lbC04CDCA
+;	BEQ	lbC04CDCA					; originally BEQ
 	MULS	D2,D0
 	ASR.L	#$08,D0
 lbC04CDCA:
@@ -7057,20 +7058,20 @@ lbC04F422:
 	RTS
 
 updateGameTimingAndDirection:
-	ADDQ.B	#$01,gameTimingCounter	; Increment frame counter
-	MOVE.B	#$00,D2			; Assume forward direction
-	MOVE.B	#TIMESTEP_FACTOR,D0			; Direction adjustment value
-	BEQ	lbC04F452		; Skip if zero
-	ADD.B	D0,directionCalculation	; Add to direction accumulator
-	BCS	lbC04F452		; If carry, direction is forward
-	SUBQ.B	#$01,D2			; Otherwise $FF = reverse
+	ADDQ.B	#$01,gameTimingCounter
+	MOVE.B	#$00,D2
+	MOVE.B	#TIMESTEP_FACTOR,D0
+;	BEQ	lbC04F452		; originally BEQ
+	ADD.B	D0,directionCalculation
+	BCS	lbC04F452
+	SUBQ.B	#$01,D2
 lbC04F452:
-	MOVE.B	D2,skipDamageFlag	; Store direction flag
+	MOVE.B	D2,skipDamageFlag
 	MOVE.B	lapTimeDisplayDuration,D0
-	BEQ	lbC04F472		; Skip if no event pending
-	SUBQ.B	#$01,lapTimeDisplayDuration	; Decrement countdown
-	BNE	lbC04F472		; Skip if not yet zero
-	JSR	handleLapCompletionTiming	; Trigger state change when reaches zero
+	BEQ	lbC04F472
+	SUBQ.B	#$01,lapTimeDisplayDuration
+	BNE	lbC04F472
+	JSR	handleLapCompletionTiming
 lbC04F472:
 	TST.B	selectedRaceType
 	BPL	lbC04F4AA
@@ -7324,11 +7325,10 @@ clearGameDataSlot:
 updateLapTimer:
 	;MOVE.B	#$13,D0			; Add 19 milliseconds
 	move.b	framesSinceCopperlistUpdate,d0	; originally #$13
-	tst.b	lapTimerDelay		; added
-	beq.s	.timeDeltaOk
+	add.b	#1,lapTimerDelay	; added
+	and.b	#3,lapTimerDelay
+	beq.s	lbC04F832
 	add.b	d0,d0
-.timeDeltaOk:
-	eor.b	#1,lapTimerDelay
 lbC04F832:
 	MOVE.L	#lapTimeSubseconds,A0
 	MOVE.L	#lapTimeSeconds,A1
@@ -10828,11 +10828,14 @@ lbC053106:
 	RTS
 
 applyMomentumAmplification:
-	MOVE.W	#$0114,D3			; interesting constant for potential fixes
-	BEQ	lbC05311A
-	MULS	D3,D0
-	ASR.L	#$08,D0
-lbC05311A:
+;	MOVE.W	#$0192,D3			; originally $0114 ($0192 = ($114/$100)^6*$100)
+;	BEQ	lbC05311A			; originally BEQ
+;	MULS	D3,D0
+;	ASR.L	#$08,D0
+;lbC05311A:
+	move.l	d0,d3				; added
+	add.l	d0,d0				; added
+	add.l	d3,d0
 	ADD.W	D6,D0
 	RTS
 
@@ -11156,7 +11159,7 @@ updateWheelSuspensionPhysics:
 	BGE	.damageAccumulationDone1
 	LSR.W	#$08,D0
 	MOVE.B	D0,D3
-	LSR.B	#$01,D3
+	LSR.B	#$04,D3							; originally $01
 	ADD.B	D3,D0
 	ADD.B	accumulatedForceFrontLeft,D0
 	BCC	.forceXOk
@@ -11230,7 +11233,7 @@ updateWheelSuspensionPhysics:
 	BGE	.damageAccumulationDone2
 	LSR.W	#$08,D0
 	MOVE.B	D0,D3
-	LSR.B	#$01,D3
+	LSR.B	#$04,D3							; originally $01
 	ADD.B	D3,D0
 	ADD.B	accumulatedForceFrontRight,D0
 	BCC	.forceYOk
@@ -11279,11 +11282,11 @@ updateWheelSuspensionPhysics:
 	MOVE.W	suspensionVelocityRear,D4
 	MOVE.W	D0,suspensionVelocityRear
 	CMP.W	#$0400/FRAMERATE_MULTIPLIER,D0				; originally $0400
-	BLT	..hardImpactRearChecked
+	BLT	.hardImpactRearChecked
 	CMP.W	#$0200/FRAMERATE_MULTIPLIER,D4				; originally $0200
-	BGE	..hardImpactRearChecked
+	BGE	.hardImpactRearChecked
 	ADDQ.B	#$01,hardImpactCount
-..hardImpactRearChecked:
+.hardImpactRearChecked:
 	MOVE.W	suspensionVelocityRear,D0
 	MOVE.B	trackWidthMultiplier,D3
 	ASL.W	#$08,D3
@@ -11304,7 +11307,7 @@ updateWheelSuspensionPhysics:
 	BGE	.damageAccumulationDone3
 	LSR.W	#$08,D0
 	MOVE.B	D0,D3
-	LSR.B	#$01,D3
+	LSR.B	#$04,D3							; originally $01
 	ADD.B	D3,D0
 	ADD.B	accumulatedForceRear,D0
 	BCC	.forceZOk
@@ -11314,9 +11317,9 @@ updateWheelSuspensionPhysics:
 	MOVE.B	#$80,damageAccumulationActive
 .damageAccumulationDone3:
 	MOVE.W	suspensionVelocityRear,D0
-	CMP.W	#$1200/5,D0				; originally $1200
+	CMP.W	#$1200/FRAMERATE_MULTIPLIER,D0				; originally $1200
 	BCS	.velocityRearOk
-	MOVE.W	#$1200/5-1,suspensionVelocityRear		; originally $11FF
+	MOVE.W	#$1200/FRAMERATE_MULTIPLIER-1,suspensionVelocityRear		; originally $11FF
 .velocityRearOk:
 	BRA	.clampingDone
 
@@ -13254,10 +13257,6 @@ lbC0553A6:
 	MOVE.B	trackDamageFrameBase,D2
 lbC0553D2:
 	MOVE.B	D2,damageFrameLimit
-	add.b	d2,damageFrameLimit				; added x6 TODO too easy to damage the car
-	add.b	d2,d2
-	add.b	d2,d2
-	add.b	d2,damageFrameLimit
 	JSR	generateRandomNumber
 	MOVE.L	#lbW01172C,A0
 	AND.B	$00(A0,D1.W),D0
@@ -21128,7 +21127,7 @@ lbB05047E:
 SELECTSingleP.MSG:
 	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
 	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
-	dc.b	" S.",$FF,"        s",$FF,"Build 260209 ",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; originally Computer Link
+	dc.b	" S.",$FF,"        s",$FF,"WIP v20260211",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; originally Computer Link
 	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
 lbL050548:
 	dc.b	"------------",$FF
