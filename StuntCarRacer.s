@@ -1,8 +1,6 @@
 ; Known issues
 ; - AI physics are messed up
 ; - damage accumulates a bit too easily
-; - car angle incorrect when cornering
-; - sometimes right wheel falls down while in air
 ; - paused text not rendered
 	incdir	"scr:"
 
@@ -2693,7 +2691,7 @@ displayLeagueStandingsTable:
 .renderRowLoop:
 	MOVE.B	renderingIndex,D2
 	MOVE.L	#lbB00E30E,A2
-	MOVE.B	$00(A2,D2.W),savedPlayerIndex
+	MOVE.B	$00(A2,D2.W),tempByte5
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.B	lbB04AA3E,D1
@@ -2706,7 +2704,7 @@ displayLeagueStandingsTable:
 	JSR	setBackgroundColor
 	MOVE.L	#raceParticipationCounters,A1
 	CLR.W	D0
-	MOVE.B	savedPlayerIndex,D0
+	MOVE.B	tempByte5,D0
 	MOVE.B	$00(A1,D0.W),D0
 	JSR	renderDecimal
 	MOVE.B	#$0F,D0
@@ -2721,7 +2719,7 @@ displayLeagueStandingsTable:
 	JSR	setBackgroundColor
 	MOVE.L	#lbL00E2DE,A1
 	CLR.W	D0
-	MOVE.B	savedPlayerIndex,D0
+	MOVE.B	tempByte5,D0
 	MOVE.B	$00(A1,D0.W),D0
 	JSR	renderDecimal
 	MOVE.B	#$0F,D0
@@ -2736,7 +2734,7 @@ displayLeagueStandingsTable:
 	JSR	setBackgroundColor
 	MOVE.L	#lbL00E2EA,A1
 	CLR.W	D0
-	MOVE.B	savedPlayerIndex,D0
+	MOVE.B	tempByte5,D0
 	MOVE.B	$00(A1,D0.W),D0
 	JSR	renderDecimal
 	MOVE.B	#$0F,D0
@@ -2751,7 +2749,7 @@ displayLeagueStandingsTable:
 	JSR	setBackgroundColor
 	MOVE.L	#lbL00E302,A1
 	CLR.W	D0
-	MOVE.B	savedPlayerIndex,D0
+	MOVE.B	tempByte5,D0
 	MOVE.B	$00(A1,D0.W),D0
 	JSR	renderDecimal
 	ADD.B	#$0B,lbB04AA3E
@@ -5834,9 +5832,11 @@ lbC04DA54:
 lbC04DA76:
 	LSR.W	#$08,D0
 	ADDQ.B	#$01,D0
-	ASL.B	#$01,D0
-	MOVE.B	D0,lbB00D4E5
-	ASL.B	#$01,D0
+;	ASL.B	#$01,D0
+;	MOVE.B	D0,lbB00D4E5				; fixed dead code
+;	ASL.B	#$01,D0
+	add.b	d0,d0					; added
+	add.b	d0,d0
 	MOVE.B	D0,renderingLoopIndex
 	MOVE.B	reverseDirectionFlag,D0
 	BPL	lbC04DAA2
@@ -7208,7 +7208,7 @@ lbC04F64A:
 	JSR	refreshLapTimerHUD
 	JSR	saveLapTimeToBuffer
 lbC04F680:
-	MOVE.B	D1,savedPlayerIndex
+	MOVE.B	D1,tempByte5
 	MOVE.B	#$1F,D0
 	JSR	renderCharacter
 	MOVE.B	#$06,D0
@@ -7221,7 +7221,7 @@ lbC04F680:
 	JSR	renderDigitAndAdvance
 	MOVE.B	#$00,textHorizontalOffset
 	MOVE.B	#$00,textYOffset
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 lbC04F6D6:
 	MOVE.L	#player1LapCounter,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -9467,7 +9467,7 @@ lbC051D4C:
 	MOVE.W	#$0000,D1
 	MOVE.B	#$00,segmentProcessedFlag
 	MOVE.B	#$00,processedSegmentIndices1
-	MOVE.B	#$00,savedPlayerIndex
+	MOVE.B	#$00,tempByte5
 	ADD.W	#$0010,renderCommandQueueOffset
 	MOVE.L	#lineDrawingBuffer,lineDrawingBufferPointer
 	JSR	drawTrackSegmentWireframe
@@ -10079,121 +10079,121 @@ setParticleCountAndPlayGrindSound:
 	JSR	playSample
 .soundDone:
 	add.b	#1,grindSoundCooldownTimer
-	cmp.b	#6,grindSoundCooldownTimer
+	cmp.b	#FRAMERATE_MULTIPLIER,grindSoundCooldownTimer
 	bcs.s	.cooldownDone
 	clr.b	grindSoundCooldownTimer
 .cooldownDone:
 	MOVE.L	#debrisParticleXPositions,A4
 	MOVE.L	#debrisParticleXVelocities,A5
-	MOVE.B	currentDataIndex,D1	; D1 = 62 (start at last particle)
-lbC0526D2:
-	JSR	validateAndRenderParticle		; Check if particle on screen
-	BNE	lbC0526F0		; Skip if off-screen
-	ADDQ.W	#$02,$40(A5,D1.W)	; Increment Y velocity (gravity!)
-	MOVE.W	$40(A5,D1.W),D0		; Load Y velocity
-	ADD.W	D0,$40(A4,D1.W)		; Update Y position
-	MOVE.W	$00(A5,D1.W),D0		; Load X velocity
-	ADD.W	D0,$00(A4,D1.W)		; Update X position
-lbC0526F0:
-	SUBQ.B	#$02,D1			; Move to previous particle
-	BPL	lbC0526D2		; Loop for all 32 particles
 	MOVE.B	currentDataIndex,D1
-lbC0526FC:
-	MOVE.W	$40(A4,D1.W),D0		; Get Y position
-	CMP.W	#$0080,D0		; Check if below screen (Y < 128)
-	BCS	lbC052780		; Skip if still on screen
-	JSR	generateRandomNumber	; Particle has fallen off screen - respawn it
-	AND.W	#$0007,D0		; Random 0-7
+.updateParticlesLoop:
+	JSR	validateAndRenderParticle
+	BNE	.particleUpdated
+	ADDQ.W	#$01,$40(A5,D1.W)	; originally #$02
+	MOVE.W	$40(A5,D1.W),D0
+	ADD.W	D0,$40(A4,D1.W)
+	MOVE.W	$00(A5,D1.W),D0
+	ADD.W	D0,$00(A4,D1.W)
+.particleUpdated:
+	SUBQ.B	#$02,D1
+	BPL	.updateParticlesLoop
+	MOVE.B	currentDataIndex,D1
+.respawnOffscreenParticlesLoop:
+	MOVE.W	$40(A4,D1.W),D0
+	CMP.W	#$0080,D0
+	BCS	.particleOk
+	JSR	generateRandomNumber
+	AND.W	#$0007,D0
 	MOVE.W	D0,D3
 	CLR.W	D0
-	MOVE.B	collisionImpactLevel,D0		; Reload impact severity
-	LSR.W	#$01,D0			; Halve it
-	TST.B	offTrackStateFlags	; Check collision type
-	BMI	lbC05272A		; Branch for major collision
-	LSR.W	#$01,D0			; Further reduce for minor collision
-lbC05272A:
-	ADD.W	D3,D0			; Add randomness
-	NOT.W	D0			; Invert (negative velocity)
-	MOVE.W	D0,$40(A5,D1.W)		; Set new Y velocity (upward)
+	MOVE.B	collisionImpactLevel,D0
+	LSR.W	#$02,D0			; originally #$01
 	TST.B	offTrackStateFlags
-	BPL	lbC052748		; Branch for normal collision
-	JSR	initializeMajorCrashParticle		; Initialize for major crash
-	JMP	lbC05276E
+	BMI	.yVelocityOk
+	LSR.W	#$01,D0
+.yVelocityOk:
+	ADD.W	D3,D0
+	NOT.W	D0
+	MOVE.W	D0,$40(A5,D1.W)
+	TST.B	offTrackStateFlags
+	BPL	.edgeCollision
+	JSR	initializeDustCloudParticle
+	JMP	.coordinatesOk
 
-lbC052748:				; Normal collision respawn
+.edgeCollision:
 	JSR	generateRandomNumber
-	AND.W	#$007F,D0		; Random 0-127
-	ADD.W	#$0040,D0		; Set X position
+	AND.W	#$007F,D0
+	ADD.W	#$0040,D0
 	MOVE.W	D0,$00(A4,D1.W)
-	MOVE.W	D0,D5			; Save for velocity calc
+	MOVE.W	D0,D5
 	JSR	generateRandomNumber
-	OR.W	#$FFF8,D0		; Force high bits
-	ADD.W	#$007F,D0		; Range calculation
-	MOVE.W	D0,$40(A4,D1.W)		; Set Y position
-lbC05276E:
+	OR.W	#$FFF8,D0
+	ADD.W	#$007F,D0
+	MOVE.W	D0,$40(A4,D1.W)
+.coordinatesOk:
 	MOVE.W	D5,D0
-	SUB.W	#$0080,D0		; Center at 128
-	ASR.W	#$03,D0			; Divide by 8
-	MOVE.W	D0,$00(A5,D1.W)		; Set X velocity
-	JSR	validateAndRenderParticle		; Validate particle
-lbC052780:
+	SUB.W	#$0080,D0
+	ASR.W	#$04,D0			; originally #$03
+	MOVE.W	D0,$00(A5,D1.W)
+	JSR	validateAndRenderParticle
+.particleOk:
 	SUBQ.B	#$02,D1
-	BPL	lbC0526FC		; Loop for all particles
+	BPL	.respawnOffscreenParticlesLoop
 	RTS
 
 validateAndRenderParticle:
-	MOVE.B	D1,savedPlayerIndex	; Save particle index
-	MOVE.W	$40(A4,D1.W),D5		; Load Y position
-	CMP.W	#$0080,D5		; Check if Y >= 128
-	BCC	lbC0527AE		; Reset if off bottom
-	MOVE.W	$00(A4,D1.W),D0		; Load X position
-	CMP.W	#$0100,D0		; Check if X >= 256
-	BCC	lbC0527AE		; Reset if off right
-	CMP.W	#$0001,D5		; Check if Y < 1
-	BCC	lbC0527B6		; Continue if valid
-lbC0527AE:
-	MOVE.W	#$00D2,$40(A4,D1.W)	; Reset Y to 210 (off-screen)
+	MOVE.B	D1,tempByte5	; Save particle index
+	MOVE.W	$40(A4,D1.W),D5
+	CMP.W	#$0080,D5
+	BCC	.resetY
+	MOVE.W	$00(A4,D1.W),D0
+	CMP.W	#$0100,D0
+	BCC	.resetY
+	CMP.W	#$0001,D5
+	BCC	.coordinateOk
+.resetY:
+	MOVE.W	#$00D2,$40(A4,D1.W)
 	RTS
 
-lbC0527B6:
+.coordinateOk:
 	TST.B	offTrackStateFlags
-	BPL	lbC0527CC		; Branch for normal rendering
-	JSR	renderDustCloud		; Render as sprite (major crash)
-	JMP	lbC05282A
+	BPL	.render
+	JSR	renderDustCloud
+	JMP	.done
 
-lbC0527CC:				; Normal pixel rendering
+.render:
 	MOVE.W	D0,D4
 	CMP.W	#$00FE,D0
-	BCC	lbC0527AE
-	MOVE.L	viewportTopAddress,A0	; Calculate framebuffer address from X,Y coordinates
+	BCC	.resetY
+	MOVE.L	viewportTopAddress,A0
 	EXT.L	D0
 	EXT.L	D5
-	LSR.L	#$03,D0			; X / 8 (byte offset)
-	AND.B	#$FE,D0			; Align to even
-	ADD.L	D0,A0			; Add X offset
+	LSR.L	#$03,D0
+	AND.B	#$FE,D0
+	ADD.L	D0,A0
 	MOVE.L	D5,D0
-	ASL.L	#$02,D0			; Y * 4
-	ADD.L	D5,D0			; Y * 5
-	ASL.L	#$03,D0			; Y * 40 (scanline width)
-	ADD.L	D0,A0			; Add Y offset
-	MOVE.B	#$03,D0			; Plot 4 pixels in 2x2 pattern
-	JSR	setPixelColor		; Set color 3
-	JSR	plotPixel		; Plot pixel
+	ASL.L	#$02,D0
+	ADD.L	D5,D0
+	ASL.L	#$03,D0
+	ADD.L	D0,A0
+	MOVE.B	#$03,D0
+	JSR	setPixelColor
+	JSR	plotPixel
 	ADDQ.W	#$01,D4
-	JSR	plotPixel		; Plot right pixel
-	SUB.L	#$00000028,A0		; Move up one scanline (40 bytes)
+	JSR	plotPixel
+	SUB.L	#$00000028,A0
 	SUBQ.W	#$01,D4
-	JSR	plotPixel		; Plot upper-left
+	JSR	plotPixel
 	ADDQ.W	#$01,D4
 	MOVE.B	#$0F,D0
-	JSR	setPixelColor		; Set color 15 (bright)
-	JSR	plotPixel		; Plot upper-right (brightest)
-lbC05282A:
-	MOVE.B	savedPlayerIndex,D1
+	JSR	setPixelColor
+	JSR	plotPixel
+.done:
+	MOVE.B	tempByte5,D1
 	MOVE.B	#$00,D0
 	RTS
 
-initializeMajorCrashParticle:
+initializeDustCloudParticle:
 	JSR	generateRandomNumber
 	AND.W	#$00FF,D0		; Random X: 0-255
 	MOVE.W	D0,$00(A4,D1.W)		; Set X position (full screen width)
@@ -10806,7 +10806,7 @@ verticalBlankDone:
 	RTS
 
 lbC0530D0:
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	#$02,D3
 lbC0530DA:
 	EOR.B	#$02,D1
@@ -11359,7 +11359,7 @@ updateWheelSuspensionPhysics:
 	BNE	.targetPitchRateDone
 	TST.B	raceStartTimer
 	BNE	.targetPitchRateDone
-	MOVE.W	#$FF80,D3
+	MOVE.W	#-128*FRAMERATE_MULTIPLIER,D3		; originally #$FF80
 	MOVE.W	cameraAngleX,D0
 	BPL	.cameraAnglePositive
 	MOVE.B	currentTrackID,D0
@@ -11371,13 +11371,13 @@ updateWheelSuspensionPhysics:
 .notTrack7:
 	CMP.B	#$04,D0
 	BNE	.targetPitchRateDone
-	MOVE.W	#$FFF8,D3
+	MOVE.W	#-8*FRAMERATE_MULTIPLIER,D3		; originally #$FFF8
 	BRA	.checkTargetPitchRate
 
 .cameraAnglePositive:
 	CMP.W	#$1000,D0
 	BLT	.checkTargetPitchRate
-	MOVE.W	#$FF00,D3
+	MOVE.W	#-256*FRAMERATE_MULTIPLIER,D3		; originally #$FF00
 .checkTargetPitchRate:
 	SUB.W	targetPitchRate,D3
 	BPL	.targetPitchRateDone
@@ -11450,7 +11450,10 @@ lbC053A18:
 
 updateVelocityDamping:
 	MOVE.W	rotationSpeedX,D3
-;	ASR.W	#$04,D3			; originally ASR.W
+	ASR.W	#$02,D3			; originally ASR.W #$04
+	move.w	d3,d0			; added x6
+	asr.w	d0
+	add.w	d0,d3
 	MOVE.W	targetPitchRate,D0
 	SUB.W	D3,D0
 	TST.B	wheelMovementActive
@@ -11461,7 +11464,10 @@ updateVelocityDamping:
 lbC053A5C:
 	MOVE.W	D0,angularAccelerationX
 	MOVE.W	rotationSpeedZ,D3
-;	ASR.W	#$04,D3			; originally ASR.W
+	ASR.W	#$02,D3			; originally ASR.W #$04
+	move.w	d3,d0			; added x6
+	asr.w	d0
+	add.w	d0,d3
 	MOVE.W	targetRollRate,D0
 	SUB.W	D3,D0
 	MOVE.W	D0,angularAccelerationZ
@@ -14043,10 +14049,10 @@ renderStandingsEntry:
 	MOVE.B	renderingIndex,D2
 	MOVE.L	#lbB00E30E,A2
 	MOVE.B	$00(A2,D2.W),D1
-	MOVE.B	D1,savedPlayerIndex
+	MOVE.B	D1,tempByte5
 	JSR	renderPlayerName
 	JSR	renderSpace
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	TST.B	multiplayerRaceDisplayFlag
 	BPL	lbC05606E
 	JSR	renderLapTime
@@ -14611,7 +14617,7 @@ lbC0568E2:
 	JSR	processTrackVisibility
 	JSR	processRenderData
 	JSR	processTrackSegments
-	MOVE.B	#$00,lbB00D4E5
+;	MOVE.B	#$00,lbB00D4E5				; fixed dead code
 	MOVE.B	#$00,renderingLoopIndex
 	MOVE.B	#$04,segmentDataStartIndex
 	JSR	shiftCoordinateArrays
@@ -15091,12 +15097,12 @@ lbC05701E:
 
 lbC057020:
 	MOVEM.L	D1-D7/A3-A6,-(SP)
-	MOVE.B	D1,savedPlayerIndex
+	MOVE.B	D1,tempByte5
 	MOVE.W	#$0200,$78(A6,D1.W)
 	MOVE.W	D1,D0
 	LSR.W	#$02,D0
 	JSR	processTrackCharacteristics
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.W	D1,D2
 	AND.W	#$0002,D2
 	ADD.B	#$78,D1
@@ -15338,7 +15344,7 @@ renderBarrierPost:
 	MOVE.W	D3,renderCommandQueueOffset
 	MOVE.L	#coordinateLookupTable,A4
 	MOVE.L	#transformedVertexBounds,A5
-	MOVE.B	D1,savedPlayerIndex
+	MOVE.B	D1,tempByte5
 	CMP.W	#$0078,D1
 	BLT	lbC05739C
 	TST.W	$00(A6,D1.W)
@@ -15351,7 +15357,7 @@ lbC05739C:
 	CMP.W	#$0080,D0
 	BCC	lbC0573CC
 	JSR	lbC0573E2
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.W	D1,D2
 	SUBQ.B	#$04,D2
 	JSR	drawClippedLine
@@ -15364,7 +15370,7 @@ lbC0573CC:
 	RTS
 
 lbC0573E2:
-	MOVE.B	D1,savedPlayerIndex
+	MOVE.B	D1,tempByte5
 	MOVE.B	D1,D0
 	AND.B	#$02,D0
 	MOVE.B	D0,renderingIndex
@@ -15385,7 +15391,7 @@ lbC057414:
 	MOVE.B	lbB00D40F,D0
 	AND.W	#$00FF,D0
 	JSR	interpolateCoordinatePair
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	CMP.W	#$0078,D1
 	BGE	lbC057474
 	MOVE.B	#$00,D0
@@ -17539,7 +17545,7 @@ lbC058A00:
 
 lbC058A14:
 	MOVE.B	processedSegmentIndices1,D2
-	MOVE.B	D1,savedPlayerIndex
+	MOVE.B	D1,tempByte5
 	MOVE.B	segmentAlternateFlag,D0
 	ASL.B	#$01,D0
 	EOR.B	D1,D0
@@ -17558,7 +17564,7 @@ lbC058A14:
 	ADD.B	#$00,D2
 	ADD.B	#$00,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058A98
 
@@ -17576,7 +17582,7 @@ lbC058A98:
 	ADD.B	#$02,D2
 	ADD.B	#$02,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058AE4
 
@@ -17594,7 +17600,7 @@ lbC058AE4:
 	ADD.B	#$78,D2
 	ADD.B	#$78,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058B30
 
@@ -17612,7 +17618,7 @@ lbC058B30:
 	ADD.B	#$7A,D2
 	ADD.B	#$7A,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058B7C
 
@@ -17645,7 +17651,7 @@ drawTrackSegmentWireframe:
 	ADD.B	#$78,D2
 	ADD.B	#$00,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058C10
 
@@ -17663,7 +17669,7 @@ lbC058C10:
 	ADD.B	#$02,D2
 	ADD.B	#$7A,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058C5C
 
@@ -17691,7 +17697,7 @@ lbC058C8C:
 	ADD.B	#$00,D2
 	ADD.B	#$02,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058CD0
 
@@ -17740,7 +17746,7 @@ drawTrackLines:
 lbC058D76:
 	CMP.W	#$05E0,renderCommandQueueOffset
 	BCC	lbC059008
-	MOVE.B	D1,savedPlayerIndex
+	MOVE.B	D1,tempByte5
 	MOVE.B	D2,processedSegmentIndices1
 	TST.W	$00(A6,D2.W)
 	BMI	lbC058DBE
@@ -17750,7 +17756,7 @@ lbC058D76:
 	ADD.B	#$00,D2
 	ADD.B	#$00,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058DD2
 
@@ -17768,7 +17774,7 @@ lbC058DD2:
 	ADD.B	#$02,D2
 	ADD.B	#$02,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058E1E
 
@@ -17786,7 +17792,7 @@ lbC058E1E:
 	ADD.B	#$78,D2
 	ADD.B	#$78,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058E6A
 
@@ -17804,7 +17810,7 @@ lbC058E6A:
 	ADD.B	#$7A,D2
 	ADD.B	#$7A,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058EB6
 
@@ -17822,7 +17828,7 @@ lbC058EB6:
 	ADD.B	#$78,D2
 	ADD.B	#$00,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058F02
 
@@ -17840,7 +17846,7 @@ lbC058F02:
 	ADD.B	#$02,D2
 	ADD.B	#$7A,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058F4E
 
@@ -17858,7 +17864,7 @@ lbC058F4E:
 	ADD.B	#$00,D2
 	ADD.B	#$02,D1
 	JSR	drawClippedLine
-	MOVE.B	savedPlayerIndex,D1
+	MOVE.B	tempByte5,D1
 	MOVE.B	processedSegmentIndices1,D2
 	BRA	lbC058F9A
 
@@ -21505,7 +21511,7 @@ lbB05047E:
 SELECTSingleP.MSG:
 	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
 	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
-	dc.b	" S.",$FF,"        s",$FF,"WIP v20260211",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; originally Computer Link
+	dc.b	" S.",$FF,"        s",$FF,"WIP v20260216",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; originally Computer Link
 	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
 lbL050548:
 	dc.b	"------------",$FF
@@ -22294,9 +22300,9 @@ gameModeStateFlags:
 	ds.b	1
 wheelAnimationAccumulator:
 	ds.b	1
-savedPlayerIndex:
+tempByte5:
 	ds.b	1
-lbB00D4E5:
+;lbB00D4E5:
 	ds.b	1
 segmentHalfFlags:
 	ds.b	2
