@@ -917,7 +917,7 @@ initializeGameMemoryAndState:
 	MOVE.B	#$00,$00(A0,D1.W)
 	SUBQ.B	#$01,D1
 	BPL	.clearKeyboardStateLoop
-	MOVE.L	#memory_7A01A,A0
+	MOVE.L	#leagueSeasonData,A0
 .clearPlayerStatsMemory:
 	MOVE.B	#$00,(A0)+
 	CMP.L	#memory_7B6FA,A0
@@ -1247,7 +1247,7 @@ lbC048C74:
 	JSR	sendSerialByteWithChecksum
 	MOVE.B	lapTimeDisplayDuration,D0
 	JSR	sendSerialByteWithChecksum
-	MOVE.B	gameTimingCounter,D0
+	MOVE.B	globalFrameCounter,D0
 	JSR	sendSerialByteWithChecksum
 	MOVE.W	checksumAccumulator,D0
 	JSR	sendSerialWordWithChecksum
@@ -1382,7 +1382,7 @@ lbC048E96:
 	MOVE.B	lbB049558,lbB00E239
 	MOVE.B	lbB049559,networkConnectionState
 	MOVE.B	lbB04955A,D0
-	SUB.B	gameTimingCounter,D0
+	SUB.B	globalFrameCounter,D0
 	BPL	lbC048FBE
 	JSR	networkTimingSync1
 	JSR	synchronizeNetworkState
@@ -1442,7 +1442,7 @@ lbC04906E:
 	EOR.B	#$C0,D0
 	MOVE.B	D0,raceOutcomeFlags
 	MOVE.B	#$80,currentTrackIDs
-	MOVE.B	#$05,gameEndModeFlag
+	MOVE.B	#$05,raceCompletionState
 	MOVE.B	#$00,gameModeStateFlags
 	MOVE.B	#$00,playerInputState
 	MOVE.B	#$00,lbB00D4A5
@@ -1557,7 +1557,7 @@ updateNetworkGameFlags:
 	TST.B	networkGameMode
 	BEQ	lbC0492AE
 	MOVE.B	#$00,D0
-	TST.B	gameEndModeFlag
+	TST.B	raceCompletionState
 	BEQ	lbC049286
 	MOVE.B	raceOutcomeFlags,D0
 	OR.B	#$20,D0
@@ -1860,7 +1860,7 @@ lbC0497B6:
 	BNE	lbC0497E8
 	ADDQ.B	#$01,additionalPlayerCount
 lbC0497D4:
-	JSR	screenUpdate
+	JSR	runPlayerNameEntry
 	MOVE.B	additionalPlayerCount,D0
 	CMP.B	#$07,D0
 	BCS	lbC0497B6
@@ -2555,7 +2555,7 @@ lbC04A39C:
 applyPlayerGraphicsMasks:
 	MOVE.B	lbB04A4BA,D3
 	AND.L	#$0000000F,D3
-	MOVE.B	#$36,tempByte2
+	MOVE.B	#$36,tempByte4
 	MOVE.L	A0,A5
 	MOVE.L	A3,A0
 lbC04A444:
@@ -2577,7 +2577,7 @@ lbC04A44E:
 	BLT	lbC04A44E
 	ADD.L	#$00000078,A5
 	ADD.L	#$0000001E,A0
-	SUBQ.B	#$01,tempByte2
+	SUBQ.B	#$01,tempByte4
 	BPL	lbC04A444
 	RTS
 
@@ -3486,23 +3486,23 @@ lbC04B36A:
 renderTrackQuadrilateral:
 	MOVE.W	#$05E0,D0
 	ADD.W	#$0080,D0
-	MOVE.W	D0,renderDataPointer
+	MOVE.W	D0,renderCommandQueueOffset
 	MOVE.W	#$0118,D1
 	MOVE.W	#$011C,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0118,D1
 	MOVE.W	#$011A,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$011A,D1
 	MOVE.W	#$011E,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$011C,D1
 	MOVE.W	#$011E,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	RTS
 
 calculateStepSizes:
@@ -3575,12 +3575,12 @@ lbC04B57A:
 setupRenderingCoordinates:
 	MOVE.W	#$05E0,D0
 	ADD.W	#$0040,D0
-	MOVE.W	D0,renderDataPointer
+	MOVE.W	D0,renderCommandQueueOffset
 	JSR	negateViewOffset
 	JSR	calculateRelativeViewOffset
 	MOVE.W	#$05E0,D0
 	ADD.W	#$0010,D0
-	MOVE.W	D0,renderDataPointer
+	MOVE.W	D0,renderCommandQueueOffset
 	MOVE.W	quadRectHalfWidth,D0
 	SUB.W	quadRectWidth,D0
 	MOVE.W	D0,lbW00D9BE
@@ -3628,19 +3628,19 @@ setupRenderingCoordinates:
 	MOVE.W	#$0108,D1
 	MOVE.W	#$010A,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$010A,D1
 	MOVE.W	#$010C,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$010C,D1
 	MOVE.W	#$010E,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$010E,D1
 	MOVE.W	#$0108,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	RTS
 
 setupQuadrilateralVertices:
@@ -3678,42 +3678,42 @@ setupQuadrilateralVertices:
 	ADDQ.W	#$01,quadVertexY3
 	MOVE.W	#$05E0,D0
 	ADD.W	#$0020,D0
-	MOVE.W	D0,renderDataPointer
+	MOVE.W	D0,renderCommandQueueOffset
 	MOVE.W	#$0110,D1
 	MOVE.W	#$0112,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0112,D1
 	MOVE.W	#$0114,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0114,D1
 	MOVE.W	#$0116,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0116,D1
 	MOVE.W	#$0110,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0108,D1
 	MOVE.W	#$0110,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$010E,D1
 	MOVE.W	#$0116,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$010A,D1
 	MOVE.W	#$0112,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$010C,D1
 	MOVE.W	#$0114,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$05E0,D0
 	ADD.W	#$0060,D0
-	MOVE.W	D0,renderDataPointer
+	MOVE.W	D0,renderCommandQueueOffset
 	JSR	negateViewOffset
 	JSR	calculateRelativeViewOffset
 	RTS
@@ -3770,19 +3770,19 @@ setupQuadVerticesWithOffset:
 	MOVE.W	#$0100,D1
 	MOVE.W	#$0102,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0102,D1
 	MOVE.W	#$0104,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0104,D1
 	MOVE.W	#$0106,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.W	#$0106,D1
 	MOVE.W	#$0100,D2
 	JSR	drawClippedLine
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	RTS
 
 calculateCoordinateDeltas:
@@ -4003,7 +4003,7 @@ lbC04BD40:
 
 calculateAndStoreBounds:
 	JSR	calculateBilinearTrackInterpolation
-	MOVE.L	interpolatedPosition,D0
+	MOVE.L	tempByte1,D0
 	ASR.L	#$03,D0
 	MOVE.L	#boundsMinX,A0
 	MOVE.W	D0,$00(A0,D1.W)
@@ -4181,7 +4181,7 @@ lbC04C0EA:
 	BRA	lbC04C266
 
 lbC04C0FE:
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	lbC04C10E
 	ADDQ.B	#$01,trackVariationSeed
 lbC04C10E:
@@ -4226,13 +4226,13 @@ lbC04C1AC:
 	ADDQ.B	#$01,D2
 	MOVE.B	trackDataComponent,$00(A0,D2.W)
 	ADDQ.B	#$01,D2
-	MOVE.B	D2,tempByte2
+	MOVE.B	D2,tempByte4
 	MOVE.B	#$48,D2
-	SUB.B	tempByte2,D2
+	SUB.B	tempByte4,D2
 	MOVE.B	(SP)+,$00(A0,D2.W)
 	ADDQ.B	#$01,D2
 	MOVE.B	trackDataComponent,$00(A0,D2.W)
-	MOVE.B	tempByte2,D2
+	MOVE.B	tempByte4,D2
 	CMP.B	#$12,D2
 	BEQ	lbC04C19A
 	SUBQ.B	#$01,D1
@@ -4446,36 +4446,36 @@ lbC04C556:
 lbC04C566:
 	TST.B	raceSetupFlags
 	BMI	lbC04C58E
-	MOVE.B	D1,savedSegmentIndex
+	MOVE.B	D1,tempByte2
 	BTST	#$06,raceSetupFlags
 	BNE	lbC04C5A0
 lbC04C582:
-	MOVE.B	D1,interpolatedPosition
+	MOVE.B	D1,tempByte1
 	JMP	lbC04C5A6
 
 lbC04C58E:
-	MOVE.B	D2,savedSegmentIndex
+	MOVE.B	D2,tempByte2
 	BTST	#$06,raceSetupFlags
 	BEQ	lbC04C582
 lbC04C5A0:
-	MOVE.B	D2,interpolatedPosition
+	MOVE.B	D2,tempByte1
 lbC04C5A6:
 	TST.B	networkGameMode
 	BEQ	lbC04C5BA
 	TST.B	raceMode
 	BMI	lbC04C5FC
 lbC04C5BA:
-	MOVE.B	savedSegmentIndex,D1
+	MOVE.B	tempByte2,D1
 	MOVE.L	#lbL00E2DE,A1
 	ADDQ.B	#$01,$00(A1,D1.W)
-	MOVE.B	interpolatedPosition,D1
+	MOVE.B	tempByte1,D1
 	MOVE.L	#lbL00E2EA,A1
 	ADDQ.B	#$01,$00(A1,D1.W)
 	MOVE.B	displayTrackID,D0
 	CMP.B	selectedTrack,D0
 	BNE	lbC04C5FC
 	MOVE.B	D1,lbB00E326
-	MOVE.B	savedSegmentIndex,D0
+	MOVE.B	tempByte2,D0
 	MOVE.B	D0,lbB00E325
 lbC04C5FC:
 	RTS
@@ -4501,10 +4501,10 @@ lbC04C610:
 	BLT	lbC04C610
 lbC04C64C:
 	MOVE.B	#$00,D0
-	MOVE.B	D0,savedSegmentIndex
+	MOVE.B	D0,tempByte2
 	MOVE.B	trackBaseOffset,D2
 lbC04C65C:
-	MOVE.B	D2,interpolatedPosition
+	MOVE.B	D2,tempByte1
 	MOVE.B	$00(A3,D2.W),D1
 	MOVE.B	$01(A3,D2.W),D0
 	MOVE.B	D0,D2
@@ -4529,15 +4529,15 @@ lbC04C6AC:
 	LSR.B	#$01,D0
 	BCC	lbC04C6DA
 lbC04C6B8:
-	MOVE.B	D2,tempByte1
-	MOVE.B	interpolatedPosition,D2
+	MOVE.B	D2,tempByte3
+	MOVE.B	tempByte1,D2
 	MOVE.B	D1,D0
 	MOVE.B	D0,$01(A3,D2.W)
-	MOVE.B	tempByte1,D0
+	MOVE.B	tempByte3,D0
 	MOVE.B	D0,$00(A3,D2.W)
-	ADDQ.B	#$01,savedSegmentIndex
+	ADDQ.B	#$01,tempByte2
 lbC04C6DA:
-	MOVE.B	interpolatedPosition,D2
+	MOVE.B	tempByte1,D2
 	ADDQ.B	#$01,D2
 	ADDQ.B	#$01,D2
 	CMP.B	maxRenderingIndex,D2
@@ -4546,7 +4546,7 @@ lbC04C6DA:
 	BRA	lbC04C65C
 
 lbC04C6F4:
-	MOVE.B	savedSegmentIndex,D0
+	MOVE.B	tempByte2,D0
 	BNE	lbC04C64C
 	RTS
 
@@ -4557,9 +4557,9 @@ readTrackDataByte:
 	RTS
 
 applyDirectionalOffset:
-	TST.B	tempByte1
+	TST.B	tempByte3
 	BMI	lbC04C72E
-	BTST	#$06,tempByte1
+	BTST	#$06,tempByte3
 	BNE	lbC04C728
 	ADD.B	#$10,D0
 	RTS
@@ -4569,7 +4569,7 @@ lbC04C728:
 	RTS
 
 lbC04C72E:
-	BTST	#$06,tempByte1
+	BTST	#$06,tempByte3
 	BNE	lbC04C740
 	SUB.B	#$10,D0
 	RTS
@@ -4613,14 +4613,14 @@ lbC04C7D0:
 	BEQ	lbC04C820
 	SUBQ.B	#$01,segmentRepeatCounter
 	MOVE.B	previousSegmentProperties,D0
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$10,D0
 	BEQ	lbC04C80E
-	MOVE.B	tempByte1,D0
+	MOVE.B	tempByte3,D0
 	EOR.B	#$C0,D0
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 lbC04C80E:
 	MOVE.B	currentTrackCoordinate,D0
 	JSR	applyDirectionalOffset
@@ -4628,13 +4628,13 @@ lbC04C80E:
 
 lbC04C820:
 	JSR	readTrackDataByte
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	AND.B	#$0F,D0
 	CMP.B	#$0F,D0
 	BNE	lbC04C856
-	MOVE.B	tempByte1,D0
+	MOVE.B	tempByte3,D0
 	LSR.B	#$04,D0
 	MOVE.B	D0,segmentRepeatCounter
 	JMP	lbC04C7D0
@@ -4651,8 +4651,8 @@ lbC04C86C:
 	MOVE.B	segmentAlternateFlag,D0
 	LSR.B	#$02,D0
 	ROXR.B	#$01,D0
-	MOVE.B	D0,tempByte2
-	MOVE.B	tempByte1,D0
+	MOVE.B	D0,tempByte4
+	MOVE.B	tempByte3,D0
 	AND.B	#$0F,D0
 	CMP.B	#$0C,D0
 	BLT	lbC04C8DC
@@ -4674,7 +4674,7 @@ lbC04C8DC:
 	JSR	readTrackDataByte
 	MOVE.L	#segmentGeometryIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.B	tempByte1,D0
+	MOVE.B	tempByte3,D0
 	AND.B	#$20,D0
 	BEQ	lbC04C90A
 	MOVE.L	#segmentGeometryIndices,A1
@@ -4685,7 +4685,7 @@ lbC04C90A:
 	JSR	readTrackDataByte
 lbC04C910:
 	AND.B	#$7F,D0
-	OR.B	tempByte2,D0
+	OR.B	tempByte4,D0
 	MOVE.L	#segmentAlternateGeometryIndices,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.B	D2,D0
@@ -4707,27 +4707,27 @@ lbC04C910:
 	ADD.W	D0,segmentProgressDistance
 	MOVE.B	#$00,D2
 	JSR	readSegmentInterpolationValue
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.L	#segmentInterpolationPoint1,A3
 	MOVE.L	#segmentInterpolationPoint2,A4
 	MOVE.W	tempWord1,D4
-	SUB.W	tempByte1,D4
+	SUB.W	tempByte3,D4
 	MOVE.W	D4,$00(A3,D1.W)
 	MOVE.B	trackModeParameter,D2
 	JSR	readSegmentInterpolationValue
-	MOVE.B	D0,tempByte1
-	ADD.W	tempByte1,D4
+	MOVE.B	D0,tempByte3
+	ADD.W	tempByte3,D4
 	MOVE.W	D4,tempWord1
 	MOVE.B	#$00,D2
 	JSR	switchToAlternateGeometryAndReadSegmentInterpolationValue
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.W	tempWord2,D4
-	SUB.W	tempByte1,D4
+	SUB.W	tempByte3,D4
 	MOVE.W	D4,$00(A4,D1.W)
 	MOVE.B	trackModeParameter,D2
 	JSR	switchToAlternateGeometryAndReadSegmentInterpolationValue
-	MOVE.B	D0,tempByte1
-	ADD.W	tempByte1,D4
+	MOVE.B	D0,tempByte3
+	ADD.W	tempByte3,D4
 	MOVE.W	D4,tempWord2
 	LSR.B	#$01,D1
 	MOVE.B	(SP)+,D0
@@ -4785,7 +4785,7 @@ lbC04CAB8:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,segmentRepeatCounter
 	MOVE.B	#$7C,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	#$02,D0
 	MOVE.B	D0,renderModeFlag
 	BNE	lbC04CBB0
@@ -4813,7 +4813,7 @@ lbC04CB08:
 	MOVE.B	D2,segmentRepeatCounter
 lbC04CB2A:
 	AND.B	#$7F,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	BPL	lbC04CBAA
 lbC04CB38:
 	MOVE.L	#trackSegmentPropertiesTable,A1
@@ -4825,17 +4825,17 @@ lbC04CB38:
 	BPL	lbC04CB72
 	MOVE.B	aiCorneringSkill,D0
 	SUB.B	#$0A,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	aiCorneringSkill,D0
 	JMP	lbC04CB8C
 
 lbC04CB72:
-	MOVE.B	tempByte2,D0
+	MOVE.B	tempByte4,D0
 	ADD.B	#$0A,D0
 	BMI	lbC04CB86
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 lbC04CB86:
-	MOVE.B	tempByte2,D0
+	MOVE.B	tempByte4,D0
 lbC04CB8C:
 	MOVE.B	segmentRepeatCounter,D2
 	BEQ	lbC04CBA0
@@ -4870,7 +4870,7 @@ readSegmentInterpolationValue:
 	MOVE.B	D0,D2
 	ADDQ.B	#$01,D2
 	MOVE.B	$00(A0,D2.W),D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	SUBQ.B	#$01,D2
 	MOVE.B	$00(A0,D2.W),D0
 	AND.B	#$7F,D0
@@ -4880,7 +4880,7 @@ lbC04CC14:
 	MOVE.B	$00(A0,D2.W),D0
 	ASL.B	#$01,D0
 	AND.B	#$E0,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	$00(A0,D2.W),D0
 	AND.B	#$0F,D0
 	RTS
@@ -4949,7 +4949,7 @@ lbC04CD02:
 	JSR	updateCarStartRotation
 	MOVE.B	#$02,D0
 	JSR	adjustCarHeightToTrack
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	lbC04CD30
 	SUBQ.B	#$01,raceStartTimer
 	BNE	lbC04CD30
@@ -4968,7 +4968,7 @@ lbC04CD50:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,raceStartTimer
 	MOVE.B	D0,offTrackStateFlags
-	MOVE.B	D0,lbB00D48E
+	MOVE.B	D0,gameMessageActiveFlag
 	MOVE.B	#$80,D0
 	MOVE.B	D0,raceStartComplete
 lbC04CD70:
@@ -5034,8 +5034,8 @@ lbC04CE14:
 	NEG.W	D0
 lbC04CE28:
 	MOVE.B	trackSideIndicator,trackSideIndicatorCopy
-	MOVE.B	#$A0,tempByte1
-	MOVE.B	tempByte1,D3
+	MOVE.B	#$A0,tempByte3
+	MOVE.B	tempByte3,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	lbC04CE50
@@ -5114,7 +5114,7 @@ lbC04CF32:
 	MOVE.B	#$00,engineAudioNoiseFlag
 	RTS
 
-screenUpdate:
+runPlayerNameEntry:
 	JSR	drawScreenFrame
 	MOVE.B	#$E0,D1
 	JSR	renderLeagueText
@@ -5259,7 +5259,7 @@ renderAllMenuOptions:
 	MOVE.B	D0,currentMenuItem		; Store as 0
 lbC04D188:
 	MOVE.B	currentMenuItem,D2		; Load current item index
-	MOVE.B	D2,interpolatedPosition			; Store for later use
+	MOVE.B	D2,tempByte1			; Store for later use
 	CMP.B	selectedMenuItem,D2		; Is this the selected item?
 	BNE	lbC04D1B6			; Skip highlight logic if not
 	MOVE.B	#$00,D0
@@ -5270,26 +5270,26 @@ lbC04D1B0:
 	MOVE.B	D0,menuCursorObjectType
 lbC04D1B6:
 	JSR	advanceMenuLine		; Draw cursor/arrow sprite
-	MOVE.B	interpolatedPosition,D0
+	MOVE.B	tempByte1,D0
 	ADDQ.B	#$01,D0
 	JSR	renderDigit			; Draw "1", "2", "3", etc.
 	MOVE.B	#$2E,D0
 	JSR	renderCharacter			; Draw "."
 	MOVE.B	#$20,D0
 	JSR	renderCharacter			; Draw " "
-	MOVE.B	interpolatedPosition,D2
+	MOVE.B	tempByte1,D2
 	ADD.B	currentTrackCoordinate,D2
 	MOVE.L	#menuStringOffsetTable,A2
 	MOVE.B	$00(A2,D2.W),D1
 	JSR	renderTextString
 	CMP.B	#$18,currentTrackCoordinate
 	BNE	lbC04D214
-	MOVE.B	interpolatedPosition,D0
+	MOVE.B	tempByte1,D0
 	ADDQ.B	#$01,D0
 	JSR	renderDigit
 lbC04D214:
 	MOVE.B	maxMenuIndex,D0			; Load max menu index
-	CMP.B	interpolatedPosition,D0			; Rendered all items?
+	CMP.B	tempByte1,D0			; Rendered all items?
 	BCS	lbC04D262			; Exit loop if done
 	MOVE.B	currentTrackCoordinate,D0
 	CMP.B	#$1C,D0
@@ -5298,7 +5298,7 @@ lbC04D214:
 	JSR	renderLeagueText
 	MOVE.B	selectedTrackGroup,D0
 	ASL.B	#$01,D0
-	ADD.B	interpolatedPosition,D0
+	ADD.B	tempByte1,D0
 	MOVE.B	D0,D2
 	MOVE.L	#trackIDLookupTable,A2
 	MOVE.B	$00(A2,D2.W),D1
@@ -5370,11 +5370,11 @@ delayRoutine:
 	MOVE.B	#$14,D2
 delayWithParam:
 	MOVE.B	#$14,D0
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 lbC04D34C:
-	SUBQ.B	#$01,tempByte2
+	SUBQ.B	#$01,tempByte4
 	BNE	lbC04D34C
-	SUBQ.B	#$01,tempByte1
+	SUBQ.B	#$01,tempByte3
 	BNE	lbC04D34C
 	SUBQ.B	#$01,D2
 	BNE	delayWithParam
@@ -5474,7 +5474,7 @@ enterLeagueCareer:
 	MOVE.B	D0,D1
 	MOVE.B	#$00,D2
 lbC04D4EC:
-	MOVE.L	#memory_7A01A,A2
+	MOVE.L	#leagueSeasonData,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.L	#trackSegmentGrid,A2
 	MOVE.B	D0,$00(A2,D2.W)
@@ -5520,7 +5520,7 @@ restoreGameData:
 	MOVE.B	#$00,D2
 	MOVE.B	lbB00D4D0,lbB00E334
 	MOVE.L	#trackSegmentGrid,A2
-	MOVE.L	#memory_7A01A,A0
+	MOVE.L	#leagueSeasonData,A0
 lbC04D5C2:
 	MOVE.B	$00(A2,D2.W),$00(A0,D2.W)
 	SUBQ.B	#$01,D2
@@ -5550,7 +5550,7 @@ processOpponentAI:
 	MOVE.B	D1,aiLateralOffset1
 	MOVE.B	aiActionTimer,D0
 	BEQ	lbC04D6A6
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	lbC04D662
 	SUBQ.B	#$01,aiActionTimer
 lbC04D662:
@@ -5577,7 +5577,7 @@ lbC04D6A6:
 	MOVE.L	#segmentVisibilityData,A0
 	TST.B	$00(A0,D2.W)
 	BMI	lbC04D71C
-	TST.B	carCrashedFlag
+	TST.B	opponentAheadFlag
 	BMI	lbC04D71C
 	TST.B	segmentSteeringFlags
 	BMI	lbC04D71C
@@ -5591,9 +5591,9 @@ lbC04D6EC:
 	MOVE.B	D2,aiPatternOffset
 	JSR	generateRandomNumber
 	AND.B	#$1F,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	opponentID,D0
-	CMP.B	tempByte2,D0
+	CMP.B	tempByte4,D0
 	BLT	lbC04D71C
 	MOVE.B	#$40,D0				; originally $10
 	MOVE.B	D0,aiActionTimer
@@ -5638,10 +5638,10 @@ lbC04D7B0:
 
 lbC04D7CE:
 	JSR	applyTrackDirectionTransform
-	MOVE.B	#$B5,tempByte1
+	MOVE.B	#$B5,tempByte3
 	MOVE.W	tempWord1,D0
 	SUB.W	tempWord2,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5652,10 +5652,10 @@ lbC04D7CE:
 	MOVE.B	$0002(A5),D3
 	SUB.W	D3,D0
 	MOVE.W	D0,lateralRoadPosition
-	MOVE.B	$0007(A5),tempByte1
+	MOVE.B	$0007(A5),tempByte3
 	MOVE.W	tempWord1,D0
 	ADD.W	tempWord2,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5705,8 +5705,8 @@ lbC04D892:
 	BPL	lbC04D8D6
 	NEG.W	D0
 lbC04D8D6:
-	MOVE.B	$0008(A5),tempByte1
-	MOVE.B	tempByte1,D3
+	MOVE.B	$0008(A5),tempByte3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5734,7 +5734,7 @@ lbC04D90C:
 	CMP.B	#$03,D0
 	BNE	lbC04D980
 lbC04D936:
-	MOVE.B	currentSegmentIndex,savedSegmentIndex
+	MOVE.B	currentSegmentIndex,tempByte2
 	TST.B	reverseDirectionFlag
 	BEQ	lbC04D956
 	JSR	retreatToPreviousSegment
@@ -5751,7 +5751,7 @@ lbC04D95C:
 	BRA	applyTrackSegmentGeometry
 
 lbC04D976:
-	MOVE.B	savedSegmentIndex,currentSegmentIndex
+	MOVE.B	tempByte2,currentSegmentIndex
 lbC04D980:
 	JSR	lbC04DF5A
 	MOVE.B	$000A(A5),D3
@@ -5875,7 +5875,7 @@ updateWheelHeightsFromTrack:
 	JSR	loadTrackSegmentConfiguration
 	MOVE.B	wheelDataOffset,D1
 .segmentAlreadyLoaded:
-	MOVE.B	segmentOrientationPrimary,tempByte1
+	MOVE.B	segmentOrientationPrimary,tempByte3
 	MOVE.L	#wheelCornerXFrontLeft,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$04,D0
@@ -5897,7 +5897,7 @@ updateWheelHeightsFromTrack:
 	BPL	.lateralPositionPositive
 	NEG.W	D0
 .lateralPositionPositive:
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -5916,11 +5916,11 @@ updateWheelHeightsFromTrack:
 	BNE	.notRearWheel
 	MOVE.B	D0,playerTrackPositionIndex
 .notRearWheel:
-	MOVE.B	segmentOrientationAlternate,tempByte1
+	MOVE.B	segmentOrientationAlternate,tempByte3
 	MOVE.L	#wheelCornerYFrontLeft,A1
 	MOVE.W	$00(A1,D1.W),D0
 	ASR.W	#$03,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -6144,7 +6144,7 @@ lbC04DEE4:
 lbC04DEE6:
 	ASR.L	#$08,D0
 	ADD.L	D5,D0
-	MOVE.L	D0,interpolatedPosition
+	MOVE.L	D0,tempByte1
 	RTS
 
 updateCarWorldPositionCoordinate:
@@ -6160,7 +6160,7 @@ lbC04DF12:
 	BLT	lbC04DF32
 lbC04DF20:
 	MOVE.L	#wheelHeightFrontLeft,A0
-	MOVE.L	interpolatedPosition,$00(A3,D1.W)
+	MOVE.L	tempByte1,$00(A3,D1.W)
 	LSR.B	#$01,D1
 	RTS
 
@@ -6172,7 +6172,7 @@ lbC04DF3E:
 	CMP.B	#$05,D0
 	BGT	lbC04DF20
 	MOVE.L	$00(A3,D1.W),D0
-	ADD.L	interpolatedPosition,D0
+	ADD.L	tempByte1,D0
 	ROXR.L	#$01,D0
 	MOVE.L	D0,$00(A3,D1.W)
 	LSR.B	#$01,D1
@@ -6189,11 +6189,11 @@ lbC04DF5A:
 	JSR	lbC052C5A
 	MOVE.B	trackGeometryTypeIndex,D2
 	MOVE.L	#lbL04DFB8,A0
-	MOVE.B	$00(A0,D2.W),tempByte1
+	MOVE.B	$00(A0,D2.W),tempByte3
 	SUB.L	D0,D4
 	LSR.L	#$08,D4
 	MOVE.W	D4,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -6292,12 +6292,12 @@ lbC04E122:
 	BGT	lbC04E172
 	AND.L	#$000000FF,D0
 	ASL.L	#$04,D0
-	MOVE.L	interpolatedPosition,D3
+	MOVE.L	tempByte1,D3
 	SUB.L	D0,D3
 	SUB.L	#$00000100,D3
 	CMP.L	#$00001000,D3
 	BLT	lbC04E172
-	MOVE.L	D3,interpolatedPosition
+	MOVE.L	D3,tempByte1
 	MOVE.B	lateralPositionOutOfBounds,D3
 	MOVE.B	reverseDirectionFlag,D0
 	EOR.B	D3,D0
@@ -6309,7 +6309,7 @@ lbC04E16A:
 	RTS
 
 lbC04E172:
-	MOVE.L	#$00001000,interpolatedPosition
+	MOVE.L	#$00001000,tempByte1
 	MOVE.B	lbB00D49A,D0
 	LSR.B	#$01,D0
 	BSET	#$07,D0
@@ -6633,12 +6633,12 @@ initializeGameSystemsAndMainLoop:
 	JSR	updateWheelSuspensionPosition
 	JSR	initializeDebrisParticlePositions
 	JSR	processGameFrame
-	JSR	updateGameTimingAndDirection
+	JSR	updateFrameThrottlingAndTimers
 	SUBQ.B	#$01,frameCounter
 	JSR	swapDisplayBuffers
 	JSR	updateGamePhysics
 	JSR	processGameFrame
-	JSR	updateGameTimingAndDirection
+	JSR	updateFrameThrottlingAndTimers
 	SUBQ.B	#$01,frameCounter
 	JSR	updateSpeedometerBar
 	JSR	swapDisplayBuffers
@@ -6659,8 +6659,8 @@ mainGameLoop:
 	JSR	generateDrawBridge
 	JSR	updateSpeedometerBar
 	JSR	updateDamageAndTimers
-	JSR	updateGameTimingAndDirection
-	JSR	updateFrameTimingEffects
+	JSR	updateFrameThrottlingAndTimers
+	JSR	renderDistanceDisplay
 	MOVE.B	currentTrackIDs,D0
 	AND.B	displayStateFlag,D0
 	BPL	continueGameLoop
@@ -6677,7 +6677,7 @@ checkGameEndConditions:
 	BEQ	continueGameLoop
 lbC04EDFC:
 	clr.b	frameProcessingFlag		; added
-	TST.B	gameEndModeFlag
+	TST.B	raceCompletionState
 	BNE	lbC04EE34
 	MOVE.B	networkGameMode,D0
 	BEQ	lbC04EE22
@@ -6761,7 +6761,7 @@ lbC04EF2C:
 	MOVE.B	playerInputState,D0
 	JSR	lbC048A00
 	BNE	mainGameLoop
-	TST.B	gameEndModeFlag
+	TST.B	raceCompletionState
 	BNE	lbC04EF6E
 	MOVE.B	networkGameMode,D0
 	BEQ	lbC04EF66
@@ -6868,7 +6868,7 @@ lbC04F108:
 lbC04F130:
 	MOVE.B	#$00,$00(A0,D0.W)
 	DBRA	D0,lbC04F130
-	MOVE.L	#memory_3D80,A0
+	MOVE.L	#lineDrawingBuffer,A0
 	MOVE.W	#$270F,D3
 	MOVE.B	#$00,D0
 lbC04F148:
@@ -7002,7 +7002,7 @@ lbC04F310:
 	MOVE.B	#$80,gameInitFlag3
 	JSR	disableAudio
 	MOVE.W	#$0000,enginePitchDelta
-	MOVE.B	lbB00D48E,D0
+	MOVE.B	gameMessageActiveFlag,D0
 	MOVE.W	D0,-(SP)
 	MOVE.B	gameMessageIndex,D0
 	MOVE.W	D0,-(SP)
@@ -7022,7 +7022,7 @@ lbC04F310:
 	MOVE.W	(SP)+,D0
 	MOVE.B	D0,gameMessageIndex
 	MOVE.W	(SP)+,D0
-	MOVE.B	D0,lbB00D48E
+	MOVE.B	D0,gameMessageActiveFlag
 	MOVE.B	#$00,networkInputSyncEnabled
 	MOVE.B	#$00,gameInitFlag3
 initializeGameLoop:
@@ -7057,16 +7057,16 @@ lbC04F422:
 	JSR	setupFrameBufferAddresses
 	RTS
 
-updateGameTimingAndDirection:
-	ADDQ.B	#$01,gameTimingCounter
+updateFrameThrottlingAndTimers:
+	ADDQ.B	#$01,globalFrameCounter
 	MOVE.B	#$00,D2
 	MOVE.B	#TIMESTEP_FACTOR,D0
 ;	BEQ	lbC04F452		; originally BEQ
-	ADD.B	D0,directionCalculation
+	ADD.B	D0,frameThrottleAccumulator
 	BCS	lbC04F452
 	SUBQ.B	#$01,D2
 lbC04F452:
-	MOVE.B	D2,skipDamageFlag
+	MOVE.B	D2,frameThrottleFlag
 	MOVE.B	lapTimeDisplayDuration,D0
 	BEQ	lbC04F472
 	SUBQ.B	#$01,lapTimeDisplayDuration
@@ -7110,7 +7110,7 @@ lbC04F4D6:
 	CMP.B	#$06,D0
 	BCS	lbC04F536
 lbC04F512:
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	lbC04F536
 	SUBQ.B	#$01,blinkCountdownTimer
 	BNE	lbC04F536
@@ -7153,7 +7153,7 @@ lbC04F57C:
 handleLapCompletionTiming:
 	MOVE.B	D1,D0
 	MOVE.B	D0,-(SP)
-	JSR	setupResultScreenDisplay
+	JSR	renderResultsCarIcon
 	MOVE.B	#$02,D2
 	MOVE.B	#$03,D1
 	MOVE.B	#$80,D0
@@ -7244,20 +7244,20 @@ lbC04F714:
 checkRaceCompletion:
 	MOVE.W	#$0001,D1
 lbC04F720:
-	TST.B	gameEndModeFlag
+	TST.B	raceCompletionState
 	BNE	lbC04F798
 	MOVE.L	#player1LapCounter,A1			; Lap counter array
 	MOVE.B	$00(A1,D1.W),D0			; Get player's lap count
 	CMP.B	maxLapsForRace,D0			; Compare with max laps (typically 4)
 	BNE	lbC04F798			; Skip if not finished
-	MOVE.B	D0,gameEndModeFlag		; Set race end flag
+	MOVE.B	D0,raceCompletionState		; Set race end flag
 	MOVE.B	blinkCountdownTimer,D0
 	BNE	lbC04F758
 	MOVE.B	#$2C,D0
 	MOVE.B	D0,blinkCountdownTimer
 lbC04F758:
 	MOVE.W	D1,-(SP)
-	JSR	setupRaceDisplayMode
+	JSR	renderLeaderCarIcon
 	MOVE.W	(SP)+,D1
 	CMP.W	#$000B,D2
 	BEQ	lbC04F780
@@ -7428,7 +7428,7 @@ lbC04F986:
 lbC04F996:
 	RTS
 
-setupResultScreenDisplay:
+renderResultsCarIcon:
 	MOVE.B	#$0B,D2
 	MOVE.B	raceWinnerBits,D0
 	BNE	renderPlayer2CarGraphic
@@ -7440,9 +7440,9 @@ renderPlayer2CarGraphic:
 	BEQ	lbC04F9C0
 	MOVE.B	#$12,D0
 lbC04F9C0:
-	BRA	lbC04F9EC
+	BRA	renderCarIcon
 
-setupRaceDisplayMode:
+renderLeaderCarIcon:
 	MOVE.B	#$0B,D2
 	JSR	checkForTieCondition
 	BPL	renderPlayer1CarGraphic
@@ -7451,9 +7451,9 @@ renderPlayer1CarGraphic:
 	MOVE.B	D2,unusedDisplayFlag1
 	MOVE.B	#$0F,D0
 	CMP.B	#$07,D2
-	BEQ	lbC04F9EC
+	BEQ	renderCarIcon
 	MOVE.B	#$10,D0
-lbC04F9EC:
+renderCarIcon:
 	MOVE.W	D2,-(SP)
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	frameBuffers,renderFrameBuffer
@@ -7468,13 +7468,13 @@ lbC04F9EC:
 	MOVE.W	(SP)+,D2
 	RTS
 
-updateFrameTimingEffects:
+renderDistanceDisplay:
 	MOVE.B	frameCounter,D0
 	AND.B	#$03,D0
-	BEQ	lbC04FA3A
+	BEQ	.render
 	RTS
 
-lbC04FA3A:
+.render:
 	MOVE.B	#$00,D1
 	MOVE.B	D1,D5
 	MOVE.B	#$00,D2
@@ -7483,33 +7483,33 @@ lbC04FA3A:
 	LSR.W	#$02,D3
 	ADD.W	D3,D0
 	LSR.W	#$02,D0
-	JMP	lbC04FA5E
+	JMP	.extractThousands
 
-lbC04FA58:
+.thousandsLoop:
 	SUB.W	#$03E8,D0
 	ADDQ.B	#$01,D5
-lbC04FA5E:
+.extractThousands:
 	CMP.W	#$03E8,D0
-	BGE	lbC04FA58
-	JMP	lbC04FA72
+	BGE	.thousandsLoop
+	JMP	.extractHundreds
 
-lbC04FA6C:
+.hundredsLoop:
 	SUB.W	#$0064,D0
 	ADDQ.B	#$01,D2
-lbC04FA72:
+.extractHundreds:
 	CMP.W	#$0064,D0
-	BGE	lbC04FA6C
-	JMP	lbC04FA86
+	BGE	.hundredsLoop
+	JMP	.extractTens
 
-lbC04FA80:
+.tensLoop:
 	SUB.B	#$0A,D0
 	ADDQ.B	#$01,D1
-lbC04FA86:
+.extractTens:
 	CMP.B	#$0A,D0
-	BGE	lbC04FA80
-	MOVE.B	D0,interpolatedPosition
-	MOVE.B	D1,tempByte1
-	MOVE.B	D2,savedSegmentIndex
+	BGE	.tensLoop
+	MOVE.B	D0,tempByte1
+	MOVE.B	D1,tempByte3
+	MOVE.B	D2,tempByte2
 	MOVE.B	D5,speedDisplayThousands
 	MOVE.B	#$01,textHorizontalOffset
 	MOVE.B	#$04,textYOffset
@@ -7520,26 +7520,25 @@ lbC04FA86:
 	MOVE.B	#$17,D0
 	JSR	renderCharacter
 	MOVE.B	#$F0,D0
-	TST.B	carCrashedFlag
-	BPL	lbC04FAE6
+	TST.B	opponentAheadFlag
+	BPL	.signOk
 	MOVE.B	#$FD,D0
-lbC04FAE6:
+.signOk:
 	JSR	renderDigitAndAdvance
 	MOVE.B	speedDisplayThousands,D0
 	JSR	renderDigitAndAdvance
-	MOVE.B	savedSegmentIndex,D0
+	MOVE.B	tempByte2,D0
+	JSR	renderDigitAndAdvance
+	MOVE.B	tempByte3,D0
 	JSR	renderDigitAndAdvance
 	MOVE.B	tempByte1,D0
 	JSR	renderDigitAndAdvance
-	MOVE.B	interpolatedPosition,D0
-	JSR	renderDigitAndAdvance
 	MOVE.B	#$00,textHorizontalOffset
 	MOVE.B	#$00,textYOffset
-	TST.B	gameEndModeFlag
-	BNE	lbC04FB3C
-	JSR	setupRaceDisplayMode
-lbC04FB3C:
-	RTS
+	TST.B	raceCompletionState
+	BNE	.done
+	JSR	renderLeaderCarIcon
+.done:	RTS
 
 updateSpeedometerBar:
 	MOVE.W	carLocalVelocityZ,D0
@@ -7690,7 +7689,7 @@ displayHUDText:
 	RTS
 
 setMessageParameters:
-	MOVE.B	#$80,lbB00D48E
+	MOVE.B	#$80,gameMessageActiveFlag
 	MOVE.B	D2,gameMessageIndex
 	MOVE.B	D0,gameMessageMode
 	RTS
@@ -7698,7 +7697,7 @@ setMessageParameters:
 displayGameMessage:
 	JSR	setMessageParameters
 updateGameMessageDisplay:
-	TST.B	lbB00D48E
+	TST.B	gameMessageActiveFlag
 	BMI	.displayMessage
 .done:
 	RTS
@@ -7887,7 +7886,7 @@ selectGameMode:
 	CMP.B	#$01,D0
 	BEQ	gameModeMultiplayer
 	BGT	gameModeComputerLink
-	JSR	screenUpdate
+	JSR	runPlayerNameEntry
 	JMP	gameModeSelected
 
 addMultiplayerPlayers:
@@ -7899,7 +7898,7 @@ addMultiplayerPlayers:
 	BNE	lbC05021A		; Exit if other option chosen
 	ADDQ.B	#$01,additionalPlayerCount	; Increment player count
 gameModeMultiplayer:
-	JSR	screenUpdate		; Update display
+	JSR	runPlayerNameEntry		; Update display
 	MOVE.B	additionalPlayerCount,D0
 	CMP.B	#$07,D0			; Check if < 7 players
 	BCS	addMultiplayerPlayers	; Loop back to add more
@@ -8153,7 +8152,7 @@ randomizeCarAssignments:
 	MOVE.B	#$01,D1
 	MOVE.B	#$01,remainingRaces
 lbC050782:
-	MOVE.B	D1,tempByte1
+	MOVE.B	D1,tempByte3
 	MOVE.B	D1,D0
 	MOVE.B	selectedTrack,D2
 	BEQ	lbC0507B6
@@ -8185,7 +8184,7 @@ lbC0507F2:
 	ADDQ.B	#$01,D1
 	ADDQ.B	#$01,D2
 	DBRA	D3,lbC0507F2
-	MOVE.B	tempByte1,D1
+	MOVE.B	tempByte3,D1
 	SUBQ.B	#$01,D1
 	BPL	lbC050782
 	MOVE.B	additionalPlayerCount,D1
@@ -8280,7 +8279,7 @@ lbC050946:
 
 lbC05094A:
 	MOVE.L	#networkTransferBuffer,A0
-	MOVE.L	#memory_7A01A,A1
+	MOVE.L	#leagueSeasonData,A1
 	MOVE.W	#$00BF,D0
 	TST.B	networkSyncStateFlag
 	BNE	lbC05096C
@@ -8400,7 +8399,7 @@ lbC050B1E:
 	ASL.B	#$04,D0
 	MOVE.B	D0,D1
 	MOVE.B	#$0C,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 lbC050B34:
 	MOVE.L	#playerNames,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -8408,13 +8407,13 @@ lbC050B34:
 	MOVE.B	D0,$00(A2,D2.W)
 	ADDQ.B	#$01,D1
 	ADDQ.B	#$01,D2
-	SUBQ.B	#$01,tempByte2
+	SUBQ.B	#$01,tempByte4
 	BNE	lbC050B34
 	MOVE.W	(SP)+,D1
 	RTS
 
 transferLapRecords:
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	currentTrackID,D1
 	MOVE.L	#trackIDLookupTable,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -8425,7 +8424,7 @@ lbC050B7E:
 	ASL.B	#$04,D0
 	MOVE.B	D0,D1
 	MOVE.B	#$00,D2
-	TST.B	tempByte2
+	TST.B	tempByte4
 	BMI	lbC050C02
 lbC050B90:
 	MOVE.L	#lbL050548,A2
@@ -8691,7 +8690,7 @@ lbC0510CC:
 	MOVE.B	#$00,D1
 lbC0510D0:
 	MOVE.B	$00(A0,D2.W),D0
-	MOVE.B	D0,interpolatedPosition
+	MOVE.B	D0,tempByte1
 	MOVE.B	D1,speedDisplayThousands
 	MOVE.B	lbB052586,D1
 	MOVE.B	$00(A1,D1.W),D0
@@ -8700,11 +8699,11 @@ lbC0510D0:
 	ADDQ.B	#$01,D1
 	TST.B	currentMenuItem
 	BPL	lbC051110
-	CMP.B	interpolatedPosition,D1
+	CMP.B	tempByte1,D1
 	BEQ	lbC05111C
 	BNE	lbC0510D0
 lbC051110:
-	CMP.B	interpolatedPosition,D0
+	CMP.B	tempByte1,D0
 	BNE	lbC0510D0
 	MOVE.B	D1,D0
 lbC05111C:
@@ -8830,10 +8829,10 @@ lbC0512D2:
 lbC0512F2:
 	MOVE.B	#$67,D1
 lbC0512F6:
-	MOVE.B	D1,interpolatedPosition
+	MOVE.B	D1,tempByte1
 	JSR	checkKeyPressed
 	BNE	lbC051386
-	MOVE.B	interpolatedPosition,D0
+	MOVE.B	tempByte1,D0
 	MOVE.B	lbB0513DC,D1
 	MOVE.L	#lbB0513DE,A1
 	MOVE.B	$00(A1,D1.W),D2
@@ -8856,7 +8855,7 @@ lbC05135C:
 	MOVE.B	#$00,D0				; chime
 	JSR	playSample
 lbC051366:
-	MOVE.B	interpolatedPosition,D1
+	MOVE.B	tempByte1,D1
 	JSR	checkKeyPressed
 	BEQ	lbC051366
 	MOVE.B	#$03,D2
@@ -8864,7 +8863,7 @@ lbC051366:
 	JMP	lbC051396
 
 lbC051386:
-	MOVE.B	interpolatedPosition,D1
+	MOVE.B	tempByte1,D1
 	SUBQ.B	#$01,D1
 	BNE	lbC0512F6
 	BRA	lbC0512F2
@@ -8894,13 +8893,13 @@ renderMessagePanel:
 	JMP	renderMaskedGraphicsObject
 
 transmitNetworkMessage:
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	additionalPlayerCount,D0
 	BEQ	lbC05142C
 	MOVE.B	currentPlayerID,D0
 	JSR	lbC049D72
 	MOVE.L	#controlKeys,A1
-	TST.B	tempByte2
+	TST.B	tempByte4
 	BPL	lbC05142E
 lbC05141E:
 	MOVE.B	$00(A2,D2.W),$00(A1,D1.W)
@@ -9056,13 +9055,13 @@ getSegmentAtGridCoordinate:
 	CMP.B	#$10,D0
 	BCC	lbC051750
 	ASL.B	#$04,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	trackViewOffsetX,D0
 	ADD.B	currentPlayerNameOffset,D0
 	CMP.B	#$10,D0
 	BCC	lbC051750
 	AND.B	#$0F,D0
-	OR.B	tempByte2,D0
+	OR.B	tempByte4,D0
 	MOVE.B	D0,D1
 	MOVE.L	#trackSegmentGrid,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -9186,11 +9185,11 @@ lbC0518F2:
 	RTS
 
 adjustNetworkCoordinates:
-	MOVE.B	D0,tempByte2
-	MOVE.B	D2,tempByte1
-	CMP.B	tempByte2,D2
+	MOVE.B	D0,tempByte4
+	MOVE.B	D2,tempByte3
+	CMP.B	tempByte4,D2
 	BCC	lbC051966
-	ADD.B	tempByte1,D0
+	ADD.B	tempByte3,D0
 	BCC	lbC051952
 	MOVE.B	D1,D0
 	AND.B	#$0F,D0
@@ -9207,7 +9206,7 @@ lbC051952:
 	JMP	lbC051994
 
 lbC051966:
-	ADD.B	tempByte1,D0
+	ADD.B	tempByte3,D0
 	BCC	lbC051988
 	MOVE.B	D1,D0
 	AND.B	#$F0,D0
@@ -9232,7 +9231,7 @@ lbC0519A0:
 
 processCoordinateData:
 	LSR.W	#$08,D0
-	MOVE.B	D0,savedSegmentIndex
+	MOVE.B	D0,tempByte2
 	MOVE.L	#cameraWorldX,A0
 	MOVE.L	#lbB00D407,A1
 	MOVE.L	#trackViewOffsetX,A2
@@ -9256,9 +9255,9 @@ lbC0519E4:
 	MOVE.B	D0,$0002(A1)
 	LSR.W	#$08,D0
 	MOVE.B	D0,$0002(A2)
-	TST.B	savedSegmentIndex
+	TST.B	tempByte2
 	BMI	lbC051A40
-	BTST	#$06,savedSegmentIndex
+	BTST	#$06,tempByte2
 	BNE	lbC051A22
 	MOVE.L	cameraWorldX,rotatedCameraX
 	MOVE.L	cameraWorldZ,rotatedCameraZ
@@ -9272,7 +9271,7 @@ lbC051A22:
 	RTS
 
 lbC051A40:
-	BTST	#$06,savedSegmentIndex
+	BTST	#$06,tempByte2
 	BNE	lbC051A72
 	MOVE.L	#$08000000,D0
 	SUB.L	cameraWorldX,D0
@@ -9464,13 +9463,13 @@ lbC051D4C:
 	MOVE.L	#segmentProcessedFlags,A0
 	MOVE.B	#$00,(A0)
 	MOVE.B	#$00,$00(A0,D1.W)
-	MOVE.W	lbW00D51E,renderDataPointer
+	MOVE.W	lbW00D51E,renderCommandQueueOffset
 	MOVE.W	#$0000,D1
 	MOVE.B	#$00,segmentProcessedFlag
 	MOVE.B	#$00,processedSegmentIndices1
 	MOVE.B	#$00,savedPlayerIndex
-	ADD.W	#$0010,renderDataPointer
-	MOVE.L	#memory_3D80,lineDrawingBufferPointer
+	ADD.W	#$0010,renderCommandQueueOffset
+	MOVE.L	#lineDrawingBuffer,lineDrawingBufferPointer
 	JSR	drawTrackSegmentWireframe
 	JSR	renderTrackNear
 lbC051DA6:
@@ -9654,7 +9653,7 @@ lbC0520BC:
 	MOVE.W	D4,carRenderDistance
 	EOR.W	#$8000,D5
 	LSR.W	#$08,D5
-	MOVE.B	D5,carCrashedFlag
+	MOVE.B	D5,opponentAheadFlag
 	RTS
 
 checkForTieCondition:
@@ -9718,7 +9717,7 @@ updateTurboBoostSystem:
 lbC0521CC:
 	MOVE.B	boostFuelLevel,D0
 	BEQ	lbC052210
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	lbC052200
 	SUBQ.B	#$01,fuelConsumptionTimer
 	BPL	lbC052200
@@ -9824,17 +9823,17 @@ lbC05231E:
 lbC052322:
 	TST.B	currentMenuItem
 	BPL	lbC05234C
-	MOVE.L	#memory_7A01A,A1
+	MOVE.L	#leagueSeasonData,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.B	D0,interpolatedPosition
+	MOVE.B	D0,tempByte1
 	MOVE.L	#memory_7A03F,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.B	D0,savedSegmentIndex
+	MOVE.B	D0,tempByte2
 lbC05234C:
 	MOVE.B	#$00,D2
-	MOVE.B	D2,tempByte1
+	MOVE.B	D2,tempByte3
 lbC052356:
-	ADDQ.B	#$01,tempByte1
+	ADDQ.B	#$01,tempByte3
 	BNE	lbC052366
 	ADDQ.B	#$01,D2
 	BMI	lbC052482
@@ -9847,18 +9846,18 @@ lbC052366:
 	CMP.B	$00(A1,D1.W),D0
 	BNE	lbC052356
 	MOVE.B	D2,D0
-	MOVE.L	#memory_7A01A,A1
+	MOVE.L	#leagueSeasonData,A1
 	MOVE.B	D0,$00(A1,D1.W)
-	MOVE.B	tempByte1,D0
+	MOVE.B	tempByte3,D0
 	MOVE.L	#memory_7A03F,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	JMP	lbC0523D6
 
 lbC0523AC:
-	CMP.B	interpolatedPosition,D2
+	CMP.B	tempByte1,D2
 	BNE	lbC052356
-	MOVE.B	tempByte1,D0
-	CMP.B	savedSegmentIndex,D0
+	MOVE.B	tempByte3,D0
+	CMP.B	tempByte2,D0
 	BNE	lbC052356
 	MOVE.B	speedDisplayThousands,D0
 	MOVE.L	#networkTransferBuffer,A1
@@ -10301,7 +10300,7 @@ lbC0529AC:
 	BEQ	lbC052A3C
 	MOVE.B	tempWord1,D3
 	EOR.B	D3,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	segmentSteeringFlags,D0
 	BPL	lbC052A20
 	MOVE.B	steeringInputDirection,D0
@@ -10322,7 +10321,7 @@ lbC052A04:
 lbC052A20:
 	MOVE.B	segmentBaseSteeringOffset,D0
 lbC052A26:
-	TST.B	tempByte2
+	TST.B	tempByte4
 	BMI	lbC052A36
 	ADD.B	steeringScaleFactor,D0
 lbC052A36:
@@ -10346,7 +10345,7 @@ lbC052A60:
 	BPL	lbC052AC2
 	MOVE.B	#$FF,D2
 lbC052A88:
-	MOVE.B	D2,tempByte1
+	MOVE.B	D2,tempByte3
 	MOVE.W	carLocalVelocityZ,D0
 	BPL	lbC052A9A
 	NEG.W	D0
@@ -10355,7 +10354,7 @@ lbC052A9A:
 	BPL	lbC052AA6
 	MOVE.W	#$7F00,D0
 lbC052AA6:
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -10392,9 +10391,9 @@ lbC052B14:
 	RTS
 
 lbC052B1C:
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.W	carLocalVelocityZ,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -10425,11 +10424,11 @@ displayTrackHeader:
 
 multiplyAndRandomize:
 	AND.W	#$00FF,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	AND.W	#$00FF,D3
 	MULU	D0,D3
 	MOVE.W	D3,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	LSR.W	#$08,D0
 	RTS
 
@@ -10454,14 +10453,14 @@ lbC052BEE:
 	JSR	multiplyAndRandomize
 	NEG.W	D3
 	MOVE.W	D3,D0
-	MOVE.B	D3,tempByte2
+	MOVE.B	D3,tempByte4
 	LSR.W	#$08,D0
 	RTS
 
 	BCLR	#$07,trackSideIndicatorCopy
 	ASL.W	#$08,D0
-	OR.B	tempByte2,D0
-	MOVE.B	tempByte1,D3
+	OR.B	tempByte4,D0
+	MOVE.B	tempByte3,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	lbC052C28
@@ -10470,7 +10469,7 @@ lbC052C28:
 	MULS	D0,D3
 	ASR.L	#$08,D3
 	MOVE.W	D3,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	LSR.W	#$08,D0
 	RTS
 
@@ -10828,14 +10827,11 @@ lbC053106:
 	RTS
 
 applyMomentumAmplification:
-;	MOVE.W	#$0192,D3			; originally $0114 ($0192 = ($114/$100)^6*$100)
+	MOVE.W	#$0678,D3			; originally $0114
 ;	BEQ	lbC05311A			; originally BEQ
-;	MULS	D3,D0
-;	ASR.L	#$08,D0
+	MULS	D3,D0
+	ASR.L	#$08,D0
 ;lbC05311A:
-	move.l	d0,d3				; added
-	add.l	d0,d0				; added
-	add.l	d3,d0
 	ADD.W	D6,D0
 	RTS
 
@@ -10847,7 +10843,7 @@ updateOpponentLapTime:
 	BNE	lbC05315A
 	MOVE.B	$01(A0,D3.W),D0			; Load opponent time modifier
 	EOR.B	#$FF,D0				; Invert bits
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.B	#$0D,D0				; Multiplier
 	JSR	multiplyAndRandomize		; Add randomness
 	CMP.B	#$0A,D0
@@ -11151,7 +11147,7 @@ updateWheelSuspensionPhysics:
 	MOVE.W	D0,maxCompressionVelocity
 .maxDistanceOk1:
 	SUB.W	#$0600/FRAMERATE_MULTIPLIER,D0			; originally $0600
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	.damageAccumulationDone1
 	ADDQ.B	#$01,highCompressionFrameCount
 	MOVE.B	highCompressionFrameCount,D3
@@ -11225,7 +11221,7 @@ updateWheelSuspensionPhysics:
 	MOVE.W	D0,maxCompressionVelocity
 .maxDistanceOk2:
 	SUB.W	#$0600/FRAMERATE_MULTIPLIER,D0				; originally $0600
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	.damageAccumulationDone2
 	ADDQ.B	#$01,highCompressionFrameCount
 	MOVE.B	highCompressionFrameCount,D3
@@ -11299,7 +11295,7 @@ updateWheelSuspensionPhysics:
 	MOVE.W	D0,maxCompressionVelocity
 .maxDistanceOk3:
 	SUB.W	#$0600/FRAMERATE_MULTIPLIER,D0				; originally $0600
-	TST.B	skipDamageFlag
+	TST.B	frameThrottleFlag
 	BMI	.damageAccumulationDone3
 	ADDQ.B	#$01,highCompressionFrameCount
 	MOVE.B	highCompressionFrameCount,D3
@@ -11556,7 +11552,7 @@ lbC053B7A:
 	MOVE.L	#$00000005,D7
 	TST.B	proximityEffectTimer
 	BPL	lbC053BA4
-	TST.B	carCrashedFlag
+	TST.B	opponentAheadFlag
 	BMI	lbC053BA4
 	MOVE.W	#$0014,D3
 	ASL.W	#$07,D3
@@ -11599,17 +11595,17 @@ calculateSuspensionSpringForces:
 	ASR.L	#$03,D0
 	MOVE.W	D0,rollDisplacement
 	JSR	attenuateDisplacementValue
-	MOVE.B	tempAttenuatedValue,tempByte1
+	MOVE.B	tempAttenuatedValue,tempByte3
 	MOVE.B	attenuatedDisplacementValue,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,pitchSpringComponent
 	MOVE.B	rawDisplacementValue,D0
 	JSR	multiplyAndRandomize
 	MOVE.B	D0,rollSpringComponent
-	MOVE.B	rollSpringComponent,tempByte1
+	MOVE.B	rollSpringComponent,tempByte3
 	MOVE.B	rollDisplacement,trackSideIndicatorCopy
 	MOVE.W	averageWheelVelocity,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	.rollComponentPositive
@@ -11620,10 +11616,10 @@ calculateSuspensionSpringForces:
 	ASL.L	#$03,D0				; originally $01
 	SWAP	D0
 	MOVE.W	D0,rollSpringAngle
-	MOVE.B	pitchSpringComponent,tempByte1
+	MOVE.B	pitchSpringComponent,tempByte3
 	MOVE.B	pitchReferenceZero,trackSideIndicatorCopy
 	MOVE.W	averageWheelVelocity,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	.pitchComponentPositive
@@ -11634,10 +11630,10 @@ calculateSuspensionSpringForces:
 	ASL.L	#$03,D0				; originally $01
 	SWAP	D0
 	MOVE.W	D0,pitchSpringAngle
-	MOVE.B	yawSpringComponent,tempByte1
+	MOVE.B	yawSpringComponent,tempByte3
 	MOVE.B	pitchDisplacement,trackSideIndicatorCopy
 	MOVE.W	averageWheelVelocity,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	AND.W	#$00FF,D3
 	TST.B	trackSideIndicatorCopy
 	BPL	.yawComponentPositive
@@ -12062,7 +12058,7 @@ lbC054480:
 	MOVE.W	D0,D1
 	MOVE.W	#$0000,D0
 	MOVE.W	#$0001,D2
-	MOVE.L	#memory_0400,A1
+	MOVE.L	#saveSlotNameBuffer,A1
 	JSR	renderSlotGraphics
 	CLR.W	D1
 	CLR.W	D2
@@ -12159,7 +12155,7 @@ renderSlotGraphicsAtPosition:
 	MOVE.W	#$0001,D2
 	MOVE.W	#$0000,D3
 	MOVE.L	#memory_7A21A,A0
-	MOVE.L	#memory_0400,A1
+	MOVE.L	#saveSlotNameBuffer,A1
 	JSR	renderSlotGraphics
 	CLR.W	D1
 	CLR.W	D0
@@ -12998,7 +12994,7 @@ handleProximityEffects:
 	MOVE.B	carRenderDistanceLow,D0
 	CMP.B	#$40,D0
 	BCC	lbC055030
-	TST.B	carCrashedFlag
+	TST.B	opponentAheadFlag
 	BMI	lbC05502A
 	CMP.B	#$32,trackBoostThreshold
 	BCC	lbC055030
@@ -13038,7 +13034,7 @@ lbC0550A6:
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$08,D0
 	BEQ	lbC0550D0
-	TST.B	carCrashedFlag
+	TST.B	opponentAheadFlag
 	BMI	lbC0550D0
 	MOVE.B	carRenderDistanceLow,D0
 	CMP.B	#$0E,D0
@@ -13048,7 +13044,7 @@ lbC0550D0:
 	JMP	lbC0551B6
 
 lbC0550DC:
-	TST.B	carCrashedFlag
+	TST.B	opponentAheadFlag
 	BMI	lbC055132
 	CMP.B	#$32,D0
 	BCC	lbC05510C
@@ -13090,7 +13086,7 @@ lbC055164:
 	MOVE.B	D2,currentDataIndex
 lbC05516A:
 	MOVE.B	#$02,D0
-	MOVE.B	D0,savedSegmentIndex
+	MOVE.B	D0,tempByte2
 	MOVE.B	opponentSegmentIndex,D1
 	MOVE.B	D1,currentSegmentIndex
 lbC055180:
@@ -13104,7 +13100,7 @@ lbC055180:
 	MOVE.B	#$80,currentDataIndex
 lbC0551A6:
 	JSR	advanceToNextSegment
-	SUBQ.B	#$01,savedSegmentIndex
+	SUBQ.B	#$01,tempByte2
 	BNE	lbC055180
 lbC0551B6:
 	MOVE.B	aiLateralOffset1,D0
@@ -13185,9 +13181,9 @@ processOpponentLogic:
 	JSR	applyOpponentCollisionAvoidance
 	JSR	updateOpponentAcceleration
 	MOVE.B	segmentOrientationAlternate,D0
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.W	aiCurrentSpeed,D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -13270,7 +13266,7 @@ lbC055406:
 	RTS
 
 updateOpponentAcceleration:
-	MOVE.W	#$0000,interpolatedPosition
+	MOVE.W	#$0000,tempByte1
 	MOVE.B	lbB00D4EF,D0
 	ASL.B	#$01,D0
 	MOVE.B	aiCurrentSpeed,D0
@@ -13278,17 +13274,17 @@ updateOpponentAcceleration:
 	ROXL.B	#$01,D0
 	TST.B	proximityEffectTimer
 	BPL	lbC055444
-	TST.B	carCrashedFlag
+	TST.B	opponentAheadFlag
 	BPL	lbC055444
 	SUB.B	#$14,D0
 	BCC	lbC055444
 	MOVE.B	#$00,D0
 lbC055444:
-	MOVE.B	D0,tempByte1
+	MOVE.B	D0,tempByte3
 	MOVE.B	aiCurrentSpeed,D0
 	JSR	multiplyAndRandomize
 	ASR.W	#$06,D3
-	MOVE.W	D3,interpolatedPosition
+	MOVE.W	D3,tempByte1
 	MOVE.B	aiEnabled,D0
 	BEQ	lbC055494
 	MOVE.W	aiTargetSpeed,D0
@@ -13304,7 +13300,7 @@ lbC05548E:
 	MOVE.W	D0,aiTargetSpeed
 lbC055494:
 	MOVE.W	aiTargetSpeed,D0
-	SUB.W	interpolatedPosition,D0
+	SUB.W	tempByte1,D0
 	TST.B	aiEnabled
 	BEQ.L	lbC0554E4
 	MOVE.W	boundsMinX,D3
@@ -13789,7 +13785,7 @@ updateOpponentWheelSuspension:
 	BNE	.dampingDone
 	MOVE.B	aiEnabled,D0
 	BNE	.dampingDone
-;	TST.B	interpolatedPosition			; fixed nop code
+;	TST.B	tempByte1			; fixed nop code
 ;	BMI	lbC055BBC
 ;lbC055BBC:
 	MOVE.W	$00(A4,D1.W),D0
@@ -14003,7 +13999,7 @@ renderMatchupScreenCommon:
 	JSR	renderDivisionBackgroundAndHeader
 	MOVE.B	displayTrackID,D0
 	ASL.B	#$01,D0
-	MOVE.B	D0,tempByte2
+	MOVE.B	D0,tempByte4
 	MOVE.B	currentRaceNumber,D0
 	TST.B	additionalPlayerCount
 	BEQ	.calculateRaceConfigIndex
@@ -14011,7 +14007,7 @@ renderMatchupScreenCommon:
 	EOR.B	#$01,D0
 .calculateRaceConfigIndex:
 	AND.B	#$01,D0
-	ADD.B	tempByte2,D0
+	ADD.B	tempByte4,D0
 	MOVE.B	D0,D1
 	JSR	configureSelectedRace
 	BTST	#$00,displayFlags
@@ -14341,10 +14337,10 @@ renderPlayerName:
 	JMP	lbC056548
 
 renderTrackName:
-	MOVE.L	#levelNames,A0		; Point to track names table
+	MOVE.L	#trackNames,A0		; Point to track names table
 	MOVE.B	#$0F,D2			; Set length to 15 characters
 lbC056548:
-	MOVE.B	D2,tempByte2			; Store character count
+	MOVE.B	D2,tempByte4			; Store character count
 	ASL.B	#$04,D1			; Multiply track index by 16 (each name is 16 bytes)
 	MOVE.B	#$00,D2			; Initialize character counter
 lbC056554:
@@ -14352,7 +14348,7 @@ lbC056554:
 	JSR	renderCharacter		; Render the character
 	ADDQ.B	#$01,D1			; Move to next character
 	ADDQ.B	#$01,D2			; Increment counter
-	CMP.B	tempByte2,D2			; Check if 15 characters rendered
+	CMP.B	tempByte4,D2			; Check if 15 characters rendered
 	BNE	lbC056554		; Loop until done
 	RTS
 
@@ -14631,7 +14627,7 @@ lbC0568E2:
 	JSR	generateTrackEdgeLines
 	JSR	shiftCoordinateArrays
 	JSR	advanceToNextSegment
-	MOVE.W	renderDataPointer,lbW05AC2C
+	MOVE.W	renderCommandQueueOffset,lbW05AC2C
 	MOVE.W	transformedCoordinates1,lbW0579FC
 	MOVE.W	transformedCoordinates2,lbW0579FE
 	JSR	transformCoordinates
@@ -14644,13 +14640,13 @@ lbC05699E:
 	BEQ	lbC0569AE
 	JSR	handleNetworkProtocol
 lbC0569AE:
-	MOVE.W	renderDataPointer,-(SP)
+	MOVE.W	renderCommandQueueOffset,-(SP)
 	JSR	renderHorizon
 	JSR	renderMountainHorizon
-	MOVE.W	(SP)+,renderDataPointer
+	MOVE.W	(SP)+,renderCommandQueueOffset
 	JSR	updateOpponentVisibility
 	JSR	renderTrackFar
-	MOVE.W	lbW05AC2C,renderDataPointer
+	MOVE.W	lbW05AC2C,renderCommandQueueOffset
 	JSR	renderTrackNear
 lbC0569E2:
 	TST.B	raceStartTimer
@@ -15076,7 +15072,7 @@ lbC056FD0:
 	SUBQ.B	#$04,D1
 	BPL	lbC056F94
 	ADDQ.B	#$04,D1
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	CMP.W	#$0020,D3
 	BEQ	lbC05701E
 	MOVE.W	D3,-(SP)
@@ -15085,11 +15081,11 @@ lbC056FD0:
 	BEQ	lbC057006
 	ADDQ.W	#$04,D3
 lbC057006:
-	MOVE.W	D3,renderDataPointer
+	MOVE.W	D3,renderCommandQueueOffset
 	MOVE.W	D1,D2
 	ADD.B	#$78,D1
 	JSR	drawClippedLine
-	MOVE.W	(SP)+,renderDataPointer
+	MOVE.W	(SP)+,renderCommandQueueOffset
 lbC05701E:
 	RTS
 
@@ -15334,12 +15330,12 @@ lbC057324:
 	ADD.B	#$7A,D1
 	MOVE.W	#$000B,D3
 	JSR	renderBarrierPost
-	MOVE.W	#$0020,renderDataPointer
+	MOVE.W	#$0020,renderCommandQueueOffset
 	RTS
 
 renderBarrierPost:
 	ASL.W	#$02,D3
-	MOVE.W	D3,renderDataPointer
+	MOVE.W	D3,renderCommandQueueOffset
 	MOVE.L	#coordinateLookupTable,A4
 	MOVE.L	#transformedVertexBounds,A5
 	MOVE.B	D1,savedPlayerIndex
@@ -15363,7 +15359,7 @@ lbC05739C:
 
 lbC0573CC:
 	MOVE.L	#renderCommandQueue,A1
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	RTS
 
@@ -15393,10 +15389,10 @@ lbC057414:
 	CMP.W	#$0078,D1
 	BGE	lbC057474
 	MOVE.B	#$00,D0
-	MOVE.B	lbB00D40F,tempByte1
+	MOVE.B	lbB00D40F,tempByte3
 	MOVE.W	$00(A6,D1.W),D0
 	SUB.W	-$04(A6,D1.W),D0
-	MOVE.B	tempByte1,D3
+	MOVE.B	tempByte3,D3
 	ASL.W	#$07,D3
 	BCLR	#$0F,D3
 	MULS	D3,D0
@@ -15908,77 +15904,458 @@ chainAnimationComplete:
 	RTS
 
 setPixelColor:
-	LSR.B	#$01,D0
-	BCS	lbC057C62
-	BCLR	#$06,lbB057D05
-	BCLR	#$06,lbB057D1B
-	BRA	lbC057C72
-
-lbC057C62:
-	BSET	#$06,lbB057D05
-	BSET	#$06,lbB057D1B
-lbC057C72:
-	LSR.B	#$01,D0
-	BCS	lbC057C8C
-	BCLR	#$06,lbB057D09
-	BCLR	#$06,lbB057D1D
-	BRA	lbC057C9C
-
-lbC057C8C:
-	BSET	#$06,lbB057D09
-	BSET	#$06,lbB057D1D
-lbC057C9C:
-	LSR.B	#$01,D0
-	BCS	lbC057CB6
-	BCLR	#$06,lbB057D0D
-	BCLR	#$06,lbB057D21
-	BRA	lbC057CC6
-
-lbC057CB6:
-	BSET	#$06,lbB057D0D
-	BSET	#$06,lbB057D21
-lbC057CC6:
-	LSR.B	#$01,D0
-	BCS	lbC057CE0
-	BCLR	#$06,lbB057D11
-	BCLR	#$06,lbB057D25
-	BRA	lbC057CF0
-
-lbC057CE0:
-	BSET	#$06,lbB057D11
-	BSET	#$06,lbB057D25
-lbC057CF0:
+;	LSR.B	#$01,D0
+;	BCS	lbC057C62
+;	BCLR	#$06,lbB057D05
+;	BCLR	#$06,lbB057D1B
+;	BRA	lbC057C72
+;
+;lbC057C62:
+;	BSET	#$06,lbB057D05
+;	BSET	#$06,lbB057D1B
+;lbC057C72:
+;	LSR.B	#$01,D0
+;	BCS	lbC057C8C
+;	BCLR	#$06,lbB057D09
+;	BCLR	#$06,lbB057D1D
+;	BRA	lbC057C9C
+;
+;lbC057C8C:
+;	BSET	#$06,lbB057D09
+;	BSET	#$06,lbB057D1D
+;lbC057C9C:
+;	LSR.B	#$01,D0
+;	BCS	lbC057CB6
+;	BCLR	#$06,lbB057D0D
+;	BCLR	#$06,lbB057D21
+;	BRA	lbC057CC6
+;
+;lbC057CB6:
+;	BSET	#$06,lbB057D0D
+;	BSET	#$06,lbB057D21
+;lbC057CC6:
+;	LSR.B	#$01,D0
+;	BCS	lbC057CE0
+;	BCLR	#$06,lbB057D11
+;	BCLR	#$06,lbB057D25
+;	BRA	lbC057CF0
+;
+;lbC057CE0:
+;	BSET	#$06,lbB057D11
+;	BSET	#$06,lbB057D25
+;lbC057CF0:
+	ext.w	d0
+	lsl.w	#5,d0
+	addq	#2,d0
+	move.w	d0,plotPixelOffset
 	RTS
 
 plotPixel:
 	MOVE.B	D4,D0
-	AND.W	#$000F,D0
-	EOR.W	#$000F,D0
-	CMP.W	#$0008,D0
-	BGE	lbC057D16
-	; FIXME Self modifying code here!
-	dc.b	$01
-lbB057D05:
-	dc.b	$E8,$00,$01,$01
-lbB057D09:
-	dc.b	$E8,$1F,$41,$01
-lbB057D0D:
-	dc.b	$E8,$3E,$81,$01
-lbB057D11:
-	dc.b	$E8,$5D,$C1,$4E,$75
+;	AND.W	#$000F,D0
+;	EOR.W	#$000F,D0
+;	CMP.W	#$0008,D0
+;	BGE	.highByte
+;	dc.b	$01					; BSET/BCLR $D0,$0001(A0)
+;lbB057D05:
+;	dc.b	$E8,$00,$01,$01				; BSET/BCLR D0,$1F41(A0)
+;lbB057D09:
+;	dc.b	$E8,$1F,$41,$01				; BSET/BCLR D0,$3E81(A0)
+;lbB057D0D:
+;	dc.b	$E8,$3E,$81,$01				; BSET/BCLR D0,$5DC1(A0)
+;lbB057D11:
+;	dc.b	$E8,$5D,$C1
+	move.w	d1,-(sp)
+	move.w	plotPixelOffset,d1
+	not.b	d0
+	btst	#3,d0
+	bne	.highByte
+	jmp	(pc,d1.w)
+	bclr	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bclr	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bclr	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bclr	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0001(a0)
+	bset	d0,$1f41(a0)
+	bset	d0,$3e81(a0)
+	bset	d0,$5dc1(a0)
+	move.w	(sp)+,d1
+	RTS
 
-lbC057D16:
-	AND.W	#$0007,D0
-	; FIXME Self modifying code here!
-	dc.b	$01
-lbB057D1B:
-	dc.b	$D0,$01
-lbB057D1D:
-	dc.b	$E8,$1F,$40,$01
-lbB057D21:
-	dc.b	$E8,$3E,$80,$01
-lbB057D25:
-	dc.b	$E8,$5D,$C0,$4E,$75
+.highByte:
+;	AND.W	#$0007,D0
+;	dc.b	$01					; BSET/BCLR D0,(A0)
+;lbB057D1B:
+;	dc.b	$D0,$01					; BSET/BCLR D0,$1F40(A0)
+;lbB057D1D:
+;	dc.b	$E8,$1F,$40,$01				; BSET/BCLR D0,$3E80(A0)
+;lbB057D21:
+;	dc.b	$E8,$3E,$80,$01				; BSET/BCLR D0,$5DC0(A0)
+;lbB057D25:
+;	dc.b	$E8,$5D,$C0
+	jmp	(pc,d1.w)
+	bclr	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bclr	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bclr	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bclr	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bclr	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	bset	d0,$0000(a0)
+	bset	d0,$1f40(a0)
+	bset	d0,$3e80(a0)
+	bset	d0,$5dc0(a0)
+	move.w	(sp)+,d1
+	RTS
 
 drawHorizontalLine:
 	JSR	setPixelColor
@@ -15994,26 +16371,27 @@ drawHorizontalLine:
 	ADD.L	D5,D0
 	ASL.L	#$03,D0
 	ADD.L	D0,A0
-lbC057D4E:
-	JSR	plotPixel
+.loop:	JSR	plotPixel
 	ADDQ.W	#$01,D4
 	MOVE.B	D4,D0
 	AND.B	#$0F,D0
-	BNE	lbC057D66
+	BNE	.wordOk
 	ADD.L	#$00000002,A0
-lbC057D66:
+.wordOk:
 	CMP.W	D4,D6
-	BNE	lbC057D4E
+	BNE	.loop
 	RTS
 
 applyBitplaneMask:
 	MOVE.W	D4,D2
 	NOT.W	D2
-	; FIXME Self modifying code here!
-	dc.w	$6000
-	ds.b	1
-lbB057D75:
-	dc.b	$02
+	moveq	#0,d0
+	move.b	lbB057D75,d0
+	jmp	(pc,d0.w)
+;	dc.w	$6000					; original BRA.W + self modifying code
+;	ds.b	1
+;lbB057D75:
+;	dc.b	$02
 
 lbC057D76:
 	AND.W	D2,(A4)+
@@ -16338,18 +16716,18 @@ drawClippedLine:
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.W	#$0000,lbW0581A6
 	MOVE.W	#$FFFF,lbW0581A2
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	lineDrawingBufferPointer,A0
-	CMP.L	#memory_60A8,A0
-	BLT	lbC0581EC
+	CMP.L	#lineDrawingBufferEnd,A0
+	BLT	.drawLine
 	TST.B	lineDrawingModeFlag
-	BMI	lbC0581EC
+	BMI	.drawLine
 	MOVE.L	#$80000000,$00(A1,D0.W)
 	CLR.W	D1
 	CLR.W	D2
 	RTS
 
-lbC0581EC:
+.drawLine:
 	MOVE.L	A0,$00(A1,D0.W)
 	MOVE.L	A0,A2
 	ADD.L	#$00000008,A0
@@ -17066,7 +17444,7 @@ lbC0588A8:
 	RTS
 
 initializeRenderBuffer:
-	MOVE.L	#memory_3D80,A0
+	MOVE.L	#lineDrawingBuffer,A0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	A1,A3
 	MOVE.L	#$80000000,D0
@@ -17079,12 +17457,12 @@ initializeRenderBuffer:
 	MOVE.L	D0,(A3)+
 	MOVE.B	#$00,$001E(A1)
 	MOVE.L	A0,lineDrawingBufferPointer
-	MOVE.W	#$0020,renderDataPointer
+	MOVE.W	#$0020,renderCommandQueueOffset
 	RTS
 
 manageRenderBounds:
 	MOVE.B	#$FF,previousSegmentIndex
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 lbC0588FE:
 	MOVE.L	#renderCommandQueue,A0
 	SUB.W	#$0020,D0
@@ -17108,7 +17486,7 @@ processTrackSegments:
 lbC05894A:
 	MOVE.B	D4,previousSegmentIndex
 	MOVE.B	#$00,processedSegmentIndices1
-	MOVE.W	#$0030,renderDataPointer
+	MOVE.W	#$0030,renderCommandQueueOffset
 	MOVE.B	renderingLoopIndex,D1
 	BEQ	lbC058A14
 	MOVE.L	#segmentProcessedFlags,A3
@@ -17128,7 +17506,7 @@ lbC05897C:
 
 generateTrackEdgeLines:
 	MOVE.L	#segmentProcessedFlags,A3
-	CMP.W	#$05E0,renderDataPointer
+	CMP.W	#$05E0,renderCommandQueueOffset
 	BCC	lbC058D5E
 	MOVE.B	#$FF,D4
 	MOVE.B	lbB00D4A6,D0
@@ -17170,7 +17548,7 @@ lbC058A14:
 	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.B	$00(A3,D1.W),segmentProcessedFlag
 	JSR	lbC0530D0
-	CMP.W	#$0030,renderDataPointer
+	CMP.W	#$0030,renderCommandQueueOffset
 	BEQ	lbC058B84
 	TST.W	$00(A6,D2.W)
 	BMI	lbC058A84
@@ -17185,11 +17563,11 @@ lbC058A14:
 	BRA	lbC058A98
 
 lbC058A84:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058A98:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$02(A6,D2.W)
 	BMI	lbC058AD0
 	TST.W	$02(A6,D1.W)
@@ -17203,11 +17581,11 @@ lbC058A98:
 	BRA	lbC058AE4
 
 lbC058AD0:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058AE4:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$78(A6,D2.W)
 	BMI	lbC058B1C
 	TST.W	$78(A6,D1.W)
@@ -17221,11 +17599,11 @@ lbC058AE4:
 	BRA	lbC058B30
 
 lbC058B1C:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058B30:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$7A(A6,D2.W)
 	BMI	lbC058B68
 	TST.W	$7A(A6,D1.W)
@@ -17239,11 +17617,11 @@ lbC058B30:
 	BRA	lbC058B7C
 
 lbC058B68:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058B7C:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 lbC058B84:
 	TST.B	segmentAlternateRenderFlag
 	BEQ	drawTrackSegmentWireframe
@@ -17251,11 +17629,11 @@ lbC058B84:
 	BPL	drawTrackSegmentWireframe
 	BTST	#$06,segmentProcessedFlag
 	BNE	drawTrackSegmentWireframe
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D3.W)
 	MOVE.L	#$80000000,$04(A1,D3.W)
-	ADD.W	#$0008,renderDataPointer
+	ADD.W	#$0008,renderCommandQueueOffset
 	BRA	lbC058C64
 
 drawTrackSegmentWireframe:
@@ -17272,11 +17650,11 @@ drawTrackSegmentWireframe:
 	BRA	lbC058C10
 
 lbC058BFC:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058C10:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$02(A6,D1.W)
 	BMI	lbC058C48
 	TST.W	$7A(A6,D1.W)
@@ -17290,18 +17668,18 @@ lbC058C10:
 	BRA	lbC058C5C
 
 lbC058C48:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058C5C:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 lbC058C64:
 	TST.B	segmentProcessedFlag
 	BPL	lbC058C8C
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D3.W)
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	BRA	lbC058CD8
 
 lbC058C8C:
@@ -17318,13 +17696,13 @@ lbC058C8C:
 	BRA	lbC058CD0
 
 lbC058CBC:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058CD0:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 lbC058CD8:
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.B	currentSegmentIndex,$00(A1,D3.W)
 	MOVE.B	segmentSteeringFlags,$03(A1,D3.W)
 	MOVE.B	#$09,D0
@@ -17346,10 +17724,10 @@ lbC058D26:
 lbC058D34:
 	MOVE.B	D0,$01(A1,D3.W)
 	MOVE.B	segmentProcessedFlag,$02(A1,D3.W)
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.L	#segmentProcessedFlags,A3
 	MOVE.B	D1,processedSegmentIndices1
-	CMP.W	#$05E0,renderDataPointer
+	CMP.W	#$05E0,renderCommandQueueOffset
 	BCS	lbC0589EA
 lbC058D5E:
 	RTS
@@ -17360,7 +17738,7 @@ drawTrackLines:
 	MOVE.B	#$00,D2
 	MOVE.B	#$04,D1
 lbC058D76:
-	CMP.W	#$05E0,renderDataPointer
+	CMP.W	#$05E0,renderCommandQueueOffset
 	BCC	lbC059008
 	MOVE.B	D1,savedPlayerIndex
 	MOVE.B	D2,processedSegmentIndices1
@@ -17377,11 +17755,11 @@ lbC058D76:
 	BRA	lbC058DD2
 
 lbC058DBE:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058DD2:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$02(A6,D2.W)
 	BMI	lbC058E0A
 	TST.W	$02(A6,D1.W)
@@ -17395,11 +17773,11 @@ lbC058DD2:
 	BRA	lbC058E1E
 
 lbC058E0A:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058E1E:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$78(A6,D2.W)
 	BMI	lbC058E56
 	TST.W	$78(A6,D1.W)
@@ -17413,11 +17791,11 @@ lbC058E1E:
 	BRA	lbC058E6A
 
 lbC058E56:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058E6A:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$7A(A6,D2.W)
 	BMI	lbC058EA2
 	TST.W	$7A(A6,D1.W)
@@ -17431,11 +17809,11 @@ lbC058E6A:
 	BRA	lbC058EB6
 
 lbC058EA2:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058EB6:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$78(A6,D1.W)
 	BMI	lbC058EEE
 	TST.W	$00(A6,D1.W)
@@ -17449,11 +17827,11 @@ lbC058EB6:
 	BRA	lbC058F02
 
 lbC058EEE:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F02:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$02(A6,D1.W)
 	BMI	lbC058F3A
 	TST.W	$7A(A6,D1.W)
@@ -17467,11 +17845,11 @@ lbC058F02:
 	BRA	lbC058F4E
 
 lbC058F3A:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F4E:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	TST.W	$00(A6,D1.W)
 	BMI	lbC058F86
 	TST.W	$02(A6,D1.W)
@@ -17485,18 +17863,18 @@ lbC058F4E:
 	BRA	lbC058F9A
 
 lbC058F86:
-	MOVE.W	renderDataPointer,D0
+	MOVE.W	renderCommandQueueOffset,D0
 	MOVE.L	#renderCommandQueue,A1
 	MOVE.L	#$80000000,$00(A1,D0.W)
 lbC058F9A:
-	ADD.W	#$0004,renderDataPointer
+	ADD.W	#$0004,renderCommandQueueOffset
 	MOVE.L	#renderCommandQueue,A0
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	#memory_7AB5A,A3
-	MOVE.W	$00(A3,D1.W),tempByte1
-	MOVE.B	tempByte2,D0
+	MOVE.W	$00(A3,D1.W),tempByte3
+	MOVE.B	tempByte4,D0
 	MOVE.B	D0,$00(A0,D3.W)
-	MOVE.B	tempByte1,$02(A0,D3.W)
+	MOVE.B	tempByte3,$02(A0,D3.W)
 	TST.B	lbB00D467
 	BNE	lbC058FF4
 	CMP.B	lbB00D4A6,D0
@@ -17506,7 +17884,7 @@ lbC058F9A:
 	JSR	lbC0588FE
 	MOVE.B	#$80,lbB00D467
 lbC058FF4:
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	MOVE.B	D1,D2
 	ADDQ.B	#$04,D1
 	CMP.B	lbB0579FA,D1
@@ -17542,7 +17920,7 @@ lbC05903E:
 	RTS
 
 outputClippedLine:
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	OR.B	#$80,D0
 	OR.B	D0,$00(A1,D3.W)
 	TST.W	D4
@@ -17680,7 +18058,7 @@ lbC0591B0:
 	JSR	applyScreenSpaceRotation
 	MOVE.W	#$0006,D1
 	JSR	applyScreenSpaceRotation
-	MOVE.W	#$0000,renderDataPointer
+	MOVE.W	#$0000,renderCommandQueueOffset
 	MOVE.W	#$0004,D1
 	MOVE.W	#$0006,D2
 	MOVE.B	#$80,lineDrawingModeFlag
@@ -17844,27 +18222,27 @@ expandMasksToLongwords:
 	RTS
 
 renderPlayerCarModel:
-	TST.B	carCrashedFlag
+	TST.B	opponentAheadFlag
 	BMI	lbC059A42
 	MOVE.W	carRenderDistance,D0
 	CMP.W	#$000A,D0
 	BCS	lbC059A42
 	CMP.W	#$0C80,D0
 	BGE	lbC059A42
-	MOVE.W	renderDataPointer,-(SP)
-	MOVE.W	#$05E0,renderDataPointer
+	MOVE.W	renderCommandQueueOffset,-(SP)
+	MOVE.W	#$05E0,renderCommandQueueOffset
 	JSR	clampAndSetupCoordinates
 	MOVE.B	#$80,trackRenderingEnableFlag
-	MOVE.W	#$05E0,renderDataPointer
+	MOVE.W	#$05E0,renderCommandQueueOffset
 	TST.B	curveSmoothingFlag
 	BNE	lbC0594B8
 	CMP.W	#$001C,networkEngineFlag
 	BLT	lbC0594B8
 	CMP.W	#$00E4,networkEngineFlag
 	BGT	lbC0594B8
-	ADD.W	#$0080,renderDataPointer
+	ADD.W	#$0080,renderCommandQueueOffset
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$00(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -17914,10 +18292,10 @@ lbC0594A0:
 lbC0594AA:
 	JSR	renderQuadrilateral
 lbC0594B0:
-	SUB.W	#$0080,renderDataPointer
+	SUB.W	#$0080,renderCommandQueueOffset
 lbC0594B8:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$60(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -17968,7 +18346,7 @@ lbC05954E:
 	JSR	renderQuadrilateral
 lbC059554:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$70(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18019,7 +18397,7 @@ lbC0595EA:
 	JSR	renderQuadrilateral
 lbC0595F0:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$20(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18070,7 +18448,7 @@ lbC059686:
 	JSR	renderQuadrilateral
 lbC05968C:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$18(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18121,7 +18499,7 @@ lbC059722:
 	JSR	renderQuadrilateral
 lbC059728:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$10(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18172,7 +18550,7 @@ lbC0597BE:
 	JSR	renderQuadrilateral
 lbC0597C4:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$38(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18223,7 +18601,7 @@ lbC05985A:
 	JSR	renderQuadrilateral
 lbC059860:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$30(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18274,7 +18652,7 @@ lbC0598F6:
 	JSR	renderQuadrilateral
 lbC0598FC:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$40(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18325,7 +18703,7 @@ lbC059992:
 	JSR	renderQuadrilateral
 lbC059998:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$50(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -18376,7 +18754,7 @@ lbC059A2E:
 	JSR	renderQuadrilateral
 lbC059A34:
 	MOVE.B	#$00,trackRenderingEnableFlag
-	MOVE.W	(SP)+,renderDataPointer
+	MOVE.W	(SP)+,renderCommandQueueOffset
 lbC059A42:
 	RTS
 
@@ -18386,7 +18764,7 @@ clipLineAndMakeEdge:
 	EXG	D1,D2
 lbC059A52:
 	MOVE.L	lineDrawingBufferPointer,A0
-	CMP.L	#memory_60A8,A0
+	CMP.L	#lineDrawingBufferEnd,A0
 	BGT	lbC059AB2
 	CMP.W	#$0081,D2
 	BCC	lbC059AB2
@@ -19030,7 +19408,7 @@ lbC05A1D2:
 
 renderTrackSurfaceEdge:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.B	#$0F,D0
 	JSR	setPixelColor
 	MOVE.L	$18(A4,D3.W),D0
@@ -19043,7 +19421,7 @@ lbC05A228:
 
 renderRightBarrierEdges:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	BRA	lbC05A270
 
 lbC05A23A:
@@ -19067,7 +19445,7 @@ lbC05A270:
 
 renderLeftBarrierEdges:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	BRA	lbC05A2C2
 
 lbC05A28C:
@@ -19091,7 +19469,7 @@ lbC05A2C2:
 
 renderLeftRoadEdge:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	BRA	lbC05A306
 
 lbC05A2DE:
@@ -19112,7 +19490,7 @@ lbC05A306:
 
 renderRightRoadEdge:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	BRA	lbC05A34A
 
 lbC05A322:
@@ -19134,7 +19512,7 @@ lbC05A34A:
 renderRightBarrier:
 	MOVE.B	#$80,renderingFlag
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 lbC05A36A:
 	MOVE.W	D3,lbW05B3E8
 	MOVE.L	$10(A4,D3.W),D0
@@ -19194,7 +19572,7 @@ lbC05A3FA:
 lbC05A448:
 	SUBQ.L	#$04,A1
 lbC05A44A:
-	CMP.W	renderDataPointer,D3
+	CMP.W	renderCommandQueueOffset,D3
 	BEQ	lbC05A4EA
 lbC05A454:
 	MOVE.L	$10(A4,D3.W),D0
@@ -19242,7 +19620,7 @@ lbC05A4EA:
 renderLeftBarrier:
 	MOVE.B	#$02,renderingFlag
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 lbC05A500:
 	MOVE.W	D3,lbW05B3E8
 	MOVE.L	$14(A4,D3.W),D0
@@ -19302,7 +19680,7 @@ lbC05A590:
 lbC05A5DE:
 	SUBQ.L	#$04,A1
 lbC05A5E0:
-	CMP.W	renderDataPointer,D3
+	CMP.W	renderCommandQueueOffset,D3
 	BEQ	lbC05A680
 lbC05A5EA:
 	MOVE.L	$14(A4,D3.W),D0
@@ -19352,7 +19730,7 @@ renderTrackSurface:
 	MOVE.B	#$00,segmentPropertyFlags
 	MOVE.B	#$80,lbB00D4D2
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.W	D3,lbW05B3E8
 	MOVE.L	$18(A4,D3.W),D0
 	MOVE.L	D0,D4
@@ -19402,7 +19780,7 @@ lbC05A71C:
 lbC05A76A:
 	SUBQ.L	#$04,A1
 lbC05A76C:
-	CMP.W	renderDataPointer,D3
+	CMP.W	renderCommandQueueOffset,D3
 	BEQ	lbC05A80C
 lbC05A776:
 	MOVE.L	$18(A4,D3.W),D0
@@ -19453,12 +19831,12 @@ lbC05A826:
 	RTS
 
 renderTrackNear:
-	SUB.W	#$0020,renderDataPointer
-	CMP.W	#$0040,renderDataPointer
+	SUB.W	#$0020,renderCommandQueueOffset
+	CMP.W	#$0040,renderCommandQueueOffset
 	BLT	lbC05A9BA
 lbC05A83C:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 lbC05A848:
 	SUB.W	#$0020,D3
 	BEQ	lbC05A858
@@ -19493,15 +19871,15 @@ lbC05A8B2:
 	JSR	renderPlayerCarIfOpponentHidden
 	JSR	renderRightBarrier
 	JSR	renderRightBarrierEdges
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	CMP.W	lbW05B3E8,D3
 	BEQ	lbC05A926
 	TST.B	raceStartTimer
 	BNE	lbC05A926
-	MOVE.W	renderDataPointer,-(SP)
-	MOVE.W	lbW05B3E8,renderDataPointer
+	MOVE.W	renderCommandQueueOffset,-(SP)
+	MOVE.W	lbW05B3E8,renderCommandQueueOffset
 	JSR	renderLeftRoadEdge
-	MOVE.W	(SP)+,renderDataPointer
+	MOVE.W	(SP)+,renderCommandQueueOffset
 	BRA	lbC05A92C
 
 lbC05A926:
@@ -19519,15 +19897,15 @@ lbC05A936:
 	JSR	renderPlayerCarIfOpponentHidden
 	JSR	renderLeftBarrier
 	JSR	renderLeftBarrierEdges
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	CMP.W	lbW05B3E8,D3
 	BEQ	lbC05A9A0
 	TST.B	raceStartTimer
 	BNE	lbC05A9A0
-	MOVE.W	renderDataPointer,-(SP)
-	MOVE.W	lbW05B3E8,renderDataPointer
+	MOVE.W	renderCommandQueueOffset,-(SP)
+	MOVE.W	lbW05B3E8,renderCommandQueueOffset
 	JSR	renderRightRoadEdge
-	MOVE.W	(SP)+,renderDataPointer
+	MOVE.W	(SP)+,renderCommandQueueOffset
 	BRA	lbC05A9A6
 
 lbC05A9A0:
@@ -19535,14 +19913,14 @@ lbC05A9A0:
 lbC05A9A6:
 	JSR	renderPlayerCarIfOpponentAhead
 lbC05A9AC:
-	MOVE.W	depthValue,renderDataPointer
+	MOVE.W	depthValue,renderCommandQueueOffset
 	BNE	lbC05A83C
 lbC05A9BA:
 	RTS
 
 renderTrackFar:
-	SUB.W	#$0020,renderDataPointer
-	MOVE.W	renderDataPointer,D3
+	SUB.W	#$0020,renderCommandQueueOffset
+	MOVE.W	renderCommandQueueOffset,D3
 	CMP.W	lbW05AC2C,D3
 	BLT	lbC05AA6A
 	SUB.W	#$0020,D3
@@ -19606,14 +19984,14 @@ lbC05AAB0:
 
 renderLeftTrackSidePanel:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.B	#$0F,D7
 	BTST	#$00,$1C(A4,D3.W)
 	BEQ	lbC05AAD4
 	MOVE.B	trackColorIndex2,D7
 lbC05AAD4:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$0C(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -19667,14 +20045,14 @@ lbC05AB6E:
 
 renderRightTrackSidePanel:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.B	#$0F,D7
 	BTST	#$00,$1C(A4,D3.W)
 	BEQ	lbC05AB90
 	MOVE.B	trackColorIndex2,D7
 lbC05AB90:
 	MOVE.L	#renderCommandQueue,A4
-	MOVE.W	renderDataPointer,D3
+	MOVE.W	renderCommandQueueOffset,D3
 	MOVE.L	$08(A4,D3.W),D0
 	MOVE.L	D0,D4
 	AND.L	#$00FFFFFF,D0
@@ -19983,7 +20361,7 @@ lbC05AF04:
 	SUBQ.B	#$02,D1
 	BPL	lbC05AF04
 	MOVE.L	(SP)+,A6
-	MOVE.W	#$0000,renderDataPointer
+	MOVE.W	#$0000,renderCommandQueueOffset
 	MOVE.B	(A6)+,lbB05B097
 lbC05AF20:
 	MOVE.B	(A6)+,D1
@@ -19991,7 +20369,7 @@ lbC05AF20:
 	MOVE.L	A6,-(SP)
 	JSR	drawClippedLine
 	MOVE.L	(SP)+,A6
-	ADDQ.W	#$04,renderDataPointer
+	ADDQ.W	#$04,renderCommandQueueOffset
 	SUBQ.B	#$01,lbB05B097
 	BNE	lbC05AF20
 	MOVE.B	(A6)+,lbB05B098
@@ -20583,7 +20961,7 @@ opponentBehaviorTraits:
 	dc.b	$22,$20,$62,$20,$3E,$04,$30,$14,$4A,$10,$08,$00
 ;	dc.b	"e.b",$09,"d0,d"
 ;	dc.b	"2",$0D,$09,"movea.l",$09,"#"
-levelNames:
+trackNames:
 	dc.b	'LITTLE RAMP     '
 	dc.b	'STEPPING STONES '
 	dc.b	'HUMP BACK       '
@@ -21576,13 +21954,13 @@ currentMenuItem:
 	ds.b	1
 speedDisplayThousands:
 	ds.b	1
-interpolatedPosition:
-	ds.b	1
-savedSegmentIndex:
-	ds.b	1
-tempByte1:
+tempByte1:				; also used as a long!
 	ds.b	1
 tempByte2:
+	ds.b	1
+tempByte3:
+	ds.b	1
+tempByte4:
 	ds.b	1
 playerSegmentIndex:
 	ds.b	1
@@ -21756,7 +22134,7 @@ unusedDisplayFlag2:
 	ds.b	1
 maxMenuIndex:
 	ds.b	1
-lbB00D48E:
+gameMessageActiveFlag:
 	ds.b	1
 segmentConfigLoadedFlag:
 	ds.b	1
@@ -21818,7 +22196,7 @@ lbB00D4AD:
 	ds.b	1
 lbB00D4AE:
 	ds.b	1
-gameEndModeFlag:
+raceCompletionState:
 	ds.b	1
 trackVariationSeed:
 	ds.b	1
@@ -21832,7 +22210,7 @@ savedHoleRenderingPosition:
 	ds.b	1
 targetDamageLevel:
 	ds.b	2
-carCrashedFlag:
+opponentAheadFlag:
 	ds.b	1
 gameInitFlag3:
 	ds.b	1
@@ -21866,7 +22244,7 @@ proximityEffectTimer:
 	ds.b	1
 displayStateFlag:
 	ds.b	1
-gameTimingCounter:
+globalFrameCounter:
 	ds.b	1
 menuHighlightMode:
 	ds.b	1
@@ -21874,9 +22252,9 @@ multiplayerRaceDisplayFlag:
 	ds.b	1
 lapTimeDisplayDuration:
 	ds.b	1
-skipDamageFlag:
+frameThrottleFlag:
 	ds.b	2
-directionCalculation:
+frameThrottleAccumulator:
 	ds.b	1
 lbB00D4D0:
 	ds.b	1
@@ -22835,7 +23213,7 @@ lbW0581A6:
 	ds.w	1
 lineDrawingBufferPointer:
 	ds.l	1
-renderDataPointer:
+renderCommandQueueOffset:
 	ds.w	1
 savedXCoordinate:
 	ds.w	1
@@ -22880,7 +23258,9 @@ segmentAlternateRenderFlag:
 segmentProcessedFlag:
 	ds.b	2
 edgeClipFailedFlag:
-	ds.b	2
+	ds.b	1
+lbB057D75:
+	ds.b	1
 lbB05B3DE:
 	ds.b	4
 lbB05B3E2:
@@ -22925,43 +23305,15 @@ renderFrameBuffer:
 	ds.l	1
 viewportTopAddress:
 	ds.l	1
+plotPixelOffset:
+	ds.w	1
 fastRenderBuffer:
 	ds.l	40*200
-jorma:	ds.l	1
-
-sp_quit:	ds.l	1
-base_vector:	ds.l	1
-base_graphics:	ds.l	1
-gb_copinit_old:	ds.l	1
-gb_ActiView_old:	ds.l	1
-tv_Lev1IntVect_old:	ds.l	1
-tv_Lev2IntVect_old:	ds.l	1
-tv_Lev3IntVect_old:	ds.l	1
-tv_Lev4IntVect_old:	ds.l	1
-tv_Lev5IntVect_old:	ds.l	1
-tv_Lev6IntVect_old:	ds.l	1
-tv_Lev7IntVect_old:	ds.l	1
-cachebits_old:	ds.l	1
-dmaconr_old:	ds.w	1
-intenar_old:	ds.w	1
-ciaacra_old:	ds.b	1
-ciaacrb_old:	ds.b	1
-ciabcra_old:	ds.b	1
-ciabcrb_old:	ds.b	1
-quit:			ds.b	1
-
-	section	ChipBSS,bss_c
-memory_00000:	ds.b	$10000
-memory_70000:	ds.b	$10000
-frameBuffer1:   ds.b    40*200*4
-frameBuffer2:   ds.b    40*200*4
-
-memory_0400	equ	(memory_00000+$0400)
-memory_3D80	equ	(memory_00000+$3D80)
-memory_60A8	equ	(memory_00000+$60A8)
-memory_6490	equ	(memory_00000+$6490)
+saveSlotNameBuffer:	ds.b	$3980
+memory_6490:	ds.b	$9b70
+memory_70000:  ds.b    $10000
 memory_79360	equ	(memory_70000+$9360)
-memory_7A01A	equ	(memory_70000+$A01A)
+leagueSeasonData	equ	(memory_70000+$A01A)
 memory_7A035	equ	(memory_70000+$A035)
 memory_7A03A	equ	(memory_70000+$A03A)
 memory_7A03F	equ	(memory_70000+$A03F)
@@ -22987,3 +23339,30 @@ memory_7AB5A	equ	(memory_70000+$AB5A)
 previewDataBuffer	equ	(memory_70000+$ABDA)
 renderCommandQueue	equ	(memory_70000+$B08A)
 memory_7B6FA	equ	(memory_70000+$B6FA)
+
+sp_quit:	ds.l	1
+base_vector:	ds.l	1
+base_graphics:	ds.l	1
+gb_copinit_old:	ds.l	1
+gb_ActiView_old:	ds.l	1
+tv_Lev1IntVect_old:	ds.l	1
+tv_Lev2IntVect_old:	ds.l	1
+tv_Lev3IntVect_old:	ds.l	1
+tv_Lev4IntVect_old:	ds.l	1
+tv_Lev5IntVect_old:	ds.l	1
+tv_Lev6IntVect_old:	ds.l	1
+tv_Lev7IntVect_old:	ds.l	1
+cachebits_old:	ds.l	1
+dmaconr_old:	ds.w	1
+intenar_old:	ds.w	1
+ciaacra_old:	ds.b	1
+ciaacrb_old:	ds.b	1
+ciabcra_old:	ds.b	1
+ciabcrb_old:	ds.b	1
+quit:			ds.b	1
+
+	section	ChipBSS,bss_c
+lineDrawingBuffer:	ds.b	$2710
+lineDrawingBufferEnd:
+frameBuffer1:   ds.b    40*200*4
+frameBuffer2:   ds.b    40*200*4
