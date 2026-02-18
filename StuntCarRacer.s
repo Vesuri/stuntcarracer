@@ -1,6 +1,4 @@
 ; Known issues
-; - AI physics are messed up
-; - damage accumulates a bit too easily
 ; - majorImpactCooldownTimer should be multiplied by 6 or decremented 1/6 of the time
 ; - paused text not rendered
 	incdir	"scr:"
@@ -5527,15 +5525,15 @@ lbC04D5C2:
 	RTS
 
 configureSelectedRace:
-	MOVE.B	D0,D1			; Copy index to D1
-	MOVE.L	#trackIDLookupTable,A0	; Point to track ID lookup table
-	MOVE.B	$00(A0,D1.W),currentTrackID	; Load track ID (0-7)
-	TST.B	currentPlayerContext	; Check player context
-	BEQ	lbC04D60E		; Skip swap if player 1
-	BCHG	#$00,D1			; Toggle bit 0 (swap even/odd)
-lbC04D60E:
-	MOVE.L	#raceConfigLookupTable,A0	; Point to config value table
-	MOVE.B	$00(A0,D1.W),raceConfigValue	; Store config value
+	MOVE.B	D0,D1
+	MOVE.L	#trackIDLookupTable,A0
+	MOVE.B	$00(A0,D1.W),currentTrackID
+	TST.B	currentPlayerContext
+	BEQ	.evenOddOk
+	BCHG	#$00,D1
+.evenOddOk:
+	MOVE.L	#raceConfigLookupTable,A0
+	MOVE.B	$00(A0,D1.W),raceConfigValue
 	RTS
 
 processOpponentAI:
@@ -5554,7 +5552,7 @@ processOpponentAI:
 	SUBQ.B	#$01,aiActionTimer
 lbC04D662:
 	ADD.B	aiPatternOffset,D0
-	AND.B	#$3F,D0				; originally $0F
+	AND.B	#$0F,D0
 	MOVE.B	D0,D2
 	MOVE.L	#aiMovementPatterns,A2
 	MOVE.B	$00(A2,D2.W),D0
@@ -5565,7 +5563,7 @@ lbC04D680:
 	MOVE.L	#aiLateralOffset2,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$05,D2
-	AND.B	#$3F,D2				; originally $0F
+	AND.B	#$0F,D2
 	MOVE.L	#aiMovementPatterns,A2
 	MOVE.B	$00(A2,D2.W),D0
 	MOVE.B	D0,aiLateralOffset1
@@ -5580,12 +5578,12 @@ lbC04D6A6:
 	BMI	lbC04D71C
 	TST.B	segmentSteeringFlags
 	BMI	lbC04D71C
-	MOVE.B	#$20,D2				; originally $08
+	MOVE.B	#$08,D2
 	TST.B	lbB00D49D
 	BPL	lbC04D71C
 	BTST	#$06,lbB00D49D
 	BEQ	lbC04D6EC
-	MOVE.B	#$40,D2				; originally $10
+	MOVE.B	#$10,D2
 lbC04D6EC:
 	MOVE.B	D2,aiPatternOffset
 	JSR	generateRandomNumber
@@ -5594,7 +5592,7 @@ lbC04D6EC:
 	MOVE.B	opponentID,D0
 	CMP.B	tempByte4,D0
 	BLT	lbC04D71C
-	MOVE.B	#$40,D0				; originally $10
+	MOVE.B	#$10,D0
 	MOVE.B	D0,aiActionTimer
 lbC04D71C:
 	MOVE.B	reverseDirectionFlag,D0
@@ -13162,12 +13160,12 @@ lbC0551B6:
 lbC0551D8:
 	CMP.B	#$F0,D0
 	BCC	lbC055224
-	MOVE.B	#$F7,D0
+	MOVE.B	#$FE,D0				; originally $F7
 	BNE	lbC0551F4
 lbC0551E8:
 	CMP.B	#$10,D0
 	BCS	lbC055224
-	MOVE.B	#$09,D0
+	MOVE.B	#$02,D0				; originally $09
 lbC0551F4:
 	ADD.B	previousDataIndex,D0
 	MOVE.B	aiEnabled,D2
@@ -13753,11 +13751,6 @@ lbC055A62:
 lbC055A7A:
 	ASR.W	#$01,D0
 	ADD.W	D0,opponentRearRightWheelPosition
-;	add.b	#1,aiPhysicsUpdateCounter			; fixed TODO
-;	cmp.b	#5,aiPhysicsUpdateCounter
-;	bcs.s	.applyPhysics
-;	clr.b	aiPhysicsUpdateCounter
-;.applyPhysics:
 	MOVE.W	#$0128,tempWord1
 	MOVE.B	#$00,D1
 	MOVE.B	#$02,D2
@@ -13828,8 +13821,6 @@ updateOpponentWheelSuspension:
 	MOVE.B	#$04,D2
 	MOVE.B	wheelDataOffset,D1
 .wheelDistanceOk:
-;	tst.b	aiPhysicsUpdateCounter			; fixed TODO
-;	bne.s	.dampingDone
 	CMP.B	#$04,D2
 	BNE	.dampingDone
 	MOVE.B	aiEnabled,D0
@@ -21487,14 +21478,18 @@ menuStringOffsetTable:
 	dc.l	$EC0A142C,$44494E55,$5C6B5500,$7A875500,$0A1F7100
 	dc.l	$2B400000,$49494949,$0A0A5500
 aiMovementPatterns:
-;	dc.b	$20,$50,$60,$70							; fixed
+;	dc.b	$20,$50,$60,$70							; originally 4 values per pattern
 ;	dc.b	$70,$60,$50,$20
 ;	dc.b	$E0,$B0,$A0,$90
 ;	dc.b	$90,$A0,$B0,$E0
-	dc.b	32,54,63,69,74,79,83,87,91,94,97,100,103,106,109,111
-	dc.b	111,109,106,103,100,97,94,91,87,83,79,74,69,63,54,32
-	dc.b	-32,-54,-63,-69,-74,-79,-83,-87,-91,-94,-97,-100,-103,-106,-109,-111
-	dc.b	-111,-109,-106,-103,-100,-97,-94,-91,-87,-83,-79,-74,-69,-63,-54,-32
+	dc.b	$20,$21,$25,$2A,$31,$38,$3F,$46,$4B,$4F,$50,$50,$52,$53,$56
+	dc.b	$5A,$5D,$5E,$60,$60,$60,$61,$63,$65,$67,$69,$6B,$6D,$6F,$70
+	dc.b	$70,$70,$6E,$6D,$6A,$68,$66,$63,$62,$60,$60,$60,$5E,$5D,$5A
+	dc.b	$56,$53,$52,$50,$50,$4F,$4C,$47,$42,$3B,$35,$2E,$29,$24,$21
+	dc.b	$E0,$DF,$DB,$D6,$CF,$C8,$C1,$BA,$B5,$B1,$B0,$B0,$AE,$AD,$AA
+	dc.b	$A6,$A3,$A2,$A0,$A0,$A0,$9F,$9D,$9B,$99,$97,$95,$93,$91,$90
+	dc.b	$90,$90,$92,$93,$96,$98,$9A,$9D,$9E,$A0,$A0,$A0,$A2,$A3,$A6
+	dc.b	$AA,$AD,$AE,$B0,$B0,$B1,$B4,$B9,$BE,$C5,$CB,$D2,$D7,$DC,$DF
 lbL04DFB8:
 	dc.l	$00D480D4,$0000ABAB,$40400000
 lbB04E1F4:
@@ -21652,7 +21647,7 @@ savedRandomSeed1:
 savedRandomSeed3:	EQU	*-3
 	dc.b	$3B,$3B,$35,$62
 opponentSuspensionDampingTable:
-	dc.w	$0001,$0001,$FFFF		       ; originally $0004,$0004,$FFFC
+	dc.w	$0004,$0004,$FFFC
 leagueTextTable:
 	dc.w	$1F0F
 lbB055C56:
@@ -22043,9 +22038,7 @@ trackRenderingEnableFlag:
 opponentSpeedFractional:
 	ds.b	1
 fuelConsumptionTimer:
-	ds.b	1
-aiPhysicsUpdateCounter:
-	ds.b	1
+	ds.b	2
 trackEffectFlag:
 	ds.b	1
 trackDirection:
