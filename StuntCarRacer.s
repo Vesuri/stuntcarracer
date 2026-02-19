@@ -1394,7 +1394,7 @@ lbC048FCA:
 	BPL	lbC048FEC
 	JSR	convertOpponentWheelsToCarFootprint
 	JSR	calculatePlayerDistance
-	JSR	calculateOpponentRelativePosition
+	JSR	handleOpponentPositioning
 	JSR	setupTrackGeometryForFrame
 lbC048FEC:
 	RTS
@@ -4039,7 +4039,7 @@ calculateRoadEdgeControlPoints:
 	MOVE.W	additionalInterpolationPoints2,splineControlPoint4
 lbC04BE08:
 	MOVE.B	D0,segmentBlendParam
-	MOVE.B	previousDataIndex,lateralTrackPosition
+	MOVE.B	opponentCurrentLateralPos,lateralTrackPosition
 	MOVE.W	#$0004,D1
 	BRA	calculateAndStoreBounds
 
@@ -4064,7 +4064,7 @@ addBaseCoordinateAndStore:
 
 interpolateOpponentTrackPosition:
 	MOVE.B	trackDistanceHigh,D0
-	MOVE.L	#aiLateralOffset2,A0
+	MOVE.L	#opponentSegmentOffset1,A0
 	ADD.B	$00(A0,D1.W),D0
 	ROXR.B	#$01,D3
 	MOVE.B	D3,segmentHalfFlags
@@ -5542,9 +5542,9 @@ processOpponentAI:
 	TST.B	networkGameMode
 	BNE	lbC04D732
 	MOVE.B	#$00,D1
-	MOVE.B	D1,aiLateralOffset2
-	MOVE.B	D1,aiLateralOffset3
-	MOVE.B	D1,aiLateralOffset1
+	MOVE.B	D1,opponentSegmentOffset1
+	MOVE.B	D1,opponentSegmentOffset2
+	MOVE.B	D1,aiMovementOverride
 	MOVE.B	aiActionTimer,D0
 	BEQ	lbC04D6A6
 	TST.B	frameThrottleFlag
@@ -5560,13 +5560,13 @@ lbC04D662:
 	NEG.B	D0
 	ADDQ.B	#$01,D1
 lbC04D680:
-	MOVE.L	#aiLateralOffset2,A1
+	MOVE.L	#opponentSegmentOffset1,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	ADDQ.B	#$05,D2
 	AND.B	#$0F,D2
 	MOVE.L	#aiMovementPatterns,A2
 	MOVE.B	$00(A2,D2.W),D0
-	MOVE.B	D0,aiLateralOffset1
+	MOVE.B	D0,aiMovementOverride
 	JMP	lbC04D71C
 
 lbC04D6A6:
@@ -5904,7 +5904,7 @@ updateWheelHeightsFromTrack:
 	SWAP	D0
 	CMP.W	#$0100,D0
 	BLT	.lateralCalculationDone
-	MOVE.B	$000000FF,D0
+	MOVE.B	#$FF,D0					; originally $000000FF
 .lateralCalculationDone:
 	MOVE.B	D0,lateralTrackPosition
 	TST.B	reverseDirectionFlag
@@ -6621,7 +6621,7 @@ lbC04ECA4:
 	MOVE.B	playerSpawnSegment,D1
 	MOVE.B	D1,opponentSegmentIndex
 	MOVE.B	#$04,opponentSubSegmentProgress
-	MOVE.B	#$4C,previousDataIndex
+	MOVE.B	#$4C,opponentCurrentLateralPos
 	JSR	initializeTrackCoordinates
 	MOVE.B	playerSpawnSegment,D1
 	CMP.B	#$40,networkGameMode
@@ -7481,7 +7481,7 @@ renderDistanceDisplay:
 	MOVE.B	#$00,D1
 	MOVE.B	D1,D5
 	MOVE.B	#$00,D2
-	MOVE.W	carRenderDistance,D0
+	MOVE.W	opponentDistance,D0
 	MOVE.W	D0,D3
 	LSR.W	#$02,D3
 	ADD.W	D3,D0
@@ -9692,7 +9692,7 @@ lbC0520A8:
 	MOVE.W	D0,D4
 	EOR.W	#$8000,D5
 lbC0520BC:
-	MOVE.W	D4,carRenderDistance
+	MOVE.W	D4,opponentDistance
 	EOR.W	#$8000,D5
 	LSR.W	#$08,D5
 	MOVE.B	D5,opponentAheadFlag
@@ -10112,7 +10112,7 @@ lbC05268E:
 	MOVE.W	D0,sampleEnginePeriod
 setParticleCountAndPlayGrindSound:
 	ASL.B	#$01,D1
-	MOVE.B	D1,currentDataIndex
+	MOVE.B	D1,opponentTargetLateralPos
 	MOVE.B	wheelMovementActive,D0
 	BEQ	initializeDebrisParticlePositions
 	tst.b	grindSoundCooldownTimer		; added
@@ -10127,7 +10127,7 @@ setParticleCountAndPlayGrindSound:
 .cooldownDone:
 	MOVE.L	#debrisParticleXPositions,A4
 	MOVE.L	#debrisParticleXVelocities,A5
-	MOVE.B	currentDataIndex,D1
+	MOVE.B	opponentTargetLateralPos,D1
 .updateParticlesLoop:
 	JSR	validateAndRenderParticle
 	BNE	.particleUpdated
@@ -10139,7 +10139,7 @@ setParticleCountAndPlayGrindSound:
 .particleUpdated:
 	SUBQ.B	#$02,D1
 	BPL	.updateParticlesLoop
-	MOVE.B	currentDataIndex,D1
+	MOVE.B	opponentTargetLateralPos,D1
 .respawnOffscreenParticlesLoop:
 	MOVE.W	$40(A4,D1.W),D0
 	CMP.W	#$0080,D0
@@ -11598,7 +11598,7 @@ lbC053B72:
 	MOVE.W	D3,D0
 lbC053B7A:
 	MOVE.L	#$00000005,D7
-	TST.B	proximityEffectTimer
+	TST.B	draftingTimer
 	BPL	lbC053BA4
 	TST.B	opponentAheadFlag
 	BMI	lbC053BA4
@@ -13020,164 +13020,164 @@ initializeRandomSeeds:
 	MOVE.B	savedRandomSeed3,randomSeed3
 	RTS
 
-calculateOpponentRelativePosition:
+handleOpponentPositioning:
 	MOVE.B	opponentID,D1
 	MOVE.B	#$00,D2
-	MOVE.B	D2,proximityEffectTimer
-	MOVE.B	previousDataIndex,D0
-	MOVE.B	D0,currentDataIndex
+	MOVE.B	D2,draftingTimer
+	MOVE.B	opponentCurrentLateralPos,D0
+	MOVE.B	D0,opponentTargetLateralPos
 	SUB.B	playerTrackPositionIndex,D0
-	BCC	lbC054FEA
+	BCC	.positionDeltaOk
 	NEG.B	D0
 	SUBQ.B	#$01,D2
-lbC054FEA:
+.positionDeltaOk:
 	MOVE.B	D0,trackBoostThreshold
 	MOVE.B	D2,tempWord1
-	MOVE.B	carRenderDistance,D0
-	BEQ	handleProximityEffects
-	JMP	lbC05513E
+	MOVE.B	opponentDistance,D0
+	BEQ	.opponentNear
+	JMP	.opponentFar
 
-handleProximityEffects:
-	MOVE.B	carRenderDistanceLow,D0
+.opponentNear:
+	MOVE.B	opponentDistanceLow,D0
 	CMP.B	#$40,D0
-	BCC	lbC055030
+	BCC	.draftingOk
 	TST.B	opponentAheadFlag
-	BMI	lbC05502A
+	BMI	.handleDrafting
 	CMP.B	#$32,trackBoostThreshold
-	BCC	lbC055030
-lbC05502A:
-	SUBQ.B	#$01,proximityEffectTimer
-lbC055030:
+	BCC	.draftingOk
+.handleDrafting:
+	SUBQ.B	#$01,draftingTimer
+.draftingOk:
 	CMP.B	#$10,D0
-	BCC	handleDistantOpponent
+	BCC	.noCollision
 	TST.B	networkGameMode
-	BEQ	lbC05504C
+	BEQ	.networkOk
 	TST.B	networkEngineFlag
-	BNE	handleDistantOpponent
-lbC05504C:
+	BNE	.noCollision
+.networkOk:
 	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$32,D0
-	BCC	handleDistantOpponent
+	BCC	.noCollision
 	MOVE.B	lateralRoadPosition,D0
 	CMP.B	#$01,D0
-	BCS	lbC05507A
-	BNE	handleDistantOpponent
+	BCS	.collision
+	BNE	.noCollision
 	MOVE.B	speedMinor,D0
 	CMP.B	#$80,D0
-	BCC	handleDistantOpponent
-lbC05507A:
+	BCC	.noCollision
+.collision:
 	JSR	calculateProximityCollisionForces
-	JMP	lbC0550A6
+	JMP	.opponentVeryClose
 
-handleDistantOpponent:
+.noCollision:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,proximityCollisionTimer
 	MOVE.B	#$00,proximityCollisionActive
-	MOVE.B	carRenderDistanceLow,D0
+	MOVE.B	opponentDistanceLow,D0
 	CMP.B	#$18,D0
-	BCC	lbC0550DC
-lbC0550A6:
+	BCC	.opponentNotVeryClose
+.opponentVeryClose:
 	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
-	AND.B	#$08,D0
-	BEQ	lbC0550D0
+	AND.B	#$08,D0					; aggressive
+	BEQ	.aggressive
 	TST.B	opponentAheadFlag
-	BMI	lbC0550D0
-	MOVE.B	carRenderDistanceLow,D0
+	BMI	.aggressive
+	MOVE.B	opponentDistanceLow,D0
 	CMP.B	#$0E,D0
-	BCC	lbC05513E
-lbC0550D0:
+	BCC	.opponentFar
+.aggressive:
 	JSR	adjustOpponentPositionAggressive
-	JMP	lbC0551B6
+	JMP	.behavior2
 
-lbC0550DC:
+.opponentNotVeryClose:
 	TST.B	opponentAheadFlag
-	BMI	lbC055132
+	BMI	.standardAndBehavior2
 	CMP.B	#$32,D0
-	BCC	lbC05510C
+	BCC	.opponentFurtherAhead
 	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
-	AND.B	#$02,D0
-	BEQ	lbC055126
+	AND.B	#$02,D0					; follow
+	BEQ	.standardAndBehavior1
 	JSR	copyPlayerToOpponentPosition
-	JMP	lbC05516A
+	JMP	.behavior1
 
-lbC05510C:
+.opponentFurtherAhead:
 	CMP.B	#$C8,D0
-	BCC	lbC05513E
+	BCC	.opponentFar
 	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
-	AND.B	#$20,D0
-	BEQ	lbC05513E
-lbC055126:
+	AND.B	#$20,D0					; overtake
+	BEQ	.opponentFar
+.standardAndBehavior1:
 	JSR	adjustOpponentPositionStandard
-	JMP	lbC05516A
+	JMP	.behavior1
 
-lbC055132:
+.standardAndBehavior2:
 	JSR	adjustOpponentPositionStandard
-	JMP	lbC0551B6
+	JMP	.behavior2
 
-lbC05513E:
+.opponentFar:
 	MOVE.B	#$40,D2
 	MOVE.L	#opponentBehaviorTraits,A1
 	MOVE.B	$00(A1,D1.W),D0
-	AND.B	#$08,D0
-	BEQ	lbC055158
+	AND.B	#$08,D0					; aggressive
+	BEQ	.targetLateralPosOk1
 	MOVE.B	#$6E,D2
-lbC055158:
+.targetLateralPosOk1:
 	MOVE.B	D1,D0
 	AND.B	#$01,D0
-	BEQ	lbC055164
+	BEQ	.targetLateralPosOk2
 	NOT.B	D2
-lbC055164:
-	MOVE.B	D2,currentDataIndex
-lbC05516A:
+.targetLateralPosOk2:
+	MOVE.B	D2,opponentTargetLateralPos
+.behavior1:
 	MOVE.B	#$02,D0
 	MOVE.B	D0,tempByte2
 	MOVE.B	opponentSegmentIndex,D1
 	MOVE.B	D1,currentSegmentIndex
-lbC055180:
+.behavior1Loop:
 	MOVE.L	#trackSegmentPropertiesTable,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
 	MOVE.B	D0,D2
 	MOVE.L	#geometryParameterTable,A2
 	MOVE.B	$00(A2,D2.W),D0
-	BPL	lbC0551A6
-	MOVE.B	#$80,currentDataIndex
-lbC0551A6:
+	BPL	.targetLateralPosOk3			; special geometry?
+	MOVE.B	#$80,opponentTargetLateralPos		; center
+.targetLateralPosOk3:
 	JSR	advanceToNextSegment
 	SUBQ.B	#$01,tempByte2
-	BNE	lbC055180
-lbC0551B6:
-	MOVE.B	aiLateralOffset1,D0
-	BMI	lbC0551D8
-	BNE	lbC0551E8
-	MOVE.B	currentDataIndex,D0
-	SUB.B	previousDataIndex,D0
-	BEQ	lbC055224
-	BCC	lbC0551E8
-lbC0551D8:
+	BNE	.behavior1Loop
+.behavior2:
+	MOVE.B	aiMovementOverride,D0
+	BMI	.moveLeft
+	BNE	.moveRight
+	MOVE.B	opponentTargetLateralPos,D0
+	SUB.B	opponentCurrentLateralPos,D0
+	BEQ	.done
+	BCC	.moveRight
+.moveLeft:
 	CMP.B	#$F0,D0
-	BCC	lbC055224
+	BCC	.done
 	MOVE.B	#$FE,D0				; originally $F7
-	BNE	lbC0551F4
-lbC0551E8:
+	BRA	.deltaOk			; originally BNE
+.moveRight:
 	CMP.B	#$10,D0
-	BCS	lbC055224
+	BCS	.done
 	MOVE.B	#$02,D0				; originally $09
-lbC0551F4:
-	ADD.B	previousDataIndex,D0
+.deltaOk:
+	ADD.B	opponentCurrentLateralPos,D0
 	MOVE.B	aiEnabled,D2
-	BEQ	lbC055224
+	BEQ	.done
 	CMP.B	#$E1,D0
-	BCC	lbC055224
+	BCC	.done
 	CMP.B	#$20,D0
-	BCS	lbC055224
+	BCS	.done
 	TST.B	networkGameMode
-	BNE	lbC055224
-	MOVE.B	D0,previousDataIndex
-lbC055224:
+	BNE	.done
+	MOVE.B	D0,opponentCurrentLateralPos
+.done:
 	RTS
 
 adjustOpponentPositionAggressive:
@@ -13198,7 +13198,7 @@ adjustOpponentPositionStandard:
 	BCC	lbC05527C
 lbC055268:
 	MOVE.B	#$E0,D0
-	MOVE.B	D0,currentDataIndex
+	MOVE.B	D0,opponentTargetLateralPos
 	RTS
 
 lbC055274:
@@ -13206,13 +13206,13 @@ lbC055274:
 	BCS	lbC055268
 lbC05527C:
 	MOVE.B	#$20,D0
-	MOVE.B	D0,currentDataIndex
+	MOVE.B	D0,opponentTargetLateralPos
 lbC055286:
 	RTS
 
 copyPlayerToOpponentPosition:
 	MOVE.B	playerTrackPositionIndex,D0
-	MOVE.B	D0,currentDataIndex
+	MOVE.B	D0,opponentTargetLateralPos
 	RTS
 
 processOpponentLogic:
@@ -13319,7 +13319,7 @@ updateOpponentAcceleration:
 	MOVE.B	aiCurrentSpeed,D0
 	BMI	lbC055494
 	ROXL.B	#$01,D0
-	TST.B	proximityEffectTimer
+	TST.B	draftingTimer
 	BPL	lbC055444
 	TST.B	opponentAheadFlag
 	BPL	lbC055444
@@ -13482,7 +13482,7 @@ lbC055654:
 	MOVE.B	trackBoostThreshold,D0
 	CMP.B	#$2D,D0
 	BCC	lbC055688
-	MOVE.B	carRenderDistanceLow,D0
+	MOVE.B	opponentDistanceLow,D0
 	CMP.B	#$08,D0
 	BCC	lbC055688
 	MOVE.B	#$08,D0
@@ -14625,7 +14625,7 @@ lbC05685E:
 	BPL	lbC056880
 	JSR	processOpponentLogic
 	JSR	calculatePlayerDistance
-	JSR	calculateOpponentRelativePosition
+	JSR	handleOpponentPositioning
 	JSR	setupTrackGeometryForFrame
 lbC056880:
 	MOVE.B	#$80,D0
@@ -18264,7 +18264,7 @@ expandMasksToLongwords:
 renderPlayerCarModel:
 	TST.B	opponentAheadFlag
 	BMI	lbC059A42
-	MOVE.W	carRenderDistance,D0
+	MOVE.W	opponentDistance,D0
 	CMP.W	#$000A,D0
 	BCS	lbC059A42
 	CMP.W	#$0C80,D0
@@ -21478,18 +21478,18 @@ menuStringOffsetTable:
 	dc.l	$EC0A142C,$44494E55,$5C6B5500,$7A875500,$0A1F7100
 	dc.l	$2B400000,$49494949,$0A0A5500
 aiMovementPatterns:
-;	dc.b	$20,$50,$60,$70							; originally 4 values per pattern
-;	dc.b	$70,$60,$50,$20
-;	dc.b	$E0,$B0,$A0,$90
-;	dc.b	$90,$A0,$B0,$E0
-	dc.b	$20,$21,$25,$2A,$31,$38,$3F,$46,$4B,$4F,$50,$50,$52,$53,$56
-	dc.b	$5A,$5D,$5E,$60,$60,$60,$61,$63,$65,$67,$69,$6B,$6D,$6F,$70
-	dc.b	$70,$70,$6E,$6D,$6A,$68,$66,$63,$62,$60,$60,$60,$5E,$5D,$5A
-	dc.b	$56,$53,$52,$50,$50,$4F,$4C,$47,$42,$3B,$35,$2E,$29,$24,$21
-	dc.b	$E0,$DF,$DB,$D6,$CF,$C8,$C1,$BA,$B5,$B1,$B0,$B0,$AE,$AD,$AA
-	dc.b	$A6,$A3,$A2,$A0,$A0,$A0,$9F,$9D,$9B,$99,$97,$95,$93,$91,$90
-	dc.b	$90,$90,$92,$93,$96,$98,$9A,$9D,$9E,$A0,$A0,$A0,$A2,$A3,$A6
-	dc.b	$AA,$AD,$AE,$B0,$B0,$B1,$B4,$B9,$BE,$C5,$CB,$D2,$D7,$DC,$DF
+	dc.b	$20,$50,$60,$70
+	dc.b	$70,$60,$50,$20
+	dc.b	$E0,$B0,$A0,$90
+	dc.b	$90,$A0,$B0,$E0
+;	dc.b	$20,$21,$25,$2A,$31,$38,$3F,$46,$4B,$4F,$50,$50,$52,$53,$56
+;	dc.b	$5A,$5D,$5E,$60,$60,$60,$61,$63,$65,$67,$69,$6B,$6D,$6F,$70
+;	dc.b	$70,$70,$6E,$6D,$6A,$68,$66,$63,$62,$60,$60,$60,$5E,$5D,$5A
+;	dc.b	$56,$53,$52,$50,$50,$4F,$4C,$47,$42,$3B,$35,$2E,$29,$24,$21
+;	dc.b	$E0,$DF,$DB,$D6,$CF,$C8,$C1,$BA,$B5,$B1,$B0,$B0,$AE,$AD,$AA
+;	dc.b	$A6,$A3,$A2,$A0,$A0,$A0,$9F,$9D,$9B,$99,$97,$95,$93,$91,$90
+;	dc.b	$90,$90,$92,$93,$96,$98,$9A,$9D,$9E,$A0,$A0,$A0,$A2,$A3,$A6
+;	dc.b	$AA,$AD,$AE,$B0,$B0,$B1,$B4,$B9,$BE,$C5,$CB,$D2,$D7,$DC,$DF
 lbL04DFB8:
 	dc.l	$00D480D4,$0000ABAB,$40400000
 lbB04E1F4:
@@ -22213,7 +22213,7 @@ lbB00D4A5:
 	ds.b	1
 lbB00D4A6:
 	ds.b	1
-currentDataIndex:
+opponentTargetLateralPos:
 	ds.b	1
 accelerationStateFlag:
 	ds.b	1
@@ -22253,11 +22253,11 @@ trackSideIndicatorCopy:
 	ds.b	1
 singleBufferRenderMode:
 	ds.b	1
-aiLateralOffset1:
+aiMovementOverride:
 	ds.b	1
-aiLateralOffset2:
+opponentSegmentOffset1:
 	ds.b	1
-aiLateralOffset3:
+opponentSegmentOffset2:
 	ds.b	1
 aiActionTimer:
 	ds.b	1
@@ -22273,7 +22273,7 @@ segmentDataStartIndex:
 	ds.b	1
 steeringInputDirection:
 	ds.b	1			; 0=no steering, -15=left,15=right
-proximityEffectTimer:
+draftingTimer:
 	ds.b	1
 displayStateFlag:
 	ds.b	1
@@ -22343,7 +22343,7 @@ proximityCollisionActive:
 	ds.b	1
 networkEngineFlag:
 	ds.b	1
-previousDataIndex:
+opponentCurrentLateralPos:
 	ds.b	1
 aiCurrentSpeed:
 	ds.w	1
@@ -22421,9 +22421,9 @@ enginePitchAccumulator:
 	ds.w	1
 perspectiveDepthDivisor:
 	ds.w	1
-carRenderDistance:
+opponentDistance:
 	ds.w	1
-carRenderDistanceLow:	EQU	*-1
+opponentDistanceLow:	EQU	*-1
 maxCompressionVelocity:
 	ds.w	1
 steeringScaleFactor:
