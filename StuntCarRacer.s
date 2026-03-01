@@ -1,6 +1,6 @@
 ; Known issues
 ; - majorImpactCooldownTimer should be multiplied by 6 or decremented 1/6 of the time
-; - car easily goes off track in corners when not running 60 FPS
+; - wheels don't rotate at 60FPS when running sub-60FPS
 ; - major impact holes sometimes appear in the wrong place
 ; - paused text not rendered
 	incdir	"scr:"
@@ -560,13 +560,12 @@ verticalBlankInterrupt:
 	CLR.W	D2
 	JSR	verticalBlank
 	BTST	#$05,_custom+serdatr
-	BEQ	verticalBlankInterruptDone
+	BEQ	.done
 	MOVE.B	serialWriteIndex,D0
 	CMP.B	serialReadIndex,D0
-	BEQ	verticalBlankInterruptDone
+	BEQ	.done
 	JSR	serialTransmitEmptyInterrupt
-verticalBlankInterruptDone:
-	MOVEM.L	(SP)+,D0-D7/A0-A6
+.done:	MOVEM.L	(SP)+,D0-D7/A0-A6
 	RTS
 
 copperInterrupt:
@@ -4185,7 +4184,8 @@ animateDrawBridge:
 .drawBridgeInactive:
 ;	TST.B	frameThrottleFlag
 ;	BMI	.animationPhaseOk
-	ADDQ.B	#$01,drawBridgeAnimationPhase
+	move.b	framesSinceCopperlistUpdate,d0			; added
+	ADD.B	d0,drawBridgeAnimationPhase			; originally ADDQ.B #$01
 	cmp.b	#$c0,drawBridgeAnimationPhase			; added
 	bcs.s	.animationPhaseOk
 	clr.b	drawBridgeAnimationPhase
@@ -5835,10 +5835,10 @@ calculateTrackPosition:
 lbC04DA54:
 	MOVE.W	D0,trackProgressionByte
 	ADD.W	#$0040,D0
-	MOVE.W	D0,lbB00D40E
+	MOVE.W	D0,trackProgressionOffset
 	CMP.W	D4,D0
 	BLT	lbC04DA76
-	MOVE.B	#$80,lbB00D40E
+	MOVE.B	#$80,trackProgressionOffset
 	MOVE.W	#$0000,D0
 lbC04DA76:
 	LSR.W	#$08,D0
@@ -5861,7 +5861,7 @@ lbC04DAA2:
 lbC04DAA8:
 	MOVE.B	#$20,D3
 	SUB.B	D0,D3
-	TST.B	lbB00D40E
+	TST.B	trackProgressionOffset
 	BPL	lbC04DABE
 	ADD.B	trackModeParameter,D3
 lbC04DABE:
@@ -6659,14 +6659,18 @@ initializeGameSystemsAndMainLoop:
 	MOVE.B	#$03,D2
 	JSR	delayWithParam
 	JSR	animatePaletteToTarget
-	MOVE.W	#$8020,gameLoopControl
+	MOVE.W	#$8020,dmaconValueToSet
 	JSR	initializeGameLoop
 mainGameLoop:
 	SUBQ.B	#$01,frameCounter
-	JSR	processPlayerInput
+	move.b	framesSinceCopperlistUpdate,framesToProcess		; added
+	sub.b	#1,framesToProcess
+.loop:	JSR	processPlayerInput
 	JSR	updateGamePhysics
 	JSR	updateEngineAudioPitch
 	JSR	processGameFrame
+	sub.b	#1,framesToProcess
+	bpl	.loop
 	JSR	animateDrawBridge
 	JSR	updateSpeedometerBar
 	JSR	updateDamageAndTimers
@@ -6757,7 +6761,7 @@ lbC04EEE2:
 	MOVE.B	blinkCountdownTimer,D0
 	BNE	lbC04EF0E
 	JSR	disableAudio
-	MOVE.B	lbB00D49B,D1
+	MOVE.B	lastValidSegmentIndex,D1
 	JMP	initializeGameSystemsAndMainLoop
 
 lbC04EF0E:
@@ -6784,7 +6788,7 @@ lbC04EF66:
 lbC04EF6E:
 	JSR	updateNetworkGameFlags
 lbC04EF74:
-	MOVE.W	#$0020,gameLoopControl
+	MOVE.W	#$0020,dmaconValueToSet
 	MOVE.W	imageMenuScreenPalette,D0
 	JSR	fadeToColor
 	MOVE.B	#$00,D0
@@ -9102,13 +9106,13 @@ lbC0516B4:
 
 getSegmentAtGridCoordinate:
 	MOVE.B	trackViewOffsetY,D0
-	ADD.B	selectedMenuItem,D0
+	ADD.B	gridLookupY,D0
 	CMP.B	#$10,D0
 	BCC	lbC051750
 	ASL.B	#$04,D0
 	MOVE.B	D0,tempByte4
 	MOVE.B	trackViewOffsetX,D0
-	ADD.B	currentPlayerNameOffset,D0
+	ADD.B	gridLookupX,D0
 	CMP.B	#$10,D0
 	BCC	lbC051750
 	AND.B	#$0F,D0
@@ -9235,7 +9239,7 @@ lbC0518F2:
 	MOVE.B	D3,baseCoordinateY
 	RTS
 
-adjustNetworkCoordinates:
+findSegmentBySubGridAdjustment:
 	MOVE.B	D0,tempByte4
 	MOVE.B	D2,tempByte3
 	CMP.B	tempByte4,D2
@@ -9284,7 +9288,7 @@ processCoordinateData:
 	LSR.W	#$08,D0
 	MOVE.B	D0,tempByte2
 	MOVE.L	#cameraWorldX,A0
-	MOVE.L	#lbB00D407,A1
+	MOVE.L	#subGridOffsetX,A1
 	MOVE.L	#trackViewOffsetX,A2
 	TST.W	$0002(A0)
 	BNE	lbC0519CC
@@ -9471,8 +9475,8 @@ lbC051C7C:
 	NEG.B	D1
 	MOVE.B	currentTrackCoordinate,D2
 lbC051C8A:
-	MOVE.B	D1,currentPlayerNameOffset
-	MOVE.B	D2,selectedMenuItem
+	MOVE.B	D1,gridLookupX
+	MOVE.B	D2,gridLookupY
 	MOVE.W	#$0000,D0
 	MOVE.W	D0,visibilityAccumulator
 	MOVE.B	D0,segmentDepthCounter
@@ -9611,19 +9615,19 @@ lbC051F08:
 	MOVE.L	#trackSegmentCoordinates,A1
 	MOVE.B	$00(A1,D1.W),D0
 	AND.B	#$0F,D0
-	MOVE.B	D0,currentPlayerNameOffset
+	MOVE.B	D0,gridLookupX
 	MOVE.B	$00(A1,D1.W),D0
 	LSR.B	#$04,D0
-	MOVE.B	D0,selectedMenuItem
+	MOVE.B	D0,gridLookupY
 	MOVE.W	#$0000,D0
 	MOVE.W	D0,lbW00D5DA
 	MOVE.W	D0,lbW00D5E2
-	MOVE.B	currentPlayerNameOffset,D0
+	MOVE.B	gridLookupX,D0
 	AND.W	#$00FF,D0
 	ASL.W	#$07,D0
 	ADD.W	#$0040,D0
 	MOVE.W	D0,cameraWorldX
-	MOVE.B	selectedMenuItem,D0
+	MOVE.B	gridLookupY,D0
 	AND.W	#$00FF,D0
 	ASL.W	#$07,D0
 	ADD.W	#$0040,D0
@@ -10075,41 +10079,41 @@ initializeDebrisParticlePositions:
 
 handleEdgeCollision:
 	MOVE.B	#$01,grindSampleID		; egde grind
-	MOVE.B	wheelBouncePhaseAccumulator,D0		; Check audio pitch modifier
-	BNE	lbC052614		; Skip if non-zero
-	MOVE.B	postWreckStateFlag,D0	; Check if in wreck state
-	BEQ	noEdgeCollision		; Exit if no collision
-lbC052614:				; Continue if collision detected
-	TST.B	offTrackStateFlags	; Check collision flag
-	BMI	noEdgeCollision		; Exit if MSB set
-	MOVE.B	carSpeedMagnitude,D0	; Get impact severity (0-255)
+	MOVE.B	wheelBouncePhaseAccumulator,D0
+	BNE	lbC052614
+	MOVE.B	postWreckStateFlag,D0
+	BEQ	noEdgeCollision
+lbC052614:
+	TST.B	offTrackStateFlags
+	BMI	noEdgeCollision
+	MOVE.B	carSpeedMagnitude,D0
 	CMP.B	#$01,D0
-	BLT	noEdgeCollision		; Exit if too low
-	CMP.B	#$32,D0			; Cap at 50 (decimal)
+	BLT	noEdgeCollision
+	CMP.B	#$32,D0
 	BLT	lbC052638
 	MOVE.B	#$32,D0
 lbC052638:
-	MOVE.B	D0,collisionImpactLevel		; Store severity
-	MOVE.B	#$1F,D1			; Prepare for 32 particles (0-31)
-	JSR	generateRandomNumber	; Get random value
-	AND.B	#$07,D0			; Mask to 0-7
-	MOVE.B	D0,D2			; Save random value
-	MOVE.B	collisionImpactLevel,D0		; Reload severity
+	MOVE.B	D0,collisionImpactLevel
+	MOVE.B	#$1F,D1
+	JSR	generateRandomNumber
+	AND.B	#$07,D0
+	MOVE.B	D0,D2
+	MOVE.B	collisionImpactLevel,D0
 	LSR.B	#$01,D0
-	BRA	lbC052682
+;	BRA	lbC052682
 
 ;	CMP.B	#$08,D0			; fixed dead code
 ;	BGE	lbC05266A
 ;	MOVE.B	#$08,D0
 ;	BNE	lbC052682
 ;lbC05266A:
-	CMP.B	#$06,D2
-	BLT	lbC052682
-	MOVE.B	#$0D,D0
-	CMP.B	#$07,D2
-	BNE	lbC052682
-	MOVE.B	#$03,D0
-lbC052682:
+;	CMP.B	#$06,D2
+;	BLT	lbC052682
+;	MOVE.B	#$0D,D0
+;	CMP.B	#$07,D2
+;	BNE	lbC052682
+;	MOVE.B	#$03,D0
+;lbC052682:
 	CMP.B	#$1F,D0
 	BCS	lbC05268E
 	MOVE.B	#$1F,D0
@@ -10794,32 +10798,32 @@ verticalBlank:
 	CLR.W	D1
 	CLR.W	D2
 	TST.B	framesToWait
-	BEQ	lbC052FF0
+	BEQ	.waitOk
 	SUBQ.B	#$01,framesToWait
-lbC052FF0:
+.waitOk:
 	TST.B	framesToWaitWhenFading
-	BEQ	lbC053000
+	BEQ	.fadeOk
 	SUBQ.B	#$01,framesToWaitWhenFading
-lbC053000:
+.fadeOk:
 	TST.B	displayUpdateFlag
-	BPL	lbC05301A
+	BPL	.wheelGraphicsOk
 	TST.B	gameInitFlag3
-	BNE	lbC05301A
+	BNE	.wheelGraphicsOk
 	JSR	updateWheelGraphics
-lbC05301A:
-	MOVE.W	gameLoopControl,_custom+dmacon
+.wheelGraphicsOk:
+	MOVE.W	dmaconValueToSet,_custom+dmacon
 	MOVE.W	enginePitchAccumulator,D0
 	ADD.W	enginePitchDelta,D0
-	BPL	lbC053056
+	BPL	.enginePitchOk
 	TST.B	gameExitFlag
-	BEQ	lbC053052
+	BEQ	.clearAccumulator
 	MOVE.W	#DMAF_AUD0,_custom+dmacon
 	MOVE.W	#INTF_AUD0,_custom+intena
 	BRA	verticalBlankDone
 
-lbC053052:
+.clearAccumulator:
 	MOVE.W	#$0000,D0
-lbC053056:
+.enginePitchOk:
 	MOVE.W	D0,enginePitchAccumulator
 	ADD.W	#$017A,D0
 	MOVE.L	#$00493E00,D3
@@ -10853,8 +10857,8 @@ setAudioChannel0:
 verticalBlankDone:
 	RTS
 
-	MOVEM.L	(SP)+,D0-D7/A0-A6
-	RTS
+;	MOVEM.L	(SP)+,D0-D7/A0-A6				; fixed dead code
+;	RTS
 
 adjustCoordinateBoundsFromCenter:
 	MOVE.B	tempByte5,D1
@@ -10892,23 +10896,21 @@ updateOpponentLapTime:
 	ASL.B	#$01,D3
 	TST.B	$00(A0,D3.W)
 	BNE	lbC05315A
-	MOVE.B	$01(A0,D3.W),D0			; Load opponent time modifier
-	EOR.B	#$FF,D0				; Invert bits
+	MOVE.B	$01(A0,D3.W),D0
+	EOR.B	#$FF,D0
 	MOVE.B	D0,tempByte3
-	MOVE.B	#$0D,D0				; Multiplier
-	JSR	multiplyAndRandomize		; Add randomness
+	MOVE.B	#$0D,D0
+	JSR	multiplyAndRandomize
 	CMP.B	#$0A,D0
-	BCS	lbC053154			; If < 10, use as-is
-	ADD.B	#$06,D0				; Otherwise add 6
+	BCS	lbC053154
+	ADD.B	#$06,D0
 lbC053154:
-	JSR	incrementLapTimeBCD			; Update timer with this value
+	JSR	incrementLapTimeBCD
 lbC05315A:
 	RTS
 
 updateGamePhysics:
-	move.b	framesSinceCopperlistUpdate,physicsUpdateCount
-	sub.b	#1,physicsUpdateCount
-.loop:	JSR	calculateTransformMatrices
+	JSR	calculateTransformMatrices
 	JSR	calculateWheelCornerPositions
 	JSR	updateWheelHeightsFromTrack
 	JSR	calculateExpectedTrackSurfaceHeights
@@ -10928,8 +10930,6 @@ updateGamePhysics:
 .processed:
 	JSR	applyVelocityIntegration
 	JSR	updateWorldPosition
-	sub.b	#1,physicsUpdateCount
-	bpl.s	.loop
 	RTS
 
 calculateWheelCornerPositions:
@@ -14384,19 +14384,19 @@ renderPlayerName:
 	JMP	lbC056548
 
 renderTrackName:
-	MOVE.L	#trackNames,A0		; Point to track names table
-	MOVE.B	#$0F,D2			; Set length to 15 characters
+	MOVE.L	#trackNames,A0
+	MOVE.B	#$0F,D2
 lbC056548:
-	MOVE.B	D2,tempByte4			; Store character count
-	ASL.B	#$04,D1			; Multiply track index by 16 (each name is 16 bytes)
-	MOVE.B	#$00,D2			; Initialize character counter
+	MOVE.B	D2,tempByte4
+	ASL.B	#$04,D1
+	MOVE.B	#$00,D2
 lbC056554:
-	MOVE.B	$00(A0,D1.W),D0		; Load character from track name
-	JSR	renderCharacter		; Render the character
-	ADDQ.B	#$01,D1			; Move to next character
-	ADDQ.B	#$01,D2			; Increment counter
-	CMP.B	tempByte4,D2			; Check if 15 characters rendered
-	BNE	lbC056554		; Loop until done
+	MOVE.B	$00(A0,D1.W),D0
+	JSR	renderCharacter
+	ADDQ.B	#$01,D1
+	ADDQ.B	#$01,D2
+	CMP.B	tempByte4,D2
+	BNE	lbC056554
 	RTS
 
 drawScreenFrame:
@@ -14576,76 +14576,78 @@ initializeRenderingState:
 processGameFrame:
 	JSR	initializeRenderingState
 	MOVE.B	#$00,D0
-	MOVE.B	D0,currentPlayerNameOffset
-	MOVE.B	D0,selectedMenuItem
+	MOVE.B	D0,gridLookupX
+	MOVE.B	D0,gridLookupY
 	JSR	getSegmentAtGridCoordinate
-	BCS	lbC05678E
+	BCS	.playerOffGrid
 	CMP.B	#$FF,D0
-	BNE	lbC0567F6
-	MOVE.B	lbB00D407,D0
-	MOVE.B	lbB00D409,D2
-	JSR	adjustNetworkCoordinates
+	BNE	.segmentFound
+	MOVE.B	subGridOffsetX,D0
+	MOVE.B	subGridOffsetZ,D2
+	JSR	findSegmentBySubGridAdjustment
 	CMP.B	#$FF,D0
-	BNE	lbC0567F6
-lbC05678E:
+	BNE	.segmentFound
+.playerOffGrid:
 	MOVE.B	#$C0,offTrackStateFlags
 	TST.B	networkGameMode
-	BEQ	lbC0567A6
+	BEQ	.networkStateOk
 	JSR	synchronizeNetworkState
-lbC0567A6:
+.networkStateOk:
 	TST.B	selectedTrackInDivision
-	BPL	lbC0567BC
+	BPL	.opponentLogicProcessed
 	JSR	processOpponentLogic
 	JSR	setupTrackGeometryForFrame
-lbC0567BC:
-	MOVE.B	lbB00D49F,lbB00D40E
-	MOVE.W	lbW00D528,visibilityAccumulator
-	MOVE.B	lbB00D49E,segmentDepthCounter
-	BRA	lbC056880
+.opponentLogicProcessed:
+	MOVE.B	prevTrackProgressionOffset,trackProgressionOffset
+	MOVE.W	prevVisibilityAccumulator,visibilityAccumulator
+	MOVE.B	prevSegmentDepthCounter,segmentDepthCounter
+	BRA	.setupRendering
 
 ;	JSR	busyWaitDelay				; fixed dead code
 ;	JSR	renderHorizon
 ;	JSR	renderMountainHorizon
 ;	JMP	lbC0569E2
 
-lbC0567F6:
+.segmentFound:
 	MOVE.B	D0,currentSegmentIndex
 	JSR	applyTrackSegmentGeometry
 	JSR	checkRoadBoundaries
 	MOVE.B	currentSegmentIndex,D0
 	MOVE.B	D0,playerSegmentIndex
 	BTST	#$06,offTrackStateFlags
-	BNE	lbC056826
-	MOVE.B	D0,lbB00D49B
-lbC056826:
+	BNE	.lastValidSegmentIndexOk
+	MOVE.B	D0,lastValidSegmentIndex
+.lastValidSegmentIndexOk:
 	JSR	calculateTrackPosition
-	MOVE.B	lbB00D40E,lbB00D49F
-	MOVE.W	visibilityAccumulator,lbW00D528
-	MOVE.B	segmentDepthCounter,lbB00D49E
+	MOVE.B	trackProgressionOffset,prevTrackProgressionOffset
+	MOVE.W	visibilityAccumulator,prevVisibilityAccumulator
+	MOVE.B	segmentDepthCounter,prevSegmentDepthCounter
 	TST.B	networkGameMode
-	BEQ	lbC05685E
+	BEQ	.localGameMode
 	JSR	synchronizeNetworkState
-	BRA	lbC056880
+	BRA	.setupRendering
 
-lbC05685E:
+.localGameMode:
 	TST.B	selectedTrackInDivision
-	BPL	lbC056880
+	BPL	.setupRendering
 	JSR	processOpponentLogic
 	JSR	calculatePlayerDistance
 	JSR	handleOpponentPositioning
 	JSR	setupTrackGeometryForFrame
-lbC056880:
+.setupRendering:
+	tst.b	framesToProcess				; added
+	bne	lbC0569E2
 	MOVE.B	#$80,D0
 	MOVE.B	D0,processedSegmentIndices1
 	MOVE.B	D0,processedSegmentIndices2
 	MOVE.B	playerSegmentIndex,currentSegmentIndex
 	MOVE.B	#$00,segmentDataStartIndex
-	MOVE.B	lbB00D40E,D0
+	MOVE.B	trackProgressionOffset,D0
 	BPL	lbC0568BA
 	JSR	advanceToNextSegment
-	MOVE.B	#$00,lbB00D40E
+	MOVE.B	#$00,trackProgressionOffset
 lbC0568BA:
-	TST.B	lbB00D40E
+	TST.B	trackProgressionOffset
 	BNE	lbC0568E2
 	JSR	retreatToPreviousSegment
 	CMP.B	lbB00D4A6,D1
@@ -15425,7 +15427,7 @@ lbC057408:
 	MOVE.L	#lbW00D434,A2
 	MOVE.W	$00(A2,D2.W),-$04(A6,D1.W)
 lbC057414:
-	MOVE.B	lbB00D40E,D0
+	MOVE.B	trackProgressionOffset,D0
 	JSR	processTrackCharacteristics
 	MOVE.B	renderingIndex,D1
 	MOVE.B	#$08,D2
@@ -21834,7 +21836,7 @@ lbL05B7B4:
 	dc.l	$00000000,$0FFF0C88,$00000000,$0FFF0C88
 lbW05B7C4:
 	dc.w	$002C
-gameLoopControl:
+dmaconValueToSet:
 	dc.w	$0020
 graphicsRenderingParameters:      ; structs of 8 words, only 2-5 used (size, position)
 	dc.w	$0000,$0000,$0001,$0039					; 00 right wheel 1
@@ -21911,19 +21913,19 @@ copperlist:
 	dc.w	$0007,bpl3ptl,$C000,bpl4pth,$0007,bpl4ptl,$E000,color00
 copperlistColor0:
 	dc.w	$0000,color01,$0000,color02,$0000,color03,$0000,color04,$0000
-	dc.w	$018A,$0000,$018C,$0000,$018E,$0000,$0190,$0000,$0192
-	dc.w	$0000,$0194,$0000,$0196,$0000,$0198,$0000,$019A,$0000
-	dc.w	$019C,$0000,$019E,$0000,$01A0
+	dc.w	color05,$0000,color06,$0000,color07,$0000,color08,$0000,color09
+	dc.w	$0000,color10,$0000,color11,$0000,color12,$0000,color13,$0000
+	dc.w	color14,$0000,color15,$0000,color16
 copperlistColor16:
-	dc.w	$0000,$01A2,$0000,$01A4,$0000,$01A6,$0000,$01A8,$0000
-	dc.w	$01AA,$0000,$01AC,$0000,$01AE,$0000,$01B0,$0000,$01B2
-	dc.w	$0000,$01B4,$0000,$01B6,$0000,$01B8,$0000,$01BA,$0000
-	dc.w	$01BC,$0000,color31,$0000,spr0pth
+	dc.w	$0000,color17,$0000,color18,$0000,color19,$0000,color20,$0000
+	dc.w	color21,$0000,color22,$0000,color23,$0000,color24,$0000,color25
+	dc.w	$0000,color26,$0000,color27,$0000,color28,$0000,color29,$0000
+	dc.w	color30,$0000,color31,$0000,spr0pth
 copperlistSprite0:
-	dc.w	$0000,spr0ptl,$0000,$0124,$0000,$0126,$0000,$0128,$0000
-	dc.w	$012A,$0000,$012C,$0000,$012E,$0000,$0130,$0000,$0132
-	dc.w	$0000,$0134,$0000,$0136,$0000,$0138,$0000,$013A,$0000
-	dc.w	$013C,$0000,$013E,$0000,$FFFF				; originally $FA01,$FF00,intreq,$8010,
+	dc.w	$0000,spr0ptl,$0000,spr1pth,$0000,spr1ptl,$0000,spr2pth,$0000
+	dc.w	spr2ptl,$0000,spr3pth,$0000,spr3ptl,$0000,spr4pth,$0000,spr4ptl
+	dc.w	$0000,spr5pth,$0000,spr5ptl,$0000,spr6pth,$0000,spr6ptl,$0000
+	dc.w	spr7pth,$0000,spr7ptl,$0000,$FFFF				; originally $FA01,$FF00,intreq,$8010,
 	dc.w	$FFFE
 
 sampleData:
@@ -21983,15 +21985,15 @@ trackViewOffsetX:
 	ds.b	2
 trackViewOffsetY:
 	ds.b	1
-lbB00D407:
+subGridOffsetX:
 	ds.b	2
-lbB00D409:
+subGridOffsetZ:
 	ds.b	1
 trackProgressionByte:
 	ds.w	1
 opponentSubSegmentProgress:
 	ds.w	1
-lbB00D40E:
+trackProgressionOffset:
 	ds.b	1
 lbB00D40F:
 	ds.b	1
@@ -22059,7 +22061,7 @@ trackDirection:
 	ds.b	1
 restartTimerCountdown:
 	ds.b	1
-physicsUpdateCount:
+framesToProcess:
 	ds.b	1
 distanceCharacteristic:
 	ds.b	1
@@ -22207,15 +22209,15 @@ maxLapsForRace:
 	ds.b	1
 renderingOrderMode:
 	ds.b	1
-lbB00D49B:
+lastValidSegmentIndex:
 	ds.b	1
 offTrackStateFlags:
 	ds.b	1		; bit 7=major collision/severely off track, bit 6=completely outside track grid
 aiPatternControlFlags:
 	ds.b	1
-lbB00D49E:
+prevSegmentDepthCounter:
 	ds.b	1
-lbB00D49F:
+prevTrackProgressionOffset:
 	ds.b	2
 playerLateralPosition:
 	ds.b	2
@@ -22314,8 +22316,10 @@ textTransparencyMode:
 segmentBaseSteeringOffset:
 	ds.b	1
 currentPlayerNameOffset:
+gridLookupX:
 	ds.b	1
 selectedMenuItem:
+gridLookupY:
 	ds.b	1
 collisionImpactLevel:
 	ds.b	2
@@ -22419,7 +22423,7 @@ lbB00D524:
 	ds.b	2
 visibilityAccumulator:
 	ds.w	1
-lbW00D528:
+prevVisibilityAccumulator:
 	ds.w	1
 segmentProgressDistance:
 	ds.w	1
@@ -22926,7 +22930,7 @@ drawBridgeHeightValues:
 ;lbB00E285:			; dead code
 	ds.b	1
 ;lbB00E286:
-;	ds.b	48
+	ds.b	48
 lbL00E2B6:
 	ds.b	12
 lbL00E2C2:
@@ -23012,7 +23016,9 @@ lbW049538:
 networkPacketReadyFlag:
 	ds.b	2
 networkGameMode:
-	ds.b	2
+	ds.b	1
+steeringInputDirectionBackup:			; added
+	ds.b	1
 checksumAccumulator:
 	ds.w	1
 networkDataCounter1:
@@ -23189,7 +23195,6 @@ menuInitializedFlag:
 	ds.b	2
 framesToWait:
 	ds.b	1
-framesToWaitForJotain:
 	ds.b	1
 framesToWaitWhenFading:
 	ds.b	1
