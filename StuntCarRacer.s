@@ -1,6 +1,7 @@
 ; Known issues
 ; - majorImpactCooldownTimer should be multiplied by 6 or decremented 1/6 of the time
-; - draw bridge is not updated smoothly (drawBridgeAnimationPhase is 0-255, clamped to 0-15 -> expand drawBridgeAngleTable and drawBridgeHeightCurve 4x and update clamping to 0-63)
+; - car easily goes off track in corners when not running 60 FPS
+; - major impact holes sometimes appear in the wrong place
 ; - paused text not rendered
 	incdir	"scr:"
 
@@ -4177,29 +4178,37 @@ animateDrawBridge:
 .carWithinActiveSegments:
 	MOVE.B	#$0C,D0
 	MOVE.B	D0,drawBridgeActive
-	ADD.B	drawBridgeAnimationPhase,D0
-	BRA	lbC04C266
+;	ADD.B	drawBridgeAnimationPhase,D0			; dead code
+;	BRA	lbC04C266
+	rts							; added
 
 .drawBridgeInactive:
-	TST.B	frameThrottleFlag
-	BMI	.animationPhaseOk
+;	TST.B	frameThrottleFlag
+;	BMI	.animationPhaseOk
 	ADDQ.B	#$01,drawBridgeAnimationPhase
+	cmp.b	#$c0,drawBridgeAnimationPhase			; added
+	bcs.s	.animationPhaseOk
+	clr.b	drawBridgeAnimationPhase
 .animationPhaseOk:
 	MOVE.W	#$0000,segmentProgressDistance
 	MOVE.B	#$00,drawBridgeActive
 	MOVE.B	drawBridgeAnimationPhase,D0
-	AND.W	#$001F,D0
-	SUB.W	#$0010,D0
+	AND.W	#$00FF,D0					; originally $1F
+	SUB.W	#$0010*FRAMERATE_MULTIPLIER,D0			; originally $10
 	BPL	.animationPhasePositive
 	NOT.W	D0
 .animationPhasePositive:
 	MOVE.B	D0,D2
-	ADDQ.W	#$04,D0
-	MOVE.L	#drawBridgeAngleTable,A0
-	MOVE.B	$00(A0,D2.W),lbB00E285
-	MOVE.B	$00(A0,D2.W),lbB00E286
-	ASL.W	#$05,D0
+;	ADDQ.W	#$04,D0
+;	MOVE.L	#drawBridgeAngleTable,A0			; dead code
+;	MOVE.B	$00(A0,D2.W),lbB00E285
+;	MOVE.B	$00(A0,D2.W),lbB00E286
+;	ASL.W	#$05,D0
 	MOVE.W	D0,tempWord1
+	add.w	d0,d0						; added
+	add.w	d0,d0
+	add.w	#128,d0
+	add.w	d0,tempWord1
 	MOVE.B	#$02,D2
 	MOVE.B	#$BE,D1
 	MOVE.L	#segmentGeometryOffsetTable,A1
@@ -4261,25 +4270,25 @@ lbC04C1AC:
 	MOVE.W	D0,$0044(A1)
 lbC04C24A:
 	MOVE.B	#$80,drawBridgeUpdateFlag
-	MOVE.B	opponentSegmentIndex,D0
-	CMP.B	#$2F,D0
-	BNE	lbC04C294
-	MOVE.B	drawBridgeAnimationPhase,D0
-lbC04C266:
-	MOVE.L	#drawBridgeHeightCurve,A1
-	MOVE.L	#drawBridgeHeightValues,A2
-	AND.B	#$1F,D0
-	LSR.B	#$01,D0
-	MOVE.B	D0,D2
-	MOVE.B	#$00,D1
-	MOVE.B	#$C6,D0
-lbC04C282:
-	ADD.B	$00(A1,D2.W),D0
-	MOVE.B	D0,$00(A2,D1.W)
-	ADDQ.B	#$01,D1
-	CMP.B	#$03,D1
-	BNE	lbC04C282
-lbC04C294:
+;	MOVE.B	opponentSegmentIndex,D0			; dead code
+;	CMP.B	#$2F,D0
+;	BNE	lbC04C294
+;	MOVE.B	drawBridgeAnimationPhase,D0
+;lbC04C266:
+;	MOVE.L	#drawBridgeHeightOffsets,A1
+;	MOVE.L	#drawBridgeHeightValues,A2
+;	AND.B	#$1F,D0
+;	LSR.B	#$01,D0
+;	MOVE.B	D0,D2
+;	MOVE.B	#$00,D1
+;	MOVE.B	#$C6,D0
+;lbC04C282:
+;	ADD.B	$00(A1,D2.W),D0
+;	MOVE.B	D0,$00(A2,D1.W)
+;	ADDQ.B	#$01,D1
+;	CMP.B	#$03,D1
+;	BNE	lbC04C282
+;lbC04C294:
 	RTS
 
 initializeGameData:
@@ -4329,7 +4338,7 @@ lbC04C37C:
 	RTS
 
 setupRandomRaceParameters:
-	MOVE.L	#lbL04C3F4,A0
+	MOVE.L	#aiBaseSkillTable,A0
 	MOVE.L	#aiSkillLevelTable,A1
 	MOVE.W	#$000B,D1
 lbC04C394:
@@ -4369,7 +4378,7 @@ setupGameConfiguration:
 
 lbC04C422:
 	MOVE.B	displayTrackID,D1
-	MOVE.L	#lbL04C442,A1
+	MOVE.L	#divisionBaseOffsets,A1
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,trackBaseOffset
 	ADDQ.B	#$03,D0
@@ -4390,8 +4399,8 @@ configurePlayersAndCars:
 	BRA	lbC04C4BA
 
 lbC04C47C:
-	MOVE.L	#lbL04C4C8,A0
-	MOVE.L	#lbL04C4CE,A1
+	MOVE.L	#player1OpponentIndices,A0
+	MOVE.L	#player2OpponentIndices,A1
 	MOVE.B	currentRaceNumber,D1
 	MOVE.B	$00(A0,D1.W),D2
 	ADD.B	trackBaseOffset,D2
@@ -8169,7 +8178,7 @@ lbC050782:
 lbC0507B0:
 	MOVE.B	D0,lbB05047E
 lbC0507B6:
-	MOVE.L	#lbL04C442,A0
+	MOVE.L	#divisionBaseOffsets,A0
 	MOVE.L	#opponentTraitsBuffer,A1
 	MOVE.L	#opponentBehaviorTraits,A2
 	MOVE.L	#playerNamesBuffer,A3
@@ -21456,20 +21465,35 @@ textStringTable:
 lbB04C057:
 	dc.b	$09,"SUPER DIVISION ",$FF,"EXCELLENT DRIVING - WELL DONE",$FF
 	dc.b	"Hall of Fame",$FF,$00
-drawBridgeAngleTable:
-	dc.b	$D2,$BB,$B7,$B3,$B1,$AD,$AB,$A7,$A6,$A4,$A2,$A1,$9F,$9F,$9F,$9E
-drawBridgeHeightCurve:
-	dc.b	$F7,$F7,$F6,$F6,$F5,$F5,$F6,$F7,$F8,$F9,$FB,$FD,$FF,$02,$05,$FD
-lbL04C3F4:
-	dc.l	$786E645A,$50463C32,$281E140A
-lbL04C442:
-	dc.l	$09060300
-lbL04C4C8:
-	ds.l	1
-	dc.w	$0101
-lbL04C4CE:
-	dc.l	$01010202
-	dc.w	$0202
+;drawBridgeAngleTable:									; dead code
+;	dc.b	$D2,$BB,$B7,$B3,$B1,$AD,$AB,$A7,$A6,$A4,$A2,$A1,$9F,$9F,$9F,$9E
+drawBridgeHeightOffsets:
+	dc.b	$F7,$F7,$F7,$F7,$F7,$F7
+	dc.b	$F7,$F7,$F7,$F7,$F7,$F6
+	dc.b	$F6,$F6,$F6,$F6,$F6,$F6
+	dc.b	$F6,$F6,$F6,$F6,$F5,$F5
+	dc.b	$F5,$F5,$F5,$F5,$F5,$F5
+	dc.b	$F5,$F5,$F5,$F6,$F6,$F6
+	dc.b	$F6,$F6,$F6,$F7,$F7,$F7
+	dc.b	$F7,$F7,$F8,$F8,$F8,$F8
+	dc.b	$F8,$F8,$F8,$F9,$F9,$F9
+	dc.b	$F9,$F9,$FA,$FA,$FA,$FB
+	dc.b	$FB,$FB,$FC,$FC,$FC,$FD
+	dc.b	$FD,$FD,$FE,$FE,$FE,$FF
+	dc.b	$FF,$FF,$00,$00,$01,$01
+	dc.b	$02,$02,$03,$03,$04,$04
+	dc.b	$05,$04,$03,$02,$01,$00
+	dc.b	$FD,$FD,$FD,$FD,$FD,$FD
+aiBaseSkillTable:
+	dc.b	$78,$6E,$64,$5A,$50,$46,$3C,$32,$28,$1E,$14,$0A
+divisionBaseOffsets:
+	dc.b	$09,$06,$03,$00
+player1OpponentIndices:
+	ds.b	4
+	dc.b	$01,$01
+player2OpponentIndices:
+	dc.b	$01,$01,$02,$02
+	dc.b	$02,$02
 specialSegmentLookupTable:
 	dc.b	$03,$04,$04,$03
 menuStringOffsetTable:
@@ -21481,7 +21505,7 @@ aiMovementPatterns:
 	dc.b	$E0,$B0,$A0,$90
 	dc.b	$90,$A0,$B0,$E0
 lbL04DFB8:
-	dc.l	$00D480D4,$0000ABAB,$40400000
+	dc.b	$00,$D4,$80,$D4,$00,$00,$AB,$AB,$40,$40,$00,$00
 lbB04E1F4:
 	ds.b	104
 	dc.b	$FF,$FF,$FF,$FF
@@ -22899,14 +22923,14 @@ segmentVisibilityData:
 	ds.l	12
 drawBridgeHeightValues:
 	ds.b	3
-lbB00E285:
+;lbB00E285:			; dead code
 	ds.b	1
-lbB00E286:
-	ds.b	48
+;lbB00E286:
+;	ds.b	48
 lbL00E2B6:
-	ds.l	3
+	ds.b	12
 lbL00E2C2:
-	ds.l	3
+	ds.b	12
 currentDivision:
 	ds.b	1
 holeRenderingPosition:
