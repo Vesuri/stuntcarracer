@@ -1,6 +1,5 @@
 ; Known issues
 ; - majorImpactCooldownTimer should be multiplied by 6 or decremented 1/6 of the time
-; - wheels don't rotate at 60FPS when running sub-60FPS
 ; - major impact holes sometimes appear in the wrong place
 ; - paused text not rendered
 	incdir	"scr:"
@@ -374,7 +373,7 @@ initialize:
 	MOVE.W	#$4200,_custom+bplcon0
 	MOVE.W	#$3C81,_custom+diwstrt
 	MOVE.W	#$04C1,_custom+diwstop
-	MOVE.W	#$003C,lbW05B7C4
+	MOVE.W	#$003C,spriteYOffset
 	MOVE.W	#$0038,_custom+ddfstrt
 	MOVE.W	#$00D0,_custom+ddfstop
 	MOVE.W	#$0000,_custom+bpl1mod
@@ -7051,7 +7050,7 @@ swapDisplayBuffers:
 	EOR.B	#$01,bufferSelector
 	MOVE.B	bufferSelector,D0
 	ADD.B	#$05,D0
-	MOVE.B	#$00,framesToWait	; originally $06
+	MOVE.B	#$06,framesToWait	; originally $06
 	MOVE.L	frameBuffers,D0
 	MOVE.L	D0,D3
 	MOVE.B	frameBufferToggle,D4
@@ -14636,7 +14635,9 @@ processGameFrame:
 	JSR	setupTrackGeometryForFrame
 .setupRendering:
 	tst.b	framesToProcess				; added
-	bne	lbC0569E2
+	beq.s	.continueSetup
+	rts
+.continueSetup:
 	MOVE.B	#$80,D0
 	MOVE.B	D0,processedSegmentIndices1
 	MOVE.B	D0,processedSegmentIndices2
@@ -20495,43 +20496,51 @@ loadMountainDataDone:
 	RTS
 
 initializeGraphicsData:
-	MOVE.L	#compressedGraphicsBuffer,A1				; cbits
+	MOVE.L	#bitmapGraphicsBuffer,A1
 	MOVE.W	#$0000,D4
-lbC05B606:
+.loadGraphicsElementLoop:
 	JSR	loadGraphicsElement
 	ADDQ.W	#$01,D4
 	CMP.W	#$000A,D4
-	BNE	lbC05B61A
+	BNE	.graphicsElementIndexOk
 	MOVE.W	#$000F,D4
-lbC05B61A:
+.graphicsElementIndexOk:
+	cmp.w	#$0025,d4				; added
+	bne.s	.notFirstSprite
+	move.l	a1,-(sp)
+	lea	spriteBuffer,a1
+	bra.s	.destinationOk
+.notFirstSprite:
+	cmp.w	#$0031,d4
+	bne.s	.destinationOk
+	move.l	(sp)+,a1
+.destinationOk:
 	CMP.W	#$0034,D4
-	BNE	lbC05B606
+	BNE	.loadGraphicsElementLoop
 	MOVE.L	A1,-(SP)
 	MOVE.L	#imageMainGameBackground,A0
-prutku:
 	MOVE.L	#bitplaneMaskTable,A1
 	JSR	decompressRLEObjectToMask
-kutku:
 	MOVE.L	(SP)+,A1
 	MOVE.W	#$000A,D4
-lbC05B63C:
+.loadGraphicsElementWithMaskLoop:
 	JSR	loadGraphicsElement
 	ADDQ.W	#$01,D4
 	CMP.W	#$000F,D4
-	BNE	lbC05B63C
+	BNE	.loadGraphicsElementWithMaskLoop
 	RTS
 
 loadGraphicsElement:
 	CLR.B	loadingHardwareSprite
-	CMP.W	#$0025,D4		; skip hardware sprite graphics at indices 37-48
-	BLT	lbC05B66C
+	CMP.W	#$0025,D4				; indices 37-48 are hardware sprite graphics and need special handling
+	BLT	.loadingHardwareSpriteOk
 	CMP.W	#$0030,D4
-	BGT	lbC05B66C
+	BGT	.loadingHardwareSpriteOk
 	MOVE.B	#$80,loadingHardwareSprite
-lbC05B66C:
+.loadingHardwareSpriteOk:
 	MOVE.W	D4,D0
 	ASL.W	#$02,D0
-	MOVE.L	#graphicsDataTable,A5			; graphic.pointers
+	MOVE.L	#graphicsPointerTable,A5
 	MOVE.L	A1,$00(A5,D0.W)
 	ASL.W	#$02,D0
 	MOVE.L	#graphicsRenderingParameters,A3
@@ -20551,10 +20560,10 @@ lbC05B66C:
 	MOVE.W	(A3)+,D1
 	MOVE.W	(A3)+,D2
 	TST.B	loadingHardwareSprite
-	BEQ	lbC05B6BE
+	BEQ	loadBitmapData
 	JMP	loadHardwareSprite
 
-lbC05B6BE:
+loadBitmapData:
 	MOVE.W	D1,D3
 	MOVE.L	A4,A2
 lbC05B6C2:
@@ -20598,7 +20607,7 @@ lbC05B708:
 	MOVE.L	D7,(A1)+
 	DBRA	D3,lbC05B6C2
 	LEA	$00A0(A2),A4
-	DBRA	D2,lbC05B6BE
+	DBRA	D2,loadBitmapData
 	RTS
 
 loadHardwareSprite:
@@ -20607,7 +20616,7 @@ loadHardwareSprite:
 	ASL.W	#$04,D0
 	ADD.W	#$0080,D0
 	MOVE.W	$0002(A3),D3
-	ADD.W	lbW05B7C4,D3
+	ADD.W	spriteYOffset,D3
 	ADD.W	D3,D6
 	ASL.L	#$08,D3
 	ASL.L	#$08,D6
@@ -20643,25 +20652,23 @@ lbC05B77A:
 
 loadPaletteColors:
 	MOVE.L	#copperlistColor16,A0
-	MOVE.L	#lbL05B7B4,A1
+	MOVE.L	#spritePalette,A1
 	MOVE.W	#$0007,D0
-lbC05B7AA:
-	MOVE.W	(A1)+,(A0)+
+.loop:	MOVE.W	(A1)+,(A0)+
 	ADDQ.L	#$02,A0
-	DBRA	D0,lbC05B7AA
+	DBRA	D0,.loop
 	RTS
 
 initializeSpritePointers:
 	MOVE.W	#$0007,D3
-lbC05B7CA:
-	MOVE.W	D3,D1
-	MOVE.L	#lbL000DB4,D0
+.loop:	MOVE.W	D3,D1
+	MOVE.L	#emptySprite,D0
 	JSR	setSpritePointer
-	DBRA	D3,lbC05B7CA
+	DBRA	D3,.loop
 	RTS
 
 setSpriteFromTable:
-	MOVE.L	#graphicsDataTable,A1
+	MOVE.L	#graphicsPointerTable,A1
 	AND.W	#$00FF,D0
 	ASL.W	#$02,D0
 	MOVE.L	$00(A1,D0.W),D0
@@ -20676,13 +20683,13 @@ setSpritePointer:
 updateSpritePositions:
 	MOVE.W	#$0094,D1
 lbC05B808:
-	MOVE.L	#graphicsDataTable,A0
+	MOVE.L	#graphicsPointerTable,A0
 	MOVE.L	$00(A0,D1.W),A0
 	MOVE.W	D1,D0
 	ASL.W	#$02,D0
 	MOVE.L	#graphicsRenderingParameters,A1
 	MOVE.W	$0A(A1,D0.W),D0
-	ADD.W	lbW05B7C4,D0
+	ADD.W	spriteYOffset,D0
 	MOVE.B	$0002(A0),D3
 	SUB.B	(A0),D3
 	MOVE.B	D0,(A0)
@@ -20700,7 +20707,7 @@ renderMaskedGraphicsObject:
 	AND.W	#$00FF,D0
 	move.w	d0,d5
 	ASL.W	#$02,D0
-	MOVE.L	#graphicsDataTable,A1
+	MOVE.L	#graphicsPointerTable,A1
 	MOVE.L	$00(A1,D0.W),A1
 	ASL.W	#$02,D0
 	MOVE.L	#graphicsRenderingParameters,A2
@@ -20848,7 +20855,7 @@ renderGraphicsObjectAtPosition:
 	MOVE.W	D2,-(SP)
 	AND.W	#$00FF,D0
 	ASL.W	#$02,D0
-	MOVE.L	#graphicsDataTable,A1
+	MOVE.L	#graphicsPointerTable,A1
 	MOVE.L	$00(A1,D0.W),A1
 	ASL.W	#$02,D0
 	MOVE.L	#graphicsRenderingParameters,A2
@@ -20905,8 +20912,6 @@ sampleParameters:	EQU	*-2
 	ds.w	1
 downsampledSampleTable:
 	ds.l	15
-lbL000DB4:
-	ds.l	1
 sampleParameterTable:
 	; sample 0: $0000F4B8, 2436 bytes, period 150, volume 30, channel 1, chime
 	dc.l	$0000F4B8,$00000984
@@ -21832,9 +21837,9 @@ trackMountainCountsAnglesAndIndices:
 	dc.b	$02,$3F,$03,$45,$00,$4F,$01,$55,$04,$5F,$05,$65,$02,$6F
 	dc.b	$01,$75,$00,$7F,$05,$85,$02,$8F,$03,$95,$04,$9F,$05,$A5
 	dc.b	$00,$AF,$09,$B5,$06,$BF,$07,$C5,$08,$CF,$05,$D5,$00,$DF,$03,$E5,$04,$EF,$01,$F5,$02,$FF,$05,$00
-lbL05B7B4:
-	dc.l	$00000000,$0FFF0C88,$00000000,$0FFF0C88
-lbW05B7C4:
+spritePalette:
+	dc.w	$0000,$0000,$0FFF,$0C88,$0000,$0000,$0FFF,$0C88
+spriteYOffset:
 	dc.w	$002C
 dmaconValueToSet:
 	dc.w	$0020
@@ -23348,7 +23353,7 @@ renderGraphicsCurrentX:
 	ds.w	1
 renderGraphicsCurrentY:
 	ds.w	1
-graphicsDataTable:
+graphicsPointerTable:
 	ds.l	54
 frameBuffers:
 	ds.l	1
@@ -23363,8 +23368,7 @@ plotPixelOffset:
 fastRenderBuffer:
 	ds.l	40*200
 saveSlotBuffer:	ds.b	$200
-compressedGraphicsBuffer:	ds.b	$9b70
-;memory_79360:
+bitmapGraphicsBuffer:	ds.b	$7aa8
 leagueSeasonData:	ds.b	$1b
 randomSeedBuffer1:	ds.b	5
 randomSeedBuffer2:	ds.b	5
@@ -23414,6 +23418,8 @@ ciabcrb_old:	ds.b	1
 quit:			ds.b	1
 
 	section	ChipBSS,bss_c
+emptySprite:	ds.l	1
+spriteBuffer:	ds.b	$360
 lineDrawingBuffer:	ds.b	$2710
 lineDrawingBufferEnd:
 frameBuffer1:   ds.b    40*200*4
