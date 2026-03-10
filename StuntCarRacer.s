@@ -1,6 +1,3 @@
-; Known issues
-; - majorImpactCooldownTimer should be multiplied by 6 or decremented 1/6 of the time
-; - creakingSoundCooldownTimer should be multiplied by 6 or decremented 1/6 of the time
 	incdir	"scr:"
 
 dsksync:	EQU	$0000007E
@@ -191,8 +188,9 @@ CACR_CopyBack		equ	$80000000
 gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
-FRAMERATE_MULTIPLIER	equ	6		; 10FPS -> 60FPS
+FRAMERATE_MULTIPLIER	equ	6					; 10FPS -> 60FPS
 TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
+MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 
 	section	Code,code
 startup:
@@ -6477,7 +6475,7 @@ startCompetitiveRace:
 	MOVE.B	#$80,D0
 	JSR	transmitNetworkMessage
 	MOVE.B	#$00,gameStateID
-	JSR	runMainGame
+	;JSR	runMainGame
 	MOVE.B	#$80,D0
 	JSR	displayRacePositions
 	JSR	synchronizeRaceData
@@ -6708,7 +6706,7 @@ lbC04EE34:
 	JSR	displayGameMessage
 	MOVE.W	#$FFF8,enginePitchDelta
 	MOVE.B	#$00,wheelSpeed
-	CMP.B	#$45,majorImpactCooldownTimer
+	CMP.B	#MAJOR_IMPACT_COOLDOWN_TIME,majorImpactCooldownTimer
 	BNE	lbC04EE74
 	MOVE.B	holeRenderingPosition,D2
 	BEQ	lbC04EE74
@@ -7386,10 +7384,6 @@ lbC04F8AE:
 	RTS
 
 updateDamageAndTimers:
-	tst.b	creakingSoundCooldownTimer			; added
-	beq.s	.creakingSoundCooldownTimerOk
-	sub.b	#1,creakingSoundCooldownTimer
-.creakingSoundCooldownTimerOk:
 	MOVE.B	damageAccumulationActive,D0
 	BEQ	.damageBarUpdated
 	MOVE.B	accumulatedForceFrontLeft,D0
@@ -7402,8 +7396,14 @@ updateDamageAndTimers:
 .damageBarUpdated:
 	MOVE.B	majorImpactCooldownTimer,D0
 	BEQ	.checkDamageAccumulation
-	SUBQ.B	#$01,majorImpactCooldownTimer
-	CMP.B	#$45,D0
+;	SUBQ.B	#$01,majorImpactCooldownTimer	; originally
+	move.b	framesSinceCopperlistUpdate,d2	; added
+	cmp.b	d2,d0
+	bcc.s	.deltaOk
+	move.b	d0,d2
+.deltaOk:
+	sub.b	d2,majorImpactCooldownTimer
+	CMP.B	#MAJOR_IMPACT_COOLDOWN_TIME,D0
 	BEQ	.majorImpact
 	MOVE.B	damageAccumulationActive,D0
 	BNE	.minorImpact
@@ -7425,7 +7425,7 @@ updateDamageAndTimers:
 	SUBQ.B	#$01,D2
 	MOVE.B	D2,holeRenderingPosition
 	JSR	renderNewHole
-	MOVE.B	#$45,D0
+	MOVE.B	#MAJOR_IMPACT_COOLDOWN_TIME,D0
 	MOVE.B	D0,majorImpactCooldownTimer
 ;	MOVE.B	#$0A,D0					; fixed unnecessary code
 	MOVE.B	#$05,D0					; major impact
@@ -10801,6 +10801,10 @@ lbC052F82:
 	RTS
 
 verticalBlank:
+	tst.b	creakingSoundCooldownTimer			; added
+	beq.s	.creakingSoundCooldownTimerOk
+	sub.b	#1,creakingSoundCooldownTimer
+.creakingSoundCooldownTimerOk:
 	add.b	#1,framesSinceCopperlistUpdateAccumulator
 	CLR.W	D1
 	CLR.W	D2
@@ -11197,13 +11201,13 @@ updateWheelSuspensionPhysics:
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	.resetHighCompressionFrameCount
-	CMP.W	#$0700,D0			; originally $0700
+	CMP.W	#$0700,D0
 	BLT	.resetHighCompressionFrameCount
 	CMP.W	maxCompressionVelocity,D0
 	BCS	.maxDistanceOk1
 	MOVE.W	D0,maxCompressionVelocity
 .maxDistanceOk1:
-	SUB.W	#$0600,D0			; originally $0600
+	SUB.W	#$0600,D0
 	TST.B	frameThrottleFlag
 	BMI	.damageAccumulationDone1
 	ADDQ.B	#$01,highCompressionFrameCount
@@ -11271,13 +11275,13 @@ updateWheelSuspensionPhysics:
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	.resetOffTrackFrameCounter2
-	CMP.W	#$0700,D0				; originally $0700
+	CMP.W	#$0700,D0
 	BLT	.resetOffTrackFrameCounter2
 	CMP.W	maxCompressionVelocity,D0
 	BCS	.maxDistanceOk2
 	MOVE.W	D0,maxCompressionVelocity
 .maxDistanceOk2:
-	SUB.W	#$0600,D0				; originally $0600
+	SUB.W	#$0600,D0
 	TST.B	frameThrottleFlag
 	BMI	.damageAccumulationDone2
 	ADDQ.B	#$01,highCompressionFrameCount
@@ -11345,13 +11349,13 @@ updateWheelSuspensionPhysics:
 	ASL.W	#$08,D3
 	SUB.W	D3,D0
 	BMI	.resetOffTrackFrameCounter3
-	CMP.W	#$0700,D0				; originally $0700
+	CMP.W	#$0700,D0
 	BLT	.resetOffTrackFrameCounter3
 	CMP.W	maxCompressionVelocity,D0
 	BCS	.maxDistanceOk3
 	MOVE.W	D0,maxCompressionVelocity
 .maxDistanceOk3:
-	SUB.W	#$0600,D0				; originally $0600
+	SUB.W	#$0600,D0
 	TST.B	frameThrottleFlag
 	BMI	.damageAccumulationDone3
 	ADDQ.B	#$01,highCompressionFrameCount
@@ -21380,20 +21384,20 @@ imagePlayersPalette:
 	dc.w	$0240,$0030,$0035,$0025,$0710,$0500,$0740
 imagePlayers:
 	incbin	"imagePlayers"
+imageWreck:
+	incbin	"imageWreck"
+imageWon:
+	incbin	"imageWon"
+imageLost:
+	incbin	"imageLost"
+imagePromotion:
+	incbin	"imagePromotion"
 resultScreenPointerTable:
 	dc.l	frameBuffer1
 	dc.l	imageWon
 	dc.l	imageLost
 	dc.l	imageWreck
 	dc.l	imagePromotion
-imageWon:
-	incbin	"imageWon"
-imageLost:
-	incbin	"imageLost"
-imageWreck:
-	incbin	"imageWreck"
-imagePromotion:
-	incbin	"imagePromotion"
 lbL049700:
 	dc.b	$1F,$0E,$10,"Link abandoned",$FF,$1F,$0E,$10,"Link complete",$FF,$1F,$11,$10
 	dc.b	"Linking",$FF,$1F,$0F,$10,"Please wait",$FF,$00
@@ -21589,7 +21593,7 @@ lbB05047E:
 menuTextStrings:
 	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
 	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
-	dc.b	" S.",$FF,"        s",$FF,"WIP v20260305",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; originally Computer Link
+	dc.b	" S.",$FF,"        s",$FF,"WIP v20260310",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; originally Computer Link
 	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
 lbL050548:
 	dc.b	"------------",$FF
@@ -21929,6 +21933,7 @@ bitplaneMaskTable:
 	incbin	"bitplaneMaskTable"
 
 name_graphics:	dc.b	"graphics.library",0
+version:	dc.b	"$VER: Stunt Car Racer Ultimate 0.9 (10.03.2026) Work in progress!",0
 
 	section	ChipData,data_c
 copperlistStart:
