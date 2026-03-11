@@ -191,19 +191,17 @@ DMAF_ALL		equ	$01FF
 FRAMERATE_MULTIPLIER	equ	6					; 10FPS -> 60FPS
 TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
-sampleDataOffset	equ	$00000db8
-sampleDataSize		equ	46482
 
 	section	Code,code
 startup:
-;	moveq	#0,d2
-;	jmp	debug
 	move.l	sp,sp_quit
 	move.b	#$80,skipSaveSlotScreen
 
-	lea	gameData+sampleDataOffset,a0
+	move.l	sampleParameterTable,a0
+        sub.l   #$e700,a0
+        add.l   #gameData,a0
 	lea	sampleData,a1
-	move.w	#sampleDataSize-1,d7
+	move.w	#downsampledEngineData-sampleData-1,d7
 .copySampleData:
 	move.b	(a0)+,(a1)+
 	dbra	d7,.copySampleData
@@ -6485,7 +6483,7 @@ startCompetitiveRace:
 	MOVE.B	#$80,D0
 	JSR	transmitNetworkMessage
 	MOVE.B	#$00,gameStateID
-	;JSR	runMainGame
+	JSR	runMainGame
 	MOVE.B	#$80,D0
 	JSR	displayRacePositions
 	JSR	synchronizeRaceData
@@ -6577,7 +6575,6 @@ lbC04EBA6:
 	JSR	displayTrackHeader
 	MOVE.B	#$03,D0
 	JSR	setBackgroundColor
-debug:	; StuntCarRacer.s:10188
 	JSR	initializeSegmentFlags
 	MOVE.B	currentTrackID,D1
 	JSR	processTrackDataBuffer
@@ -20945,10 +20942,10 @@ gameData:	incbin	"scr.exe.decrypted"
 		include	"gameDataOffsets.i"
 
 	section Data,data
-audioChannelMasks:
-	dc.l	$00000001,$00000002,$00000004,$00000008
-audioChannel0Period:
-	dc.w	$0700
+;audioChannelMasks:
+;	dc.l	$00000001,$00000002,$00000004,$00000008
+;audioChannel0Period:
+;	dc.w	$0700
 ;sampleParameterTable:
 ;	; sample 0: $0000F4B8, 2436 bytes, period 150, volume 30, channel 1, chime
 ;	dc.l	$0000F4B8,$00000984
@@ -21411,9 +21408,9 @@ resultScreenPointerTable:
 	dc.l	imageLost
 	dc.l	imageWreck
 	dc.l	imagePromotion
-lbL049700:
-	dc.b	$1F,$0E,$10,"Link abandoned",$FF,$1F,$0E,$10,"Link complete",$FF,$1F,$11,$10
-	dc.b	"Linking",$FF,$1F,$0F,$10,"Please wait",$FF,$00
+;lbL049700:
+;	dc.b	$1F,$0E,$10,"Link abandoned",$FF,$1F,$0E,$10,"Link complete",$FF,$1F,$11,$10
+;	dc.b	"Linking",$FF,$1F,$0F,$10,"Please wait",$FF,$00
 ;lbW049A46:
 ;	dc.w	$0002,$040A,$162A,$4872
 ;lbW049A4E:
@@ -21455,11 +21452,11 @@ lbL04A180:
 ;	dc.l	$000001FE,$00000A96,$0000132E
 ;lbW04A420:
 ;	dc.w	$0307,$0B09,$0608,$0A04,$0001,$0502
-lbW04A49A:
-	dc.w	$C000,$C000,$0000,$0000,$0000,$0000,$0000,$0000,$0003
-	dc.w	$0003
-lbL04A4BC:
-	dc.b	$0B,$0B,$0B,$0B,$05,$02,$0E,$01,$04,$0F,$09,$0B
+;lbW04A49A:
+;	dc.w	$C000,$C000,$0000,$0000,$0000,$0000,$0000,$0000,$0003
+;	dc.w	$0003
+;lbL04A4BC:
+;	dc.b	$0B,$0B,$0B,$0B,$05,$02,$0E,$01,$04,$0F,$09,$0B
 ;playerGraphicsMask:
 ;	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFE000,$07FFFFFF,$F800001F
 ;	dc.l	$E0000FFF,$FFFFFC00,$001FE000,$1FFFFFFF,$FE00001F
@@ -21528,43 +21525,43 @@ drawBridgeHeightOffsets:
 	dc.b	$02,$02,$03,$03,$04,$04
 	dc.b	$05,$04,$03,$02,$01,$00
 	dc.b	$FD,$FD,$FD,$FD,$FD,$FD
-aiBaseSkillTable:
-	dc.b	$78,$6E,$64,$5A,$50,$46,$3C,$32,$28,$1E,$14,$0A
-divisionBaseOffsets:
-	dc.b	$09,$06,$03,$00
-player1OpponentIndices:
-	ds.b	4
-	dc.b	$01,$01
-player2OpponentIndices:
-	dc.b	$01,$01,$02,$02
-	dc.b	$02,$02
-specialSegmentLookupTable:
-	dc.b	$03,$04,$04,$03
-menuStringOffsetTable:
-	dc.b	$EC,$0A,$14,$2C,$44,$49,$4E,$55,$5C,$6B,$55,$00,$7A,$87,$55,$00,$0A,$1F,$71,$00
-	dc.b	$2B,$40,$00,$00,$49,$49,$49,$49,$0A,$0A,$55,$00
-aiMovementPatterns:
-	dc.b	$20,$50,$60,$70
-	dc.b	$70,$60,$50,$20
-	dc.b	$E0,$B0,$A0,$90
-	dc.b	$90,$A0,$B0,$E0
-lbL04DFB8:
-	dc.b	$00,$D4,$80,$D4,$00,$00,$AB,$AB,$40,$40,$00,$00
-lbB04E1F4:
-	ds.b	104
-	dc.b	$FF,$FF,$FF,$FF
+;aiBaseSkillTable:
+;	dc.b	$78,$6E,$64,$5A,$50,$46,$3C,$32,$28,$1E,$14,$0A
+;divisionBaseOffsets:
+;	dc.b	$09,$06,$03,$00
+;player1OpponentIndices:
+;	ds.b	4
+;	dc.b	$01,$01
+;player2OpponentIndices:
+;	dc.b	$01,$01,$02,$02
+;	dc.b	$02,$02
+;specialSegmentLookupTable:
+;	dc.b	$03,$04,$04,$03
+;menuStringOffsetTable:
+;	dc.b	$EC,$0A,$14,$2C,$44,$49,$4E,$55,$5C,$6B,$55,$00,$7A,$87,$55,$00,$0A,$1F,$71,$00
+;	dc.b	$2B,$40,$00,$00,$49,$49,$49,$49,$0A,$0A,$55,$00
+;aiMovementPatterns:
+;	dc.b	$20,$50,$60,$70
+;	dc.b	$70,$60,$50,$20
+;	dc.b	$E0,$B0,$A0,$90
+;	dc.b	$90,$A0,$B0,$E0
+;lbL04DFB8:
+;	dc.b	$00,$D4,$80,$D4,$00,$00,$AB,$AB,$40,$40,$00,$00
+;lbB04E1F4:
+;	ds.b	104
+;	dc.b	$FF,$FF,$FF,$FF
 lbB04E7E2:
 	ds.b	24
-lbL04E82C:
-	dc.l	$28195027
-divider:
-	dc.b	'------------'
-	dc.b	$09
-	ds.b	1
-	ds.b	1
-	ds.b	1
-lbL04FD6C:
-	dc.l	$16171617,$02040204
+;lbL04E82C:
+;	dc.l	$28195027
+;divider:
+;	dc.b	'------------'
+;	dc.b	$09
+;	ds.b	1
+;	ds.b	1
+;	ds.b	1
+;lbL04FD6C:
+;	dc.l	$16171617,$02040204
 ;gameMessageMode:
 ;	ds.b	1
 ;gameMessageIndex:
@@ -21586,32 +21583,32 @@ lbL04FD6C:
 ;	dc.b	$03,'VERCIFY! KEaYS '
 ;	dc.b	$03,'<FACULT!<FOaUND<T'
 ;	dc.b	$06,$1A
-divisionRowPositions:
-	dc.b	$0C
-	dc.b	$0C
-	dc.b	$0C
-	dc.b	$0C
-	dc.b	$0B
-	dc.b	$0B
-	dc.b	$0A
-	dc.b	$0A
-trackColumnOffsets:
-	dc.l	$13131312,$11100F0F
+;divisionRowPositions:
+;	dc.b	$0C
+;	dc.b	$0C
+;	dc.b	$0C
+;	dc.b	$0C
+;	dc.b	$0B
+;	dc.b	$0B
+;	dc.b	$0A
+;	dc.b	$0A
+;trackColumnOffsets:
+;	dc.l	$13131312,$11100F0F
 raceCount:
 	dc.b	$06
 currentPlayerID:
 	dc.b	$0B
 lbB05047E:
 	ds.b	1
-menuTextStrings:
-	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
-	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
-	dc.b	" S.",$FF,"        s",$FF,"WIP v20260310",$FF,"ssssssssssssssssssssTrack:  The ",$FF		; originally Computer Link
-	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
-lbL050548:
-	dc.b	"------------",$FF
-trackRecordMessage:
-	dc.b	"------------",$FF,$1F,$0C,$0F,"New track record",$FF
+;menuTextStrings:
+;	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
+;	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
+;	dc.b	" S.",$FF,"        s",$FF,"Computer Link",$FF,"ssssssssssssssssssssTrack:  The ",$FF
+;	dc.b	$1F,$0A,$09,"DRIVERS CHAMPIONSHIP",$FF,$1F,$0E,$14,"Track record",$FF,$00
+;lbL050548:
+;	dc.b	"------------",$FF
+;trackRecordMessage:
+;	dc.b	"------------",$FF,$1F,$0C,$0F,"New track record",$FF
 ;raceResultsText:
 ;	dc.b	"TRACK BONUS POINTS",$FF,$1F,$0E,$0C,"FINAL SEASON",$FF,"Race Time: ",$FF
 ;	dc.b	"Best Lap : ",$FF,$1F,$10,$01,"HALL of FAME",$FF,$1F,$10,$05,"SUPER LEAGUE",$FF
@@ -21620,8 +21617,8 @@ trackRecordMessage:
 ;	dc.b	$0E,"DRIVER      BEST-LAP RACE-TIME",$FF
 ;lbB050E86:							; fixed dead code
 ;	dc.b	"DIR "
-commandSkipStandingsScreen:
-	dc.b	"HALL"
+;commandSkipStandingsScreen:
+;	dc.b	"HALL"
 commandRestoreDriverNames:
 	dc.b	"MP"
 
@@ -21633,55 +21630,55 @@ commandRestoreDriverNames:
 ;	dc.b	"File name is not suitable",$FF,$1F,$05,$13,"Insert game position save ",$FF
 ;	dc.b	"tape",$FF,"disc",$FF,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F
 ;	dc.b	$FF
-;	even
+	even
 lbW051020:
 	dc.w	$683B
-lbB0513DE:
-	dc.b	$00,$01,$04,$03,$02
-messageTypeTable:
-	dc.b	$B4,$A4,$94,$84,$74
-playersControlKeys:
-	dc.b	$2A,$40,$21,$22,$44
-	dc.b	$2A,$40,$21,$22,$44
-	dc.b	$2A,$40,$21,$22,$44
-	dc.b	$2A,$40,$21,$22,$44
-	dc.b	$2A,$40,$21,$22,$44
-	dc.b	$2A,$40,$21,$22,$44
-	dc.b	$2A,$40,$21,$22,$44
-	dc.b	$2A,$40,$21,$22,$44
-trackAbbreviationCodes1:
-	dc.b	"L"
-trackAbbreviationCodes2:
-	dc.b	"RHBSSBRHJRCSJDB"
-lbL051E52:
-	dc.b	$04,$00,$04,$08
-lbB051E56:
-	dc.b	$00,$04,$08,$04
-lbL051E5A:
-	dc.b	$00,$40,$80,$C0
+;lbB0513DE:
+;	dc.b	$00,$01,$04,$03,$02
+;messageTypeTable:
+;	dc.b	$B4,$A4,$94,$84,$74
+;playersControlKeys:
+;	dc.b	$2A,$40,$21,$22,$44
+;	dc.b	$2A,$40,$21,$22,$44
+;	dc.b	$2A,$40,$21,$22,$44
+;	dc.b	$2A,$40,$21,$22,$44
+;	dc.b	$2A,$40,$21,$22,$44
+;	dc.b	$2A,$40,$21,$22,$44
+;	dc.b	$2A,$40,$21,$22,$44
+;	dc.b	$2A,$40,$21,$22,$44
+;trackAbbreviationCodes1:
+;	dc.b	"L"
+;trackAbbreviationCodes2:
+;	dc.b	"RHBSSBRHJRCSJDB"
+;lbL051E52:
+;	dc.b	$04,$00,$04,$08
+;lbB051E56:
+;	dc.b	$00,$04,$08,$04
+;lbL051E5A:
+;	dc.b	$00,$40,$80,$C0
 lbB052586:
 	dc.b	$11,$11
-controlKeys:
-	dc.b	$2A,$40,$21,$22,$44	; ', space, S, D, return
-keycodeTable:
-	dc.b	$01			; 1, 2, 3, 4
-	dc.b	$02
-	dc.b	$03
-	dc.b	$04
-	ds.b	1
-dustCloudOffsetTable:
-	dc.w	$0020,$0020,$0020,$0028,$0018,$0020,$0020,$0020
-dustCloudAnimSequence:
-	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06
-	dc.b	$02,$07
+;controlKeys:
+;	dc.b	$2A,$40,$21,$22,$44	; ', space, S, D, return
+;keycodeTable:
+;	dc.b	$01			; 1, 2, 3, 4
+;	dc.b	$02
+;	dc.b	$03
+;	dc.b	$04
+;	ds.b	1
+;dustCloudOffsetTable:
+;	dc.w	$0020,$0020,$0020,$0028,$0018,$0020,$0020,$0020
+;dustCloudAnimSequence:
+;	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06
+;	dc.b	$02,$07
 steeringOffsetTable:
 	dc.w	$0000,$00D9,$FF27
-trackDisplayYOffsets:
-	dc.b	$0F,$0D,$10,$10,$10,$0F,$10,$0D,$00,$00
-lbB0530CA:
-	dc.b	$00,$00,$4B,$26,$49,$27
-cameraAngleThresholds:
-	dc.w	$2C00,$0A00,$D300,$F500
+;trackDisplayYOffsets:
+;	dc.b	$0F,$0D,$10,$10,$10,$0F,$10,$0D,$00,$00
+;lbB0530CA:
+;	dc.b	$00,$00,$4B,$26,$49,$27
+;cameraAngleThresholds:
+;	dc.w	$2C00,$0A00,$D300,$F500
 ;saveLoadMenuText:
 ;	dc.b	$1F,$0B,$09,"LOAD game position",$FF,$1F,$0B,$09,"SAVE game position",$FF
 ;	dc.b	"Drive not ready",$FF,"Disc write protected",$FF,"Insert disc",$FF,"Disc error",$FF
@@ -21691,7 +21688,7 @@ cameraAngleThresholds:
 ;	dc.b	$1F,$05,$0F,"Insert formatted game save disc",$1F,$0E,$11,"into drive 0.",$1F,$09,$14
 ;	dc.b	"Press any key to continue",$FF,$00
 ;	even
-	dc.w	$0008
+;	dc.w	$0008
 lbB0544B8:
 	dc.b	$0F
 lbB0544B9:
@@ -21700,12 +21697,12 @@ lbW054632:
 	dc.w	$8000
 lbW054F84:
 	dc.w	$FFFF,$FFFF,$FFFF,$FFFF
-savedRandomSeed1:
-	dc.l	$3B3B1E49
-savedRandomSeed3:	EQU	*-3
-	dc.b	$3B,$3B,$35,$62
-opponentSuspensionDampingTable:
-	dc.w	$0004,$0004,$FFFC
+;savedRandomSeed1:
+;	dc.l	$3B3B1E49
+;savedRandomSeed3:	EQU	*-3
+;	dc.b	$3B,$3B,$35,$62
+;opponentSuspensionDampingTable:
+;	dc.w	$0004,$0004,$FFFC
 ;leagueTextTable:
 ;	dc.w	$1F0F
 ;lbB055C56:
@@ -21717,40 +21714,40 @@ opponentSuspensionDampingTable:
 ;	dc.b	$0F,$15,"The ",$FF,$1F,$11,$0F,"RESULT",$FF,"Race Winner: ",$FF,"Fastest Lap: ",$FF,$1F,$0E,$0B
 ;	dc.b	"RESULTS TABLE",$1F,$06,$0E,"DRIVER     RACED WIN LAP  PTS",$FF,"Promotion for  ",$FF
 ;	dc.b	"Relegation for ",$FF," CHANGES",$FF,$1F,$12,$0E,"NAME?",$FF," 2pts",$FF," 1pt",$FF," of ",$FF,$00
-trackIDLookupTable:
-	dc.b	$00,$02,$01,$03,$06,$07,$04,$05
+;trackIDLookupTable:
+;	dc.b	$00,$02,$01,$03,$06,$07,$04,$05
 ;trackConfigTable:					; fixed dead code
 ;	dc.b	$08,$05,$0C,$05,$05,$08,$0C,$08
-lbL0563C6:
-	dc.l	$03030302,$02020101,$01000000
-lbL0563EC:
-	dc.l	$2F76EA80
-skipSaveSlotScreen:
-	dc.b	$00,$06,$04,$00
-lbL0563F4:
-	dc.l	$0D101316,$1013100F,$14170A0E
-	dc.w	$1216
-displayColumnOffset:
-	dc.b	$0E,$0B,$11,$0C,$13,$FC,$00,$03,$00,$06,$4C,$18
+;lbL0563C6:
+;	dc.l	$03030302,$02020101,$01000000
+;lbL0563EC:
+;	dc.l	$2F76EA80
+;skipSaveSlotScreen:
+;	dc.b	$00,$06,$04,$00
+;lbL0563F4:
+;	dc.l	$0D101316,$1013100F,$14170A0E
+;	dc.w	$1216
+;displayColumnOffset:
+;	dc.b	$0E,$0B,$11,$0C,$13,$FC,$00,$03,$00,$06,$4C,$18
 menuCursorObjectType:
 	dc.b	$02,$00
-lbL05651A:
-	dc.l	$00004070,$00004F70,$00005E70,$00006D70,$00003170
+;lbL05651A:
+;	dc.l	$00004070,$00004F70,$00005E70,$00006D70,$00003170
 lbB056DC0:
 	ds.b	2
-trackSpecificRenderDepthOverrides:
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00		; 4 entries of (segment_index, override_value) pairs, $80 terminates the list
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$30,$18,$80,$00,$00,$00,$00,$00
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$1A,$18,$80,$00,$00,$00,$00,$00
-	dc.b	$0F,$28,$1C,$28,$80,$00,$00,$00
-	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
-	dc.b	$3D,$30,$80,$00,$00,$00,$00,$00
-damageBarVerticalOffset:
-	dc.b	$04
-damageBarColor:
-	dc.b	$0B,$FC,$F3,$CF,$3F,$03,$0C,$30,$C0
+;trackSpecificRenderDepthOverrides:
+;	dc.b	$80,$00,$00,$00,$00,$00,$00,$00		; 4 entries of (segment_index, override_value) pairs, $80 terminates the list
+;	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
+;	dc.b	$30,$18,$80,$00,$00,$00,$00,$00
+;	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
+;	dc.b	$1A,$18,$80,$00,$00,$00,$00,$00
+;	dc.b	$0F,$28,$1C,$28,$80,$00,$00,$00
+;	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
+;	dc.b	$3D,$30,$80,$00,$00,$00,$00,$00
+;damageBarVerticalOffset:
+;	dc.b	$04
+;damageBarColor:
+;	dc.b	$0B,$FC,$F3,$CF,$3F,$03,$0C,$30,$C0
 ;lbW0580E0:
 ;	dc.w	$FFFF,$FFFF,$7FFF,$7FFF,$3FFF,$3FFF,$1FFF,$1FFF,$0FFF
 ;	dc.w	$0FFF,$07FF,$07FF,$03FF,$03FF,$01FF,$01FF,$00FF,$00FF
@@ -21869,11 +21866,11 @@ mountainSilhouetteTable:
 	dc.l	mountainShape4Data,mountainData00
 trackMountainDataTable:
 	dc.l	trackMountainCountsAnglesAndIndices,trackMountainCountsAnglesAndIndices
-trackMountainCountsAnglesAndIndices:
-	dc.b	$20,$05,$00,$0F,$0D,$15,$0A,$1F,$0B,$25,$0C,$2F,$05,$35
-	dc.b	$02,$3F,$03,$45,$00,$4F,$01,$55,$04,$5F,$05,$65,$02,$6F
-	dc.b	$01,$75,$00,$7F,$05,$85,$02,$8F,$03,$95,$04,$9F,$05,$A5
-	dc.b	$00,$AF,$09,$B5,$06,$BF,$07,$C5,$08,$CF,$05,$D5,$00,$DF,$03,$E5,$04,$EF,$01,$F5,$02,$FF,$05,$00
+;trackMountainCountsAnglesAndIndices:
+;	dc.b	$20,$05,$00,$0F,$0D,$15,$0A,$1F,$0B,$25,$0C,$2F,$05,$35
+;	dc.b	$02,$3F,$03,$45,$00,$4F,$01,$55,$04,$5F,$05,$65,$02,$6F
+;	dc.b	$01,$75,$00,$7F,$05,$85,$02,$8F,$03,$95,$04,$9F,$05,$A5
+;	dc.b	$00,$AF,$09,$B5,$06,$BF,$07,$C5,$08,$CF,$05,$D5,$00,$DF,$03,$E5,$04,$EF,$01,$F5,$02,$FF,$05,$00
 spritePalette:
 	dc.w	$0000,$0000,$0FFF,$0C88,$0000,$0000,$0FFF,$0C88
 spriteYOffset:
