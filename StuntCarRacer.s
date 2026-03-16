@@ -195,8 +195,6 @@ MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 	section	Code,code
 startup:
 	move.l	sp,sp_quit
-	move.b	#$80,skipSaveSlotScreen
-	move.b	#$80,alternateEndScreenEnabledFlag
 
 	move.l	sampleParameterTable,a0
         sub.l   #$e700,a0
@@ -20942,7 +20940,7 @@ lbC05BA48:
 
 	section OriginalData,data
 gameData:	incbin	"scr.exe.decrypted"
-		include	"gameDataOffsets.54.i"
+		include	"gameDataOffsets.i"
 
 	section Data,data
 ;audioChannelMasks:
@@ -21490,7 +21488,8 @@ resultScreenPointerTable:
 ;	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced  "
 ;	dc.b	$FF," Wins   ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First     Se"
 ;	dc.b	"cond     Third",$FF,$00
-;	dc.b	$17,$13,$19,$08,$15,$0A,$08,$15,$09,$1F
+;lbB04ACF6:
+;	dc.b	$80,$00
 ;textStringTable:
 ;	dc.b	$1F,$11,$0B,"SELECT",$FF,"Practise ",$FF,"Start the Racing Season",$FF
 ;	dc.b	"Load/Save/Replay       ",$FF,"Load",$FF,"Save",$FF,"Replay",$FF,"Cancel",$FF
@@ -21662,10 +21661,10 @@ drawBridgeHeightOffsets:
 ;dustCloudAnimSequence:
 ;	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06
 ;	dc.b	$02,$07
-steeringOffsetTable:
-	dc.w	$0000,$00D9,$FF27
+;steeringOffsetTable:
+;	dc.w	$0000,$00D9,$FF27
 ;trackDisplayYOffsets:
-;	dc.b	$0F,$0D,$10,$10,$10,$0F,$10,$0D,$00,$00
+;	dc.b	$0F,$0D,$10,$10,$10,$0F,$10,$0D
 ;lbB0530CA:
 ;	dc.b	$00,$00,$4B,$26,$49,$27
 ;cameraAngleThresholds:
@@ -21674,7 +21673,7 @@ steeringOffsetTable:
 ;	dc.b	$1F,$0B,$09,"LOAD game position",$FF,$1F,$0B,$09,"SAVE game position",$FF
 ;	dc.b	"Drive not ready",$FF,"Disc write protected",$FF,"Insert disc",$FF,"Disc error",$FF
 ;	dc.b	"Incorrect data found  ",$FF,"Type in file name",$FF,$1F,$07,$16,"                            "
-;	dc.b	$1F,$07,$17,"                             ",$FF,$1F,$08,$17,$FF,"Disc error: retry or escape"
+;	dc.b	$1F,$07,$17,"                            ",$FF,$1F,$08,$17,$FF,"Disc error: retry or escape"
 ;	dc.b	$FF,$1F,$08,$16,"Warning: this disc has not",$1F,$08,$17,"been used for game saving",$FF
 ;	dc.b	$1F,$05,$0F,"Insert formatted game save disc",$1F,$0E,$11,"into drive 0.",$1F,$09,$14
 ;	dc.b	"Press any key to continue",$FF,$00
@@ -21720,8 +21719,8 @@ steeringOffsetTable:
 ;	dc.w	$1216
 ;displayColumnOffset:
 ;	dc.b	$0E,$0B,$11,$0C,$13,$FC,$00,$03,$00,$06,$4C,$18
-menuCursorObjectType:
-	dc.b	$02,$00
+;menuCursorObjectType:
+;	dc.b	$02,$00
 ;lbL05651A:
 ;	dc.l	$00004070,$00004F70,$00005E70,$00006D70,$00003170
 ;lbB056DC0:
@@ -21753,10 +21752,10 @@ menuCursorObjectType:
 ;	dc.w	$0800,$0400,$0400,$0200,$0200,$0100,$0100,$0080,$0080
 ;	dc.w	$0040,$0040,$0020,$0020,$0010,$0010,$0008,$0008,$0004
 ;	dc.w	$0004,$0002,$0002,$0001,$0001
-trackColorIndex2:
-	dc.b	$0A
-trackColorIndex1:
-	dc.b	$09
+;trackColorIndex2:
+;	dc.b	$0A
+;trackColorIndex1:
+;	dc.b	$09
 ;mountainShape0Data:
 ;	dc.w	$0004,$0000,$0000,$80C8,$0000,$804B,$8019,$8078
 ;	dc.w	$801E,$0400,$0200,$0404,$0602,$0601,$0504,$0004,$080C
@@ -21864,10 +21863,10 @@ trackMountainDataTable:
 ;	dc.b	$00,$AF,$09,$B5,$06,$BF,$07,$C5,$08,$CF,$05,$D5,$00,$DF,$03,$E5,$04,$EF,$01,$F5,$02,$FF,$05,$00
 ;spritePalette:
 ;	dc.w	$0000,$0000,$0FFF,$0C88,$0000,$0000,$0FFF,$0C88
-spriteYOffset:
-	dc.w	$002C
-dmaconValueToSet:
-	dc.w	$0020
+;spriteYOffset:
+;	dc.w	$002C
+;dmaconValueToSet:
+;	dc.w	$0020
 ;graphicsRenderingParameters:      ; structs of 8 words, only 2-5 used (size, position)
 ;	dc.w	$0000,$0000,$0001,$0039					; 00 right wheel 1
 ;	dc.w	$0010
@@ -23149,10 +23148,10 @@ lbB0499D6:
 	ds.b	1
 lbB0499D7:
 	ds.b	1
-encodedControlIndices:
-	ds.b	6
-lbL04A180:
-	ds.l	2
+;encodedControlIndices:
+;	ds.b	6
+;lbL04A180:
+;	ds.l	2
 lbL04A4AE:
 	ds.l	3
 lbB04A4BA:
@@ -23169,16 +23168,14 @@ bitplaneMaskPointer:
 	ds.l	1
 lbB04AA3E:
 	ds.b	2
-lbW04AA40:
-	ds.b	2
+;lbW04AA40:
+;	ds.b	2
 useAlternateFontFlag:
 	ds.b	1
 lbB04AB4B:
 	ds.b	1
-alternateEndScreenEnabledFlag:
-	ds.b	2
-interpolationBlendFactor:
-	ds.w	1
+;interpolationBlendFactor:
+;	ds.w	1
 playerNameRenderingPosition:
 	ds.l	1
 foregroundColorMask1:
