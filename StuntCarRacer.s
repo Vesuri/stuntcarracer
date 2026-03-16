@@ -196,6 +196,7 @@ MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 startup:
 	move.l	sp,sp_quit
 	move.b	#$80,skipSaveSlotScreen
+	move.b	#$80,alternateEndScreenEnabledFlag
 
 	move.l	sampleParameterTable,a0
         sub.l   #$e700,a0
@@ -3349,11 +3350,13 @@ lbC04B1F4:
 	TST.B	$0061(A0)
 	BEQ	lbC04B214
 lbC04B20A:
-	MOVE.L	lbB00D194,A0
+;	MOVE.L	lbB00D194,A0			; removed
+	lea	uppercaseTable,a0		; added
 	BRA	lbC04B21A
 
 lbC04B214:
-	MOVE.L	lbW00D190,A0
+;	MOVE.L	lbW00D190,A0			; removed
+	lea	lowercaseTable,a0		; added
 lbC04B21A:
 	LEA	$00(A0,D0.W),A0
 	ASL.W	#$08,D0
@@ -20939,7 +20942,7 @@ lbC05BA48:
 
 	section OriginalData,data
 gameData:	incbin	"scr.exe.decrypted"
-		include	"gameDataOffsets.i"
+		include	"gameDataOffsets.54.i"
 
 	section Data,data
 ;audioChannelMasks:
@@ -20983,12 +20986,12 @@ gameData:	incbin	"scr.exe.decrypted"
 ;	dc.l	sampleEngineData
 ;sampleEngineSize:
 ;	dc.w	$0000,$0C64,$012C,$0030,$0000,$0000
-joystickState:
-	dc.w	$FFFF
-lbW00D190:
-	dc.l	lowercaseTable
-lbB00D194:
-	dc.l	uppercaseTable
+;joystickState:
+;	dc.w	$FFFF
+;lbW00D190:
+;	dc.l	lowercaseTable
+;lbB00D194:
+;	dc.l	uppercaseTable
 ;uppercaseTable:
 ;	dc.b	$00,$31,$32,$33,$34,$35,$36,$37,$38,$39
 ;	dc.b	$30,$00,$00,$00,$00,$30,$51,$57,$45,$52,$54,$59,$55,$49
@@ -21426,8 +21429,6 @@ resultScreenPointerTable:
 ;	dc.w	$0406,$0507,$0003,$0102,$0407,$0506,$0004,$0307,$0105
 ;	dc.w	$0206,$0005,$0104,$0207,$0306,$0007,$0106,$0205,$0304
 ;	dc.w	$0006,$0107,$0204,$0305
-encodedControlIndices:
-	ds.b	6
 ;keyboardMatrixTable:
 ;	dc.w	$0E45,$0102,$0304,$0506,$0708,$090A,$0B0C,$4142,$1011
 ;	dc.w	$1213,$1415,$1617,$1819,$1A1B,$4463,$2021,$2223,$2425
@@ -21437,8 +21438,6 @@ encodedControlIndices:
 ;	dc.w	$6D6E,$6F70,$7172,$305F,$465A,$5B5C,$5D3D,$3E3F,$2D2E
 ;	dc.w	$2F1D,$1E1F,$0F3C,$4373,$7475,$7677,$7879,$7A7B,$7C7D
 ;	dc.w	$7E7F
-lbL04A180:
-	ds.l	2
 ;lbB04A3A2:
 ;	ds.b	2
 ;lbW04A3A4:
@@ -21487,17 +21486,11 @@ lbL04A180:
 ;	dc.l	$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF
 ;	dc.l	$FFFFFFFF,$FFFFFFFF
 ;	dc.w	$FFFF
-lbW04AA40:
-	ds.w	1
 ;leagueStatisticsTextTable:
 ;	dc.b	$1F,$14,$0F,"V",$FF,$1F,$07,$10,"Winner 2pts     Best Lap 1pt",$FF," Raced  "
 ;	dc.b	$FF," Wins   ",$FF," Laps   ",$FF," Points ",$FF,$1F,$07,$0A,"First     Se"
 ;	dc.b	"cond     Third",$FF,$00
-alternateEndScreenEnabledFlag:
-	dc.b	$80,$00
-interpolationBlendFactor:
-	ds.w	1
-	dc.b	$17,$13,$19,$08,$15,$0A,$08,$15,$09,$1F
+;	dc.b	$17,$13,$19,$08,$15,$0A,$08,$15,$09,$1F
 ;textStringTable:
 ;	dc.b	$1F,$11,$0B,"SELECT",$FF,"Practise ",$FF,"Start the Racing Season",$FF
 ;	dc.b	"Load/Save/Replay       ",$FF,"Load",$FF,"Save",$FF,"Replay",$FF,"Cancel",$FF
@@ -21550,8 +21543,8 @@ drawBridgeHeightOffsets:
 ;lbB04E1F4:
 ;	ds.b	104
 ;	dc.b	$FF,$FF,$FF,$FF
-lbB04E7E2:
-	ds.b	24
+;lbB04E7E2:
+;	ds.b	24							; dead code
 ;lbL04E82C:
 ;	dc.l	$28195027
 ;divider:
@@ -21594,12 +21587,12 @@ lbB04E7E2:
 ;	dc.b	$0A
 ;trackColumnOffsets:
 ;	dc.l	$13131312,$11100F0F
-raceCount:
-	dc.b	$06
-currentPlayerID:
-	dc.b	$0B
-lbB05047E:
-	ds.b	1
+;raceCount:
+;	dc.b	$06
+;currentPlayerID:
+;	dc.b	$0B
+;lbB05047E:
+;	ds.b	1
 ;menuTextStrings:
 ;	dc.b	$1F,$11,$0B,"SELECT",$FF,"Single Player League",$FF,"Multiplayer",$FF
 ;	dc.b	"Enter another driver",$FF,"Continue",$FF,"Tracks in DIVISION ",$FF,$00,$00,$00,$00,$00,$00
@@ -21619,9 +21612,8 @@ lbB05047E:
 ;	dc.b	"DIR "
 ;commandSkipStandingsScreen:
 ;	dc.b	"HALL"
-commandRestoreDriverNames:
-	dc.b	"MP"
-
+;commandRestoreDriverNames:
+;	dc.b	"MP"
 ;lbB050F36:
 ;	dc.b	$05,$0D,$43,$14,$2A,$43,$43,$43,$71,$8F,$94
 ;diskIOMessages:
@@ -21630,9 +21622,8 @@ commandRestoreDriverNames:
 ;	dc.b	"File name is not suitable",$FF,$1F,$05,$13,"Insert game position save ",$FF
 ;	dc.b	"tape",$FF,"disc",$FF,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F,$7F
 ;	dc.b	$FF
-	even
-lbW051020:
-	dc.w	$683B
+;lbW051020:
+;	dc.w	$683B
 ;lbB0513DE:
 ;	dc.b	$00,$01,$04,$03,$02
 ;messageTypeTable:
@@ -21656,8 +21647,8 @@ lbW051020:
 ;	dc.b	$00,$04,$08,$04
 ;lbL051E5A:
 ;	dc.b	$00,$40,$80,$C0
-lbB052586:
-	dc.b	$11,$11
+;lbB052586:
+;	dc.b	$11,$11
 ;controlKeys:
 ;	dc.b	$2A,$40,$21,$22,$44	; ', space, S, D, return
 ;keycodeTable:
@@ -21689,14 +21680,14 @@ steeringOffsetTable:
 ;	dc.b	"Press any key to continue",$FF,$00
 ;	even
 ;	dc.w	$0008
-lbB0544B8:
-	dc.b	$0F
-lbB0544B9:
-	dc.b	$0B
-lbW054632:
-	dc.w	$8000
-lbW054F84:
-	dc.w	$FFFF,$FFFF,$FFFF,$FFFF
+;lbB0544B8:
+;	dc.b	$0F
+;lbB0544B9:
+;	dc.b	$0B
+;lbW054632:
+;	dc.w	$8000
+;lbW054F84:
+;	dc.w	$FFFF,$FFFF,$FFFF,$FFFF
 ;savedRandomSeed1:
 ;	dc.l	$3B3B1E49
 ;savedRandomSeed3:	EQU	*-3
@@ -21733,8 +21724,8 @@ menuCursorObjectType:
 	dc.b	$02,$00
 ;lbL05651A:
 ;	dc.l	$00004070,$00004F70,$00005E70,$00006D70,$00003170
-lbB056DC0:
-	ds.b	2
+;lbB056DC0:
+;	ds.b	2
 ;trackSpecificRenderDepthOverrides:
 ;	dc.b	$80,$00,$00,$00,$00,$00,$00,$00		; 4 entries of (segment_index, override_value) pairs, $80 terminates the list
 ;	dc.b	$80,$00,$00,$00,$00,$00,$00,$00
@@ -21871,8 +21862,8 @@ trackMountainDataTable:
 ;	dc.b	$02,$3F,$03,$45,$00,$4F,$01,$55,$04,$5F,$05,$65,$02,$6F
 ;	dc.b	$01,$75,$00,$7F,$05,$85,$02,$8F,$03,$95,$04,$9F,$05,$A5
 ;	dc.b	$00,$AF,$09,$B5,$06,$BF,$07,$C5,$08,$CF,$05,$D5,$00,$DF,$03,$E5,$04,$EF,$01,$F5,$02,$FF,$05,$00
-spritePalette:
-	dc.w	$0000,$0000,$0FFF,$0C88,$0000,$0000,$0FFF,$0C88
+;spritePalette:
+;	dc.w	$0000,$0000,$0FFF,$0C88,$0000,$0000,$0FFF,$0C88
 spriteYOffset:
 	dc.w	$002C
 dmaconValueToSet:
@@ -23158,6 +23149,10 @@ lbB0499D6:
 	ds.b	1
 lbB0499D7:
 	ds.b	1
+encodedControlIndices:
+	ds.b	6
+lbL04A180:
+	ds.l	2
 lbL04A4AE:
 	ds.l	3
 lbB04A4BA:
@@ -23174,10 +23169,16 @@ bitplaneMaskPointer:
 	ds.l	1
 lbB04AA3E:
 	ds.b	2
+lbW04AA40:
+	ds.b	2
 useAlternateFontFlag:
 	ds.b	1
 lbB04AB4B:
 	ds.b	1
+alternateEndScreenEnabledFlag:
+	ds.b	2
+interpolationBlendFactor:
+	ds.w	1
 playerNameRenderingPosition:
 	ds.l	1
 foregroundColorMask1:
