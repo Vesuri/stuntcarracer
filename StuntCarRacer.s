@@ -1,3 +1,6 @@
+; TODO
+; - car to car collisions easily cause way too much damage
+; - rotation when falling off track sometimes weird
 	incdir	"scr:"
 
 dsksync:	EQU	$0000007E
@@ -188,6 +191,7 @@ CACR_CopyBack		equ	$80000000
 gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
+ORIGINAL_LOAD_ADDRESS		equ	$e700
 FRAMERATE_MULTIPLIER	equ	6					; 10FPS -> 60FPS
 TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
@@ -197,7 +201,7 @@ startup:
 	move.l	sp,sp_quit
 
 	move.l	sampleParameterTable,a0
-        sub.l   #$e700,a0
+        sub.l   #ORIGINAL_LOAD_ADDRESS,a0						
         add.l   #gameData,a0
 	lea	sampleData,a1
 	move.w	#downsampledEngineData-sampleData-1,d7
@@ -20941,6 +20945,7 @@ lbC05BA48:
 	section OriginalData,data
 gameData:	incbin	"scr.exe.decrypted"
 		include	"gameDataOffsets.i"
+		include	"gameDataOffsetsBSS.i"
 
 	section Data,data
 ;audioChannelMasks:
@@ -21933,7 +21938,7 @@ trackMountainDataTable:
 ;	incbin	"bitplaneMaskTable"
 
 name_graphics:	dc.b	"graphics.library",0
-version:	dc.b	"$VER: Stunt Car Racer Ultimate 0.9 (11.03.2026) Work in progress!",0
+version:	dc.b	"$VER: Stunt Car Racer Ultimate 0.20260316 (16.03.2026) Work in progress!",0
 
 	section	ChipData,data_c
 copperlistStart:
@@ -21966,1441 +21971,1441 @@ copperlistSprite0:
 ;	ds.b	3200
 
 	section BSS,bss
-sampleEngineParameters:
-	ds.w	2
-downsampledSampleEngineTable:
-	ds.l	15
-palette:
-	ds.w    16
-sourcePalette:
-  	ds.w    16
-keyboardState:
-	ds.b    128
-serialReceiveBuffer:
-	ds.b    256
-serialTransmitBuffer:
-	ds.b    256
-ciaBTimerBSet:
-	ds.b	2
-serialBufferIndex:
-	ds.l    1
-lbB000B55:	EQU	*-3
-serialWriteIndex:	EQU	*-2
-serialReadIndex:	EQU	*-1
-lbB000B58:
-	ds.b	2
-lbW000B5A:
-	ds.w	1
-grindSampleID:
-	ds.b	2
-audioDMAEnableGuard:
-	ds.w	1
-bitplane1Pointer:
-	ds.l	1
-copperlistUpdatePendingFlag:
-	ds.b	1
-framesSinceCopperlistUpdateAccumulator:
-	ds.b	1
-gameDataRegionStart:			; initializeGameData clears from here up to playerHolePositions, loadPlayerConfiguration up to segmentProcessedFlags
-playerContextValues:
-	ds.b	2
-gasInputIntensityValue:
-	ds.b	1
-gasInputAccumulatorValue:
-	ds.b	1
-aiBaseSpeedHigh:
-	ds.b	1
-aiBaseSpeedLow:
-	ds.b	1
-fuelConsumptionRate:
-	ds.b	3
-trackWidthMultiplier:
-	ds.b	3
-trackViewOffsetX:
-	ds.b	2
-trackViewOffsetY:
-	ds.b	1
-subGridOffsetX:
-	ds.b	2
-subGridOffsetZ:
-	ds.b	1
-trackProgressionByte:
-	ds.w	1
-opponentSubSegmentProgress:
-	ds.w	1
-trackProgressionOffset:
-	ds.b	1
-lbB00D40F:
-	ds.b	1
-lbW00D410:
-	ds.w	1
-trackDistance:
-	ds.w	1
-trackDistanceHigh:	EQU	*-1
-	ds.b	2
-currentMenuItem:
-	ds.b	1
-speedDisplayThousands:
-	ds.b	1
-tempByte1:				; also used as a long!
-	ds.b	1
-tempByte2:
-	ds.b	1
-tempByte3:
-	ds.b	1
-tempByte4:
-	ds.b	1
-playerSegmentIndex:
-	ds.b	1
-opponentSegmentIndex:
-	ds.b	1
-lapCrossingDetectionFlag:
-	ds.w	1
-player1LapCounter:
-	ds.b	1
-player2LapCounter:
-	ds.b	1
-baseCoordinateX:
-	ds.b	1
-cameraGridOffsetXLow:
-	ds.b	3
-baseCoordinateY:
-	ds.b	1
-cameraGridOffsetZLow:
-	ds.b	3
-perpendicularOffsetY:
-	ds.b	1
-rawDisplacementValue:
-	ds.b	1
-tempAttenuatedValue:
-	ds.b	1
-attenuatedDisplacementValue:
-	ds.b	1
-cameraGridOffsetXHigh:
-	ds.b	4
-cameraGridOffsetZHigh:
-	ds.b	2
-lbW00D434:
-	ds.w	1
-lbW00D436:
-	ds.w	1
-trackRenderingEnableFlag:
-	ds.b	4
-opponentSpeedFractional:
-	ds.b	1
-fuelConsumptionTimer:
-	ds.b	2
-drawBridgeActive:
-	ds.b	1
-trackDirection:
-	ds.b	1
-restartTimerCountdown:
-	ds.b	1
-framesToProcess:
-	ds.b	1
-distanceCharacteristic:
-	ds.b	1
-aiEnabled:
-	ds.b	1
-boundaryCollisionDirectionFlag:
-	ds.b	1
-collisionActiveFlag:
-	ds.b	1
-inputStateFlags:
-	ds.b	1		; Bits: 0=accelerate, 1=brake, 2=left, 3=right, 4=boost
-segmentRepeatCounter:
-	ds.b	2
-collisionDistanceTemp:
-	ds.b	3
-segmentSteeringFlags:
-	ds.b	2
-accumulatedForceFrontLeft:
-	ds.b	1
-accumulatedForceFrontRight:
-	ds.b	1
-accumulatedForceRear:
-	ds.b	3
-damageAccumulationActive:
-	ds.b	1
-accumulatedCarDamage:
-	ds.b	1
-highCompressionFrameCount:
-	ds.b	1
-cameraAngleIndex:
-	ds.b	1
-segmentDepthCounter:
-	ds.b	1
-trackSegmentLimitDoubled:
-	ds.b	1
-maxSegmentIndexDoubled:
-	ds.b	1
-raceMode:
-	ds.b	1
-lbB00D45C:
-	ds.b	1
-trackDirectionMultiplier:
-	ds.b	1
-displayRowOffset:
-	ds.b	1
-displayTrackID:
-	ds.b	1
-renderingLoopIndex:
-	ds.b	1
-segmentPropertyFlags:
-	ds.b	1
-boostActiveFlag:
-	ds.b	1
-gameExitFlag:
-	ds.b	1
-playerInputState:
-	ds.b	1
-networkSyncBitFlag:
-	ds.b	1
-segmentRenderingFlag:
-	ds.b	1
-lbB00D467:
-	ds.b	1
-lbB00D468:
-	ds.b	1
-flameAnimationFrame:
-	ds.b	1
-trackModeParameter:
-	ds.b	1
-networkPlayerStateCache:
-	ds.b	1
-blinkCountdownTimer:
-	ds.b	1
-textHorizontalOffset:
-	ds.b	1
-textYOffset:
-	ds.b	1
-frameBufferSyncMask:
-	ds.b	1
-raceActiveFlag:
-	ds.b	1
-drawBridgeUpdateFlag:
-	ds.b	1
-frameProcessingFlag:
-	ds.b	1
-majorImpactCooldownTimer:
-	ds.b	1
-crashRecoveryTimer:
-	ds.b	1
-raceCompletionCheckFlag:
-	ds.b	1
-networkConnectionState:
-	ds.b	1
-lineDrawingModeFlag:
-	ds.b	2
-geometryFormatFlag:
-	ds.b	1			; determines packed vs extended format
-segmentProcessingIndex:
-	ds.b	1
-segmentOrientationPrimary:
-	ds.b	1
-previousSegmentOffset:
-	ds.b	1
-hardImpactCount:
-	ds.b	1
-wheelMovementActive:
-	ds.b	1
-lbB00D47F:
-	ds.b	6
-currentSegmentIndex:
-	ds.b	1
-trackGeometryTypeIndex:
-	ds.b	2
-blinkFlag:
-	ds.b	1
-lapTimeSubsecondVisibility:
-	ds.b	2
-currentTrackCoordinate:
-	ds.b	1
-unusedDisplayFlag2:
-	ds.b	1
-maxMenuIndex:
-	ds.b	1
-gameMessageActiveFlag:
-	ds.b	1
-segmentConfigLoadedFlag:
-	ds.b	1
-renderModeFlag:
-	ds.b	1
-trackOffsetBase:
-	ds.b	1
-lbB00D492:
-	ds.b	1
-gridSweepDirection:
-	ds.b	1
-lbB00D494:
-	ds.b	1
-maxBoostFuel:
-	ds.b	2
-trackSegmentLimit:
-	ds.b	1
-maxSegmentIndex:
-	ds.b	1
-maxLapsForRace:
-	ds.b	1
-renderingOrderMode:
-	ds.b	1
-lastValidSegmentIndex:
-	ds.b	1
-offTrackStateFlags:
-	ds.b	1		; bit 7=major collision/severely off track, bit 6=completely outside track grid
-aiPatternControlFlags:
-	ds.b	1
-prevSegmentDepthCounter:
-	ds.b	1
-prevTrackProgressionOffset:
-	ds.b	2
-playerLateralPosition:
-	ds.b	2
-segmentDataIndexScaled:
-	ds.b	1
-pauseState:
-	ds.b	1
-pauseKeyPressed:
-	ds.b	1
-lbB00D4A6:
-	ds.b	1
-opponentTargetLateralPosition:
-	ds.b	1
-accelerationStateFlag:
-	ds.b	1
-framesSinceCopperlistUpdate:
-	ds.b	1
-raceMatchupScreenTypeFlag:
-	ds.b	1
-lbB00D4AB:
-	ds.b	1
-frameCounter:
-	ds.b	1
-lbB00D4AD:
-	ds.b	1
-lbB00D4AE:
-	ds.b	1
-raceCompletionState:
-	ds.b	1
-drawBridgeAnimationPhase:
-	ds.b	1
-displayFlags:
-	ds.b	1
-raceWinnerBits:
-	ds.b	2
-raceOutcomeFlags:
-	ds.b	1
-savedHoleRenderingPosition:
-	ds.b	1
-targetDamageLevel:
-	ds.b	2
-opponentAheadFlag:
-	ds.b	1
-disableWheelUpdateFlag:
-	ds.b	1
-curveSmoothingFlag:
-	ds.b	1
-trackSideIndicatorCopy:
-	ds.b	1
-singleBufferRenderMode:
-	ds.b	1
-aiMovementOverride:
-	ds.b	1
-opponentSegmentOffset1:
-	ds.b	1
-opponentSegmentOffset2:
-	ds.b	1
-aiActionTimer:
-	ds.b	1
-rollTransitionFlag:
-	ds.b	1
-aiPatternOffset:
-	ds.b	1
-opponentCollisionTimer:
-	ds.b	1
-raceStartComplete:
-	ds.b	1
-segmentDataStartIndex:
-	ds.b	1
-steeringInputDirection:
-	ds.b	1			; 0=no steering, -15=left,15=right
-draftingTimer:
-	ds.b	1
-frameBufferToggle:
-	ds.b	1
-globalFrameCounter:
-	ds.b	1
-menuHighlightMode:
-	ds.b	1
-multiplayerRaceDisplayFlag:
-	ds.b	1
-lapTimeDisplayDuration:
-	ds.b	1
-frameThrottleFlag:
-	ds.b	2
-frameThrottleAccumulator:
-	ds.b	1
-lbB00D4D0:
-	ds.b	1
-offRoadSideFlags:
-	ds.b	1
-lbB00D4D2:
-	ds.b	1
-textTransparencyMode:
-	ds.b	1
-segmentBaseSteeringOffset:
-	ds.b	1
-currentPlayerNameOffset:
-gridLookupX:
-	ds.b	1
-selectedMenuItem:
-gridLookupY:
-	ds.b	1
-collisionImpactLevel:
-	ds.b	2
-segmentOrientationAlternate:
-	ds.b	1
-wheelBouncePhaseAccumulator:
-	ds.b	1
-wheelRotationFrame:
-	ds.b	1
-segmentAlternateFlag:
-	ds.b	1
-wheelBaseHeight:
-	ds.b	1
-unusedDisplayFlag1:
-	ds.b	1
-raceStartTimer:
-	ds.b	1
-multiplayerSyncFlag:
-	ds.b	1
-trackSideIndicator:
-	ds.b	1
-gameModeStateFlags:
-	ds.b	1
-wheelAnimationAccumulator:
-	ds.b	1
-tempByte5:
-	ds.b	1
-;lbB00D4E5:
-	ds.b	1
-segmentHalfFlags:
-	ds.b	2
-renderingIndex:
-	ds.b	1
-chainLiftVelocity:
-	ds.b	1
-chainVerticalPosition:
-	ds.b	1
-opponentCollisionActive:
-	ds.b	1
-networkEngineFlag:
-	ds.b	1
-opponentLateralPosition:
-	ds.b	1
-aiCurrentSpeed:
-	ds.w	1
-lbB00D4EF:	EQU	*-1
-aiTargetSpeed:
-	ds.w	1
-aiTargetSpeedHigh:	EQU	*-1
-trackHeightDifference:
-	ds.b	2
-enginePitchDelta:
-	ds.w	1
-enginePitchDeltaLow:	EQU	*-1
-tempWord1:
-	ds.w	1
-playerOpponentLateralDistance:	EQU	*-1
-raceSetupFlags:  EQU    *-1
-tempWord2:
-	ds.w	1
-wheelDataOffset:	EQU	*-1
-cameraHeightBaseline:
-	ds.w	3
-carStartRotation:
-	ds.b	1
-carStartRotationLow:
-	ds.b	1
-splineControlPoint1:
-	ds.w	1
-splineControlPoint2:
-	ds.w	1
-splineControlPoint3:
-	ds.w	1
-splineControlPoint4:
-	ds.w	1
-additionalInterpolationPoints1:
-	ds.w	1
-additionalInterpolationPoints2:
-	ds.w	1
-segmentBezierOffset1:
-	ds.w	1
-segmentBezierOffset2:
-	ds.w	1
-opponentSegmentQueueOffset:
-	ds.w	1
-processedSegmentIndices1:
-	ds.b	2
-processedSegmentIndices2:
-	ds.b	2
-speedBarLength:
-	ds.w	2
-lbW00D51C:
-	ds.w	1
-minimumRenderQueueOffset:
-	ds.w	1
-previousSpeedBarLength:
-	ds.w	1
-lateralPositionOutOfBounds:
-	ds.w	1
-lbB00D524:
-	ds.b	2
-visibilityAccumulator:
-	ds.w	1
-prevVisibilityAccumulator:
-	ds.w	1
-segmentProgressDistance:
-	ds.w	1
-segmentProgressDistanceLow:	EQU	*-1
-	ds.b	2
-cameraYawPerspectiveOffset:
-	ds.w	1
-cameraRotationFlags:
-	ds.b	2
-reverseDirectionFlag:
-	ds.b	2
-enginePitchAccumulator:
-	ds.w	1
-perspectiveDepthDivisor:
-	ds.w	1
-opponentDistance:
-	ds.w	1
-opponentDistanceLow:	EQU	*-1
-maxCompressionVelocity:
-	ds.w	1
-steeringScaleFactor:
-	ds.w	1
-playerDistanceDifference:
-	ds.w	1
-forwardPositionIntermediate:
-	ds.b	1
-segmentBlendParam:
-	ds.b	1
-viewportCenterY:
-	ds.w	1
-trackDirectionInversionFlag:
-	ds.b	6
-segmentSlopeFlags:
-	ds.b	2
-adjustedDistanceValue:
-	ds.w	1
-lateralTrackPosition:	EQU	*-1
-	ds.b	6
-lbB00D554:
-	ds.b	1
-previousSegmentProperties:
-	ds.b	1
-;visualEffectFlags:				; fixed dead code
-;	ds.w	1
-horizonFillStartY:
-	ds.b	1
-maxRenderingIndex:
-	ds.b	1
-polygonFillStartY:
-	ds.b	1
-trackBaseOffset:
-	ds.b	1
-offsetFromRoadCenter:
-	ds.w	1
-lateralRoadPosition:
-	ds.w	1
-speedMinor:	EQU	*-1
-trackSurfaceHeight:
-	ds.w	1
-wheelSpeed:
-	ds.w	1
-viewOffsetX:
-	ds.w	1
-viewStepX:
-	ds.w	1
-viewOffsetY:
-	ds.w	1
-viewStepY:
-	ds.w	1
-quadRectHalfWidth:
-	ds.w	1
-quadRectWidth:
-	ds.w	1
-quadRectHalfHeight:
-	ds.w	1
-quadRectHeight:
-	ds.w	1
-stepSizeXHalf:
-	ds.w	1
-stepSizeYHalf:
-	ds.w	1
-lbW00D578:
-	ds.w	1
-lbW00D57A:
-	ds.w	1
-stepSizeXQuarter:
-	ds.w	1
-stepSizeYQuarter:
-	ds.w	1
-lbW00D580:
-	ds.w	1
-lbW00D582:
-	ds.w	1
-quadTranslateX:
-	ds.w	1
-quadTranslateY:
-	ds.w	1
-adjustedViewX:
-	ds.w	1
-adjustedViewY:
-	ds.w	1
-primaryGeometryOffset:
-	ds.w	2
-alternateGeometryOffset:
-	ds.w	2
-trackSurfaceFrontLeft:
-	ds.l	1
-trackSurfaceFrontRight:
-	ds.l	1
-trackSurfaceRear:
-	ds.l	1
-trackOffsetAdjustment:
-	ds.b	2
-postWreckStateFlag:
-	ds.b	2
-wheelHeightFrontLeft:
-	ds.l	1
-wheelHeightFrontRight:
-	ds.l	1
-wheelHeightRear:
-	ds.l	1
-suspensionTravelFrontLeft:
-	ds.l	1
-suspensionTravelFrontRight:
-	ds.l	1
-suspensionTravelRear:
-	ds.l	1
-geometryDatabaseOffset:
-	ds.w	2
-rawTrackDataOffset:
-	ds.w	4
-lbB00D5C8:
-	ds.b	4
-rotatedCameraX:			; The memory from here up to opponentFrontWheelAccel must be kept as a single block
-	ds.l	1
-carHeightPosition:
-	ds.b	4
-rotatedCameraZ:
-	ds.l	1
-cameraWorldX:
-	ds.b	2
-lbW00D5DA:
-	ds.w	1
-cameraWorldY:
-	ds.b	1
-lbB00D5DD:
-	ds.b	1
-lbW00D5DE:
-	ds.w	1
-cameraWorldZ:
-	ds.b	2
-lbW00D5E2:
-	ds.w	1
-cameraAngleX:
-	ds.w	1
-cameraAngleY:
-	ds.b	1
-cameraAngleYLow:
-	ds.b	1
-cameraAngleZ:
-	ds.w	1
-worldXSpeed:
-	ds.w	1
-worldYSpeed:
-	ds.w	1
-worldZSpeed:
-	ds.w	1
-rotationSpeedX:
-	ds.w	1
-rotationSpeedY:
-	ds.w	1
-rotationSpeedZ:
-	ds.w	1
-worldAccelerationX:
-	ds.w	1
-worldAccelerationY:
-	ds.w	1
-worldAccelerationZ:
-	ds.w	1
-angularAccelerationX:
-	ds.w	1
-angularAccelerationY:
-	ds.w	1
-angularAccelerationZ:
-	ds.w	1
-wheelCornerXFrontLeft:
-	ds.w	1
-wheelCornerXFrontRight:
-	ds.w	1
-wheelCornerXRearCenter:
-	ds.w	1
-wheelCornerYFrontLeft:
-	ds.w	1
-wheelCornerYFrontRight:
-	ds.w	1
-wheelCornerYRearCenter:
-	ds.w	1
-baseTargetRoll:
-	ds.w	1
-baseRollAngle:
-	ds.w	1
-additionalYawOffset:
-	ds.w	1
-clampedSuspensionFrontLeft:
-	ds.w	1
-clampedSuspensionFrontRight:
-	ds.w	1
-clampedSuspensionRear:
-	ds.w	1
-previousSuspensionFrontLeft:
-	ds.w	1
-previousSuspensionFrontRight:
-	ds.w	1
-previousSuspensionRear:
-	ds.w	1
-suspensionVelocityFrontLeft:
-	ds.w	1
-suspensionVelocityFrontRight:
-	ds.w	1
-suspensionVelocityRear:
-	ds.w	1
-targetPitchRate:
-	ds.w	1
-targetRollRate:
-	ds.w	1
-gasOutputAccumulatorValue:
-	ds.b	1
-gasOutputIntensityValue:
-	ds.b	1
-carLocalVelocityX:
-	ds.w	1
-carLocalVelocityY:
-	ds.w	1
-carLocalVelocityZ:
-	ds.w	1
-adjustedRollAngle:
-	ds.w	1
-adjustedPitchAngle:
-	ds.w	1
-adjustedYawAngle:
-	ds.w	1
-averageWheelVelocity:
-	ds.w	1
-averageWheelVelocityLow:	EQU	*-1
-transformedAngularVelocityX:
-	ds.w	1
-transformedAngularVelocityY:
-	ds.w	1
-transformedAngularVelocityZ:
-	ds.w	1
-rollSpringAngle:
-	ds.w	1
-pitchSpringAngle:
-	ds.w	1
-yawSpringAngle:
-	ds.w	1
-lbW00D646:
-	ds.w	1
-rollDisplacement:
-	ds.w	1
-pitchReferenceZero:
-	ds.w	1
-pitchDisplacement:
-	ds.w	1
-rollSpringComponent:
-	ds.b	2
-pitchSpringComponent:
-	ds.b	2
-yawSpringComponent:
-	ds.b	2
-lateralOpponentCollisionForce:
-	ds.w	1
-verticalOpponentCollisionForce:
-	ds.w	1
-forwardOpponentCollisionForce:
-	ds.w	1
-segmentTargetAngle:
-	ds.w	1
-carSpeedMagnitude:
-	ds.w	1
-opponentFrontWheelAccel:
-	ds.l	1
-opponentWheelAccelerationRL:	EQU	*-2
-opponentWheelAccelerationRR:
-	ds.w	2
-opponentWheelPositions:
-	ds.l	1
-opponentRearLeftWheelPosition:	EQU	*-2
-opponentRearRightWheelPosition:
-	ds.w	2
-opponentFrontWheelHeightPrev:
-	ds.w	1
-opponentWheelHeightRL:
-	ds.w	1
-opponentWheelHeightRR:
-	ds.w	2
-opponentWheelVelocities:
-	ds.w	1
-opponentRearLeftWheelVelocity:
-	ds.w	1
-opponentRearRightWheelVelocity:
-	ds.w	2
-opponentWheelForceTotal:
-	ds.w	1
-opponentWheelForceRL:
-	ds.w	1
-opponentWheelForceRR:
-	ds.w	2
-boundsMinX:
-	ds.w	1
-boundsMaxX:
-	ds.w	1
-boundsMinY:
-	ds.w	2
-trackCoordinatesX:
-	ds.l	8
-trackCoordinatesY:
-	ds.l	8
-	ds.w	1	;dc.w	$0024
-segmentProcessedFlags:
-	ds.l	39
-lbL00D76C:
-	ds.l	1
-trackSegmentData:
-	ds.l	61
-inputCoordX1:
-	ds.w	1
-inputCoordY1:
-	ds.w	1
-inputCoordX2:
-	ds.w	1
-inputCoordY2:
-	ds.w	15
-clampedCoordX1:
-	ds.w	1
-clampedCoordY1:
-	ds.w	1
-clampedCoordX2:
-	ds.w	1
-clampedCoordY2:
-	ds.w	17
-coordinateLookupTable:
-	ds.l	1
-lbW00D8B4:
-	ds.w	1
-lbW00D8B6:
-	ds.w	117
-transformedCoordinates1:
-	ds.w	1
-transformedCoordinates2:
-	ds.w	7
-quadVertexX4:
-	ds.w	1
-quadVertexX5:
-	ds.w	1
-quadVertexX6:
-	ds.w	1
-quadVertexX7:
-	ds.w	1
-lbW00D9B8:
-	ds.w	1
-lbW00D9BA:
-	ds.w	1
-lbW00D9BC:
-	ds.w	1
-lbW00D9BE:
-	ds.w	1
-quadVertexX0:
-	ds.w	1
-quadVertexX1:
-	ds.w	1
-quadVertexX2:
-	ds.w	1
-quadVertexX3:
-	ds.w	1
-lbW00D9C8:
-	ds.w	1
-lbW00D9CA:
-	ds.w	1
-lbW00D9CC:
-	ds.w	1
-lbW00D9CE:
-	ds.w	17
-transformedVertexBounds:
-	ds.l	1
-lbW00D9F4:
-	ds.w	1
-lbW00D9F6:
-	ds.w	125
-quadVertexY4:
-	ds.w	1
-quadVertexY5:
-	ds.w	1
-quadVertexY6:
-	ds.w	1
-quadVertexY7:
-	ds.w	1
-lbW00DAF8:
-	ds.w	1
-lbW00DAFA:
-	ds.w	1
-lbW00DAFC:
-	ds.w	1
-lbW00DAFE:
-	ds.w	1
-quadVertexY0:
-	ds.w	1
-quadVertexY1:
-	ds.w	1
-quadVertexY2:
-	ds.w	1
-quadVertexY3:
-	ds.w	1
-lbW00DB08:
-	ds.w	1
-lbW00DB0A:
-	ds.w	1
-lbW00DB0C:
-	ds.w	1
-lbW00DB0E:
-	ds.w	17
-lbL00DB30:
-	ds.l	13
-transformMatrix34:
-	ds.w	2
-transformMatrix38:
-	ds.w	3
-transformMatrix3E:
-	ds.w	2
-transformMatrix44:
-	ds.w	1
-transformMatrix46:
-	ds.w	1
-transformMatrix48:
-	ds.w	5
-trackSegmentGrid:
-	ds.b	16*16
-debrisParticleXPositions:
-	ds.w	32
-debrisParticleYPositions:
-	ds.w	32
-debrisParticleXVelocities:
-	ds.w	32
-debrisParticleYVelocities:
-	ds.w	32
-segmentGeometryIndices:
-	ds.b	100
-segmentAlternateGeometryIndices:
-	ds.b	100
-trackSegmentCoordinates:	; lookup table mapping track segment indices to their 2D grid coordinates, with each coordinate packed into a single byte
-	ds.b	100
-trackSegmentPropertiesTable:
-	ds.b	100
-segmentInterpolationPoint1:
-	ds.l	7
-lbL00DF6C:
-	ds.l	18
-	ds.w	1
-drawBridgeSegmentBase1:
-	ds.w	1
-drawBridgeSegmentBase2:
-	ds.w	48
-segmentInterpolationPoint2:
-	ds.l	50
-segmentWorldPositions:
-	ds.l	50
-obstacleSegmentIndices:
-	ds.l	5
-	ds.l	3
-obstacleTypes:
-	ds.l	5
-	ds.l	3
-trackFeatureData:
-	ds.l	5
-	ds.l	3
-playerStatsArray:
-	ds.b	1
-lbB00E209:
-	ds.b	13
-lbB00E216:
-	ds.b	1
-lbB00E217:
-	ds.b	9
-lapTimeSeconds:
-	ds.b	1
-lbB00E221:
-	ds.b	13
-lbB00E22E:
-	ds.b	1
-lbB00E22F:
-	ds.b	9
-lapTimeSubseconds:
-	ds.b	1
-lbB00E239:
-	ds.b	13
-lbB00E246:
-	ds.b	1
-lbB00E247:
-	ds.b	11
-segmentVisibilityData:
-	ds.l	12
-drawBridgeHeightValues:
-	ds.b	3
-;lbB00E285:			; dead code
-	ds.b	1
-;lbB00E286:
-	ds.b	48
-lbL00E2B6:
-	ds.b	12
-leagueStandingsTable:
-	ds.b	12
-currentDivision:
-	ds.b	1
-holeRenderingPosition:
-	ds.b	1
-currentPlayerContext:
-	ds.b	2
-aiSkillLevelTable:
-	ds.b	12
-playerRaceWins:
-	ds.b	12
-playerSecondPlaceFinishes:
-	ds.b	12
-raceParticipationCounters:
-	ds.b	12
-playerRankingScores:
-	ds.b	12
-sortedRaceStandings:
-	ds.b	11
-trackDataBuffer:
-	ds.b	1
-numTrackSegments:
-	ds.b	1
-playerSpawnSegment:
-	ds.b	1
-lapApproachSegment:
-	ds.b	1
-finishLineSegmentIndex:
-	ds.b	1
-startWorldPosition:
-	ds.w	1
-boostFuelLevel:
-	ds.b	1
-;trackConfigValue:
-	ds.b	1
-selectedTrackInDivision:
-	ds.b	1
-bestLapRecordHolder:
-	ds.b	1
-bestRaceRecordHolder:
-	ds.b	1
-lbB00E325:
-	ds.b	1
-lbB00E326:
-	ds.b	1
-player1ID:
-	ds.b	1
-player2ID:
-	ds.b	1
-opponentID:
-	ds.b	1
-trackMetadataBuffer:
-	ds.b	1
-trackDamageFrameBase:
-	ds.b	1
-trackBoostFuelPlayer1:
-	ds.b	1
-trackBoostFuelPlayer2:
-	ds.b	1
-obstacleCount:
-	ds.b	1
-trackFeatureCount:
-	ds.b	2
-networkSyncStateFlag:
-	ds.b	1
-lapLineSegment:
-	ds.b	1
-currentTrackID:
-	ds.b	1
-lbB00E334:
-	ds.b	1
-currentRaceNumber:
-	ds.b	1
-playerHolePositions:
-	ds.b	12
-ciaTimerFlag:
-	ds.b	2
-lbW049538:
-	ds.w	1
-networkPacketReadyFlag:
-	ds.b	2
-networkGameMode:
-	ds.b	1
-steeringInputDirectionBackup:			; added
-	ds.b	1
-checksumAccumulator:
-	ds.w	1
-networkDataCounter1:
-	ds.w	1
-savedNetworkCounter:
-	ds.w	1
-networkDataCounter2:
-	ds.w	1
-lbW049546:
-	ds.w	1
-lbW049548:
-	ds.w	1
-lbW04954A:
-	ds.w	1
-lbW04954C:
-	ds.w	1
-lbW04954E:
-	ds.w	1
-lbB049550:
-	ds.b	1
-lbB049551:
-	ds.b	1
-lbB049552:
-	ds.b	1
-lbB049553:
-	ds.b	1
-lbB049554:
-	ds.b	1
-lbB049555:
-	ds.b	1
-lbB049556:
-	ds.b	1
-lbB049557:
-	ds.b	1
-lbB049558:
-	ds.b	1
-lbB049559:
-	ds.b	1
-lbB04955A:
-	ds.b	1
-networkInputSyncEnabled:
-	ds.b	1
-receivedGameStateID:
-	ds.b	1
-receivedGameInitFlag:
-	ds.b	1
-receivedPlayerCommand:
-	ds.b	1
-receivedPlayerState:
-	ds.b	1
-receivedInputState:
-	ds.b	1
-lbB049561:
-	ds.b	1
-gameStateID:
-	ds.b	1
-networkInitPhase:
-	ds.b	1
-networkProtocolState:
-	ds.b	1
-localPlayerStateCache:
-	ds.b	1
-localInputStateCache:
-	ds.b	1
-raceSeriesCounter:
-	ds.b	1
-localPlayerReadyFlag:
-	ds.b	1
-opponentRelativePosition:
-	ds.b	1
-lbB04956A:
-	ds.b	1
-lbB04956B:
-	ds.b	1
-lbB04956C:
-	ds.b	1
-lbB04956D:
-	ds.b	1
-lbB04956E:
-	ds.b	1
-receivedKey:
-	ds.b	1
-lbW049570:
-	ds.w	1
-totalRaceCounter:
-	ds.w	1
-lbW049574:
-	ds.w	1
-lbW049576:
-	ds.w	1
-lbB0499D6:
-	ds.b	1
-lbB0499D7:
-	ds.b	1
+; sampleEngineParameters:
+; 	ds.w	2
+; downsampledSampleEngineTable:
+; 	ds.l	15
+; palette:
+; 	ds.w    16
+; sourcePalette:
+;   	ds.w    16
+; keyboardState:
+; 	ds.b    128
+; serialReceiveBuffer:
+; 	ds.b    256
+; serialTransmitBuffer:
+; 	ds.b    256
+; ciaBTimerBSet:
+; 	ds.b	2
+; serialBufferIndex:
+; 	ds.l    1
+; lbB000B55:	EQU	*-3
+; serialWriteIndex:	EQU	*-2
+; serialReadIndex:	EQU	*-1
+; lbB000B58:
+; 	ds.b	2
+; lbW000B5A:
+; 	ds.w	1
+; grindSampleID:
+; 	ds.b	2
+; audioDMAEnableGuard:
+; 	ds.w	1
+; bitplane1Pointer:
+; 	ds.l	1
+; copperlistUpdatePendingFlag:
+; 	ds.b	1
+; framesSinceCopperlistUpdateAccumulator:
+; 	ds.b	1
+; gameDataRegionStart:			; initializeGameData clears from here up to playerHolePositions, loadPlayerConfiguration up to segmentProcessedFlags
+; playerContextValues:
+; 	ds.b	2
+; gasInputIntensityValue:
+; 	ds.b	1
+; gasInputAccumulatorValue:
+; 	ds.b	1
+; aiBaseSpeedHigh:
+; 	ds.b	1
+; aiBaseSpeedLow:
+; 	ds.b	1
+; fuelConsumptionRate:
+; 	ds.b	3
+; trackWidthMultiplier:
+; 	ds.b	3
+; trackViewOffsetX:
+; 	ds.b	2
+; trackViewOffsetY:
+; 	ds.b	1
+; subGridOffsetX:
+; 	ds.b	2
+; subGridOffsetZ:
+; 	ds.b	1
+; trackProgressionByte:
+; 	ds.w	1
+; opponentSubSegmentProgress:
+; 	ds.w	1
+; trackProgressionOffset:
+; 	ds.b	1
+; lbB00D40F:
+; 	ds.b	1
+; lbW00D410:
+; 	ds.w	1
+; trackDistance:
+; 	ds.w	1
+; trackDistanceHigh:	EQU	*-1
+; 	ds.b	2
+; currentMenuItem:
+; 	ds.b	1
+; speedDisplayThousands:
+; 	ds.b	1
+; tempByte1:				; also used as a long!
+; 	ds.b	1
+; tempByte2:
+; 	ds.b	1
+; tempByte3:
+; 	ds.b	1
+; tempByte4:
+; 	ds.b	1
+; playerSegmentIndex:
+; 	ds.b	1
+; opponentSegmentIndex:
+; 	ds.b	1
+; lapCrossingDetectionFlag:
+; 	ds.w	1
+; player1LapCounter:
+; 	ds.b	1
+; player2LapCounter:
+; 	ds.b	1
+; baseCoordinateX:
+; 	ds.b	1
+; cameraGridOffsetXLow:
+; 	ds.b	3
+; baseCoordinateY:
+; 	ds.b	1
+; cameraGridOffsetZLow:
+; 	ds.b	3
+; perpendicularOffsetY:
+; 	ds.b	1
+; rawDisplacementValue:
+; 	ds.b	1
+; tempAttenuatedValue:
+; 	ds.b	1
+; attenuatedDisplacementValue:
+; 	ds.b	1
+; cameraGridOffsetXHigh:
+; 	ds.b	4
+; cameraGridOffsetZHigh:
+; 	ds.b	2
+; lbW00D434:
+; 	ds.w	1
+; lbW00D436:
+; 	ds.w	1
+; trackRenderingEnableFlag:
+; 	ds.b	4
+; opponentSpeedFractional:
+; 	ds.b	1
+; fuelConsumptionTimer:
+; 	ds.b	2
+; drawBridgeActive:
+; 	ds.b	1
+; trackDirection:
+; 	ds.b	1
+; restartTimerCountdown:
+; 	ds.b	1
+; framesToProcess:
+; 	ds.b	1
+; distanceCharacteristic:
+; 	ds.b	1
+; aiEnabled:
+; 	ds.b	1
+; boundaryCollisionDirectionFlag:
+; 	ds.b	1
+; collisionActiveFlag:
+; 	ds.b	1
+; inputStateFlags:
+; 	ds.b	1		; Bits: 0=accelerate, 1=brake, 2=left, 3=right, 4=boost
+; segmentRepeatCounter:
+; 	ds.b	2
+; collisionDistanceTemp:
+; 	ds.b	3
+; segmentSteeringFlags:
+; 	ds.b	2
+; accumulatedForceFrontLeft:
+; 	ds.b	1
+; accumulatedForceFrontRight:
+; 	ds.b	1
+; accumulatedForceRear:
+; 	ds.b	3
+; damageAccumulationActive:
+; 	ds.b	1
+; accumulatedCarDamage:
+; 	ds.b	1
+; highCompressionFrameCount:
+; 	ds.b	1
+; cameraAngleIndex:
+; 	ds.b	1
+; segmentDepthCounter:
+; 	ds.b	1
+; trackSegmentLimitDoubled:
+; 	ds.b	1
+; maxSegmentIndexDoubled:
+; 	ds.b	1
+; raceMode:
+; 	ds.b	1
+; lbB00D45C:
+; 	ds.b	1
+; trackDirectionMultiplier:
+; 	ds.b	1
+; displayRowOffset:
+; 	ds.b	1
+; displayTrackID:
+; 	ds.b	1
+; renderingLoopIndex:
+; 	ds.b	1
+; segmentPropertyFlags:
+; 	ds.b	1
+; boostActiveFlag:
+; 	ds.b	1
+; gameExitFlag:
+; 	ds.b	1
+; playerInputState:
+; 	ds.b	1
+; networkSyncBitFlag:
+; 	ds.b	1
+; segmentRenderingFlag:
+; 	ds.b	1
+; lbB00D467:
+; 	ds.b	1
+; lbB00D468:
+; 	ds.b	1
+; flameAnimationFrame:
+; 	ds.b	1
+; trackModeParameter:
+; 	ds.b	1
+; networkPlayerStateCache:
+; 	ds.b	1
+; blinkCountdownTimer:
+; 	ds.b	1
+; textHorizontalOffset:
+; 	ds.b	1
+; textYOffset:
+; 	ds.b	1
+; frameBufferSyncMask:
+; 	ds.b	1
+; raceActiveFlag:
+; 	ds.b	1
+; drawBridgeUpdateFlag:
+; 	ds.b	1
+; frameProcessingFlag:
+; 	ds.b	1
+; majorImpactCooldownTimer:
+; 	ds.b	1
+; crashRecoveryTimer:
+; 	ds.b	1
+; raceCompletionCheckFlag:
+; 	ds.b	1
+; networkConnectionState:
+; 	ds.b	1
+; lineDrawingModeFlag:
+; 	ds.b	2
+; geometryFormatFlag:
+; 	ds.b	1			; determines packed vs extended format
+; segmentProcessingIndex:
+; 	ds.b	1
+; segmentOrientationPrimary:
+; 	ds.b	1
+; previousSegmentOffset:
+; 	ds.b	1
+; hardImpactCount:
+; 	ds.b	1
+; wheelMovementActive:
+; 	ds.b	1
+; lbB00D47F:
+; 	ds.b	6
+; currentSegmentIndex:
+; 	ds.b	1
+; trackGeometryTypeIndex:
+; 	ds.b	2
+; blinkFlag:
+; 	ds.b	1
+; lapTimeSubsecondVisibility:
+; 	ds.b	2
+; currentTrackCoordinate:
+; 	ds.b	1
+; unusedDisplayFlag2:
+; 	ds.b	1
+; maxMenuIndex:
+; 	ds.b	1
+; gameMessageActiveFlag:
+; 	ds.b	1
+; segmentConfigLoadedFlag:
+; 	ds.b	1
+; renderModeFlag:
+; 	ds.b	1
+; trackOffsetBase:
+; 	ds.b	1
+; lbB00D492:
+; 	ds.b	1
+; gridSweepDirection:
+; 	ds.b	1
+; lbB00D494:
+; 	ds.b	1
+; maxBoostFuel:
+; 	ds.b	2
+; trackSegmentLimit:
+; 	ds.b	1
+; maxSegmentIndex:
+; 	ds.b	1
+; maxLapsForRace:
+; 	ds.b	1
+; renderingOrderMode:
+; 	ds.b	1
+; lastValidSegmentIndex:
+; 	ds.b	1
+; offTrackStateFlags:
+; 	ds.b	1		; bit 7=major collision/severely off track, bit 6=completely outside track grid
+; aiPatternControlFlags:
+; 	ds.b	1
+; prevSegmentDepthCounter:
+; 	ds.b	1
+; prevTrackProgressionOffset:
+; 	ds.b	2
+; playerLateralPosition:
+; 	ds.b	2
+; segmentDataIndexScaled:
+; 	ds.b	1
+; pauseState:
+; 	ds.b	1
+; pauseKeyPressed:
+; 	ds.b	1
+; lbB00D4A6:
+; 	ds.b	1
+; opponentTargetLateralPosition:
+; 	ds.b	1
+; accelerationStateFlag:
+; 	ds.b	1
+; framesSinceCopperlistUpdate:
+; 	ds.b	1
+; raceMatchupScreenTypeFlag:
+; 	ds.b	1
+; lbB00D4AB:
+; 	ds.b	1
+; frameCounter:
+; 	ds.b	1
+; lbB00D4AD:
+; 	ds.b	1
+; lbB00D4AE:
+; 	ds.b	1
+; raceCompletionState:
+; 	ds.b	1
+; drawBridgeAnimationPhase:
+; 	ds.b	1
+; displayFlags:
+; 	ds.b	1
+; raceWinnerBits:
+; 	ds.b	2
+; raceOutcomeFlags:
+; 	ds.b	1
+; savedHoleRenderingPosition:
+; 	ds.b	1
+; targetDamageLevel:
+; 	ds.b	2
+; opponentAheadFlag:
+; 	ds.b	1
+; disableWheelUpdateFlag:
+; 	ds.b	1
+; curveSmoothingFlag:
+; 	ds.b	1
+; trackSideIndicatorCopy:
+; 	ds.b	1
+; singleBufferRenderMode:
+; 	ds.b	1
+; aiMovementOverride:
+; 	ds.b	1
+; opponentSegmentOffset1:
+; 	ds.b	1
+; opponentSegmentOffset2:
+; 	ds.b	1
+; aiActionTimer:
+; 	ds.b	1
+; rollTransitionFlag:
+; 	ds.b	1
+; aiPatternOffset:
+; 	ds.b	1
+; opponentCollisionTimer:
+; 	ds.b	1
+; raceStartComplete:
+; 	ds.b	1
+; segmentDataStartIndex:
+; 	ds.b	1
+; steeringInputDirection:
+; 	ds.b	1			; 0=no steering, -15=left,15=right
+; draftingTimer:
+; 	ds.b	1
+; frameBufferToggle:
+; 	ds.b	1
+; globalFrameCounter:
+; 	ds.b	1
+; menuHighlightMode:
+; 	ds.b	1
+; multiplayerRaceDisplayFlag:
+; 	ds.b	1
+; lapTimeDisplayDuration:
+; 	ds.b	1
+; frameThrottleFlag:
+; 	ds.b	2
+; frameThrottleAccumulator:
+; 	ds.b	1
+; lbB00D4D0:
+; 	ds.b	1
+; offRoadSideFlags:
+; 	ds.b	1
+; lbB00D4D2:
+; 	ds.b	1
+; textTransparencyMode:
+; 	ds.b	1
+; segmentBaseSteeringOffset:
+; 	ds.b	1
+; currentPlayerNameOffset:
+; gridLookupX:
+; 	ds.b	1
+; selectedMenuItem:
+; gridLookupY:
+; 	ds.b	1
+; collisionImpactLevel:
+; 	ds.b	2
+; segmentOrientationAlternate:
+; 	ds.b	1
+; wheelBouncePhaseAccumulator:
+; 	ds.b	1
+; wheelRotationFrame:
+; 	ds.b	1
+; segmentAlternateFlag:
+; 	ds.b	1
+; wheelBaseHeight:
+; 	ds.b	1
+; unusedDisplayFlag1:
+; 	ds.b	1
+; raceStartTimer:
+; 	ds.b	1
+; multiplayerSyncFlag:
+; 	ds.b	1
+; trackSideIndicator:
+; 	ds.b	1
+; gameModeStateFlags:
+; 	ds.b	1
+; wheelAnimationAccumulator:
+; 	ds.b	1
+; tempByte5:
+; 	ds.b	1
+; ;lbB00D4E5:
+; 	ds.b	1
+; segmentHalfFlags:
+; 	ds.b	2
+; renderingIndex:
+; 	ds.b	1
+; chainLiftVelocity:
+; 	ds.b	1
+; chainVerticalPosition:
+; 	ds.b	1
+; opponentCollisionActive:
+; 	ds.b	1
+; networkEngineFlag:
+; 	ds.b	1
+; opponentLateralPosition:
+; 	ds.b	1
+; aiCurrentSpeed:
+; 	ds.w	1
+; lbB00D4EF:	EQU	*-1
+; aiTargetSpeed:
+; 	ds.w	1
+; aiTargetSpeedHigh:	EQU	*-1
+; trackHeightDifference:
+; 	ds.b	2
+; enginePitchDelta:
+; 	ds.w	1
+; enginePitchDeltaLow:	EQU	*-1
+; tempWord1:
+; 	ds.w	1
+; playerOpponentLateralDistance:	EQU	*-1
+; raceSetupFlags:  EQU    *-1
+; tempWord2:
+; 	ds.w	1
+; wheelDataOffset:	EQU	*-1
+; cameraHeightBaseline:
+; 	ds.w	3
+; carStartRotation:
+; 	ds.b	1
+; carStartRotationLow:
+; 	ds.b	1
+; splineControlPoint1:
+; 	ds.w	1
+; splineControlPoint2:
+; 	ds.w	1
+; splineControlPoint3:
+; 	ds.w	1
+; splineControlPoint4:
+; 	ds.w	1
+; additionalInterpolationPoints1:
+; 	ds.w	1
+; additionalInterpolationPoints2:
+; 	ds.w	1
+; segmentBezierOffset1:
+; 	ds.w	1
+; segmentBezierOffset2:
+; 	ds.w	1
+; opponentSegmentQueueOffset:
+; 	ds.w	1
+; processedSegmentIndices1:
+; 	ds.b	2
+; processedSegmentIndices2:
+; 	ds.b	2
+; speedBarLength:
+; 	ds.w	2
+; lbW00D51C:
+; 	ds.w	1
+; minimumRenderQueueOffset:
+; 	ds.w	1
+; previousSpeedBarLength:
+; 	ds.w	1
+; lateralPositionOutOfBounds:
+; 	ds.w	1
+; lbB00D524:
+; 	ds.b	2
+; visibilityAccumulator:
+; 	ds.w	1
+; prevVisibilityAccumulator:
+; 	ds.w	1
+; segmentProgressDistance:
+; 	ds.w	1
+; segmentProgressDistanceLow:	EQU	*-1
+; 	ds.b	2
+; cameraYawPerspectiveOffset:
+; 	ds.w	1
+; cameraRotationFlags:
+; 	ds.b	2
+; reverseDirectionFlag:
+; 	ds.b	2
+; enginePitchAccumulator:
+; 	ds.w	1
+; perspectiveDepthDivisor:
+; 	ds.w	1
+; opponentDistance:
+; 	ds.w	1
+; opponentDistanceLow:	EQU	*-1
+; maxCompressionVelocity:
+; 	ds.w	1
+; steeringScaleFactor:
+; 	ds.w	1
+; playerDistanceDifference:
+; 	ds.w	1
+; forwardPositionIntermediate:
+; 	ds.b	1
+; segmentBlendParam:
+; 	ds.b	1
+; viewportCenterY:
+; 	ds.w	1
+; trackDirectionInversionFlag:
+; 	ds.b	6
+; segmentSlopeFlags:
+; 	ds.b	2
+; adjustedDistanceValue:
+; 	ds.w	1
+; lateralTrackPosition:	EQU	*-1
+; 	ds.b	6
+; lbB00D554:
+; 	ds.b	1
+; previousSegmentProperties:
+; 	ds.b	1
+; ;visualEffectFlags:				; fixed dead code
+; ;	ds.w	1
+; horizonFillStartY:
+; 	ds.b	1
+; maxRenderingIndex:
+; 	ds.b	1
+; polygonFillStartY:
+; 	ds.b	1
+; trackBaseOffset:
+; 	ds.b	1
+; offsetFromRoadCenter:
+; 	ds.w	1
+; lateralRoadPosition:
+; 	ds.w	1
+; speedMinor:	EQU	*-1
+; trackSurfaceHeight:
+; 	ds.w	1
+; wheelSpeed:
+; 	ds.w	1
+; viewOffsetX:
+; 	ds.w	1
+; viewStepX:
+; 	ds.w	1
+; viewOffsetY:
+; 	ds.w	1
+; viewStepY:
+; 	ds.w	1
+; quadRectHalfWidth:
+; 	ds.w	1
+; quadRectWidth:
+; 	ds.w	1
+; quadRectHalfHeight:
+; 	ds.w	1
+; quadRectHeight:
+; 	ds.w	1
+; stepSizeXHalf:
+; 	ds.w	1
+; stepSizeYHalf:
+; 	ds.w	1
+; lbW00D578:
+; 	ds.w	1
+; lbW00D57A:
+; 	ds.w	1
+; stepSizeXQuarter:
+; 	ds.w	1
+; stepSizeYQuarter:
+; 	ds.w	1
+; lbW00D580:
+; 	ds.w	1
+; lbW00D582:
+; 	ds.w	1
+; quadTranslateX:
+; 	ds.w	1
+; quadTranslateY:
+; 	ds.w	1
+; adjustedViewX:
+; 	ds.w	1
+; adjustedViewY:
+; 	ds.w	1
+; primaryGeometryOffset:
+; 	ds.w	2
+; alternateGeometryOffset:
+; 	ds.w	2
+; trackSurfaceFrontLeft:
+; 	ds.l	1
+; trackSurfaceFrontRight:
+; 	ds.l	1
+; trackSurfaceRear:
+; 	ds.l	1
+; trackOffsetAdjustment:
+; 	ds.b	2
+; postWreckStateFlag:
+; 	ds.b	2
+; wheelHeightFrontLeft:
+; 	ds.l	1
+; wheelHeightFrontRight:
+; 	ds.l	1
+; wheelHeightRear:
+; 	ds.l	1
+; suspensionTravelFrontLeft:
+; 	ds.l	1
+; suspensionTravelFrontRight:
+; 	ds.l	1
+; suspensionTravelRear:
+; 	ds.l	1
+; geometryDatabaseOffset:
+; 	ds.w	2
+; rawTrackDataOffset:
+; 	ds.w	4
+; lbB00D5C8:
+; 	ds.b	4
+; rotatedCameraX:			; The memory from here up to opponentFrontWheelAccel must be kept as a single block
+; 	ds.l	1
+; carHeightPosition:
+; 	ds.b	4
+; rotatedCameraZ:
+; 	ds.l	1
+; cameraWorldX:
+; 	ds.b	2
+; lbW00D5DA:
+; 	ds.w	1
+; cameraWorldY:
+; 	ds.b	1
+; lbB00D5DD:
+; 	ds.b	1
+; lbW00D5DE:
+; 	ds.w	1
+; cameraWorldZ:
+; 	ds.b	2
+; lbW00D5E2:
+; 	ds.w	1
+; cameraAngleX:
+; 	ds.w	1
+; cameraAngleY:
+; 	ds.b	1
+; cameraAngleYLow:
+; 	ds.b	1
+; cameraAngleZ:
+; 	ds.w	1
+; worldXSpeed:
+; 	ds.w	1
+; worldYSpeed:
+; 	ds.w	1
+; worldZSpeed:
+; 	ds.w	1
+; rotationSpeedX:
+; 	ds.w	1
+; rotationSpeedY:
+; 	ds.w	1
+; rotationSpeedZ:
+; 	ds.w	1
+; worldAccelerationX:
+; 	ds.w	1
+; worldAccelerationY:
+; 	ds.w	1
+; worldAccelerationZ:
+; 	ds.w	1
+; angularAccelerationX:
+; 	ds.w	1
+; angularAccelerationY:
+; 	ds.w	1
+; angularAccelerationZ:
+; 	ds.w	1
+; wheelCornerXFrontLeft:
+; 	ds.w	1
+; wheelCornerXFrontRight:
+; 	ds.w	1
+; wheelCornerXRearCenter:
+; 	ds.w	1
+; wheelCornerYFrontLeft:
+; 	ds.w	1
+; wheelCornerYFrontRight:
+; 	ds.w	1
+; wheelCornerYRearCenter:
+; 	ds.w	1
+; baseTargetRoll:
+; 	ds.w	1
+; baseRollAngle:
+; 	ds.w	1
+; additionalYawOffset:
+; 	ds.w	1
+; clampedSuspensionFrontLeft:
+; 	ds.w	1
+; clampedSuspensionFrontRight:
+; 	ds.w	1
+; clampedSuspensionRear:
+; 	ds.w	1
+; previousSuspensionFrontLeft:
+; 	ds.w	1
+; previousSuspensionFrontRight:
+; 	ds.w	1
+; previousSuspensionRear:
+; 	ds.w	1
+; suspensionVelocityFrontLeft:
+; 	ds.w	1
+; suspensionVelocityFrontRight:
+; 	ds.w	1
+; suspensionVelocityRear:
+; 	ds.w	1
+; targetPitchRate:
+; 	ds.w	1
+; targetRollRate:
+; 	ds.w	1
+; gasOutputAccumulatorValue:
+; 	ds.b	1
+; gasOutputIntensityValue:
+; 	ds.b	1
+; carLocalVelocityX:
+; 	ds.w	1
+; carLocalVelocityY:
+; 	ds.w	1
+; carLocalVelocityZ:
+; 	ds.w	1
+; adjustedRollAngle:
+; 	ds.w	1
+; adjustedPitchAngle:
+; 	ds.w	1
+; adjustedYawAngle:
+; 	ds.w	1
+; averageWheelVelocity:
+; 	ds.w	1
+; averageWheelVelocityLow:	EQU	*-1
+; transformedAngularVelocityX:
+; 	ds.w	1
+; transformedAngularVelocityY:
+; 	ds.w	1
+; transformedAngularVelocityZ:
+; 	ds.w	1
+; rollSpringAngle:
+; 	ds.w	1
+; pitchSpringAngle:
+; 	ds.w	1
+; yawSpringAngle:
+; 	ds.w	1
+; lbW00D646:
+; 	ds.w	1
+; rollDisplacement:
+; 	ds.w	1
+; pitchReferenceZero:
+; 	ds.w	1
+; pitchDisplacement:
+; 	ds.w	1
+; rollSpringComponent:
+; 	ds.b	2
+; pitchSpringComponent:
+; 	ds.b	2
+; yawSpringComponent:
+; 	ds.b	2
+; lateralOpponentCollisionForce:
+; 	ds.w	1
+; verticalOpponentCollisionForce:
+; 	ds.w	1
+; forwardOpponentCollisionForce:
+; 	ds.w	1
+; segmentTargetAngle:
+; 	ds.w	1
+; carSpeedMagnitude:
+; 	ds.w	1
+; opponentFrontWheelAccel:
+; 	ds.l	1
+; opponentWheelAccelerationRL:	EQU	*-2
+; opponentWheelAccelerationRR:
+; 	ds.w	2
+; opponentWheelPositions:
+; 	ds.l	1
+; opponentRearLeftWheelPosition:	EQU	*-2
+; opponentRearRightWheelPosition:
+; 	ds.w	2
+; opponentFrontWheelHeightPrev:
+; 	ds.w	1
+; opponentWheelHeightRL:
+; 	ds.w	1
+; opponentWheelHeightRR:
+; 	ds.w	2
+; opponentWheelVelocities:
+; 	ds.w	1
+; opponentRearLeftWheelVelocity:
+; 	ds.w	1
+; opponentRearRightWheelVelocity:
+; 	ds.w	2
+; opponentWheelForceTotal:
+; 	ds.w	1
+; opponentWheelForceRL:
+; 	ds.w	1
+; opponentWheelForceRR:
+; 	ds.w	2
+; boundsMinX:
+; 	ds.w	1
+; boundsMaxX:
+; 	ds.w	1
+; boundsMinY:
+; 	ds.w	2
+; trackCoordinatesX:
+; 	ds.l	8
+; trackCoordinatesY:
+; 	ds.l	8
+; 	ds.w	1	;dc.w	$0024
+; segmentProcessedFlags:
+; 	ds.l	39
+; lbL00D76C:
+; 	ds.l	1
+; trackSegmentData:
+; 	ds.l	61
+; inputCoordX1:
+; 	ds.w	1
+; inputCoordY1:
+; 	ds.w	1
+; inputCoordX2:
+; 	ds.w	1
+; inputCoordY2:
+; 	ds.w	15
+; clampedCoordX1:
+; 	ds.w	1
+; clampedCoordY1:
+; 	ds.w	1
+; clampedCoordX2:
+; 	ds.w	1
+; clampedCoordY2:
+; 	ds.w	17
+; coordinateLookupTable:
+; 	ds.l	1
+; lbW00D8B4:
+; 	ds.w	1
+; lbW00D8B6:
+; 	ds.w	117
+; transformedCoordinates1:
+; 	ds.w	1
+; transformedCoordinates2:
+; 	ds.w	7
+; quadVertexX4:
+; 	ds.w	1
+; quadVertexX5:
+; 	ds.w	1
+; quadVertexX6:
+; 	ds.w	1
+; quadVertexX7:
+; 	ds.w	1
+; lbW00D9B8:
+; 	ds.w	1
+; lbW00D9BA:
+; 	ds.w	1
+; lbW00D9BC:
+; 	ds.w	1
+; lbW00D9BE:
+; 	ds.w	1
+; quadVertexX0:
+; 	ds.w	1
+; quadVertexX1:
+; 	ds.w	1
+; quadVertexX2:
+; 	ds.w	1
+; quadVertexX3:
+; 	ds.w	1
+; lbW00D9C8:
+; 	ds.w	1
+; lbW00D9CA:
+; 	ds.w	1
+; lbW00D9CC:
+; 	ds.w	1
+; lbW00D9CE:
+; 	ds.w	17
+; transformedVertexBounds:
+; 	ds.l	1
+; lbW00D9F4:
+; 	ds.w	1
+; lbW00D9F6:
+; 	ds.w	125
+; quadVertexY4:
+; 	ds.w	1
+; quadVertexY5:
+; 	ds.w	1
+; quadVertexY6:
+; 	ds.w	1
+; quadVertexY7:
+; 	ds.w	1
+; lbW00DAF8:
+; 	ds.w	1
+; lbW00DAFA:
+; 	ds.w	1
+; lbW00DAFC:
+; 	ds.w	1
+; lbW00DAFE:
+; 	ds.w	1
+; quadVertexY0:
+; 	ds.w	1
+; quadVertexY1:
+; 	ds.w	1
+; quadVertexY2:
+; 	ds.w	1
+; quadVertexY3:
+; 	ds.w	1
+; lbW00DB08:
+; 	ds.w	1
+; lbW00DB0A:
+; 	ds.w	1
+; lbW00DB0C:
+; 	ds.w	1
+; lbW00DB0E:
+; 	ds.w	17
+; lbL00DB30:
+; 	ds.l	13
+; transformMatrix34:
+; 	ds.w	2
+; transformMatrix38:
+; 	ds.w	3
+; transformMatrix3E:
+; 	ds.w	2
+; transformMatrix44:
+; 	ds.w	1
+; transformMatrix46:
+; 	ds.w	1
+; transformMatrix48:
+; 	ds.w	5
+; trackSegmentGrid:
+; 	ds.b	16*16
+; debrisParticleXPositions:
+; 	ds.w	32
+; debrisParticleYPositions:
+; 	ds.w	32
+; debrisParticleXVelocities:
+; 	ds.w	32
+; debrisParticleYVelocities:
+; 	ds.w	32
+; segmentGeometryIndices:
+; 	ds.b	100
+; segmentAlternateGeometryIndices:
+; 	ds.b	100
+; trackSegmentCoordinates:	; lookup table mapping track segment indices to their 2D grid coordinates, with each coordinate packed into a single byte
+; 	ds.b	100
+; trackSegmentPropertiesTable:
+; 	ds.b	100
+; segmentInterpolationPoint1:
+; 	ds.l	7
+; lbL00DF6C:
+; 	ds.l	18
+; 	ds.w	1
+; drawBridgeSegmentBase1:
+; 	ds.w	1
+; drawBridgeSegmentBase2:
+; 	ds.w	48
+; segmentInterpolationPoint2:
+; 	ds.l	50
+; segmentWorldPositions:
+; 	ds.l	50
+; obstacleSegmentIndices:
+; 	ds.l	5
+; 	ds.l	3
+; obstacleTypes:
+; 	ds.l	5
+; 	ds.l	3
+; trackFeatureData:
+; 	ds.l	5
+; 	ds.l	3
+; playerStatsArray:
+; 	ds.b	1
+; lbB00E209:
+; 	ds.b	13
+; lbB00E216:
+; 	ds.b	1
+; lbB00E217:
+; 	ds.b	9
+; lapTimeSeconds:
+; 	ds.b	1
+; lbB00E221:
+; 	ds.b	13
+; lbB00E22E:
+; 	ds.b	1
+; lbB00E22F:
+; 	ds.b	9
+; lapTimeSubseconds:
+; 	ds.b	1
+; lbB00E239:
+; 	ds.b	13
+; lbB00E246:
+; 	ds.b	1
+; lbB00E247:
+; 	ds.b	11
+; segmentVisibilityData:
+; 	ds.l	12
+; drawBridgeHeightValues:
+; 	ds.b	3
+; ;lbB00E285:			; dead code
+; 	ds.b	1
+; ;lbB00E286:
+; 	ds.b	48
+; lbL00E2B6:
+; 	ds.b	12
+; leagueStandingsTable:
+; 	ds.b	12
+; currentDivision:
+; 	ds.b	1
+; holeRenderingPosition:
+; 	ds.b	1
+; currentPlayerContext:
+; 	ds.b	2
+; aiSkillLevelTable:
+; 	ds.b	12
+; playerRaceWins:
+; 	ds.b	12
+; playerSecondPlaceFinishes:
+; 	ds.b	12
+; raceParticipationCounters:
+; 	ds.b	12
+; playerRankingScores:
+; 	ds.b	12
+; sortedRaceStandings:
+; 	ds.b	11
+; trackDataBuffer:
+; 	ds.b	1
+; numTrackSegments:
+; 	ds.b	1
+; playerSpawnSegment:
+; 	ds.b	1
+; lapApproachSegment:
+; 	ds.b	1
+; finishLineSegmentIndex:
+; 	ds.b	1
+; startWorldPosition:
+; 	ds.w	1
+; boostFuelLevel:
+; 	ds.b	1
+; ;trackConfigValue:
+; 	ds.b	1
+; selectedTrackInDivision:
+; 	ds.b	1
+; bestLapRecordHolder:
+; 	ds.b	1
+; bestRaceRecordHolder:
+; 	ds.b	1
+; lbB00E325:
+; 	ds.b	1
+; lbB00E326:
+; 	ds.b	1
+; player1ID:
+; 	ds.b	1
+; player2ID:
+; 	ds.b	1
+; opponentID:
+; 	ds.b	1
+; trackMetadataBuffer:
+; 	ds.b	1
+; trackDamageFrameBase:
+; 	ds.b	1
+; trackBoostFuelPlayer1:
+; 	ds.b	1
+; trackBoostFuelPlayer2:
+; 	ds.b	1
+; obstacleCount:
+; 	ds.b	1
+; trackFeatureCount:
+; 	ds.b	2
+; networkSyncStateFlag:
+; 	ds.b	1
+; lapLineSegment:
+; 	ds.b	1
+; currentTrackID:
+; 	ds.b	1
+; lbB00E334:
+; 	ds.b	1
+; currentRaceNumber:
+; 	ds.b	1
+; playerHolePositions:
+; 	ds.b	12
+; ciaTimerFlag:
+; 	ds.b	2
+; lbW049538:
+; 	ds.w	1
+; networkPacketReadyFlag:
+; 	ds.b	2
+; networkGameMode:
+; 	ds.b	1
+; steeringInputDirectionBackup:			; added
+; 	ds.b	1
+; checksumAccumulator:
+; 	ds.w	1
+; networkDataCounter1:
+; 	ds.w	1
+; savedNetworkCounter:
+; 	ds.w	1
+; networkDataCounter2:
+; 	ds.w	1
+; lbW049546:
+; 	ds.w	1
+; lbW049548:
+; 	ds.w	1
+; lbW04954A:
+; 	ds.w	1
+; lbW04954C:
+; 	ds.w	1
+; lbW04954E:
+; 	ds.w	1
+; lbB049550:
+; 	ds.b	1
+; lbB049551:
+; 	ds.b	1
+; lbB049552:
+; 	ds.b	1
+; lbB049553:
+; 	ds.b	1
+; lbB049554:
+; 	ds.b	1
+; lbB049555:
+; 	ds.b	1
+; lbB049556:
+; 	ds.b	1
+; lbB049557:
+; 	ds.b	1
+; lbB049558:
+; 	ds.b	1
+; lbB049559:
+; 	ds.b	1
+; lbB04955A:
+; 	ds.b	1
+; networkInputSyncEnabled:
+; 	ds.b	1
+; receivedGameStateID:
+; 	ds.b	1
+; receivedGameInitFlag:
+; 	ds.b	1
+; receivedPlayerCommand:
+; 	ds.b	1
+; receivedPlayerState:
+; 	ds.b	1
+; receivedInputState:
+; 	ds.b	1
+; lbB049561:
+; 	ds.b	1
+; gameStateID:
+; 	ds.b	1
+; networkInitPhase:
+; 	ds.b	1
+; networkProtocolState:
+; 	ds.b	1
+; localPlayerStateCache:
+; 	ds.b	1
+; localInputStateCache:
+; 	ds.b	1
+; raceSeriesCounter:
+; 	ds.b	1
+; localPlayerReadyFlag:
+; 	ds.b	1
+; opponentRelativePosition:
+; 	ds.b	1
+; lbB04956A:
+; 	ds.b	1
+; lbB04956B:
+; 	ds.b	1
+; lbB04956C:
+; 	ds.b	1
+; lbB04956D:
+; 	ds.b	1
+; lbB04956E:
+; 	ds.b	1
+; receivedKey:
+; 	ds.b	1
+; lbW049570:
+; 	ds.w	1
+; totalRaceCounter:
+; 	ds.w	1
+; lbW049574:
+; 	ds.w	1
+; lbW049576:
+; 	ds.w	1
+; lbB0499D6:
+; 	ds.b	1
+; lbB0499D7:
+; 	ds.b	1
 ;encodedControlIndices:
 ;	ds.b	6
 ;lbL04A180:
 ;	ds.l	2
-lbL04A4AE:
-	ds.l	3
-lbB04A4BA:
-	ds.b	1
-lbB04A4BB:
-	ds.b	1
-lbB04A4C8:
-	ds.b	2
-bitplaneMask1:
-	ds.l	1
-bitplaneMask2:
-	ds.l	1
-bitplaneMaskPointer:
-	ds.l	1
-lbB04AA3E:
-	ds.b	2
+; lbL04A4AE:
+; 	ds.l	3
+; lbB04A4BA:
+; 	ds.b	1
+; lbB04A4BB:
+; 	ds.b	1
+; lbB04A4C8:
+; 	ds.b	2
+; bitplaneMask1:
+; 	ds.l	1
+; bitplaneMask2:
+; 	ds.l	1
+; bitplaneMaskPointer:
+; 	ds.l	1
+; lbB04AA3E:
+; 	ds.b	2
 ;lbW04AA40:
 ;	ds.b	2
-useAlternateFontFlag:
-	ds.b	1
-lbB04AB4B:
-	ds.b	1
+; useAlternateFontFlag:
+; 	ds.b	1
+; lbB04AB4B:
+; 	ds.b	1
 ;interpolationBlendFactor:
 ;	ds.w	1
-playerNameRenderingPosition:
-	ds.l	1
-foregroundColorMask1:
-	ds.l	1
-foregroundColorMask2:
-	ds.l	1
-backgroundColorMask1:
-	ds.l	1
-backgroundColorMask2:
-	ds.l	1
-textCursorColumn:
-	ds.b	1
-textCursorRow:
-	ds.b	1
-characterByteOffset:
-	ds.b	1
-characterPixelOffset:
-	ds.b	1
-savedTransparencyFlag:
-	ds.b	1
-textControlCodeState:
-	ds.b	1
-controlCodeByteCounter:
-	ds.b	2
-engineAudioNoiseFlag:
-	ds.b	2
-maxInputLength:
-	ds.b	1
-inputCancelFlag:
-	ds.b	1
-currentInputPosition:
-	ds.b	2
-displayUpdateFlag:
-	ds.b	2
-buttonReleaseMask:
-	ds.b	2
-bufferSelector:
-	ds.b	2
-lbB050474:
-	ds.b	1
-textRenderingFlag:
-	ds.b	1
-additionalPlayerCount:
-	ds.b	1
-remainingRaces:
-	ds.b	1
-standingsDisplayModeFlag:
-	ds.b	1
-raceSeriesProgress:
-	ds.b	1
-selectedDivision:
-	ds.b	1
-divisionSelectedFlag:
-	ds.b	1
-lbB0513DC:
-	ds.b	1
-lbB0513DD:
-	ds.b	1
-menuInitializedFlag:
-	ds.b	2
-framesToWait:
-	ds.b	1
-	ds.b	1
-framesToWaitWhenFading:
-	ds.b	1
-creakingSoundCooldownTimer:
-	ds.b	1
-impactSoundCooldownTimer:
-	ds.b	1
-grindSoundCooldownTimer:
-	ds.b	1
-randomSeed1:
-	ds.w	1
-randomSeed2:
-	ds.b	1
-randomSeed2Low:
-	ds.b	1
-randomSeed3:
-	ds.b	2
-currentSaveSlotIndex:
-	ds.b	1
-disableDirectionalInputFlag:
-	ds.b	1
-selectedSaveSlotIndex:
-	ds.b	1
-lbB0544B7:
-	ds.b	1
-lbB0544BA:
-	ds.b	1
-saveSlotHighlightFlag:
-	ds.b	1
-lbB0544BC:
-	ds.b	2
-lbB054608:
-	ds.b	2
-aiLookAheadDistance:
-	ds.b	1
-aiCorneringSkill:
-	ds.b	1
-damageFrameLimit:
-	ds.b	2
-minBoundaryDistance:
-	ds.w	1
-collisionSoundCooldown:
-	ds.b	2
-suppressMenuTextFlag:
-	ds.b	2
-segmentRenderDepthTable:
-	ds.b	80
-transformedGridX:
-	ds.b	2
-transformedGridY:
-	ds.b	2
-lbB0579FA:
-	ds.b	2
-lbW0579FC:
-	ds.w	1
-lbW0579FE:
-	ds.w	1
-segmentRenderFlags:
-	ds.w	1
-segmentDataWritePointer:
-	ds.l	1
-lbB0581A0:
-	ds.b	2
-lbW0581A2:
-	ds.w	1
-lbW0581A4:
-	ds.w	1
-lbW0581A6:
-	ds.w	1
-lineDrawingBufferPointer:
-	ds.l	1
-renderCommandQueueOffset:
-	ds.w	1
-savedXCoordinate:
-	ds.w	1
-edgeDirectionFlag:
-	ds.b	1
-clipRequiredFlag:
-	ds.b	1
-clipIterationCounter:
-	ds.b	1
-renderingFlag:
-	ds.b	1
-farSegmentQueueOffset:
-	ds.w	1
-mountainHorizontalAngles:
-	ds.l	12
-mountainShapeIndices:
-	ds.l	12
-lbB05B096:
-	ds.b	1
-lbB05B097:
-	ds.b	1
-lbB05B098:
-	ds.b	1
-mountainSegmentCount:
-	ds.b	1
-mountainScreenX:
-	ds.w	1
-mountainScreenY:
-	ds.w	1
-scanlineCounter:
-	ds.b	2
-lbW05B3CC:
-	ds.w	1
-lbW05B3CE:
-	ds.w	1
-currentEdgePointer1:
-	ds.l	1
-currentEdgePointer2:
-	ds.l	1
-segmentAlternateRenderFlag:
-	ds.b	2
-segmentProcessedFlag:
-	ds.b	2
-edgeClipFailedFlag:
-	ds.b	1
-lbB057D75:
-	ds.b	1
-lbB05B3DE:
-	ds.b	4
-lbB05B3E2:
-	ds.b	4
-currentSegmentQueueOffset:
-	ds.w	1
-barrierSegmentQueueOffset:
-	ds.w	1
-lbB05B3EA:
-	ds.b	2
-lbB05B3EC:
-	ds.b	4
-lbL05B3F0:
-	ds.l	1
-lbL05B3F4:
-	ds.l	1
-lbL05B3F8:
-	ds.l	1
-	ds.l	2
-	ds.l	32
-edgeSortBuffer:
-	ds.l	32
-renderDataBuffer:
-	ds.l	64
-loadingHardwareSprite:
-	ds.b	1
-spriteUpdatePendingFlag:
-	ds.b	1
-lbW05BA66:
-	ds.w	1
-renderGraphicsCurrentX:
-	ds.w	1
-renderGraphicsCurrentY:
-	ds.w	1
-graphicsPointerTable:
-	ds.l	54
-frameBuffers:
-	ds.l	1
-displayFrameBuffer:
-	ds.l	1
-renderFrameBuffer:
-	ds.l	1
-viewportTopAddress:
-	ds.l	1
+; playerNameRenderingPosition:
+; 	ds.l	1
+;foregroundColorMask1:
+;	ds.l	1
+;foregroundColorMask2:
+;	ds.l	1
+;backgroundColorMask1:
+;	ds.l	1
+;backgroundColorMask2:
+;	ds.l	1
+;textCursorColumn:
+;	ds.b	1
+;textCursorRow:
+;	ds.b	1
+;characterByteOffset:
+;	ds.b	1
+;characterPixelOffset:
+;	ds.b	1
+;savedTransparencyFlag:
+;	ds.b	1
+;textControlCodeState:
+;	ds.b	1
+;controlCodeByteCounter:
+;	ds.b	2
+;engineAudioNoiseFlag:
+;	ds.b	2
+;maxInputLength:
+;	ds.b	1
+;inputCancelFlag:
+;	ds.b	1
+;currentInputPosition:
+;	ds.b	2
+;displayUpdateFlag:
+;	ds.b	2
+;buttonReleaseMask:
+;	ds.b	2
+;bufferSelector:
+;	ds.b	2
+; lbB050474:
+; 	ds.b	1
+; textRenderingFlag:
+; 	ds.b	1
+; additionalPlayerCount:
+; 	ds.b	1
+; remainingRaces:
+; 	ds.b	1
+;standingsDisplayModeFlag:
+;	ds.b	1
+;raceSeriesProgress:
+;	ds.b	1
+; selectedDivision:
+; 	ds.b	1
+; divisionSelectedFlag:
+; 	ds.b	1
+; lbB0513DC:
+; 	ds.b	1
+; lbB0513DD:
+; 	ds.b	1
+;menuInitializedFlag:
+;	ds.b	2
+;framesToWait:
+;	ds.b	1
+;	ds.b	1
+;framesToWaitWhenFading:
+;	ds.b	1
+;creakingSoundCooldownTimer:
+;	ds.b	1
+;impactSoundCooldownTimer:
+;	ds.b	1
+;grindSoundCooldownTimer:
+;	ds.b	1
+;randomSeed1:
+;	ds.w	1
+;randomSeed2:
+;	ds.b	1
+;randomSeed2Low:
+;	ds.b	1
+;randomSeed3:
+;	ds.b	2
+; currentSaveSlotIndex:
+; 	ds.b	1
+; disableDirectionalInputFlag:
+; 	ds.b	1
+; selectedSaveSlotIndex:
+; 	ds.b	1
+; lbB0544B7:
+; 	ds.b	1
+; lbB0544BA:
+; 	ds.b	1
+; saveSlotHighlightFlag:
+; 	ds.b	1
+; lbB0544BC:
+; 	ds.b	2
+; lbB054608:
+; 	ds.b	2
+;aiLookAheadDistance:
+;	ds.b	1
+;aiCorneringSkill:
+;	ds.b	1
+;damageFrameLimit:
+;	ds.b	2
+;minBoundaryDistance:
+;	ds.w	1
+;collisionSoundCooldown:
+;	ds.b	2
+;suppressMenuTextFlag:
+;	ds.b	2
+;segmentRenderDepthTable:
+;	ds.b	80
+;transformedGridX:
+;	ds.b	2
+;transformedGridY:
+;	ds.b	2
+; lbB0579FA:
+; 	ds.b	2
+; lbW0579FC:
+; 	ds.w	1
+; lbW0579FE:
+; 	ds.w	1
+; segmentRenderFlags:
+; 	ds.w	1
+; segmentDataWritePointer:
+; 	ds.l	1
+; lbB0581A0:
+; 	ds.b	2
+; lbW0581A2:
+; 	ds.w	1
+; lbW0581A4:
+; 	ds.w	1
+; lbW0581A6:
+; 	ds.w	1
+;lineDrawingBufferPointer:
+;	ds.l	1
+;renderCommandQueueOffset:
+;	ds.w	1
+;savedXCoordinate:
+;	ds.w	1
+;edgeDirectionFlag:
+;	ds.b	1
+;clipRequiredFlag:
+;	ds.b	1
+;clipIterationCounter:
+;	ds.b	1
+;renderingFlag:
+;	ds.b	1
+;farSegmentQueueOffset:
+;	ds.w	1
+;mountainHorizontalAngles:
+;	ds.l	12
+;mountainShapeIndices:
+;	ds.l	12
+; lbB05B096:
+; 	ds.b	1
+; lbB05B097:
+; 	ds.b	1
+; lbB05B098:
+; 	ds.b	1
+; mountainSegmentCount:
+; 	ds.b	1
+; mountainScreenX:
+; 	ds.w	1
+; mountainScreenY:
+; 	ds.w	1
+; scanlineCounter:
+; 	ds.b	2
+; lbW05B3CC:
+; 	ds.w	1
+; lbW05B3CE:
+; 	ds.w	1
+; currentEdgePointer1:
+; 	ds.l	1
+; currentEdgePointer2:
+; 	ds.l	1
+; segmentAlternateRenderFlag:
+; 	ds.b	2
+; segmentProcessedFlag:
+; 	ds.b	2
+; edgeClipFailedFlag:
+; 	ds.b	1
+;lbB057D75:
+;	ds.b	1
+; lbB05B3DE:
+; 	ds.b	4
+; lbB05B3E2:
+; 	ds.b	4
+; currentSegmentQueueOffset:
+; 	ds.w	1
+; barrierSegmentQueueOffset:
+; 	ds.w	1
+; lbB05B3EA:
+; 	ds.b	2
+; lbB05B3EC:
+; 	ds.b	4
+; lbL05B3F0:
+; 	ds.l	1
+; lbL05B3F4:
+; 	ds.l	1
+; lbL05B3F8:
+; 	ds.l	1
+; 	ds.l	2
+; 	ds.l	32
+; edgeSortBuffer:
+; 	ds.l	32
+; renderDataBuffer:
+; 	ds.l	64
+;loadingHardwareSprite:
+;	ds.b	1
+;spriteUpdatePendingFlag:
+;	ds.b	1
+; lbW05BA66:
+; 	ds.w	1
+; renderGraphicsCurrentX:
+; 	ds.w	1
+; renderGraphicsCurrentY:
+; 	ds.w	1
+;graphicsPointerTable:
+;	ds.l	54
+;frameBuffers:
+;	ds.l	1
+;displayFrameBuffer:
+;	ds.l	1
+;renderFrameBuffer:
+;	ds.l	1
+;viewportTopAddress:
+;	ds.l	1
 plotPixelOffset:
 	ds.w	1
 fastRenderBuffer:
