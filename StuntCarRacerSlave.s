@@ -26,44 +26,29 @@ slv_Version	= 16
 slv_Flags	= WHDLF_NoError|WHDLF_Examine
 slv_keyexit	= $59	; F10
 
-gameDataSize	equ	408544
+gameDataSize	equ	408416
 
 	INCLUDE	"kick31.s"
 
-	dc.b	"$VER: StuntCarRacer.slave 0.x (18.03.2026)",0
+	dc.b	"$VER: StuntCarRacer.slave 0.x (21.03.2026)",0
 
-slv_CurrentDir:	dc.b	"Data",0
-slv_name:		dc.b	"Stunt Car Racer",0
-slv_copy:		dc.b	"1989 Geoff Crammond/Microstyle",0
-slv_info:		dc.b	"Adapted by Vesa Halttunen",10
-				dc.b	"Version 0.x (18.03.2026)",0
-programName:	dc.b	"StuntCarRacer",0
-args:			dc.b	10
-argsEnd:		dc.b	0
-				EVEN
+slv_CurrentDir:	dc.b	0
+slv_name:	dc.b	"Stunt Car Racer",0
+slv_copy:	dc.b	"1989 Geoff Crammond/Microstyle",0
+slv_info:	dc.b	"Adapted by Vesuri",10
+		dc.b	"Work in progress (21.03.2026)",0
+		EVEN
 
 _bootdos:
 	move.l	_resload,a2
-	lea	programName(pc),a3
-
-	lea	_dosname(pc),a1
-	move.l	4.w,a6
-	jsr	_LVOOpenLibrary(a6)
-	move.l	d0,a6
-
-	move.l	a3,d1
-	jsr	_LVOLoadSeg(a6)
+	lea	_executable,a0
+	jsr	_LoadSegFromBuffer
 	tst.l	d0
 	bne.s	.loadData
 
 .readFailure:
-	jsr	_LVOIoErr(a6)
-	move.l	a3,-(sp)
-	move.l	d0,-(sp)
-	pea	TDREASON_DOSREAD
-	move.l	_resload(pc),-(sp)
-	add.l	#resload_Abort,(sp)
-	rts
+	pea	TDREASON_WRONGVER
+	jmp	resload_Abort(a2)
 
 .loadData:
 	add.l	d0,d0
@@ -76,7 +61,6 @@ _bootdos:
 	move.l	#$e898,d0
 	move.l	#gameDataSize+4,d1
 	moveq	#1,d2
-	move.l	_resload(pc),a2
 	jsr	resload_DiskLoad(a2)
 
 	move.l	#(gameDataSize+4)>>2,d0
@@ -86,8 +70,6 @@ _bootdos:
 	lea	-4(a5),a0
 	bsr	_Decrypt
 
-	lea	args(pc),a0
-	moveq	#argsEnd-args,d0
 	jsr	(a4)
 
 	move.l	_resload,a2
@@ -114,4 +96,9 @@ _Decrypt	movem.l	d0/d5-d7/a0,-(sp)	;Rob Northen Decryption (3 Key)
 		bne.s	.DecryptLoop
 		movem.l	(sp)+,d0/d5-d7/a0
 		rts
+
+	INCLUDE	"LoadSegFromBuffer.s"
+
+_executable:	incbin	"StuntCarRacer"
+
 	END
