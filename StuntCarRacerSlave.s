@@ -15,8 +15,8 @@
 	BOPT	wo-
 	SUPER
 
-CHIPMEMSIZE	= $25000
-FASTMEMSIZE	= $120000
+CHIPMEMSIZE	= $30000
+FASTMEMSIZE	= $100000
 NUMDRIVES	= 1
 WPDRIVES	= %0000
 HDINIT
@@ -27,6 +27,7 @@ slv_Version	= 16
 slv_Flags	= WHDLF_NoError|WHDLF_Examine
 slv_keyexit	= $59	; F10
 
+debugArea	equ	$4048d2d4
 gameDataSize	equ	408416
 
 	INCLUDE	"kick31.s"
@@ -43,13 +44,15 @@ slv_info:	dc.b	"Adapted by Vesuri",10
 _bootdos:
 	move.l	_resload,a2
 
-	; Set up chip memory and kast memory pointers for _LoadSegFromBuffer
-	lea	_chipMem,a0
-	move.l	#$1000,(a0)
-	lea	_fastMem,a0
-	move.l	_expmem,d0
-	add.l	#KICKSIZE,d0
-	move.l	d0,(a0)
+	; Set up chip memory and fast memory pointers for _LoadSegFromBuffer
+;	lea	_chipMem,a0
+;	move.l	#$1000,(a0)
+;	lea	_fastMem,a0
+;	move.l	_expmem,d0
+;	move.l	d0,debugArea+0			; 
+;	add.l	#KICKSIZE,d0
+;	move.l	d0,(a0)
+;	move.l	d0,debugArea+4			; 
 
 	lea	executable,a0
 	jsr	_LoadSegFromBuffer
@@ -67,24 +70,40 @@ _bootdos:
 
 	; Set beginning of code to A4
 	move.l	d0,a4
+;	move.l	d0,debugArea+8			;
 
 	; Get gameData BSS address from a lea gameData,a0 instruction
 	move.l	8(a4),a5
-
 	; Rob Northen requires one longword before the actual payload
-	lea	-4(a5),a0
-	move.l	#$e898,d0
-	move.l	#gameDataSize+4,d1
-	moveq	#1,d2
-	move.l	_resload,a2
-	jsr	resload_DiskLoad(a2)
+	lea	-4(a5),a5
 
-;	move.l	#(gameDataSize+4)>>2,d0
-;	move.l	#$c905b365,d5
-;	move.l	#$a0cff27b,d6
-;	move.l	#$59f3a592,d7
-;	lea	-4(a5),a0
-;	bsr	_Decrypt
+	move.l	_resload,a2
+	move.l	#$e898,d6
+	move.l	#gameDataSize+4,d7
+.readLoop:
+	move.l	d6,d0
+	move.l	d7,d1
+	cmp.l	#$2000,d1
+	bls.s	.sizeOk
+	move.l	#$2000,d1
+.sizeOk:
+	moveq	#1,d2
+	move.l	a5,a0
+	move.l	_expmem,a0
+	add.l	#KICKSIZE,a0
+	lea	(a5,d1.w),a5
+	add.l	d1,d6
+	sub.l	d1,d7
+	jsr	resload_DiskLoad(a2)
+	tst.l	d7
+	bne.s	.readLoop
+
+	move.l	#(gameDataSize+4)>>2,d0
+	move.l	#$c905b365,d5
+	move.l	#$a0cff27b,d6
+	move.l	#$59f3a592,d7
+	lea	-4(a5),a0
+	bsr	_Decrypt
 
 	jsr	(a4)
 
