@@ -1,7 +1,8 @@
+	incdir	"scr:"
+
 ; TODO
 ; - car to car collisions easily cause way too much damage
 ; - rotation when falling off track sometimes weird
-	incdir	"scr:"
 
 dsksync:	EQU	$0000007E
 CIAF_PRTRBUSY:	EQU	$00000001
@@ -195,14 +196,15 @@ ORIGINAL_LOAD_ADDRESS		equ	$e700
 FRAMERATE_MULTIPLIER	equ	6					; 10FPS -> 60FPS
 TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
+WHDLOAD			equ	1
 
 	section	Code,code
 startup:
 	move.l	sp,sp_quit
 
-	move.l	sampleParameterTable,a0
-        sub.l   #ORIGINAL_LOAD_ADDRESS,a0						
-        add.l   #gameData,a0
+	lea	gameData,a0
+        sub.l   #ORIGINAL_LOAD_ADDRESS,a0
+	add.l	sampleParameterTable,a0
 	lea	sampleData,a1
 	move.w	#downsampledEngineData-sampleData-1,d7
 .copySampleData:
@@ -229,20 +231,17 @@ startup:
 	move.l	d0,base_graphics
 	beq	startupFailure
 
-	; Get Vector Base Register
 	jsr	_LVOForbid(a6)
+
+	ifeq	WHDLOAD
+	; Get Vector Base Register
 	move.w	AttnFlags(a6),d0
 	beq	.no680x0
 	lea	GetVBR(pc),a5
 	jsr	_LVOSuperVisor(a6)
-
-	; Enable caches
-	move.l	#CACR_CopyBack|CACR_WriteAllocate|CACR_DBE|CACR_EnableD|CACR_IBE|CACR_EnableI,d0
-	move.l	#CACR_CopyBack|CACR_EnableE|CACR_DBE|CACR_ClearD|CACR_EnableD|CACR_FreezeD|CACR_IBE|CACR_ClearI|CACR_FreezeI|CACR_EnableI,d1
-	jsr	_LVOCacheControl(a6)
-	move.l	d0,cachebits_old
-
 .no680x0:
+	endc
+
 	; Store old values
 	move.l	base_vector,a5
 	move.l	base_graphics,a6
@@ -283,7 +282,6 @@ shutdown:
 	move.w	#INTF_BLIT|INTF_VERTB,intreq(a6)
 	move.w	#INTF_BLIT|INTF_VERTB,intreq(a6)
 	move.w	#$ffff-INTF_SETCLR,intena(a6)
-;	waitb
 	move.w	#DMAF_COPPER,dmacon(a6)
 
 	; Restore old values
@@ -321,12 +319,6 @@ shutdown:
 	move.l	base_graphics,a1
 	jsr	_LVOCloseLibrary(a6)
 .nobase_graphics:
-	move.w	AttnFlags(a6),d0
-	beq.b	.no680x0
-	move.l	cachebits_old,d0
-	move.l	#CACR_CopyBack|CACR_EnableE|CACR_DBE|CACR_ClearD|CACR_EnableD|CACR_FreezeD|CACR_IBE|CACR_ClearI|CACR_FreezeI|CACR_EnableI,d1
-	jsr	_LVOCacheControl(a6)
-.no680x0:
 	moveq	#0,d0
 	rts
 
@@ -20939,11 +20931,16 @@ lbC05BA48:
 	MOVE.W	(SP)+,D1
 	RTS
 
-;	section OriginalData,bss
-;gameData:	ds.b	408544
-
+	ifne	WHDLOAD
+	section OriginalData,bss
+		ds.l	1
+gameData:	ds.b	408416
+	else
 	section OriginalData,data
+		ds.l	1
 gameData:	incbin	"scr.exe.decrypted"
+	endc
+
 		include	"gameDataOffsets.i"
 		include	"gameDataOffsetsBSS.i"
 
@@ -21938,7 +21935,10 @@ trackMountainDataTable:
 ;	incbin	"bitplaneMaskTable"
 
 name_graphics:	dc.b	"graphics.library",0
-version:	dc.b	"$VER: Stunt Car Racer Ultimate 0.20260316 (16.03.2026) Work in progress!",0
+
+	ifeq	WHDLOAD
+version:	dc.b	"$VER: Stunt Car Racer Ultimate 0.20260330 (30.03.2026) Work in progress!",0
+	endif
 
 	section	ChipData,data_c
 copperlistStart:
@@ -23451,7 +23451,6 @@ tv_Lev4IntVect_old:	ds.l	1
 tv_Lev5IntVect_old:	ds.l	1
 tv_Lev6IntVect_old:	ds.l	1
 tv_Lev7IntVect_old:	ds.l	1
-cachebits_old:	ds.l	1
 dmaconr_old:	ds.w	1
 intenar_old:	ds.w	1
 ciaacra_old:	ds.b	1
