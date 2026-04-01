@@ -1,8 +1,6 @@
 	incdir	"scr:"
 
-; TODO
-; - car to car collisions easily cause way too much damage
-; - rotation when falling off track sometimes weird
+WHDLOAD		equ	0
 
 dsksync:	EQU	$0000007E
 CIAF_PRTRBUSY:	EQU	$00000001
@@ -196,7 +194,6 @@ ORIGINAL_LOAD_ADDRESS		equ	$e700
 FRAMERATE_MULTIPLIER	equ	6					; 10FPS -> 60FPS
 TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
-WHDLOAD			equ	1
 
 	section	Code,code
 startup:
@@ -10432,9 +10429,11 @@ lbC052AA6:
 	ADDQ.B	#$01,D0
 lbC052AC2:
 	TST.B	tempWord1
-	BPL	lbC052ACE
+	BPL	.angleDeltaPositive
 	NEG.W	D0
-lbC052ACE:
+.angleDeltaPositive:
+	muls	#TIMESTEP_FACTOR,d0	; added
+	asr.l	#8,d0
 	ADD.W	D0,cameraAngleY
 lbC052AD4:
 	MOVE.W	#$0000,D2
@@ -11424,7 +11423,7 @@ updateWheelSuspensionPhysics:
 	BNE	.targetPitchRateDone
 	TST.B	raceStartTimer
 	BNE	.targetPitchRateDone
-	MOVE.W	#-128*FRAMERATE_MULTIPLIER,D3		; originally #$FF80
+	MOVE.W	#$FF80,D3
 	MOVE.W	cameraAngleX,D0
 	BPL	.cameraAnglePositive
 	MOVE.B	currentTrackID,D0
@@ -11436,13 +11435,13 @@ updateWheelSuspensionPhysics:
 .notTrack7:
 	CMP.B	#$04,D0
 	BNE	.targetPitchRateDone
-	MOVE.W	#-8*FRAMERATE_MULTIPLIER,D3		; originally #$FFF8
+	MOVE.W	#$FFF8,D3
 	BRA	.checkTargetPitchRate
 
 .cameraAnglePositive:
 	CMP.W	#$1000,D0
 	BLT	.checkTargetPitchRate
-	MOVE.W	#-256*FRAMERATE_MULTIPLIER,D3		; originally #$FF00
+	MOVE.W	#$FF00,D3
 .checkTargetPitchRate:
 	SUB.W	targetPitchRate,D3
 	BPL	.targetPitchRateDone
@@ -13544,35 +13543,37 @@ lbC0556B8:
 lbC0556C2:
 	MOVE.B	#$80,collisionActiveFlag
 	MOVE.B	#$80,opponentCollisionActive
+	tst.b	frameThrottleFlag				 ; added
+	bmi	.skipCollisionDamage
 	MOVE.W	#$0200,D3
 	MOVE.W	lateralOpponentCollisionForce,D0
-	BPL	lbC0556E2
+	BPL	.lateralForcePositive
 	NEG.W	D0
-lbC0556E2:
+.lateralForcePositive:
 	ADD.W	D0,D3
 	MOVE.W	verticalOpponentCollisionForce,D0
-	BPL	lbC0556F0
+	BPL	.verticalForcePositive
 	NEG.W	D0
-lbC0556F0:
+.verticalForcePositive:
 	ADD.W	D0,D3
 	MOVE.W	forwardOpponentCollisionForce,D0
-	BPL	lbC0556FE
+	BPL	.forwardForcePositive
 	NEG.W	D0
-lbC0556FE:
+.forwardForcePositive:
 	ADD.W	D0,D3
 	LSR.W	#$08,D3
 	MOVE.L	#accumulatedForceFrontLeft,A0
 	MOVE.W	#$0002,D2
-lbC05570C:
-	MOVE.B	$00(A0,D2.W),D0
+.loop:	MOVE.B	$00(A0,D2.W),D0
 	ADD.B	D3,D0
-	BCC	lbC05571A
+	BCC	.forceOk
 	MOVE.B	#$FF,D0
-lbC05571A:
+.forceOk:
 	MOVE.B	D0,$00(A0,D2.W)
 	SUBQ.B	#$01,D2
-	BPL	lbC05570C
+	BPL	.loop
 	MOVE.B	#$80,damageAccumulationActive
+.skipCollisionDamage:					; added
 	RTS
 
 applyOpponentCollisionForces:
