@@ -1,6 +1,6 @@
 	incdir	"scr:"
 
-WHDLOAD		equ	0
+WHDLOAD		equ	1
 
 dsksync:	EQU	$0000007E
 CIAF_PRTRBUSY:	EQU	$00000001
@@ -430,7 +430,9 @@ level2Interrupt:
 	RTE
 
 level3Interrupt:
+	ifeq	WHDLOAD
 	bsr	setQuitOnRMB
+	endc
 	BTST	#INTB_COPER,_custom+intreqr+1
 	BEQ	noCopperInterrupt
 	JSR	copperInterrupt
