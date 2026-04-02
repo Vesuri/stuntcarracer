@@ -30,13 +30,13 @@ gameDataSize	equ	408416
 
 		include	"kick31.s"
 
-		dc.b	"$VER: StuntCarRacer.slave 0.x (30.03.2026)",0
+		dc.b	"$VER: StuntCarRacer.slave 0.x (02.04.2026)",0
 
 slv_CurrentDir:	dc.b	0
 slv_name:	dc.b	"Stunt Car Racer",0
 slv_copy:	dc.b	"1989 Geoff Crammond/Microstyle",0
 slv_info:	dc.b	"Adapted by Vesuri",10
-		dc.b	"Work in progress (30.03.2026)",0
+		dc.b	"Work in progress (02.04.2026)",0
 		even
 
 _bootdos:
