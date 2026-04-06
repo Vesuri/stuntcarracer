@@ -191,7 +191,7 @@ gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
 ORIGINAL_LOAD_ADDRESS		equ	$e700
-FRAMERATE_MULTIPLIER	equ	6					; 10FPS -> 60FPS
+FRAMERATE_MULTIPLIER	equ	8					; 6FPS -> 48FPS
 TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 
@@ -377,7 +377,7 @@ initialize:
 	MOVE.W	#$0000,_custom+bpl2mod
 	MOVE.W	#$0000,_custom+bplcon1
 	MOVE.W	#$0024,_custom+bplcon2
-	move.w	#$0000,_custom+beamcon0
+	move.w	#$2000,_custom+beamcon0
 	MOVE.L	#copperlistStart,A0
 	MOVE.L	A0,_custom+cop1lc
 	MOVE.W	_custom+copjmp1,D0
@@ -6335,7 +6335,7 @@ loadMenuDataToRAM:
 copyPlayerNamesLoop:
 	MOVE.B	(A0)+,(A1)+
 	DBRA	D0,copyPlayerNamesLoop
-	MOVE.L	#divider,A0
+	MOVE.L	#defaultRecordTemplate,A0
 	MOVE.L	#networkRaceBuffer1,A1
 	MOVE.L	#networkRaceBuffer2,A2
 	CLR.W	D1
@@ -6349,7 +6349,7 @@ copyDividerLoop:
 dividerIndexOk:
 	SUBQ.B	#$01,D1
 	BNE	copyDividerLoop
-	TST.B	skipSaveSlotScreen
+	TST.B	saveDataLoadedFlag
 	BNE	lbC04E826
 	JSR	readSaveSlotFromDisk
 ;	BRA	installLineEmulatorTrap
@@ -6380,7 +6380,7 @@ validateSaveDataChecksum:
 	MOVE.L	lbL04E82C,D3		; Load stored checksum seed
 	EOR.L	D3,D0			; XOR sum with seed
 	MOVE.L	D0,lbL04E82C		; Store new checksum
-	MOVE.B	#$80,skipSaveSlotScreen
+	MOVE.B	#$80,saveDataLoadedFlag
 	CLR.W	D1
 	CLR.W	D2
 lbC04E826:
@@ -7345,32 +7345,32 @@ clearGameDataSlot:
 	RTS
 
 updateLapTimer:
-	;MOVE.B	#$13,D0			; Add 19 milliseconds
-	move.b	framesSinceCopperlistUpdate,d0	; originally #$13
-	add.b	d0,d0			; added
+	tst.b	frameThrottleFlag	; added
+	bne.s	lbC04F8AC
+	MOVE.B	#$14,D0			; originally $13
 incrementLapTimeBCD:
 	MOVE.L	#lapTimeSubseconds,A0
 	MOVE.L	#lapTimeSeconds,A1
 	MOVE.L	#playerStatsArray,A2
 	ANDI.B	#$0F,CCR
 	MOVE.B	$00(A0,D1.W),D3
-	ABCD	D3,D0			; BCD add to subseconds
+	ABCD	D3,D0
 	BCC	lbC04F8AE
-	MOVE.B	D0,$00(A0,D1.W)		; Store updated subseconds
-	MOVE.B	$00(A1,D1.W),D0		; Load seconds
+	MOVE.B	D0,$00(A0,D1.W)
+	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	#$00,D3
-	ABCD	D3,D0			; Carry into seconds
+	ABCD	D3,D0
 	MOVE.B	D0,$00(A1,D1.W)
-	CMP.B	#$60,D0			; Check if >= 60 seconds
-	BCS	lbC04F88C		; Skip if < 60
-	MOVE.B	#$00,$00(A1,D1.W)	; Reset seconds to 0
+	CMP.B	#$60,D0
+	BCS	lbC04F88C
+	MOVE.B	#$00,$00(A1,D1.W)
 	ANDI.B	#$0F,CCR
 	MOVE.B	$00(A2,D1.W),D0
 	MOVE.B	#$01,D3
-	ABCD	D3,D0			; Increment minutes
-	CMP.B	#$0A,D0			; Check if >= 10 minutes
-	BGE	lbC04F88C		; Don't overflow
-	MOVE.B	D0,$00(A2,D1.W)		; Store minutes
+	ABCD	D3,D0
+	CMP.B	#$0A,D0
+	BGE	lbC04F88C
+	MOVE.B	D0,$00(A2,D1.W)
 lbC04F88C:
 	TST.B	D1
 	BNE	lbC04F8AC
@@ -7448,7 +7448,7 @@ updateDamageAndTimers:
 .volumeOk:
 	MOVE.B	D0,audioSample4Volume
 	MOVE.B	#$04,D0					; creaking
-	move.b	#20,creakingSoundCooldownTimer		; added
+	move.b	#17,creakingSoundCooldownTimer		; added
 .playSample:
 	JSR	playSample
 .sampleOk:
@@ -11524,10 +11524,7 @@ updateVelocityDamping:
 ;	TST.B	wheelMovementActive
 	BRA.S	lbC053A5C		; originally BEQ
 .groundDampingX:
-	asr.w	#2,d3			; added
-	move.w	d3,d0
-	asr.w	d0
-	add.w	d0,d3
+	asr.w	#1,d3			; added
 	MOVE.W	targetPitchRate,D0
 	SUB.W	D3,D0
 	MOVE.W	adjustedYawAngle,D3
@@ -11541,10 +11538,7 @@ lbC053A5C:
 	ASR.W	#$04,D3
 	bra.s	.speedZOk
 .groundDampingZ:
-	asr.w	#2,d3			; added
-	move.w	d3,d0
-	asr.w	d0
-	add.w	d0,d3
+	asr.w	#1,d3			; added
 .speedZOk:
 	MOVE.W	targetRollRate,D0
 	SUB.W	D3,D0
@@ -13196,12 +13190,12 @@ handleOpponentPositioning:
 .moveLeft:
 	CMP.B	#$F0,D0
 	BCC	.done
-	MOVE.B	#$FE,D0				; originally $F7
+	MOVE.B	#$FF,D0				; originally $F7
 	BRA	.deltaOk			; originally BNE
 .moveRight:
 	CMP.B	#$10,D0
 	BCS	.done
-	MOVE.B	#$02,D0				; originally $09
+	MOVE.B	#$01,D0				; originally $09
 .deltaOk:
 	ADD.B	opponentLateralPosition,D0
 	MOVE.B	aiEnabled,D2
@@ -20945,7 +20939,7 @@ gameData:	incbin	"scr.exe.decrypted"
 	endc
 
 		include	"gameDataOffsets.i"
-		include	"gameDataOffsetsBSS.i"
+		include	"gameDataOffsetsBSS.60.i"
 
 	section Data,data
 ;audioChannelMasks:
