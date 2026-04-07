@@ -1,6 +1,6 @@
 	incdir	"scr:"
 
-WHDLOAD		equ	1
+WHDLOAD		equ	0
 
 dsksync:	EQU	$0000007E
 CIAF_PRTRBUSY:	EQU	$00000001
@@ -4903,7 +4903,10 @@ lbC04CC58:
 	MOVE.B	D0,carStartRotation
 	MOVE.B	#$00,carStartRotationLow
 lbC04CC66:
+	tst.b	frameThrottleFlag			; added
+	bmi.s	.timerOk
 	SUBQ.B	#$01,raceStartTimer
+.timerOk:
 	RTS
 
 lbC04CC6E:
@@ -11456,6 +11459,8 @@ updateWheelSuspensionPhysics:
 	BEQ	.cooldownTimerOk
 	SUBQ.B	#$01,impactSoundCooldownTimer
 .cooldownTimerOk:
+	cmp.b	#$60,chainVerticalPosition		; added
+	bhi	.impactSoundDone
 	TST.B	hardImpactCount
 	BEQ	.impactSoundDone
 	MOVE.B	maxCompressionVelocity,D0
@@ -20927,7 +20932,7 @@ lbC05BA48:
 	section OriginalData,bss
 	ds.l	1
 gameData:
-	ds.b	408416
+	ds.b	408540
 	else
 	section OriginalData,data
 	ds.l	1
@@ -20946,24 +20951,6 @@ resultScreenPointerTable:
 	dc.l	imageLost
 	dc.l	imageWreck
 	dc.l	imagePromotion
-
-drawBridgeHeightOffsets:
-	dc.b	$F7,$F7,$F7,$F7,$F7,$F7
-	dc.b	$F7,$F7,$F7,$F7,$F7,$F6
-	dc.b	$F6,$F6,$F6,$F6,$F6,$F6
-	dc.b	$F6,$F6,$F6,$F6,$F5,$F5
-	dc.b	$F5,$F5,$F5,$F5,$F5,$F5
-	dc.b	$F5,$F5,$F5,$F6,$F6,$F6
-	dc.b	$F6,$F6,$F6,$F7,$F7,$F7
-	dc.b	$F7,$F7,$F8,$F8,$F8,$F8
-	dc.b	$F8,$F8,$F8,$F9,$F9,$F9
-	dc.b	$F9,$F9,$FA,$FA,$FA,$FB
-	dc.b	$FB,$FB,$FC,$FC,$FC,$FD
-	dc.b	$FD,$FD,$FE,$FE,$FE,$FF
-	dc.b	$FF,$FF,$00,$00,$01,$01
-	dc.b	$02,$02,$03,$03,$04,$04
-	dc.b	$05,$04,$03,$02,$01,$00
-	dc.b	$FD,$FD,$FD,$FD,$FD,$FD
 
 mountainSilhouetteTable:
 	dc.l	mountainShape0Data,mountainData00
