@@ -26,17 +26,17 @@ slv_Version	= 16
 slv_Flags	= WHDLF_NoError|WHDLF_Examine
 slv_keyexit	= $59	; F10
 
-gameDataSize	equ	408416
+gameDataSize	equ	408540
 
 		include	"kick31.s"
 
-		dc.b	"$VER: StuntCarRacer.slave 0.x (02.04.2026)",0
+		dc.b	"$VER: StuntCarRacer.slave 0.x (07.04.2026)",0
 
 slv_CurrentDir:	dc.b	0
 slv_name:	dc.b	"Stunt Car Racer",0
 slv_copy:	dc.b	"1989 Geoff Crammond/Microstyle",0
 slv_info:	dc.b	"Adapted by Vesuri",10
-		dc.b	"Work in progress (02.04.2026)",0
+		dc.b	"Work in progress (07.04.2026)",0
 		even
 
 _bootdos:
@@ -90,7 +90,7 @@ _bootdos:
 	move.l	#$c905b365,d5
 	move.l	#$a0cff27b,d6
 	move.l	#$59f3a592,d7
-	lea	-4(a5),a0
+	move.l	a5,a0
 	bsr	_Decrypt
 
 	jsr	resload_FlushCache(a2)
@@ -126,7 +126,4 @@ _Decrypt:
 	rts
 
 		include	"LoadSegFromBuffer.s"
-
 executable:	incbin	"StuntCarRacer"
-executableEnd:
-executableSize	equ	(executableEnd-executable)
