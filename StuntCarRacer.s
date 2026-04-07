@@ -1,6 +1,6 @@
 	incdir	"scr:"
 
-WHDLOAD		equ	0
+WHDLOAD		equ	1
 
 dsksync:	EQU	$0000007E
 CIAF_PRTRBUSY:	EQU	$00000001
@@ -191,7 +191,7 @@ gb_ActiView		equ	34
 gb_copinit		equ	38
 DMAF_ALL		equ	$01FF
 ORIGINAL_LOAD_ADDRESS		equ	$e700
-FRAMERATE_MULTIPLIER	equ	8					; 6FPS -> 48FPS
+FRAMERATE_MULTIPLIER	equ	6					; 8FPS -> 48FPS
 TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 
@@ -377,7 +377,7 @@ initialize:
 	MOVE.W	#$0000,_custom+bpl2mod
 	MOVE.W	#$0000,_custom+bplcon1
 	MOVE.W	#$0024,_custom+bplcon2
-	move.w	#$2000,_custom+beamcon0
+	move.w	#$0020,_custom+beamcon0
 	MOVE.L	#copperlistStart,A0
 	MOVE.L	A0,_custom+cop1lc
 	MOVE.W	_custom+copjmp1,D0
@@ -4186,6 +4186,10 @@ animateDrawBridge:
 ;	BMI	.animationPhaseOk
 	move.b	framesSinceCopperlistUpdate,d0			; added
 	ADD.B	d0,drawBridgeAnimationPhase			; originally ADDQ.B #$01
+	cmp.b	#$c0,drawBridgeAnimationPhase			; added
+	bcs.s	.animationPhaseOk
+	clr.b	drawBridgeAnimationPhase
+.animationPhaseOk:
 	MOVE.W	#$0000,segmentProgressDistance
 	MOVE.B	#$00,drawBridgeActive
 	MOVE.B	drawBridgeAnimationPhase,D0
@@ -4200,10 +4204,11 @@ animateDrawBridge:
 ;	MOVE.B	$00(A0,D2.W),lbB00E285
 ;	MOVE.B	$00(A0,D2.W),lbB00E286
 ;	ASL.W	#$05,D0
+	MOVE.W	D0,tempWord1
 	add.w	d0,d0						; added
 	add.w	d0,d0
 	add.w	#128,d0
-	MOVE.W	D0,tempWord1
+	add.w	d0,tempWord1
 	MOVE.B	#$02,D2
 	MOVE.B	#$BE,D1
 	MOVE.L	#segmentGeometryOffsetTable,A1
@@ -4891,38 +4896,40 @@ lbC04CC14:
 
 handleRaceStartCountdown:
 	MOVE.B	raceStartTimer,D1
-	BEQ	lbC04CC8E
+	BEQ	.done
 	CMP.B	#$E6,D1
-	BCS	lbC04CC6E
+	BCS	.checkInitialRaise
 	JSR	checkMultiplayerTrackSwap
 	MOVE.B	#$2C,D0
 	TST.B	trackSideIndicator
-	BPL	lbC04CC58
+	BPL	.setStartRotation
 	MOVE.B	#$D4,D0
-lbC04CC58:
+.setStartRotation:
 	MOVE.B	D0,carStartRotation
 	MOVE.B	#$00,carStartRotationLow
-lbC04CC66:
+.decrementTimer:
 	tst.b	frameThrottleFlag			; added
 	bmi.s	.timerOk
 	SUBQ.B	#$01,raceStartTimer
 .timerOk:
 	RTS
 
-lbC04CC6E:
+.checkInitialRaise:
 	CMP.B	#$E5,D1
-	BNE	lbC04CC90
+	BNE	.checkFullRaise
+	move.w	offsetFromRoadCenter,d0			; added
+	asl.w	#5,d0
+	move.w	d0,carStartRotation
 	MOVE.B	#$00,D0
 	JSR	updateCarStartRotation
 	MOVE.B	#$03,D0
 	JSR	adjustCarHeightToTrack
-	BPL	lbC04CC66
-lbC04CC8E:
-	RTS
+	BPL	.decrementTimer
+.done:	RTS
 
-lbC04CC90:
+.checkFullRaise:
 	CMP.B	#$E4,D1
-	BNE	lbC04CD02
+	BNE	.holdAndCountdown
 	MOVE.B	#$04,D0
 	JSR	adjustCarHeightToTrack
 	MOVE.B	#$FF,D0
@@ -4948,37 +4955,36 @@ lbC04CC90:
 	MOVE.B	#$04,D0
 	JMP	setMessageParameters
 
-.done:
-	RTS
+;.done:	RTS					; removed
 
-lbC04CD02:
+.holdAndCountdown:
 	MOVE.B	#$00,D0
 	JSR	updateCarStartRotation
 	MOVE.B	#$02,D0
 	JSR	adjustCarHeightToTrack
 	TST.B	frameThrottleFlag
-	BMI	lbC04CD30
+	BMI	.checkTransition
 	SUBQ.B	#$01,raceStartTimer
-	BNE	lbC04CD30
+	BNE	.checkTransition
 	ADDQ.B	#$01,raceStartTimer
-lbC04CD30:
+.checkTransition:
 	MOVE.B	raceStartComplete,D0
-	BNE	lbC04CD46
+	BNE	.checkRaceActive
 	TST.B	raceStartTimer
-	BPL	lbC04CD50
+	BPL	.startRace
 	RTS
 
-lbC04CD46:
+.checkRaceActive:
 	MOVE.B	raceActiveFlag,D0
-	BNE	lbC04CD70
-lbC04CD50:
+	BNE	.raceIsActive
+.startRace:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,raceStartTimer
 	MOVE.B	D0,offTrackStateFlags
 	MOVE.B	D0,gameMessageActiveFlag
 	MOVE.B	#$80,D0
 	MOVE.B	D0,raceStartComplete
-lbC04CD70:
+.raceIsActive:
 	RTS
 
 adjustCarHeightToTrack:
@@ -11459,8 +11465,6 @@ updateWheelSuspensionPhysics:
 	BEQ	.cooldownTimerOk
 	SUBQ.B	#$01,impactSoundCooldownTimer
 .cooldownTimerOk:
-	cmp.b	#$60,chainVerticalPosition		; added
-	bhi	.impactSoundDone
 	TST.B	hardImpactCount
 	BEQ	.impactSoundDone
 	MOVE.B	maxCompressionVelocity,D0
