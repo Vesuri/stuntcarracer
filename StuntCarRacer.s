@@ -506,8 +506,12 @@ ciaATimerBDone:
 	MOVE.L	#keyboardState,A0
 	CLR.W	D0
 	MOVE.B	ciasdr(A3),D0
-	ROR.B	#$01,D0				; patch: jsr _Keybd
-	EOR.B	#$FF,D0				; nop
+	ROR.B	#$01,D0
+	EOR.B	#$FF,D0
+	cmp.b	#$55,d0			; added F6 = Refresh boost
+	beq.s	refreshBoost
+	cmp.b	#$5f,d0			; Help = Win the race!
+	beq.s	winRace
 	CMP.B	#$F0,D0
 	BCC	lbC00095E
 	TST.B	D0
@@ -515,6 +519,18 @@ ciaATimerBDone:
 	AND.B	#$7F,D0
 	MOVE.B	#$00,$00(A0,D0.W)
 	BRA	lbC00095E
+
+refreshBoost:
+;	tst.b	boostFuelLevel
+;	bne.s	.toggleBoost
+	move.b	maxBoostFuel,boostFuelLevel		;Lame trainer
+.toggleBoost:
+	;eor.l	#$65000008~$4e714e71,$60836			; TODO find $60836
+	bra	lbC00095E
+
+winRace:
+	move.b	#4,player1LapCounter		;Cheating bastard! :)
+	bra	lbC00095E
 
 lbC000958:
 	MOVE.B	#$B3,$00(A0,D0.W)
@@ -5156,8 +5172,16 @@ lbC04CF94:
 	SUB.B	additionalPlayerCount,D0
 	ASL.W	#$04,D0
 	MOVE.L	#playerNamesWithSpaces,A0
-	CMP.B	#$20,$01(A0,D0.W)				; patch: jsr _SkipPlayerName "Allow fire to skip name entry"
-	BEQ	lbC04CF94					; nop nop
+	CMP.B	#$20,$01(A0,D0.W)
+;	BEQ	lbC04CF94
+	bne.b	.nameOk
+	move.b	#'P',$01(A0,D0.W)
+	move.b	#'l',$02(A0,D0.W)
+	move.b	#'a',$03(A0,D0.W)
+	move.b	#'y',$04(A0,D0.W)
+	move.b	#'e',$05(A0,D0.W)
+	move.b	#'r',$06(A0,D0.W)
+.nameOk:
 	JSR	resetTextYOffset
 	MOVE.B	#$03,D0
 	JSR	setForegroundColor
@@ -8479,8 +8503,12 @@ lbC050B90:
 	MOVE.L	#raceRecordTable,A1
 	MOVE.B	lbB00E217,$00(A1,D1.W)
 	MOVE.B	lbB00E22F,$01(A1,D1.W)
-	MOVE.B	lbB00E247,$02(A1,D1.W)						; patch: jmp _SaveTimes
-	RTS
+	MOVE.B	lbB00E247,$02(A1,D1.W)
+	tst.l	saveLapRecords						; added
+	beq.s	.done
+	move.l	saveLapRecords,a1
+	jsr	(a1)
+.done:	RTS
 
 lbC050C02:
 	MOVE.L	#lapRecordTable,A1
@@ -20944,6 +20972,8 @@ gameData:
 gameData:
 	incbin	"scr.exe.decrypted"
 	endc
+saveLapRecords:
+	ds.l	1
 
 	include	"gameDataOffsets.i"
 	include	"gameDataOffsetsBSS.i"
