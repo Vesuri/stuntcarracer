@@ -196,29 +196,10 @@ TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 
 	section	Code,code
+
+	ifeq	WHDLOAD
 startup:
 	move.l	sp,sp_quit
-
-	lea	gameData,a0
-        sub.l   #ORIGINAL_LOAD_ADDRESS,a0
-	add.l	sampleParameterTable,a0
-	lea	sampleData,a1
-	move.w	#downsampledEngineData-sampleData-1,d7
-.copySampleData:
-	move.b	(a0)+,(a1)+
-	dbra	d7,.copySampleData
-
-	move.l	sampleParameterTable,d0
-	neg.l	d0
-	add.l	#sampleData,d0
-	lea	sampleParameterTable,a0
-	add.l	d0,0*16(a0)
-	add.l	d0,1*16(a0)
-	add.l	d0,2*16(a0)
-	add.l	d0,3*16(a0)
-	add.l	d0,4*16(a0)
-	add.l	d0,5*16(a0)
-	add.l	d0,6*16(a0)
 
 	; Open libraries
 	move.l	4.w,a6
@@ -230,14 +211,12 @@ startup:
 
 	jsr	_LVOForbid(a6)
 
-	ifeq	WHDLOAD
 	; Get Vector Base Register
 	move.w	AttnFlags(a6),d0
 	beq	.no680x0
 	lea	GetVBR(pc),a5
 	jsr	_LVOSuperVisor(a6)
 .no680x0:
-	endc
 
 	; Store old values
 	move.l	base_vector,a5
@@ -338,9 +317,31 @@ testQuit:
 	rts
 doQuit:	move.l	sp_quit,sp
 	jmp	shutdown
+	endc
 
 ****************************************************************************
-begin:	JSR	initialize
+begin:	lea	gameData,a0
+        sub.l   #ORIGINAL_LOAD_ADDRESS,a0
+	add.l	sampleParameterTable,a0
+	lea	sampleData,a1
+	move.w	#downsampledEngineData-sampleData-1,d7
+.copySampleData:
+	move.b	(a0)+,(a1)+
+	dbra	d7,.copySampleData
+
+	move.l	sampleParameterTable,d0
+	neg.l	d0
+	add.l	#sampleData,d0
+	lea	sampleParameterTable,a0
+	add.l	d0,0*16(a0)
+	add.l	d0,1*16(a0)
+	add.l	d0,2*16(a0)
+	add.l	d0,3*16(a0)
+	add.l	d0,4*16(a0)
+	add.l	d0,5*16(a0)
+	add.l	d0,6*16(a0)
+
+	JSR	initialize
 	JMP	initializeGameMemoryAndState
 
 initialize:
@@ -505,8 +506,8 @@ ciaATimerBDone:
 	MOVE.L	#keyboardState,A0
 	CLR.W	D0
 	MOVE.B	ciasdr(A3),D0
-	ROR.B	#$01,D0
-	EOR.B	#$FF,D0
+	ROR.B	#$01,D0				; patch: jsr _Keybd
+	EOR.B	#$FF,D0				; nop
 	CMP.B	#$F0,D0
 	BCC	lbC00095E
 	TST.B	D0
@@ -816,7 +817,9 @@ generateEngineSamples:
 	RTS
 
 readJoystickState:
+	ifeq	WHDLOAD
 	jsr	testQuit
+	endc
 	MOVEM.L	D3/D4/A0,-(SP)
 	CLR.B	D4
 	MOVE.W	_custom+joy1dat,D0
@@ -3283,7 +3286,7 @@ setForegroundColor:
 	RTS
 
 waitForInputPress:
-	JSR	scanForInput
+	JSR	scanForInput					; patch: rts "Don't ask for floppy!"
 	BCC	waitForInputPress
 waitForInputPressAgain:
 	JSR	scanForInput
@@ -5153,8 +5156,8 @@ lbC04CF94:
 	SUB.B	additionalPlayerCount,D0
 	ASL.W	#$04,D0
 	MOVE.L	#playerNamesWithSpaces,A0
-	CMP.B	#$20,$01(A0,D0.W)
-	BEQ	lbC04CF94
+	CMP.B	#$20,$01(A0,D0.W)				; patch: jsr _SkipPlayerName "Allow fire to skip name entry"
+	BEQ	lbC04CF94					; nop nop
 	JSR	resetTextYOffset
 	MOVE.B	#$03,D0
 	JSR	setForegroundColor
@@ -6370,7 +6373,7 @@ recordTemplateIndexOk:
 finalizeFloppyAccessAndInitCIA:
 	BTST	#DMAB_BLITTER,_custom+dmaconr
 	BNE	finalizeFloppyAccessAndInitCIA
-	OR.B	#CIAF_DSKSEL0,_ciab+ciaprb
+;	OR.B	#CIAF_DSKSEL0,_ciab+ciaprb
 	MOVE.W	#(DMAF_DISK|DMAF_BLITTER|DMAF_BLITHOG),_custom+dmacon
 	CLR.W	D1
 	CLR.W	D2
@@ -8476,7 +8479,7 @@ lbC050B90:
 	MOVE.L	#raceRecordTable,A1
 	MOVE.B	lbB00E217,$00(A1,D1.W)
 	MOVE.B	lbB00E22F,$01(A1,D1.W)
-	MOVE.B	lbB00E247,$02(A1,D1.W)
+	MOVE.B	lbB00E247,$02(A1,D1.W)						; patch: jmp _SaveTimes
 	RTS
 
 lbC050C02:
@@ -12329,10 +12332,8 @@ loadOrSaveSaveSlot:
 	JSR	readWriteSaveSlotData
 	JMP	finalizeFloppyAccessAndInitCIA
 
-;	ds.w	1
-
 readWriteSaveSlotData:
-	MOVEM.L	D1-D7/A0-A5,-(SP)
+	MOVEM.L	D1-D7/A0-A5,-(SP)				; patch: jmp _Loader
 	LINK	A6,#-$0024
 	MOVE.W	D0,D4
 	AND.W	#$0003,D4
