@@ -17,7 +17,6 @@
 
 gameDataSize	equ	408540
 expMemSize	equ	$88000			; $87054
-debugBase	equ	$41800000
 
 ;======================================================================
 
@@ -76,6 +75,10 @@ _Start						;A0 = resident loader
 	lea	_resload(pc),a1
 	move.l	a0,(a1)			;Save for later use
 
+	move.l	a0,a2			;Check parameters
+	lea	_Tags(pc),a0
+	jsr	resload_Control(a2)
+
 	lea	executable,a0
 	move.l	_expmem(pc),a1
 	move.l	a1,a5
@@ -103,15 +106,16 @@ _Start						;A0 = resident loader
 
 	; Get gameData base address from a lea gameData,a0 instruction
 	move.l	2(a4),a5
-	move.l	a5,debugBase
 
-	; Store hook addresses
+	; Store hook addresses and parameters
 	move.l	a5,a3
 	add.l	#gameDataSize,a3
 	lea	_SaveTimes(pc),a0
 	move.l	a0,(a3)+
 	lea	_Loader(pc),a0
-	move.l	a0,(a3)
+	move.l	a0,(a3)+
+	lea	_Custom1(pc),a0
+	move.l	(a0),(a3)+
 
 	; Rob Northen requires one longword before the actual payload
 	lea	-4(a5),a5
@@ -163,6 +167,9 @@ _Start						;A0 = resident loader
 	jmp	resload_Abort(a2)
 
 _resload	dc.l	0			;Resident loader
+_Tags		dc.l	WHDLTAG_CUSTOM1_GET
+_Custom1	dc.l	0
+		dc.l	TAG_DONE
 _SaveFileSize	dc.l	0
 _ChipPtr	dc.l	$800
 
@@ -201,7 +208,6 @@ _Loader		movem.l	d1-d4/a0-a3,-(sp)
 		cmp.l	d4,d3			;will work
 		blt.b	_DiskOpDone
 
-		move.l	a1,debugBase+4
 		jsr	resload_LoadFileOffset(a2)
 		bra.b	_DiskOpDone
 
