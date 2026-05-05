@@ -521,11 +521,11 @@ ciaATimerBDone:
 	BRA	lbC00095E
 
 refreshBoost:
-;	tst.b	boostFuelLevel
-;	bne.s	.toggleBoost
+	tst.b	boostFuelLevel
+	bne.s	.toggleBoost
 	move.b	maxBoostFuel,boostFuelLevel		;Lame trainer
 .toggleBoost:
-	;eor.l	#$65000008~$4e714e71,$60836			; TODO find $60836
+	eor.l	#1,infiniteBoost
 	bra	lbC00095E
 
 winRace:
@@ -3302,7 +3302,7 @@ setForegroundColor:
 	RTS
 
 waitForInputPress:
-	JSR	scanForInput					; patch: rts "Don't ask for floppy!"
+	JSR	scanForInput
 	BCC	waitForInputPress
 waitForInputPressAgain:
 	JSR	scanForInput
@@ -6363,26 +6363,26 @@ startupInitAndEnterMenu:
 	MOVE.W	#$00FF,D0
 	MOVE.L	#playerNamesWithSpaces,A0
 	MOVE.L	#playerNamesBuffer,A1
-copyPlayerNamesLoop:
+.copyPlayerNamesLoop:
 	MOVE.B	(A0)+,(A1)+
-	DBRA	D0,copyPlayerNamesLoop
+	DBRA	D0,.copyPlayerNamesLoop
 	MOVE.L	#defaultRecordTemplate,A0
 	MOVE.L	#lapRecordTable,A1
 	MOVE.L	#raceRecordTable,A2
 	CLR.W	D1
 	CLR.W	D2
-initRecordTablesLoop:
+.initRecordTablesLoop:
 	MOVE.B	$00(A0,D2.W),$00(A1,D1.W)
 	MOVE.B	$00(A0,D2.W),$00(A2,D1.W)
 	SUBQ.B	#$01,D2
-	BPL	recordTemplateIndexOk
+	BPL	.recordTemplateIndexOk
 	MOVE.B	#$0F,D2
-recordTemplateIndexOk:
+.recordTemplateIndexOk:
 	SUBQ.B	#$01,D1
-	BNE	initRecordTablesLoop
-	TST.B	saveDataLoadedFlag
+	BNE	.initRecordTablesLoop
+	TST.B	lapRecordsLoadedFlag
 	BNE	lbC04E826
-	JSR	readSaveSlotFromDisk
+	JSR	loadLapRecords
 ;	BRA	installLineEmulatorTrap
 ;
 ;installLineEmulatorTrap:
@@ -6395,23 +6395,24 @@ recordTemplateIndexOk:
 	BRA	validateSaveDataChecksum
 
 finalizeFloppyAccessAndInitCIA:
-	BTST	#DMAB_BLITTER,_custom+dmaconr
-	BNE	finalizeFloppyAccessAndInitCIA
+;	BTST	#DMAB_BLITTER,_custom+dmaconr			; removed
+;	BNE	finalizeFloppyAccessAndInitCIA
 ;	OR.B	#CIAF_DSKSEL0,_ciab+ciaprb
-	MOVE.W	#(DMAF_DISK|DMAF_BLITTER|DMAF_BLITHOG),_custom+dmacon
+;	MOVE.W	#(DMAF_DISK|DMAF_BLITTER|DMAF_BLITHOG),_custom+dmacon
 	CLR.W	D1
 	CLR.W	D2
 	MOVE.B	#$00,lbB00D494
-	JMP	initializeCIA
+;	JMP	initializeCIA					; removed
+	rts
 
 validateSaveDataChecksum:
-	MOVE.L	D0,lbL0563EC		; Store return value from initializeCIA
-	MOVE.L	saveSlotNameBuffer,D0		; Load value from save slot data
-	ADD.L	saveDataChecksumValue,D0		; Add value from offset +508 bytes
-	MOVE.L	lbL04E82C,D3		; Load stored checksum seed
-	EOR.L	D3,D0			; XOR sum with seed
-	MOVE.L	D0,lbL04E82C		; Store new checksum
-	MOVE.B	#$80,saveDataLoadedFlag
+	MOVE.L	D0,lbL0563EC
+	MOVE.L	saveSlotNameBuffer,D0
+	ADD.L	saveDataChecksumValue,D0
+	MOVE.L	lbL04E82C,D3
+	EOR.L	D3,D0
+	MOVE.L	D0,lbL04E82C
+	MOVE.B	#$80,lapRecordsLoadedFlag
 	CLR.W	D1
 	CLR.W	D2
 lbC04E826:
@@ -6440,12 +6441,12 @@ lbC04E87E:
 	MOVE.B	#$F3,networkProtocolState
 	JSR	waitForNetworkHandshake
 menuSystemLoop:
-	BCLR	#$07,raceMode		; Clear race active bit
-	MOVE.B	#$10,gameStateID	; Menu state
-	JSR	handleMainMenu		; Display and handle menu input
-	TST.B	selectedTrackInDivision		; Check for game start
-	BMI	gameStateTransition	; Transition to race if set
-	MOVE.B	#$12,gameStateID	; Otherwise, show intermediate screens and loop back
+	BCLR	#$07,raceMode
+	MOVE.B	#$10,gameStateID
+	JSR	handleMainMenu
+	TST.B	selectedTrackInDivision
+	BMI	gameStateTransition
+	MOVE.B	#$12,gameStateID
 	JSR	runTrackPreviewScreen
 	MOVE.B	#$00,gameStateID
 	JSR	runMainGame
@@ -8506,8 +8507,9 @@ lbC050B90:
 	MOVE.B	lbB00E247,$02(A1,D1.W)
 	tst.l	saveLapRecords						; added
 	beq.s	.done
-	move.l	saveLapRecords,a1
-	jsr	(a1)
+	lea	lapRecordTable,a1
+	move.l	saveLapRecords,a2
+	jsr	(a2)
 .done:	RTS
 
 lbC050C02:
@@ -9779,14 +9781,16 @@ lbC052122:
 	RTS
 
 updateBoostFuelDisplay:
+	tst.l	infiniteBoost			; added
+	bne.s	.boostOk
 	MOVE.B	boostFuelLevel,D3
 	ANDI.B	#$0F,CCR
 	ABCD	D3,D0
 	CMP.B	maxBoostFuel,D0
-	BCS	lbC052140
+	BCS	.maxOk
 	MOVE.B	maxBoostFuel,D0
-lbC052140:
-	MOVE.B	D0,boostFuelLevel
+.maxOk:	MOVE.B	D0,boostFuelLevel
+.boostOk:
 	MOVE.B	#$1F,D0
 	JSR	renderCharacter
 	MOVE.B	#$09,D0
@@ -11895,8 +11899,8 @@ showLoadGameMenu:
 	JSR	drawScreenFrame
 	JSR	copyFirstFrameBufferToSecond
 	MOVE.W	#$012A,D1
-	JSR	displayMessageWithColors
-	JSR	waitForInputPress
+;	JSR	displayMessageWithColors			; removed
+;	JSR	waitForInputPress
 	JSR	drawScreenFrame
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
@@ -12170,8 +12174,8 @@ lbC054480:
 	MOVE.W	D0,D1
 	MOVE.W	#$0000,D0
 	MOVE.W	#$0001,D2
-	MOVE.L	#saveSlotBuffer,A1
-	JSR	loadOrSaveSaveSlot
+	MOVE.L	#$00000400,A1
+	JSR	loadOrSaveData
 	CLR.W	D1
 	CLR.W	D2
 lbC0544A2:
@@ -12261,14 +12265,14 @@ lbC0545FA:
 lbC054606:
 	RTS
 
-readSaveSlotFromDisk:
+loadLapRecords:
 	MOVE.W	#$0000,D0
 	MOVE.W	#$0005,D1
 	MOVE.W	#$0001,D2
 	MOVE.W	#$0000,D3
 	MOVE.L	#saveSlotNameBuffer,A0
-	MOVE.L	#saveSlotBuffer,A1
-	JSR	loadOrSaveSaveSlot
+	MOVE.L	#$00000400,A1
+	JSR	loadOrSaveData
 	CLR.W	D1
 	CLR.W	D0
 	RTS
@@ -12356,722 +12360,12 @@ lbC054766:
 	BNE	lbC054700
 	RTS
 
-loadOrSaveSaveSlot:
-	JSR	readWriteSaveSlotData
-	JMP	finalizeFloppyAccessAndInitCIA
-
-readWriteSaveSlotData:
-	MOVEM.L	D1-D7/A0-A5,-(SP)				; patch: jmp _Loader
-	LINK	A6,#-$0024
-	MOVE.W	D0,D4
-	AND.W	#$0003,D4
-	MOVE.W	D4,-$0024(A6)
-	MOVE.W	D1,-$0022(A6)
-	MOVE.W	D2,-$0020(A6)
-	MOVE.W	D3,-$001E(A6)
-	MOVE.L	A0,-$001C(A6)
-	MOVE.L	A1,-$0018(A6)
-	ROL.W	#$01,D0
-	AND.W	#$0001,D0
-	ADDQ.W	#$01,D0
-	MOVE.W	D0,-$0014(A6)
-	MOVEQ	#$1E,D0
-	MOVE.W	D2,D3
-	BEQ	lbC054870
-	ADD.W	D1,D3
-	CMP.W	#$06E0,D3
-	BGT	lbC054870
-	AND.L	#$18FF,D1
-	DIVU	#$000B,D1
-	CMP.W	#$0001,-$0014(A6)
-	BEQ.S	lbC0547DE
-	ADD.W	D1,D1
-lbC0547DE:
-	MOVE.W	D1,-$0012(A6)
-	SWAP	D1
-	MOVE.W	D1,-$0010(A6)
-	BSR	startDiskMotorAndWait
-lbC0547EC:
-	MOVE.W	-$0010(A6),D0
-	MOVEQ	#$0B,D1
-	SUB.W	D0,D1
-	CMP.W	-$0020(A6),D1
-	BLE.S	lbC0547FE
-	MOVE.W	-$0020(A6),D1
-lbC0547FE:
-	MOVE.W	D1,-$000E(A6)
-	BSR	readDiskSectorWithRetry
-	BNE.S	readDiskTrack
-	CMP.W	#$0001,-$001E(A6)
-	BNE.S	lbC05481A
-	BSR	initializeMFMTrackBuffer
-	BSR	writeBufferToDiskTrack
-	BNE.S	readDiskTrack
-lbC05481A:
-	MOVE.W	-$0020(A6),D0
-	SUB.W	-$000E(A6),D0
-	BEQ.S	readDiskTrack
-	MOVE.W	D0,-$0020(A6)
-	MOVE.W	-$000E(A6),D0
-	LSL.L	#$08,D0
-	ADD.L	D0,D0
-	ADD.L	D0,-$001C(A6)
-	CLR.W	-$0010(A6)
-	MOVE.W	-$0014(A6),D0
-	ADD.W	D0,-$0012(A6)
-	BRA.S	lbC0547EC
-
-readDiskTrack:
-	MOVE.L	D0,-(SP)
-	BSR	setupDiskHardware
-	BSR	waitBlitterDMADisabled
-	MOVE.L	(SP)+,D0
-	BEQ.S	lbC054870
-	MOVEQ	#$00,D1
-	MOVE.W	-$0012(A6),D1
-	CMP.W	#$0001,-$0014(A6)
-	BEQ.S	lbC054860
-	LSR.W	#$01,D1
-lbC054860:
-	MULU	#$000B,D1
-	ADD.W	-$0010(A6),D1
-	ADD.W	-$0006(A6),D1
-	MOVE.L	D1,$0028(SP)
-lbC054870:
-	UNLK	A6
-	TST.L	D0
-	MOVEM.L	(SP)+,D1-D7/A0-A5
-	RTS
-
-readDiskSectorWithRetry:
-	MOVEQ	#$04,D4
-lbC05487C:
-	CLR.W	-$0004(A6)
-	CLR.W	-$0006(A6)
-	CLR.W	-$0008(A6)
-	MOVE.W	-$0012(A6),D2
-	BSR	positionDiskHead
-	BNE	lbC054944
-	MOVEQ	#$1D,D0
-	BTST	#$02,$00BFE001
-	BEQ	lbC054944
-	MOVE.L	-$0018(A6),A5
-	LEA	$0400(A5),A5
-	MOVE.L	#$AAAAAAAA,(A5)
-	MOVE.W	#$4489,$0004(A5)
-	BSR	clearTrackBuffer
-	BSR	waitBlitterDMADisabled
-	BSR	performDiskRead
-	BNE	lbC054944
-	MOVE.W	-$000C(A6),D0
-	BEQ.S	lbC05491A
-	MULU	#$0440,D0
-	LEA	$0006(A5),A0
-	BSR	validateTrackData
-	LEA	_custom+intreqr,A4
-	BSR	waitDiskOperation
-	BNE.S	lbC054952
-	CMP.W	#$0001,-$001E(A6)
-	BEQ.S	lbC0548F6
-	MOVE.W	-$0006(A6),D0
-	SUB.W	-$000E(A6),D0
-	BEQ.S	lbC054956
-lbC0548F6:
-	MOVE.L	-$0018(A6),A5
-	LEA	$0400(A5),A5
-	MOVE.W	-$000C(A6),D0
-	MULU	#$0440,D0
-	ADD.L	D0,A5
-	MOVE.L	#$AAAAAAAA,(A5)
-	MOVE.W	#$4489,$0004(A5)
-	MOVE.L	A5,A0
-	BSR	encodeMFMClockBits
-lbC05491A:
-	MOVE.W	-$000A(A6),D0
-	BEQ.S	lbC054938
-	MULU	#$0440,D0
-	LEA	$0006(A5),A0
-	BSR	validateTrackData
-	LEA	-$0002(A6),A4
-	CLR.W	(A4)
-	BSR	waitDiskOperation
-	BNE.S	lbC054952
-lbC054938:
-	MOVE.W	-$0006(A6),D0
-	SUB.W	-$000E(A6),D0
-	BEQ.S	lbC054956
-	MOVEQ	#$1A,D0
-lbC054944:
-	MOVE.L	D0,-(SP)
-	MOVEQ	#$02,D2
-	BSR	positionDiskHead
-	BSR	recalibrateDiskHeadToTrack0
-	MOVE.L	(SP)+,D0
-lbC054952:
-	DBRA	D4,lbC05487C
-lbC054956:
-	BSR	stopDiskDMA
-	RTS
-
-writeBufferToDiskTrack:
-	MOVEQ	#$04,D2
-	CLR.W	-$0006(A6)
-lbC054962:
-	BSR	applyDriveConfiguration
-	MOVE.L	#$000000C8,D0
-	BSR	driveDelay
-	MOVEQ	#$1C,D0
-	BTST	#$03,$00BFE001
-	BEQ.S	lbC0549CA
-	LEA	_custom,A0
-	MOVE.W	#$4000,dsklen(A0)
-	MOVE.L	-$0018(A6),dskpt(A0)
-	MOVE.W	#$6600,adkcon(A0)
-	MOVE.W	#$9100,adkcon(A0)
-	CMP.W	#$0050,-$0012(A6)
-	BCS.S	lbC0549A8
-	MOVE.W	#$A000,adkcon(A0)
-lbC0549A8:
-	MOVE.W	#(DMAF_DISK|DMAF_SETCLR),dmacon(A0)
-	MOVE.W	#INTF_DSKBLK,intreq(A0)
-	MOVE.W	#$D961,dsklen(A0)
-	MOVE.W	#$D961,dsklen(A0)
-	BSR	checkDiskReadStatus
-	BEQ.S	lbC0549CA
-	DBRA	D2,lbC054962
-lbC0549CA:
-	MOVE.L	D0,-(SP)
-	MOVE.L	#$00000002,D0
-	BSR	driveDelay
-	MOVE.L	(SP)+,D0
-	RTS
-
-performDiskRead:
-	MOVEQ	#$0A,D2
-lbC0549DC:
-	LEA	$0006(A5),A0
-	MOVE.W	#$0040,D0
-	BSR	validateTrackData
-	BSR	checkDiskReadStatus
-	BNE.S	lbC054A24
-	BSR	validateSectorHeaderChecksum
-	BEQ.S	lbC0549FA
-	DBRA	D2,lbC0549DC
-	BRA.S	lbC054A26
-
-lbC0549FA:
-	BSR	decodeSectorHeader
-	BNE.S	lbC054A2A
-	CMP.W	-$0012(A6),D1
-	BNE.S	lbC054A2A
-	CMP.B	#$0B,D2
-	BGE.S	lbC054A2A
-	CMP.B	#$0B,D3
-	BGT.S	lbC054A2A
-	SUBQ.B	#$01,D3
-	MOVE.W	D3,-$000C(A6)
-	MOVE.W	#$000B,-$000A(A6)
-	SUB.W	D3,-$000A(A6)
-	MOVEQ	#$00,D0
-lbC054A24:
-	RTS
-
-lbC054A26:
-	MOVEQ	#$18,D0
-	RTS
-
-lbC054A2A:
-	MOVEQ	#$1B,D0
-	RTS
-
-lbC054A2E:
-	MOVEQ	#$19,D0
-	RTS
-
-waitDiskOperation:
-	MOVE.L	-$0018(A6),A5
-	LEA	$0400(A5),A5
-	MOVE.W	-$0008(A6),D0
-	MULU	#$0440,D0
-	ADD.L	D0,A5
-	MOVE.L	#$00001770,D0
-	BSR	setDiskTimeout
-lbC054A4E:
-	BTST	#$01,$0001(A4)
-	BNE	lbC054B56
-	BSR	checkTimeoutExpired
-	BEQ	lbC054B5A
-	TST.L	$0440(A5)
-	BEQ.S	lbC054A4E
-	BSR	validateSectorHeaderChecksum
-	BNE.S	lbC054A26
-	BSR	decodeSectorHeader
-	BNE.S	lbC054A2A
-	CMP.W	-$0012(A6),D1
-	BNE.S	lbC054A2A
-	MOVE.W	D2,D3
-	LEA	$0008(A5),A0
-	BSR	decodeMFMLongwords
-	MOVE.B	#$0B,D0
-	SUB.B	-$0007(A6),D0
-	LEA	$0008(A5),A0
-	BSR	writeMFMEncodedLongword
-	BSR	calculateMFMChecksum
-	LEA	$0030(A5),A0
-	BSR	writeMFMEncodedLongword
-	CMP.W	-$0010(A6),D3
-	BLT	lbC054B48
-	MOVE.W	-$000E(A6),D0
-	ADD.W	-$0010(A6),D0
-	CMP.W	D0,D3
-	BGE	lbC054B48
-	BTST	#$01,$0001(A4)
-	BNE	lbC054B56
-	MOVE.W	-$0004(A6),D0
-	BTST	D3,D0
-	BNE	lbC054B48
-	CMP.W	#$0001,-$001E(A6)
-	BNE.S	lbC054B06
-	BSR	calculateSectorOffset
-	MOVE.L	-$001C(A6),A0
-	ADD.L	D1,A0
-	LEA	$0040(A5),A1
-	BSR	fillDataWithBlitter
-	BTST	#$01,$0001(A4)
-	BNE	lbC054B56
-	LEA	$0040(A5),A0
-	MOVE.W	#$0400,D1
-	BSR	calculateMFMChecksumWithParams
-	LEA	$0038(A5),A0
-	BSR	writeMFMEncodedLongword
-	BSR	markSectorAsRead
-	BRA.S	lbC054B48
-
-lbC054B06:
-	LEA	$0040(A5),A0
-	MOVE.W	#$0400,D1
-	BSR	calculateMFMChecksumWithParams
-	MOVE.L	D0,-(SP)
-	LEA	$0038(A5),A0
-	BSR	decodeMFMLongwords
-	CMP.L	(SP)+,D0
-	BNE	lbC054A2E
-	BTST	#$01,$0001(A4)
-	BNE.S	lbC054B56
-	BSR.S	calculateSectorOffset
-	LEA	$0040(A5),A0
-	MOVE.L	-$001C(A6),A1
-	ADD.L	D1,A1
-	BSR	copyDataWithBlitter
-	BSR	markSectorAsRead
-	MOVE.W	-$0006(A6),D0
-	CMP.W	-$000E(A6),D0
-	BEQ.S	lbC054B56
-lbC054B48:
-	ADDQ.W	#$01,-$0008(A6)
-	CMP.W	#$000B,-$0008(A6)
-	BNE	waitDiskOperation
-lbC054B56:
-	MOVEQ	#$00,D0
-	RTS
-
-lbC054B5A:
-	MOVEQ	#-$01,D0
-	RTS
-
-calculateSectorOffset:
-	MOVE.L	D3,D1
-	SUB.W	-$0010(A6),D1
-	MOVE.L	#$00000200,D0
-	MULU	D0,D1
-	RTS
-
-markSectorAsRead:
-	MOVE.W	-$0004(A6),D0
-	BSET	D3,D0
-	MOVE.W	D0,-$0004(A6)
-	ADDQ.W	#$01,-$0006(A6)
-	RTS
-
-clearTrackBuffer:
-	MOVE.L	A5,A0
-	MOVEQ	#$0A,D1
-	MOVEQ	#$00,D0
-lbC054B84:
-	LEA	$0440(A0),A0
-	MOVE.L	D0,(A0)
-	DBRA	D1,lbC054B84
-	RTS
-
-decodeSectorHeader:
-	LEA	$0008(A5),A0
-	BSR	decodeMFMLongwords
-	MOVE.W	D0,D3
-	AND.W	#$00FF,D3
-	MOVE.W	D0,D2
-	LSR.W	#$08,D2
-	SWAP	D0
-	MOVE.W	D0,D1
-	AND.W	#$00FF,D1
-	LSR.W	#$08,D0
-	CMP.B	#$FF,D0
-	RTS
-
-decodeMFMLongwords:
-	MOVE.L	(A0)+,D0
-	MOVE.L	(A0)+,D1
-	AND.L	#$55555555,D0
-	AND.L	#$55555555,D1
-	ADD.L	D0,D0
-	OR.L	D1,D0
-	RTS
-
-validateSectorHeaderChecksum:
-	BSR	calculateMFMChecksum
-	MOVE.L	D0,-(SP)
-	LEA	$0030(A5),A0
-	BSR	decodeMFMLongwords
-	CMP.L	(SP)+,D0
-	RTS
-
-calculateMFMChecksum:
-	LEA	$0008(A5),A0
-	MOVEQ	#$28,D1
-calculateMFMChecksumWithParams:
-	MOVE.L	D2,-(SP)
-	LSR.W	#$02,D1
-	SUBQ.W	#$01,D1
-	MOVEQ	#$00,D0
-lbC054BE8:
-	MOVE.L	(A0)+,D2
-	EOR.L	D2,D0
-	DBRA	D1,lbC054BE8
-	MOVE.L	(SP)+,D2
-	AND.L	#$55555555,D0
-	RTS
-
-initializeMFMTrackBuffer:
-	MOVE.L	-$0018(A6),A0
-	LEA	$0400(A0),A1
-	MOVE.L	#$AAAAAAAA,D0
-	MOVE.L	D0,D1
-	MOVE.L	D0,D2
-	MOVE.L	D0,D3
-	MOVE.L	D0,D4
-	MOVE.L	D0,D5
-	MOVE.L	D0,D6
-	MOVE.L	D0,D7
-lbC054C16:
-	MOVEM.L	D0-D7,-(A1)
-	CMP.L	A1,A0
-	BNE.S	lbC054C16
-	RTS
-
-copyDataWithBlitter:
-	MOVE.L	A2,-(SP)
-	BSR	initializeBlitter
-	ADD.L	D0,A0
-	SUBQ.L	#$01,A0
-	MOVE.L	A0,$0050(A2)
-	ADD.L	D0,A0
-	MOVE.L	A0,$004C(A2)
-	ADD.L	D0,A1
-	SUBQ.L	#$01,A1
-	MOVE.L	A1,$0054(A2)
-	MOVE.W	#$1DD8,$0040(A2)
-	MOVE.W	#$0002,$0042(A2)
-	LSL.W	#$02,D0
-	OR.W	#$0008,D0
-	MOVE.W	D0,$0058(A2)
-	MOVE.L	(SP)+,A2
-	RTS
-
-fillDataWithBlitter:
-	MOVEM.L	D1-D3/A2,-(SP)
-	BSR	initializeBlitter
-	MOVE.W	D0,D1
-	LSL.W	#$02,D1
-	OR.W	#$0008,D1
-	MOVE.L	A0,$0050(A2)
-	MOVE.L	A0,$004C(A2)
-	MOVE.L	A1,$0054(A2)
-	MOVE.W	#$1DB1,$0040(A2)
-	MOVE.W	#$0000,$0042(A2)
-	MOVE.W	D1,$0058(A2)
-	BSR	waitBlitterDMADisabled
-	MOVE.L	A0,$0050(A2)
-	MOVE.L	A1,$004C(A2)
-	MOVE.L	A1,$0054(A2)
-	MOVE.W	#$2D8C,$0040(A2)
-	MOVE.W	D1,$0058(A2)
-	BSR	waitBlitterDMADisabled
-	MOVE.L	A0,D2
-	ADD.L	D0,D2
-	SUBQ.L	#$02,D2
-	MOVE.L	A1,D3
-	ADD.L	D0,D3
-	ADD.L	D0,D3
-	SUBQ.L	#$02,D3
-	MOVE.L	D2,$0050(A2)
-	MOVE.L	D2,$004C(A2)
-	MOVE.L	D3,$0054(A2)
-	MOVE.W	#$0DB1,$0040(A2)
-	MOVE.W	#$1002,$0042(A2)
-	MOVE.W	D1,$0058(A2)
-	BSR	waitBlitterDMADisabled
-	MOVE.L	A1,D3
-	ADD.L	D0,D3
-	MOVE.L	A0,$0050(A2)
-	MOVE.L	D3,$004C(A2)
-	MOVE.L	D3,$0054(A2)
-	MOVE.W	#$1D8C,$0040(A2)
-	MOVE.W	#$0000,$0042(A2)
-	MOVE.W	D1,$0058(A2)
-	BSR	waitBlitterDMADisabled
-	MOVE.L	D0,D1
-	MOVE.L	A1,A0
-	BSR	encodeMFMClockBits
-	ADD.L	D1,A0
-	BSR	encodeMFMClockBits
-	ADD.L	D1,A0
-	BSR.S	encodeMFMClockBits
-	MOVEM.L	(SP)+,D1-D3/A2
-	RTS
-
-waitBlitterDMADisabled:
-	BTST	#DMAB_BLITTER,_custom+dmaconr
-	BNE.S	waitBlitterDMADisabled
-	RTS
-
-initializeBlitter:
-	LEA	_custom,A2
-	BSR	waitBlitterDMADisabled
-	MOVE.W	#(DMAF_BLITTER|DMAF_SETCLR),dmacon(A2)
-	MOVE.L	#$FFFFFFFF,bltafwm(A2)
-	MOVE.W	#$5555,bltcdat(A2)
-	CLR.W	bltamod(A2)
-	CLR.W	bltbmod(A2)
-	CLR.W	bltdmod(A2)
-	RTS
-
-writeMFMEncodedLongword:
-	MOVE.L	D0,-(SP)
-	LSR.L	#$01,D0
-	BSR	convertToMFMEncoding
-	MOVE.L	(SP)+,D0
-	BSR	convertToMFMEncoding
-encodeMFMClockBits:
-	MOVE.B	(A0),D0
-	BTST	#$00,-$0001(A0)
-	BNE.S	lbC054D66
-	BTST	#$06,D0
-	BNE.S	lbC054D6C
-	BSET	#$07,D0
-	BRA.S	lbC054D6A
-
-lbC054D66:
-	BCLR	#$07,D0
-lbC054D6A:
-	MOVE.B	D0,(A0)
-lbC054D6C:
-	RTS
-
-convertToMFMEncoding:
-	AND.L	#$55555555,D0
-	MOVE.L	D0,D2
-	EOR.L	#$55555555,D2
-	MOVE.L	D2,D1
-	ADD.L	D2,D2
-	LSR.L	#$01,D1
-	BSET	#$1F,D1
-	AND.L	D2,D1
-	OR.L	D1,D0
-	BTST	#$00,-$0001(A0)
-	BEQ.S	lbC054D96
-	BCLR	#$1F,D0
-lbC054D96:
-	MOVE.L	D0,(A0)+
-	RTS
-
-validateTrackData:
-	LEA	_custom,A1
-	MOVE.W	#$4000,dsklen(A1)
-	MOVE.W	#(DMAF_DISK|DMAF_SETCLR),dmacon(A1)
-	MOVE.W	#$6600,adkcon(A1)
-	MOVE.W	#$9500,adkcon(A1)
-	MOVE.W	#$4489,dsksync(A1)
-	MOVE.L	A0,dskpt(A1)
-	MOVE.W	#INTF_DSKBLK,intreq(A1)
-	LSR.W	#$01,D0
-	OR.W	#$8000,D0
-	MOVE.W	D0,dsklen(A1)
-	MOVE.W	D0,dsklen(A1)
-	RTS
-
-checkDiskReadStatus:
-	LEA	_custom,A1
-	MOVE.L	#$00001770,D0
-	BSR	setDiskTimeout
-lbC054DE8:
-	BTST	#$01,intreqr+1(A1)
-	BNE.S	lbC054DFA
-	BSR	checkTimeoutExpired
-	BNE.S	lbC054DE8
-	MOVEQ	#-$01,D0
-	BRA.S	stopDiskDMA
-
-lbC054DFA:
-	MOVEQ	#$00,D0
-stopDiskDMA:
-	MOVE.W	#$0002,_custom+intreq
-	MOVE.W	#$4000,_custom+dsklen
-	TST.L	D0
-	RTS
-
-setupDiskHardware:
-	MOVE.W	#$0400,_custom+adkcon
-	MOVEQ	#-$01,D1
-driveSelect:
-	MOVE.B	D1,_ciab+ciaprb
-	MOVE.W	-$0024(A6),D0
-	ADDQ.L	#$03,D0
-	BCLR	D0,D1
-	MOVE.B	D1,_ciab+ciaprb
-	BSET	D0,D1
-	MOVE.B	D1,_ciab+ciaprb
-	RTS
-
-startDiskMotorAndWait:
-	MOVEQ	#-$01,D1
-	MOVE.B	D1,_ciab+ciaprb
-	BCLR	#$07,D1
-	BSR.S	driveSelect
-	MOVE.L	#$000000C8,D0
-	BSR	driveDelay
-	RTS
-
-positionDiskHead:
-	MOVEM.L	D2/D3,-(SP)
-	MOVE.L	D2,D3
-	BSR	applyDriveConfiguration
-	MOVE.W	-$0024(A6),D0
-	ADD.W	D0,D0
-	LEA	lbW054F84,A0
-	MOVE.W	$00(A0,D0.W),D0
-	BPL.S	lbC054E72
-	BSR	recalibrateDiskHeadToTrack0
-	BNE.S	lbC054EA2
-lbC054E72:
-	LSR.W	#$01,D0
-	LSR.W	#$01,D2
-	MOVEQ	#$01,D1
-	SUB.W	D0,D2
-	BEQ.S	lbC054E8E
-	BPL.S	lbC054E82
-	MOVEQ	#-$01,D1
-	NEG.W	D2
-lbC054E82:
-	MOVEQ	#$06,D0
-lbC054E84:
-	BSR	stepDiskHeadOneTrack
-	MOVEQ	#$06,D0
-	SUBQ.W	#$01,D2
-	BNE.S	lbC054E84
-lbC054E8E:
-	MOVE.W	-$0024(A6),D0
-	ADD.W	D0,D0
-	LEA	lbW054F84,A0
-	MOVE.W	D3,$00(A0,D0.W)
-	BSR	applyDriveConfiguration
-	MOVEQ	#$00,D0
-lbC054EA2:
-	MOVEM.L	(SP)+,D2/D3
-	RTS
-
-recalibrateDiskHeadToTrack0:
-	MOVEM.L	D2,-(SP)
-	MOVEQ	#$55,D2
-lbC054EAE:
-	BTST	#$04,$00BFE001
-	BEQ.S	lbC054EC8
-	MOVEQ	#$06,D0
-	MOVEQ	#-$01,D1
-	BSR	stepDiskHeadOneTrack
-	DBRA	D2,lbC054EAE
-	MOVEQ	#$1E,D0
-	BRA.S	lbC054ED8
-
-lbC054EC8:
-	MOVE.W	-$0024(A6),D0
-	ADD.W	D0,D0
-	LEA	lbW054F84,A0
-	CLR.W	$00(A0,D0.W)
-	MOVEQ	#$00,D0
-lbC054ED8:
-	MOVEM.L	(SP)+,D2
-	RTS
-
-stepDiskHeadOneTrack:
-	MOVE.L	D0,-(SP)
-	BSR	buildCIABDiskControlByte
-	TST.B	D1
-	BMI.S	lbC054EEC
-	BCLR	#$01,D0
-lbC054EEC:
-	BCLR	#$00,D0
-	MOVE.B	D0,$00BFD100
-	BSET	#$00,D0
-	MOVE.B	D0,$00BFD100
-	MOVE.L	(SP)+,D0
-	BSR	driveDelay
-	RTS
-
-applyDriveConfiguration:
-	BSR	buildCIABDiskControlByte
-	MOVE.B	D0,$00BFD100
-	RTS
-
-buildCIABDiskControlByte:
-	move.l	a0,-(sp)
-	MOVEM.W	D1/D2,-(SP)
-	MOVE.W	-$0024(A6),D0
-	MOVE.B	$00BFD100,D2
-	OR.B	#$7F,D2
-	ADD.B	#$03,D0
-	BCLR	D0,D2
-	SUB.B	#$03,D0
-	ADD.W	D0,D0
-	lea	lbW054F84,a0
-	MOVE.W	(A0,D0.W),D1
-	BTST	#$00,D1
-	BEQ.S	lbC054F40
-	BCLR	#$02,D2
-lbC054F40:
-	MOVE.B	D2,D0
-	MOVEM.W	(SP)+,D1/D2
-	move.l	(sp)+,a0
-	RTS
-
-driveDelay:
-	BSR	setDiskTimeout
-lbC054F4C:
-	BTST	#$00,$00BFEE01
-	BNE.S	lbC054F4C
-	SUBQ.L	#$01,D0
-	BNE.S	driveDelay
-	RTS
-
-checkTimeoutExpired:
-	BTST	#$00,$00BFEE01
-	BNE.S	lbC054F82
-	SUBQ.L	#$01,D0
-	BEQ.S	lbC054F82
-setDiskTimeout:
-	MOVE.B	#$08,$00BFEE01
-	MOVE.B	#$CC,$00BFE401
-	MOVE.B	#$02,$00BFE501
-lbC054F82:
-	RTS
+loadOrSaveData:
+	tst.l	readWriteSaveSlotData				; added
+	beq.s	.done
+	move.l	readWriteSaveSlotData,a2
+	JSR	(a2)						; originally readWriteSaveSlotData
+.done:	JMP	finalizeFloppyAccessAndInitCIA
 
 saveRandomState:
 	MOVE.L	randomSeed1,savedRandomSeed1
@@ -20974,6 +20268,10 @@ gameData:
 	endc
 saveLapRecords:
 	ds.l	1
+readWriteSaveSlotData:
+	ds.l	1
+infiniteBoost:
+	ds.l	1
 
 	include	"gameDataOffsets.i"
 	include	"gameDataOffsetsBSS.i"
@@ -21050,18 +20348,17 @@ plotPixelOffset:
 	ds.w	1
 fastRenderBuffer:
 	ds.l	40*200
-saveSlotBuffer:	ds.b	$200
 bitmapGraphicsBuffer:	ds.b	$7aa8
 leagueSeasonData:	ds.b	$1b
 randomSeedBuffer1:	ds.b	5
 randomSeedBuffer2:	ds.b	5
 obfuscatedLeagueBuffer:	ds.b	$1db
-saveSlotNameBuffer:	ds.b	10
+saveSlotNameBuffer:	ds.b	10			; this must be a contiguous block at least up to multiplayerObfuscationTable
 savedSlotIndex:	ds.b	1
 saveSlotFlags:	ds.b	$f
 saveDataValidationBuffer:	ds.b	$1e2
 saveDataChecksumValue:	ds.l	1
-networkTransferBuffer:	ds.b	$20
+networkTransferBuffer:	ds.b	$20			; load/save slots get loaded here (512 bytes)
 tempMessageBuffer1:	ds.b	$80
 tempMessageBuffer2:	ds.b	$3c
 tempPlayerCountBackup:	ds.b	4
