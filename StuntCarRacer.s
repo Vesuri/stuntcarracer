@@ -1,6 +1,6 @@
 	incdir	"scr:"
 
-WHDLOAD		equ	1
+WHDLOAD		equ	0
 
 dsksync:	EQU	$0000007E
 CIAF_PRTRBUSY:	EQU	$00000001
@@ -1384,7 +1384,7 @@ lbC048E96:
 	MOVE.L	lbW049546,opponentWheelPositions
 	MOVE.W	lbW04954A,opponentRearRightWheelPosition
 	MOVE.W	lbW04954C,aiCurrentSpeed
-	MOVE.W	lbW04954E,networkEngineFlag
+	MOVE.W	lbW04954E,opponentDistanceOffset
 	MOVE.B	lbB049550,pauseKeyPressed
 	MOVE.B	lbB049551,playerInputState
 	MOVE.B	lbB049552,gameModeStateFlags
@@ -1775,7 +1775,7 @@ lbC0495D2:
 lbC0495EA:
 	MOVE.B	#$80,networkGameMode
 	MOVE.W	#$0023,D3
-	JSR	displayNetworkMessage
+	JSR	displayLeagueMessage
 	MOVE.W	#$0005,D7
 lbC049600:
 	MOVE.B	#$45,D1
@@ -1795,14 +1795,14 @@ lbC04963C:
 	MOVE.B	#$01,currentMenuItem
 	JSR	renderMenuCursorAndAdvance
 	MOVE.W	#$0012,D3
-	JSR	displayNetworkMessage
+	JSR	displayLeagueMessage
 	MOVE.B	#$80,networkInputSyncEnabled
 	JSR	waitForFireButtonPress
 	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	resetTextYOffset
 	TST.B	networkGameMode
 	BMI	lbC04967E
-	JSR	displayNetworkWaitMessage
+	JSR	displayWaitMessage
 lbC04967E:
 	JSR	synchronizeLeagueSetup
 	ANDI.B	#$1E,CCR
@@ -1813,45 +1813,45 @@ lbC04968A:
 	MOVE.B	#$01,currentMenuItem
 	JSR	renderMenuCursorAndAdvance
 	MOVE.W	#$0000,D3
-	JSR	displayNetworkMessage
+	JSR	displayLeagueMessage
 	JSR	waitForFireButtonPress
 	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	resetTextYOffset
 	ORI.B	#$01,CCR
 	RTS
 
-displayNetworkMessage:
+displayLeagueMessage:
 	MOVE.L	#lbL049700,A0
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	displayFrameBuffer,renderFrameBuffer
-	JSR	renderNetworkString
+	JSR	renderNullTerminatedString
 	MOVE.L	(SP)+,renderFrameBuffer
 	RTS
 
-renderNetworkString:
+renderNullTerminatedString:
 	MOVE.B	$00(A0,D3.W),D0
 	CMP.B	#$FF,D0
 	BEQ	lbC0496FE
 	JSR	renderCharacter
 	ADDQ.W	#$01,D3
-	BRA	renderNetworkString
+	BRA	renderNullTerminatedString
 
 lbC0496FE:
 	RTS
 
 synchronizeLeagueSetup:
-	MOVE.B	#$00,networkSyncStateFlag
-	MOVE.B	#$40,networkPlayerStateCache
+	MOVE.B	#$00,writeMode
+	MOVE.B	#$40,leagueSessionMode
 	TST.B	networkGameMode
 	BMI	lbC0497D4
 lbC049758:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	JSR	receiveLeagueDataPacket
 	BMI	lbC049758
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	MOVE.B	(A6)+,D0
 	CMP.B	#$08,D0
 	BLT	lbC04978A
@@ -1884,8 +1884,8 @@ lbC0497D4:
 lbC0497E8:
 	TST.B	additionalPlayerCount
 	BEQ	lbC0497B6
-	JSR	displayNetworkWaitMessage
-	MOVE.L	#networkTransferBuffer,A6
+	JSR	displayWaitMessage
+	MOVE.L	#transferBuffer,A6
 	MOVE.B	additionalPlayerCount,(A6)+
 	MOVE.W	#$00BF,D7
 	MOVE.L	#playerNamesWithSpaces,A0
@@ -1896,7 +1896,7 @@ lbC049814:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049844
 	MOVE.W	#$00C0,D7
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	JSR	sendLeagueDataPacket
 	BMI	lbC049814
 	JSR	synchronizeNetworkSetup
@@ -1986,7 +1986,7 @@ lbC04996C:
 	MOVE.B	#$80,D0
 	RTS
 
-swapPlayerContextForNetwork:
+togglePlayerContext:
 	TST.B	networkGameMode
 	BEQ	lbC0499D4
 	CMP.B	#$01,D1
@@ -2036,14 +2036,14 @@ lbC049A32:
 	MOVE.B	D1,player2ID
 	RTS
 
-displayNetworkWaitMessage:
+displayWaitMessage:
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	JSR	drawScreenFrame
 	MOVE.B	#$01,currentMenuItem
 	JSR	renderMenuCursorAndAdvance
 	MOVE.W	#$002E,D3
-	JSR	displayNetworkMessage
+	JSR	displayLeagueMessage
 	JSR	resetTextYOffset
 	MOVE.L	(SP)+,renderFrameBuffer
 	RTS
@@ -2051,37 +2051,37 @@ displayNetworkWaitMessage:
 synchronizeNetworkGame:
 	CMP.B	#$80,networkGameMode
 	BNE	synchronizeNetworkSetup
-	MOVE.B	networkSyncStateFlag,D0
+	MOVE.B	writeMode,D0
 	OR.B	#$10,D0
-	TST.B	inputCancelFlag
+	TST.B	directionalInputBits
 	BPL	lbC049B60
 	BSET	#$03,D0
 lbC049B60:
 	MOVE.B	D0,localInputStateCache
-	MOVE.B	networkPlayerStateCache,localPlayerStateCache
+	MOVE.B	leagueSessionMode,localPlayerStateCache
 	MOVE.B	#$B2,networkProtocolState
 	JSR	waitForNetworkHandshake
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BNE	lbC049BF2
-	TST.B	inputCancelFlag
+	TST.B	directionalInputBits
 	BNE	lbC049BF2
 synchronizeNetworkSetup:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049BF2
-	TST.B	networkPlayerStateCache
+	TST.B	leagueSessionMode
 	BNE	lbC049BB4
 	MOVE.L	#currentDivision,A6
 	MOVE.W	#$0002,D7
 	BRA	lbC049BE8
 
 lbC049BB4:
-	MOVE.B	#$01,networkSyncStateFlag
+	MOVE.B	#$01,writeMode
 	MOVE.B	#$01,D0
 	JSR	syncMultiplayerRecords
-	MOVE.B	#$00,networkSyncStateFlag
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.B	#$00,writeMode
+	MOVE.L	#transferBuffer,A6
 	MOVE.W	#$00FF,D7
-	CMP.B	#$40,networkPlayerStateCache
+	CMP.B	#$40,leagueSessionMode
 	BNE	lbC049BE8
 	MOVE.W	#$01FF,D7
 lbC049BE8:
@@ -2092,12 +2092,12 @@ lbC049BF2:
 
 lbC049BF4:
 	MOVE.B	#$00,lbB00D494
-	JSR	displayNetworkWaitMessage
+	JSR	displayWaitMessage
 	MOVE.B	#$B2,networkProtocolState
 	JSR	waitForNetworkHandshake
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049C42
-	MOVE.B	receivedPlayerState,networkPlayerStateCache
+	MOVE.B	receivedPlayerState,leagueSessionMode
 	MOVE.B	receivedInputState,D0
 	BPL	lbC049C4A
 	JSR	initializeGameTables
@@ -2119,7 +2119,7 @@ lbC049C4A:
 	BNE	lbC049C78
 	BTST	#$00,D0
 	BNE	lbC049C78
-	MOVE.B	#$00,networkSyncStateFlag
+	MOVE.B	#$00,writeMode
 	JSR	receiveAdditionalSyncData
 lbC049C78:
 	JMP	lbC04D590
@@ -2128,20 +2128,20 @@ receiveAdditionalSyncData:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049CE6
 	MOVE.W	#$0002,D7
-	MOVE.L	#networkTransferBuffer,A6
-	TST.B	networkPlayerStateCache
+	MOVE.L	#transferBuffer,A6
+	TST.B	leagueSessionMode
 	BEQ	lbC049CB0
 	MOVE.W	#$00FF,D7
-	CMP.B	#$40,networkPlayerStateCache
+	CMP.B	#$40,leagueSessionMode
 	BNE	lbC049CB0
 	MOVE.W	#$01FF,D7
 lbC049CB0:
 	JSR	receiveLeagueDataPacket
 	BMI	receiveAdditionalSyncData
-	TST.B	networkPlayerStateCache
+	TST.B	leagueSessionMode
 	BNE	lbC049CDC
 	MOVE.L	#currentDivision,A0
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	MOVE.W	#$0002,D7
 lbC049CD4:
 	MOVE.B	(A6)+,(A0)+
@@ -2163,14 +2163,14 @@ lbC049CE8:
 lbC049D02:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC049D70
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	MOVE.W	#$0004,D7
 	JSR	receiveLeagueDataPacket
 	BMI	lbC049D02
 	JSR	decodeControlIndicesToKeys
 	MOVE.B	opponentID,D0
 	JSR	calculatePlayerDataOffset
-	MOVE.L	#networkTransferBuffer,A1
+	MOVE.L	#transferBuffer,A1
 	JSR	copyBytesReverse
 	TST.B	networkGameMode
 	BMI	lbC049D70
@@ -2225,7 +2225,7 @@ lbC049DD4:
 	RTS
 
 decodeControlIndicesToKeys:
-	MOVE.L	#networkTransferBuffer,A0
+	MOVE.L	#transferBuffer,A0
 	MOVE.L	#keyboardMatrixTable,A2
 	CLR.W	D0
 	MOVE.W	#$0004,D3
@@ -2270,7 +2270,7 @@ updateOpponentVisibility:
 	MOVE.B	#$00,opponentRelativePosition
 	TST.B	networkGameMode
 	BEQ	lbC049F40
-	MOVE.W	networkEngineFlag,D0
+	MOVE.W	opponentDistanceOffset,D0
 	BPL	lbC049F42
 	NEG.W	D0
 	CMP.W	#$003C,D0
@@ -2303,12 +2303,12 @@ synchronizeRaceData:
 lbC049F88:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	MOVE.W	#$0063,D7
 	JSR	receiveLeagueDataPacket
 	BMI	lbC049F88
 	MOVE.L	#playerStatsArray,A0
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	MOVE.W	#$0047,D7
 lbC049FB6:
 	MOVE.B	(A6)+,(A0)+
@@ -2327,7 +2327,7 @@ lbC049FE6:
 	RTS
 
 lbC049FF4:
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	MOVE.L	#playerStatsArray,A0
 	MOVE.W	#$0047,D7
 copyRaceDataToNetworkBuffer:
@@ -2346,7 +2346,7 @@ lbC04A02C:
 lbC04A038:
 	JSR	checkSpaceKeyPressed
 	BEQ	lbC04A056
-	MOVE.L	#networkTransferBuffer,A6
+	MOVE.L	#transferBuffer,A6
 	MOVE.W	#$0063,D7
 	JSR	sendLeagueDataPacket
 	BMI	lbC04A038
@@ -3378,37 +3378,37 @@ lbC04B222:
 	RTS
 
 processDirectionalInput:
-	MOVE.B	#$00,inputCancelFlag
+	MOVE.B	#$00,directionalInputBits
 	CMP.B	#$00,D0
 	BNE	lbC04B292
 	LSR.W	#$08,D0
 	CMP.B	#$45,D0
 	BNE	lbC04B24C
-	MOVE.B	#$80,inputCancelFlag
+	MOVE.B	#$80,directionalInputBits
 	RTS
 
 lbC04B24C:
 	CMP.B	#$4C,D0
 	BNE	lbC04B25E
-	MOVE.B	#$20,inputCancelFlag
+	MOVE.B	#$20,directionalInputBits
 	RTS
 
 lbC04B25E:
 	CMP.B	#$4D,D0
 	BNE	lbC04B270
-	MOVE.B	#$40,inputCancelFlag
+	MOVE.B	#$40,directionalInputBits
 	RTS
 
 lbC04B270:
 	CMP.B	#$4F,D0
 	BNE	lbC04B282
-	MOVE.B	#$10,inputCancelFlag
+	MOVE.B	#$10,directionalInputBits
 	RTS
 
 lbC04B282:
 	CMP.B	#$4E,D0
 	BNE	lbC04B292
-	MOVE.B	#$08,inputCancelFlag
+	MOVE.B	#$08,directionalInputBits
 lbC04B292:
 	RTS
 
@@ -3959,7 +3959,7 @@ lbC04BC42:
 	ASR.W	#$04,D0
 	MOVE.B	$00(A3,D0.W),distanceCharacteristic
 	MOVE.B	trackDistanceHigh,segmentBlendParam
-	MOVE.W	networkEngineFlag,D0
+	MOVE.W	opponentDistanceOffset,D0
 	CLR.W	D3
 	MOVE.B	distanceCharacteristic,D3
 	SUB.W	D3,D0
@@ -3970,7 +3970,7 @@ lbC04BC42:
 	MOVE.W	#$0008,D1
 	MOVE.W	adjustedDistanceValue,D0
 	JSR	interpolateCoordinatePair
-	MOVE.W	networkEngineFlag,D0
+	MOVE.W	opponentDistanceOffset,D0
 	CLR.W	D3
 	MOVE.B	distanceCharacteristic,D3
 	ADD.W	D3,D0
@@ -4919,13 +4919,13 @@ handleRaceStartCountdown:
 	CMP.B	#$E6,D1
 	BCS	.checkInitialRaise
 	JSR	checkMultiplayerTrackSwap
-	MOVE.B	#$2C,D0
+	MOVE.B	#$28,D0					; originally $2C
 	TST.B	trackSideIndicator
 	BPL	.setStartRotation
-	MOVE.B	#$D4,D0
+	MOVE.B	#$D8,D0					; originally $D4
 .setStartRotation:
-	MOVE.B	D0,carStartRotation
-	MOVE.B	#$00,carStartRotationLow
+	MOVE.B	D0,raceStartRoll
+	MOVE.B	#$00,raceStartRollLow
 .decrementTimer:
 	tst.b	frameThrottleFlag			; added
 	bmi.s	.timerOk
@@ -4936,11 +4936,8 @@ handleRaceStartCountdown:
 .checkInitialRaise:
 	CMP.B	#$E5,D1
 	BNE	.checkFullRaise
-	move.w	offsetFromRoadCenter,d0			; added
-	asl.w	#5,d0
-	move.w	d0,carStartRotation
 	MOVE.B	#$00,D0
-	JSR	updateCarStartRotation
+	JSR	updateRaceStartRoll
 	MOVE.B	#$03,D0
 	JSR	adjustCarHeightToTrack
 	BPL	.decrementTimer
@@ -4952,7 +4949,7 @@ handleRaceStartCountdown:
 	MOVE.B	#$04,D0
 	JSR	adjustCarHeightToTrack
 	MOVE.B	#$FF,D0
-	JSR	updateCarStartRotation
+	JSR	updateRaceStartRoll
 	BNE	.done
 	JSR	generateRandomNumber
 	AND.B	#$1F,D0
@@ -4978,7 +4975,7 @@ handleRaceStartCountdown:
 
 .holdAndCountdown:
 	MOVE.B	#$00,D0
-	JSR	updateCarStartRotation
+	JSR	updateRaceStartRoll
 	MOVE.B	#$02,D0
 	JSR	adjustCarHeightToTrack
 	TST.B	frameThrottleFlag
@@ -5025,12 +5022,12 @@ lbC04CD9A:
 	ADDQ.B	#$02,D0
 	RTS
 
-updateCarStartRotation:
-	MOVE.B	#$10,D4
+updateRaceStartRoll:
+	MOVE.B	#$0E,D4						; originally $10
 	TST.B	trackSideIndicator
 	BPL	lbC04CDBC
 	NEG.B	D0
-	MOVE.B	#$F0,D4
+	MOVE.B	#$F2,D4						; originally $F0
 lbC04CDBC:
 	ASL.W	#$08,D0
 	MOVE.B	#TIMESTEP_FACTOR,D2
@@ -5040,17 +5037,17 @@ lbC04CDBC:
 lbC04CDCA:
 	MOVE.W	offsetFromRoadCenter,D3
 	ASL.W	#$05,D3
-	MOVE.B	carStartRotation,D7
+	MOVE.B	raceStartRoll,D7
 	CMP.B	D4,D7
 	BEQ	lbC04CDE4
-	ADD.W	D0,carStartRotation
+	ADD.W	D0,raceStartRoll
 lbC04CDE4:
-	MOVE.W	carStartRotation,D0
+	MOVE.W	raceStartRoll,D0
 	SUB.W	D3,D0
 	MOVE.W	D0,cameraAngleZ
 	MOVE.W	#$0000,D0
 	MOVE.W	D0,targetPitchRate
-	MOVE.B	carStartRotation,D0
+	MOVE.B	raceStartRoll,D0
 	CMP.B	D4,D0
 	RTS
 
@@ -5205,7 +5202,7 @@ inputPlayerName:
 inputTextString:
 	MOVE.B	D0,currentPlayerNameOffset
 	MOVE.B	D3,maxInputLength
-	MOVE.B	#$00,inputCancelFlag
+	MOVE.B	#$00,directionalInputBits
 	MOVE.B	currentInputPosition,D1
 	ADD.B	D1,textCursorColumn
 	BRA	inputPlayerNameLoop
@@ -5219,7 +5216,7 @@ inputPlayerNameLoop:
 	TST.B	disableDirectionalInputFlag
 	BPL	lbC04D06C
 	JSR	processDirectionalInput
-	TST.B	inputCancelFlag
+	TST.B	directionalInputBits
 	BNE	padNameWithSpaces
 lbC04D06C:
 	CMP.B	#$0D,D0
@@ -5440,7 +5437,7 @@ handleTrackSelection:
 
 lbC04D3AE:
 	MOVE.B	#$00,D0
-	JSR	saveLoadGameData
+	JSR	encodeOrDecodeLeagueData
 	MOVE.B	#$80,D0
 	MOVE.B	D0,selectedTrackInDivision
 	RTS
@@ -5454,7 +5451,7 @@ lbC04D3C4:
 lbC04D3E4:
 	JSR	delayRoutine
 handleMainMenu:
-	MOVE.B	#$00,inputCancelFlag
+	MOVE.B	#$00,directionalInputBits
 	TST.B	divisionSelectedFlag
 	BNE	handleTrackSelection
 	MOVE.B	#$01,D0
@@ -5500,7 +5497,7 @@ lbC04D4B2:
 	TST.B	additionalPlayerCount
 	BNE	lbC04D4CA
 	MOVE.B	#$80,D0
-	JSR	saveLoadGameData
+	JSR	encodeOrDecodeLeagueData
 	BCC	lbC04D59C
 lbC04D4CA:
 	JSR	initializeGameData
@@ -5508,7 +5505,7 @@ lbC04D4CA:
 	BRA	lbC04D59C
 
 enterLeagueCareer:
-	MOVE.B	D0,networkSyncStateFlag
+	MOVE.B	D0,writeMode
 	ASL.B	#$02,D0
 	ADD.B	#$08,D0
 	MOVE.B	D0,D1
@@ -5520,20 +5517,20 @@ lbC04D4EC:
 	MOVE.B	D0,$00(A2,D2.W)
 	SUBQ.B	#$01,D2
 	BNE	lbC04D4EC
-	MOVE.B	lbB00E334,D0
+	MOVE.B	bufferEncodedFlag,D0
 	MOVE.B	D0,lbB00D4D0
 	JSR	delayRoutine
 	MOVE.B	#$00,D0
-	JSR	saveLoadGameData
+	JSR	encodeOrDecodeLeagueData
 	JSR	showLoadGameMenu
-	TST.B	networkPlayerStateCache
+	TST.B	leagueSessionMode
 	BNE	lbC04D562
-	TST.B	lbB00D492
+	TST.B	diskOperationAborted
 	BMI	lbC04D55C
-	MOVE.B	networkSyncStateFlag,D0
+	MOVE.B	writeMode,D0
 	BNE	lbC04D55C
 	MOVE.B	#$80,D0
-	JSR	saveLoadGameData
+	JSR	encodeOrDecodeLeagueData
 	BCC	lbC04D562
 	MOVE.B	#$81,lbB00D494
 lbC04D55C:
@@ -5549,7 +5546,7 @@ lbC04D57E:
 	BNE	lbC04D590
 	JSR	synchronizeNetworkGame
 lbC04D590:
-	CMP.B	#$40,networkPlayerStateCache
+	CMP.B	#$40,leagueSessionMode
 	BEQ	lbC04D5A2
 lbC04D59C:
 	JSR	initializeRaceMode
@@ -5558,7 +5555,7 @@ lbC04D5A2:
 
 restoreGameData:
 	MOVE.B	#$00,D2
-	MOVE.B	lbB00D4D0,lbB00E334
+	MOVE.B	lbB00D4D0,bufferEncodedFlag
 	MOVE.L	#trackSegmentGrid,A2
 	MOVE.L	#leagueSeasonData,A0
 lbC04D5C2:
@@ -5924,7 +5921,7 @@ updateWheelHeightsFromTrack:
 	ADD.W	lateralRoadPosition,D0
 	CMP.W	#$0180,D0
 	BCS	.lateralPositionValid
-	BSET	#$07,networkSyncBitFlag
+	BSET	#$07,wheelOutOfLateralBoundsFlag
 	MOVE.W	D0,lateralPositionOutOfBounds
 	BMI	.setLateralToMin
 	MOVE.B	#$FF,D0
@@ -6193,7 +6190,7 @@ updateCarWorldPositionCoordinate:
 	JSR	calculateBilinearTrackInterpolation
 	ASL.B	#$01,D1
 	MOVE.L	#wheelHeightFrontLeft,A3
-	BCLR	#$07,networkSyncBitFlag
+	BCLR	#$07,wheelOutOfLateralBoundsFlag
 	BEQ	lbC04DF12
 	JSR	checkLateralBoundsAndBounce
 lbC04DF12:
@@ -6509,14 +6506,14 @@ startCompetitiveRace:
 	MOVE.B	#$12,gameStateID
 	JSR	runTrackPreviewScreen
 	MOVE.B	#$80,D0
-	JSR	transmitNetworkMessage
+	JSR	propagateControlKeys
 	MOVE.B	#$00,gameStateID
 	JSR	runMainGame
 	MOVE.B	#$80,D0
 	JSR	displayRacePositions
 	JSR	synchronizeRaceData
 	MOVE.B	#$00,D0
-	JSR	transmitNetworkMessage
+	JSR	propagateControlKeys
 	MOVE.B	#$00,D0
 	JSR	transferLapRecords
 	JSR	setupRandomRaceParameters
@@ -7250,7 +7247,7 @@ checkLapCompletion:
 lbC04F644:
 	JSR	updateOpponentLapTime
 lbC04F64A:
-	JSR	swapPlayerContextForNetwork
+	JSR	togglePlayerContext
 	TST.B	D1
 	BNE	lbC04F6D6
 	MOVE.B	player1LapCounter,D0
@@ -7570,7 +7567,7 @@ renderDistanceDisplay:
 	MOVE.B	D0,tempByte1
 	MOVE.B	D1,tempByte3
 	MOVE.B	D2,tempByte2
-	MOVE.B	D5,speedDisplayThousands
+	MOVE.B	D5,tempByte0
 	MOVE.B	#$01,textHorizontalOffset
 	MOVE.B	#$04,textYOffset
 	MOVE.B	#$1F,D0
@@ -7585,7 +7582,7 @@ renderDistanceDisplay:
 	MOVE.B	#$FD,D0
 .signOk:
 	JSR	renderDigitAndAdvance
-	MOVE.B	speedDisplayThousands,D0
+	MOVE.B	tempByte0,D0
 	JSR	renderDigitAndAdvance
 	MOVE.B	tempByte2,D0
 	JSR	renderDigitAndAdvance
@@ -8336,10 +8333,10 @@ lbC050946:
 	RTS
 
 lbC05094A:
-	MOVE.L	#networkTransferBuffer,A0
+	MOVE.L	#transferBuffer,A0
 	MOVE.L	#leagueSeasonData,A1
 	MOVE.W	#$00BF,D0
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BNE	lbC05096C
 lbC050964:
 	MOVE.B	(A0)+,(A1)+
@@ -8536,12 +8533,12 @@ lbC050C02:
 	RTS
 
 syncMultiplayerRecords:
-	MOVE.B	networkSyncStateFlag,D3
+	MOVE.B	writeMode,D3
 	EOR.B	D3,D0
 	BNE	lbC050CE8
 	MOVE.B	lbB00D494,D0
 	BMI	lbC050CE8
-	MOVE.B	networkPlayerStateCache,D0
+	MOVE.B	leagueSessionMode,D0
 	BMI	lbC050CE8
 	BEQ	lbC05094A
 	CMP.B	#$40,D0
@@ -8549,13 +8546,13 @@ syncMultiplayerRecords:
 	JMP	lbC0511A8
 
 lbC050CA6:
-	MOVE.B	networkSyncStateFlag,D0
+	MOVE.B	writeMode,D0
 	BEQ	lbC050CEA
 	MOVE.B	#$00,D1
 lbC050CB4:
 	MOVE.L	#lapRecordTable,A1
 	MOVE.B	$00(A1,D1.W),D0
-	MOVE.L	#networkTransferBuffer,A1
+	MOVE.L	#transferBuffer,A1
 	MOVE.B	D0,$00(A1,D1.W)
 	MOVE.L	#raceRecordTable,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -8563,14 +8560,14 @@ lbC050CB4:
 	MOVE.B	D0,$00(A1,D1.W)
 	SUBQ.B	#$01,D1
 	BNE	lbC050CB4
-	JSR	encodeNetworkBuffer
+	JSR	encodeLeagueData
 lbC050CE8:
 	RTS
 
 lbC050CEA:
-	JSR	decodeNetworkBuffer
+	JSR	decodeLeagueData
 	BCS	lbC050CE8
-	MOVE.L	#networkTransferBuffer,A0
+	MOVE.L	#transferBuffer,A0
 	MOVE.L	#lapRecordTable,A1
 	MOVE.B	#$00,D1
 lbC050D04:
@@ -8654,8 +8651,8 @@ checkSpecialCommands:
 	BPL	.checkMPLoop
 	MOVE.B	#$01,D2
 .checkMPDone:
-	MOVE.B	D2,networkPlayerStateCache
-	MOVE.B	networkSyncStateFlag,D0
+	MOVE.B	D2,leagueSessionMode
+	MOVE.B	writeMode,D0
 	BEQ	lbC050E32
 	MOVE.B	D2,D0
 	BEQ	lbC050E38
@@ -8738,23 +8735,23 @@ displayDiskMessage:
 	RTS
 
 linearCongruentialRandom:
-	MOVE.W	lbW051020,D0
+	MOVE.W	obfuscationLcgState,D0
 	ASL.W	#$02,D0
-	ADD.W	lbW051020,D0
-	MOVE.W	D0,lbW051020
+	ADD.W	obfuscationLcgState,D0
+	MOVE.W	D0,obfuscationLcgState
 	LSR.W	#$02,D0
 	RTS
 
 initializeObfuscationEncode:
 	MOVE.B	#$00,D0
-	JMP	lbC051030
+	JMP	setEncodeDecodeFlag
 
 initializeObfuscationDecode:
 	MOVE.B	#$80,D0
-lbC051030:
-	MOVE.B	D0,currentMenuItem
-	MOVE.L	#networkTransferBuffer,rawTrackDataOffset
-	MOVE.W	#$683B,lbW051020
+setEncodeDecodeFlag:
+	MOVE.B	D0,encodeDecodeFlag
+	MOVE.L	#transferBuffer,obfuscationBufferPointer
+	MOVE.W	#$683B,obfuscationLcgState
 	MOVE.B	#$00,D1
 lbC05104C:
 	JSR	linearCongruentialRandom
@@ -8763,22 +8760,22 @@ lbC05104C:
 	ADDQ.B	#$01,D1
 	BNE	lbC05104C
 	MOVE.B	#$0F,D2
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BMI	lbC051086
-	MOVE.B	lbB052586,D0
-	MOVE.L	rawTrackDataOffset,A0
+	MOVE.B	obfuscationCipherIndex,D0
+	MOVE.L	obfuscationBufferPointer,A0
 	MOVE.B	D0,$00(A0,D2.W)
 	JMP	lbC051096
 
 lbC051086:
-	MOVE.L	rawTrackDataOffset,A0
+	MOVE.L	obfuscationBufferPointer,A0
 	MOVE.B	$00(A0,D2.W),D0
-	MOVE.B	D0,lbB052586
+	MOVE.B	D0,obfuscationCipherIndex
 lbC051096:
 	MOVE.B	#$00,D2
-	MOVE.L	rawTrackDataOffset,A0
+	MOVE.L	obfuscationBufferPointer,A0
 	MOVE.L	#multiplayerObfuscationTable,A1
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BMI	lbC0510CC
 	MOVE.B	D2,D0
 	MOVE.B	#$EF,D2
@@ -8793,13 +8790,13 @@ lbC0510CC:
 lbC0510D0:
 	MOVE.B	$00(A0,D2.W),D0
 	MOVE.B	D0,tempByte1
-	MOVE.B	D1,speedDisplayThousands
-	MOVE.B	lbB052586,D1
+	MOVE.B	D1,tempByte0
+	MOVE.B	obfuscationCipherIndex,D1
 	MOVE.B	$00(A1,D1.W),D0
-	ADDQ.B	#$01,lbB052586
-	MOVE.B	speedDisplayThousands,D1
+	ADDQ.B	#$01,obfuscationCipherIndex
+	MOVE.B	tempByte0,D1
 	ADDQ.B	#$01,D1
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BPL	lbC051110
 	CMP.B	tempByte1,D1
 	BEQ	lbC05111C
@@ -8809,18 +8806,18 @@ lbC051110:
 	BNE	lbC0510D0
 	MOVE.B	D1,D0
 lbC05111C:
-	MOVE.L	rawTrackDataOffset,A0
+	MOVE.L	obfuscationBufferPointer,A0
 	MOVE.B	D0,$00(A0,D2.W)
-	MOVE.B	lbB052586,D0
+	MOVE.B	obfuscationCipherIndex,D0
 	ADD.B	$00(A1,D1.W),D0
-	MOVE.B	D0,lbB052586
+	MOVE.B	D0,obfuscationCipherIndex
 	CMP.B	#$0E,D2
 	BNE	lbC051140
 	ADDQ.B	#$01,D2
 lbC051140:
 	ADDQ.B	#$01,D2
 	BNE	lbC0510CC
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BPL	lbC05117A
 	MOVE.B	#$EF,D2
 	MOVE.B	$00(A0,D2.W),D0
@@ -8835,18 +8832,18 @@ lbC051140:
 lbC05117A:
 	RTS
 
-encodeNetworkBuffer:
+encodeLeagueData:
 	JSR	initializeObfuscationEncode
-	ADD.L	#$00000100,rawTrackDataOffset
+	ADD.L	#$00000100,obfuscationBufferPointer
 	JMP	lbC051096
 
-decodeNetworkBuffer:
+decodeLeagueData:
 	JSR	initializeObfuscationDecode
-	ADD.L	#$00000100,rawTrackDataOffset
+	ADD.L	#$00000100,obfuscationBufferPointer
 	JMP	lbC051096
 
 lbC0511A8:
-	MOVE.B	networkSyncStateFlag,D0
+	MOVE.B	writeMode,D0
 	BEQ	lbC05121C
 	MOVE.B	#$7F,D1
 lbC0511B6:
@@ -8994,7 +8991,7 @@ renderMessagePanel:
 	MOVE.B	#$33,D0
 	JMP	renderMaskedGraphicsObject
 
-transmitNetworkMessage:
+propagateControlKeys:
 	MOVE.B	D0,tempByte4
 	MOVE.B	additionalPlayerCount,D0
 	BEQ	lbC05142C
@@ -9889,13 +9886,13 @@ renderAllDamage:
 	BPL	.damageLoop
 	RTS
 
-saveLoadGameData:
-	MOVE.B	D0,currentMenuItem
+encodeOrDecodeLeagueData:
+	MOVE.B	D0,encodeDecodeFlag
 	MOVE.L	#randomSeed1,A0
 	MOVE.L	#randomSeedBuffer1,A1
 	MOVE.B	#$04,D1
 lbC0522C4:
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BMI	lbC0522DE
 	MOVE.B	(A0)+,$00(A1,D1.W)
 	JMP	lbC0522EC
@@ -9905,13 +9902,13 @@ lbC0522D8:
 	RTS
 
 lbC0522DE:
-	MOVE.B	lbB00E334,D0
+	MOVE.B	bufferEncodedFlag,D0
 	BPL	lbC0522D8
 	MOVE.B	$00(A1,D1.W),(A0)+
 lbC0522EC:
 	SUBQ.B	#$01,D1
 	BPL	lbC0522C4
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BMI	lbC05231E
 	MOVE.B	#$0B,D1
 lbC052300:
@@ -9925,7 +9922,7 @@ lbC052300:
 lbC05231E:
 	MOVE.B	#$1A,D1
 lbC052322:
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BPL	lbC05234C
 	MOVE.L	#leagueSeasonData,A1
 	MOVE.B	$00(A1,D1.W),D0
@@ -9943,8 +9940,8 @@ lbC052356:
 	BMI	lbC052482
 lbC052366:
 	JSR	generateRandomNumber
-	MOVE.B	D0,speedDisplayThousands
-	TST.B	currentMenuItem
+	MOVE.B	D0,tempByte0
+	TST.B	encodeDecodeFlag
 	BMI	lbC0523AC
 	MOVE.L	#lbL00E2B6,A1
 	CMP.B	$00(A1,D1.W),D0
@@ -9963,8 +9960,8 @@ lbC0523AC:
 	MOVE.B	tempByte3,D0
 	CMP.B	tempByte2,D0
 	BNE	lbC052356
-	MOVE.B	speedDisplayThousands,D0
-	MOVE.L	#networkTransferBuffer,A1
+	MOVE.B	tempByte0,D0
+	MOVE.L	#transferBuffer,A1
 	MOVE.B	D0,$00(A1,D1.W)
 lbC0523D6:
 	SUBQ.B	#$01,D1
@@ -9974,7 +9971,7 @@ lbC0523D6:
 	MOVE.B	#$09,D2
 lbC0523EA:
 	MOVE.B	(A0)+,D0
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BMI	lbC052404
 	MOVE.L	#randomSeedBuffer2,A1
 	MOVE.B	D0,$00(A1,D1.W)
@@ -9986,10 +9983,10 @@ lbC052404:
 lbC052412:
 	SUBQ.B	#$01,D1
 	BPL	lbC0523EA
-	TST.B	currentMenuItem
+	TST.B	encodeDecodeFlag
 	BPL	lbC052472
 	MOVE.L	#lbL00E2B6,A3
-	MOVE.L	#networkTransferBuffer,A0
+	MOVE.L	#transferBuffer,A0
 	MOVE.B	#$1A,D1
 lbC052432:
 	TST.B	additionalPlayerCount
@@ -10012,14 +10009,14 @@ lbC052454:
 	BPL	lbC052454
 lbC052472:
 	MOVE.B	#$80,D0
-	MOVE.B	D0,lbB00E334
+	MOVE.B	D0,bufferEncodedFlag
 	ANDI.B	#$1E,CCR
 	RTS
 
 lbC052482:
 	MOVE.B	#$3B,randomSeed2Low
-	MOVE.B	currentMenuItem,D0
-	BPL	saveLoadGameData
+	MOVE.B	encodeDecodeFlag,D0
+	BPL	encodeOrDecodeLeagueData
 	ORI.B	#$01,CCR
 	RTS
 
@@ -10060,7 +10057,7 @@ lbC0524F8:
 lbC052508:
 	TST.B	D0
 	BNE	lbC05254C
-	ADDQ.B	#$01,lbB052586
+	ADDQ.B	#$01,obfuscationCipherIndex
 	JSR	readJoystickState
 	MOVE.B	joystickState,D0
 	EOR.B	#$FF,D0
@@ -11905,7 +11902,7 @@ showLoadGameMenu:
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.W	#$0000,D1
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BEQ	lbC054086
 	MOVE.W	#$0016,D1
 lbC054086:
@@ -11923,7 +11920,7 @@ lbC054086:
 
 handleSaveSlotSelection:
 	JSR	loadSaveGameFromDisk
-	TST.B	lbB00D492
+	TST.B	diskOperationAborted
 	BPL	lbC0540DC
 	RTS
 
@@ -11934,9 +11931,9 @@ lbC0540EA:
 	MOVE.B	#$0F,lbB0544B8
 	MOVE.B	#$0B,lbB0544B9
 	MOVE.B	selectedSaveSlotIndex,D0
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BEQ	lbC054110
-	MOVE.B	lbB0544B7,D0
+	MOVE.B	backupSaveSlotIndex,D0
 lbC054110:
 	MOVE.B	D0,currentSaveSlotIndex
 	MOVE.B	#$00,lbB0544B8
@@ -11951,12 +11948,12 @@ lbC054110:
 	JSR	renderCharacter
 	JSR	waitForDirectionRelease
 	MOVE.B	textCursorColumn,lbB0544BA
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BNE	lbC05419A
 lbC05416C:
 	JSR	waitForInputPress
 	JSR	processDirectionalInput
-	TST.B	inputCancelFlag
+	TST.B	directionalInputBits
 	BNE	handleSlotNavigation
 	CMP.B	#$0D,D0
 	BNE	lbC05416C
@@ -11974,7 +11971,7 @@ lbC05419A:
 	JSR	inputTextString
 	MOVE.W	#$0091,D1
 	JSR	displayMessageWithColors
-	TST.B	inputCancelFlag
+	TST.B	directionalInputBits
 	BNE	handleSlotNavigation
 	CMP.B	#$20,nameInputBuffer
 	BNE	lbC05424A
@@ -11985,13 +11982,13 @@ lbC05419A:
 	BRA	lbC05419A
 
 handleSlotNavigation:
-	BMI	lbC054366
+	BMI	setDiskOperationAborted
 	JSR	refreshSaveSlotDisplay
-	BTST	#$06,inputCancelFlag
+	BTST	#$06,directionalInputBits
 	BNE	lbC054240
-	BTST	#$05,inputCancelFlag
+	BTST	#$05,directionalInputBits
 	BNE	lbC054236
-	BTST	#$03,inputCancelFlag
+	BTST	#$03,directionalInputBits
 	BNE	lbC05422C
 	JSR	checkMinimumSlotThreshold
 	BRA	lbC054246
@@ -12025,45 +12022,45 @@ lbC05424A:
 	MOVE.W	D0,lbW054632
 lbC05428A:
 	MOVE.W	lbW054632,D0
-	MOVE.L	#networkTransferBuffer,A0
-	TST.B	networkSyncStateFlag
+	MOVE.L	#transferBuffer,A0
+	TST.B	writeMode
 	BEQ	lbC0542D2
-	JSR	displaySaveSlotAtRightPosition
-	BEQ	advanceSecondarySlot
+	JSR	writeSaveSlotToDisk
+	BEQ	writeBackupSaveSlot
 	BPL	lbC05428A
 	RTS
 
-advanceSecondarySlot:
+writeBackupSaveSlot:
 	MOVE.B	currentSaveSlotIndex,D3
 	ADDQ.B	#$01,D3
 	CMP.B	#$1E,D3
-	BLT	lbC0542C4
+	BLT	.indexOk
 	MOVE.B	#$00,D3
-lbC0542C4:
-	MOVE.B	D3,lbB0544B7
-	JSR	prepareSaveSlotForWrite
+.indexOk:
+	MOVE.B	D3,backupSaveSlotIndex
+	JSR	commitSaveSlotToDisk
 	RTS
 
 lbC0542D2:
-	JSR	displaySaveSlotAtLeftPosition
+	JSR	readSaveSlotFromDisk
 	BEQ	lbC0542E2
 	BPL	lbC05428A
 	RTS
 
 lbC0542E2:
 	MOVE.B	currentSaveSlotIndex,selectedSaveSlotIndex
-	JSR	prepareSaveSlotForWrite
+	JSR	commitSaveSlotToDisk
 	MOVE.B	#$00,D0
 	JSR	syncMultiplayerRecords
 	RTS
 
-displayConfirmationDialog:
-	MOVE.B	#$00,lbB00D492
+promptDiskRetryOrAbort:
+	MOVE.B	#$00,diskOperationAborted
 	TST.B	D0
-	BNE	lbC05430E
+	BNE	showDiskErrorAndPrompt
 	RTS
 
-lbC05430E:
+showDiskErrorAndPrompt:
 	MOVE.B	#$2C,D1
 	CMP.B	#$22,D0
 	BEQ	lbC05432A
@@ -12077,7 +12074,7 @@ lbC05432A:
 	JSR	waitForInputPress
 	LSR.W	#$08,D0
 	CMP.B	#$45,D0
-	BEQ	lbC054366
+	BEQ	setDiskOperationAborted
 	MOVE.B	#$03,D0
 	JSR	setForegroundColor
 	MOVE.W	#$0091,D1
@@ -12087,8 +12084,8 @@ lbC05432A:
 	MOVE.B	#$01,D0
 	RTS
 
-lbC054366:
-	MOVE.B	#$80,lbB00D492
+setDiskOperationAborted:
+	MOVE.B	#$80,diskOperationAborted
 	RTS
 
 refreshSaveSlotDisplay:
@@ -12120,9 +12117,9 @@ moveToNextSlot:
 	MOVE.B	#$00,D0
 updateCurrentSlot:
 	MOVE.B	D0,currentSaveSlotIndex
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BEQ	lbC0543F6
-	MOVE.B	D0,lbB0544B7
+	MOVE.B	D0,backupSaveSlotIndex
 	RTS
 
 lbC0543F6:
@@ -12162,15 +12159,15 @@ waitForDirectionRelease:
 	BEQ	waitForDirectionRelease
 	RTS
 
-displaySaveSlotAtLeftPosition:
+readSaveSlotFromDisk:
 	MOVE.W	#$0000,D3
-	BRA	lbC054480
+	BRA	transferSaveSlot
 
-displaySaveSlotAtRightPosition:
+writeSaveSlotToDisk:
 	MOVE.W	#$0001,D3
-lbC054480:
+transferSaveSlot:
 	CMP.W	#$0320,D3
-	BCC	lbC0544AA
+	BCC	displaySaveSlotFailedDialog
 	MOVE.W	D0,D1
 	MOVE.W	#$0000,D0
 	MOVE.W	#$0001,D2
@@ -12179,14 +12176,14 @@ lbC054480:
 	CLR.W	D1
 	CLR.W	D2
 lbC0544A2:
-	JSR	displayConfirmationDialog
+	JSR	promptDiskRetryOrAbort
 	RTS
 
-lbC0544AA:
+displaySaveSlotFailedDialog:
 	MOVE.B	#$80,D0
 	BRA	lbC0544A2
 
-prepareSaveSlotForWrite:
+commitSaveSlotToDisk:
 	CLR.L	D0
 	MOVE.W	lbW054632,D0
 	SUB.L	#$00000017,D0
@@ -12204,8 +12201,8 @@ lbC0544F0:
 	MOVE.W	#$0016,D0
 	MOVE.L	#$47826653,saveDataValidationBuffer
 	MOVE.B	selectedSaveSlotIndex,savedSlotIndex
-	MOVE.B	lbB0544B7,saveSlotFlags
-	JSR	displaySaveSlotAtRightPosition
+	MOVE.B	backupSaveSlotIndex,saveSlotFlags
+	JSR	writeSaveSlotToDisk
 	BEQ	lbC054526
 	BPL	lbC0544F0
 lbC054526:
@@ -12215,10 +12212,10 @@ loadSaveGameFromDisk:
 	MOVE.B	#$01,lbB054608
 lbC054530:
 	MOVE.B	#$00,saveSlotHighlightFlag
-	MOVE.B	#$00,lbB00D492
+	MOVE.B	#$00,diskOperationAborted
 	MOVE.L	#saveSlotNameBuffer,A0
 	MOVE.W	#$0016,D0
-	JSR	displaySaveSlotAtLeftPosition
+	JSR	readSaveSlotFromDisk
 	BEQ	lbC05455C
 	BMI	lbC054606
 	BRA	loadSaveGameFromDisk
@@ -12229,7 +12226,7 @@ lbC05455C:
 	CMP.L	#$47826653,saveDataValidationBuffer
 	BEQ	lbC0545FA
 	MOVE.B	#$80,saveSlotHighlightFlag
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BEQ	lbC0545F2
 	MOVE.W	#$00F0,D1
 	JSR	displayMessageWithColors
@@ -12241,14 +12238,14 @@ lbC05455C:
 	LSR.W	#$08,D0
 	CMP.B	#$45,D0
 	BNE	lbC0545C0
-	MOVE.B	#$80,lbB00D492
+	MOVE.B	#$80,diskOperationAborted
 	BRA	lbC0545F2
 
 lbC0545C0:
 	JSR	drawScreenFrame
 	MOVE.B	#$01,textYOffset
 	MOVE.W	#$0000,D1
-	TST.B	networkSyncStateFlag
+	TST.B	writeMode
 	BEQ	lbC0545E0
 	MOVE.W	#$0016,D1
 lbC0545E0:
@@ -12261,7 +12258,7 @@ lbC0545F2:
 	MOVE.B	#$00,D3
 lbC0545FA:
 	MOVE.B	D0,selectedSaveSlotIndex
-	MOVE.B	D3,lbB0544B7
+	MOVE.B	D3,backupSaveSlotIndex
 lbC054606:
 	RTS
 
@@ -12409,7 +12406,7 @@ handleOpponentPositioning:
 	BCC	.noCollision
 	TST.B	networkGameMode
 	BEQ	.networkOk
-	TST.B	networkEngineFlag
+	TST.B	opponentDistanceOffset
 	BNE	.noCollision
 .networkOk:
 	MOVE.B	playerOpponentLateralDistance,D0
@@ -17638,9 +17635,9 @@ renderOpponentCar:
 	MOVE.W	#$05E0,renderCommandQueueOffset
 	TST.B	curveSmoothingFlag
 	BNE	lbC0594B8
-	CMP.W	#$001C,networkEngineFlag
+	CMP.W	#$001C,opponentDistanceOffset
 	BLT	lbC0594B8
-	CMP.W	#$00E4,networkEngineFlag
+	CMP.W	#$00E4,opponentDistanceOffset
 	BGT	lbC0594B8
 	ADD.W	#$0080,renderCommandQueueOffset
 	MOVE.L	#renderCommandQueue,A4
@@ -20358,7 +20355,7 @@ savedSlotIndex:	ds.b	1
 saveSlotFlags:	ds.b	$f
 saveDataValidationBuffer:	ds.b	$1e2
 saveDataChecksumValue:	ds.l	1
-networkTransferBuffer:	ds.b	$20			; load/save slots get loaded here (512 bytes)
+transferBuffer:	ds.b	$20			; load/save slots get loaded here (512 bytes)
 tempMessageBuffer1:	ds.b	$80
 tempMessageBuffer2:	ds.b	$3c
 tempPlayerCountBackup:	ds.b	4
