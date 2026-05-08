@@ -55,7 +55,7 @@ _info		dc.b	"Adapted by Vesuri",10
 		ENDC
 		INCBIN	"T:date"
 		ELSE
-		dc.b	"(04.05.2026)"
+		dc.b	"(09.05.2026)"
 		ENDC
 		dc.b	-1,"This slave is partially based on the work by"
 		dc.b	10,"Codetapper/Action! & StingRay."
@@ -66,7 +66,7 @@ _info		dc.b	"Adapted by Vesuri",10
 		dc.b	0
 _TimesName	dc.b	"StuntCarRacer.times",0
 _SaveName	dc.b	"StuntCarRacer.save",0
-		dc.b	"$VER: StuntCarRacer.slave 0.x (04.05.2026)",0
+		dc.b	"$VER: StuntCarRacer.slave 0.x (09.05.2026)",0
 		EVEN
 
 ;======================================================================
