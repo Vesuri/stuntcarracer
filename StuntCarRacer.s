@@ -1,198 +1,6 @@
-	incdir	"scr:"
-
-WHDLOAD		equ	0
-
-dsksync:	EQU	$0000007E
-CIAF_PRTRBUSY:	EQU	$00000001
-copjmp1:	EQU	$00000088
-ciasdr:	EQU	$00000C00
-DMAF_BLTNZERO:	EQU	$00002000
-adkcon:	EQU	$0000009E
-serdat:	EQU	$00000030
-tv_UserIntVects:	EQU	$00000100
-DMAF_MASTER:	EQU	$00000200
-INTF_EXTER:	EQU	$00002000
-CIACRBF_RUNMODE:	EQU	$00000008
-_custom:	EQU	$00DFF000
-CIACRAF_RUNMODE:	EQU	$00000008
-ddfstop:	EQU	$00000094
-bplcon2:	EQU	$00000104
-diwstrt:	EQU	$0000008E
-ac_per:	EQU	$00000006
-intreq:	EQU	$0000009C
-bplcon0:	EQU	$00000100
-bplcon1:	EQU	$00000102
-INTF_AUD1:	EQU	$00000100
-INTB_AUD0:	EQU	$00000007
-INTF_AUD0:	EQU	$00000080
-INTF_AUD3:	EQU	$00000400
-INTF_BLIT:	EQU	$00000040
-INTF_AUD2:	EQU	$00000200
-INTF_SOFTINT:	EQU	$00000004
-INTF_DSKBLK:	EQU	$00000002
-INTB_DSKBLK:	EQU	$00000001
-aud0:	EQU	$000000A0
-diwstop:	EQU	$00000090
-INTF_RBF:	EQU	$00000800
-CIAICRF_SETCLR:	EQU	$00000080
-ddfstrt:	EQU	$00000092
-CIAF_COMCTS:	EQU	$00000010
-dmaconr:	EQU	$00000002
-DMAF_BLITHOG:	EQU	$00000400
-CIAF_COMCD:	EQU	$00000020
-CIAICRF_ALRM:	EQU	$00000004
-INTF_TBE:	EQU	$00000001
-ciapra:	EQU	$00000000
-ciaprb:	EQU	$00000100
-CIAF_COMDTR:	EQU	$00000080
-CIAICRF_FLG:	EQU	$00000010
-CIAF_COMDSR:	EQU	$00000008
-DMAF_COPPER:	EQU	$00000080
-CIAF_DSKSEL0:	EQU	$00000008
-intena:	EQU	$0000009A
-INTB_SETCLR:	EQU	$0000000F
-INTF_PORTS:	EQU	$00000008
-INTF_SETCLR:	EQU	$00008000
-bltafwm:	EQU	$00000044
-intreqr:	EQU	$0000001E
-tv_Lev7IntVect:	EQU	$0000007C
-tv_Lev6IntVect:	EQU	$00000078
-tv_Lev5IntVect:	EQU	$00000074
-tv_Lev4IntVect:	EQU	$00000070
-CIAICRF_SP:	EQU	$00000008
-tv_Lev3IntVect:	EQU	$0000006C
-tv_Lev2IntVect:	EQU	$00000068
-tv_Lev1IntVect:	EQU	$00000064
-joy1dat:	EQU	$0000000C
-bltbmod:	EQU	$00000062
-bpl2mod:	EQU	$0000010A
-serper:	EQU	$00000032
-ciaddra:	EQU	$00000200
-CIAICRF_TB:	EQU	$00000002
-CIAF_PRTRSEL:	EQU	$00000004
-bltamod:	EQU	$00000064
-bpl1mod:	EQU	$00000108
-CIAICRF_TA:	EQU	$00000001
-INTB_COPER:	EQU	$00000004
-DMAF_BLITTER:	EQU	$00000040
-INTF_COPER:	EQU	$00000010
-INTF_DSKSYNC:	EQU	$00001000
-DMAB_BLITTER:	EQU	$00000006
-INTF_VERTB:	EQU	$00000020
-ciaicr:	EQU	$00000D00
-INTB_VERTB:	EQU	$00000005
-dskpt:	EQU	$00000020
-DMAF_SETCLR:	EQU	$00008000
-DMAF_DISK:	EQU	$00000010
-cop1lc:	EQU	$00000080
-DMAF_BLTDONE:	EQU	$00004000
-DMAF_AUD0:	EQU	$00000001
-_ciaa:	EQU	$00BFE001
-DMAF_AUD1:	EQU	$00000002
-DMAF_AUD2:	EQU	$00000004
-DMAF_AUD3:	EQU	$00000008
-serdatr:	EQU	$00000018
-_ciab:	EQU	$00BFD000
-dmacon:	EQU	$00000096
-DMAF_AUDIO:	EQU	$0000000F
-bltcdat:	EQU	$00000070
-ciatbhi:	EQU	$00000700
-DMAF_RASTER:	EQU	$00000100
-INTB_TBE:	EQU	$00000000
-CIAICRB_TB:	EQU	$00000001
-ac_len:	EQU	$00000004
-dsklen:	EQU	$00000024
-ciacra:	EQU	$00000E00
-ciacrb:	EQU	$00000F00
-CIAF_PRTRPOUT:	EQU	$00000002
-ciatblo:	EQU	$00000600
-bltdmod:	EQU	$00000066
-INTF_INTEN:	EQU	$00004000
-beamcon0 = $1dc
-bpl1pth = $0e0
-bpl1ptl = $0e2
-bpl2pth = $0e4
-bpl2ptl = $0e6
-bpl3pth = $0e8
-bpl3ptl = $0ea
-bpl4pth = $0ec
-bpl4ptl = $0ee
-color00  = $180
-color01  = $182
-color02  = $184
-color03  = $186
-color04  = $188
-color05  = $18a
-color06  = $18c
-color07  = $18e
-color08  = $190
-color09  = $192
-color10 = $194
-color11 = $196
-color12 = $198
-color13 = $19a
-color14 = $19c
-color15 = $19e
-color16 = $1a0
-color17 = $1a2
-color18 = $1a4
-color19 = $1a6
-color20 = $1a8
-color21 = $1aa
-color22 = $1ac
-color23 = $1ae
-color24 = $1b0
-color25 = $1b2
-color26 = $1b4
-color27 = $1b6
-color28 = $1b8
-color29 = $1ba
-color30 = $1bc
-color31 = $1be
-cop1lch = $080
-intenar = $01c 
-spr0pth = $120
-spr0ptl = $122
-spr1pth = $124
-spr1ptl = $126
-spr2pth = $128
-spr2ptl = $12a
-spr3pth = $12c
-spr3ptl = $12e
-spr4pth = $130
-spr4ptl = $132
-spr5pth = $134
-spr5ptl = $136
-spr6pth = $138
-spr6ptl = $13a
-spr7pth = $13c
-spr7ptl = $13e
-_LVOOpenLibrary		equ	-$228
-_LVOCloseLibrary	equ	-$19e
-_LVOForbid		equ	-$84
-_LVOPermit		equ	-$8a
-_LVOSuperVisor		equ	-$1e
-_LVOCacheControl	equ	-$288
-_LVOLoadView		equ	-$de
-_LVOWaitTOF		equ	-$10e
-AttnFlags		equ	$128
-CACR_EnableI		equ	$00000001
-CACR_FreezeI		equ	$00000002
-CACR_ClearI		equ	$00000008
-CACR_IBE		equ	$00000010
-CACR_EnableD		equ	$00000100
-CACR_FreezeD		equ	$00000200
-CACR_ClearD		equ	$00000800
-CACR_DBE		equ	$00001000
-CACR_WriteAllocate	equ	$00002000
-CACR_EnableE		equ	$40000000
-CACR_CopyBack		equ	$80000000
-gb_ActiView		equ	34
-gb_copinit		equ	38
-DMAF_ALL		equ	$01FF
-ORIGINAL_LOAD_ADDRESS		equ	$e700
-FRAMERATE_MULTIPLIER	equ	6					; 8FPS -> 48FPS
-TIMESTEP_FACTOR		equ	$EE/FRAMERATE_MULTIPLIER		; originally $EE
+WHDLOAD				equ	1
+FRAMERATE_MULTIPLIER		equ	6				; 8FPS -> 48FPS
+TIMESTEP_FACTOR			equ	$EE/FRAMERATE_MULTIPLIER	; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 
 	section	Code,code
@@ -298,7 +106,6 @@ shutdown:
 	moveq	#0,d0
 	rts
 
-; Get VBR address
 GetVBR:	ORI	#$0700,SR
 	movec	vbr,d0
 	move.l	d0,base_vector
@@ -319,7 +126,6 @@ doQuit:	move.l	sp_quit,sp
 	jmp	shutdown
 	endc
 
-****************************************************************************
 begin:	lea	gameData,a0
         sub.l   #ORIGINAL_LOAD_ADDRESS,a0
 	add.l	sampleParameterTable,a0
@@ -359,8 +165,7 @@ initialize:
 	MOVE.L	#level6Interrupt,tv_Lev6IntVect(a5)
 	MOVE.L	#level7Interrupt,tv_Lev7IntVect(a5)
 ;	MOVE.W	#$2000,SR
-;	MOVE.L	#lbL05BE94,D0
-	move.l  #frameBuffer1,d0
+	MOVE.L	#frameBuffer1,D0			; originally lbL05BE94
 	MOVE.L	D0,frameBuffers
 	MOVE.L	D0,renderFrameBuffer
 	ADD.L	#$00007D00,D0
@@ -523,7 +328,7 @@ ciaATimerBDone:
 refreshBoost:
 	tst.b	boostFuelLevel
 	bne.s	.toggleBoost
-	move.b	maxBoostFuel,boostFuelLevel		;Lame trainer
+	move.b	maxBoostFuel,boostFuelLevel	;Lame trainer
 .toggleBoost:
 	eor.l	#1,infiniteBoost
 	bra	lbC00095E
@@ -761,35 +566,35 @@ audioInterruptDone:
 
 playSample:
 	MOVEM.L	D0/D3/D4/A0/A1,-(SP)
-	AND.W	#$0007,D0		; Mask to 0-7 (8 samples)
-	ASL.W	#$04,D0			; Multiply by 16 (entry size)
-	LEA	sampleParameterTable,A0		; Load audio parameter table base
-	LEA	$00(A0,D0.W),A0		; A0 = pointer to sample entry
-	MOVE.W	$000C(A0),D0		; Load channel number (0-3) from offset +$0C
-	ASL.W	#$02,D0			; Multiply by 4 (audioChannelMasks entry size)
-	LEA	audioChannelMasks,A1	; Load channel masks table
-	MOVE.W	$02(A1,D0.W),D3		; D3 = DMA enable bit (DMAF_AUD0/1/2/3)
+	AND.W	#$0007,D0
+	ASL.W	#$04,D0
+	LEA	sampleParameterTable,A0
+	LEA	$00(A0,D0.W),A0
+	MOVE.W	$000C(A0),D0
+	ASL.W	#$02,D0
+	LEA	audioChannelMasks,A1
+	MOVE.W	$02(A1,D0.W),D3
 	MOVE.W	D3,D4
-	ASL.W	#$07,D4			; D4 = Interrupt enable bit (INTF_AUD0/1/2/3)
-	MOVE.W	D4,_custom+intena	; Disable audio interrupt
-	MOVE.W	D3,_custom+dmacon	; Disable audio DMA
-	MOVE.W	#$0000,$00(A1,D0.W)	; Clear channel active flag
-	ASL.W	#$02,D0			; Multiply by 4 again (D0 = channel * 16)
-	LEA	_custom,A1		; A1 = $DFF000
-	LEA	$00(A1,D0.W),A1		; A1 = $DFF000 + (channel * 16)
-	MOVE.L	(A0),$00A0(A1)		; Set sample pointer (ac_ptr)
-	MOVE.L	$0004(A0),D0		; Load sample length in bytes
-	LSR.L	#$01,D0			; Divide by 2 (convert to words)
-	MOVE.W	D0,$00A4(A1)		; Set sample length (ac_len)
-	MOVE.W	$000A(A0),$00A8(A1)	; Set volume (ac_vol)
-	MOVE.W	$0008(A0),$00A6(A1)	; Set period (ac_per)
-	MOVE.W	D3,audioDMAEnableGuard		; Store pending interrupt flag
-	BSET	#INTB_SETCLR,D3		; Set bit 15 (enable operation)
-	MOVE.W	D4,_custom+intreq	; Clear pending interrupt
-	BSET	#INTB_SETCLR,D4		; Set bit 15
-	MOVE.W	D4,_custom+intena	; Enable audio interrupt
-	MOVE.W	D3,_custom+dmacon	; Enable audio DMA (starts playback)
-	CLR.W	audioDMAEnableGuard		; Clear pending flag
+	ASL.W	#$07,D4
+	MOVE.W	D4,_custom+intena
+	MOVE.W	D3,_custom+dmacon
+	MOVE.W	#$0000,$00(A1,D0.W)
+	ASL.W	#$02,D0
+	LEA	_custom,A1
+	LEA	$00(A1,D0.W),A1
+	MOVE.L	(A0),$00A0(A1)
+	MOVE.L	$0004(A0),D0
+	LSR.L	#$01,D0
+	MOVE.W	D0,$00A4(A1)
+	MOVE.W	$000A(A0),$00A8(A1)
+	MOVE.W	$0008(A0),$00A6(A1)
+	MOVE.W	D3,audioDMAEnableGuard
+	BSET	#INTB_SETCLR,D3
+	MOVE.W	D4,_custom+intreq
+	BSET	#INTB_SETCLR,D4
+	MOVE.W	D4,_custom+intena
+	MOVE.W	D3,_custom+dmacon
+	CLR.W	audioDMAEnableGuard
 	MOVEM.L	(SP)+,D0/D3/D4/A0/A1
 	RTS
 
@@ -871,7 +676,6 @@ lbC00D0A6:
 
 setupFrameBufferAddresses:
 	MOVE.L	#fastRenderBuffer,D3		; originally renderFrameBuffer
-	;move.l	renderFrameBuffer,d3
 	ADD.L	#$00000284,D3
 	MOVE.L	D3,viewportTopAddress
 	MOVE.L	displayFrameBuffer,bitplane1Pointer
@@ -981,13 +785,10 @@ copyMainGameBackground:
 	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A1
 	ADD.W	#$7D00,A1
-;	MOVE.W	#$7CFF,D3
-;.copyLoop:
-;	MOVE.B	(A0)+,(A1)+
-	lea	fastRenderBuffer,a2
-	MOVE.W	#$7D00/4-1,D3
+	lea	fastRenderBuffer,a2		; added
+	MOVE.W	#$7D00/4-1,D3			; originally #$7CFF
 .copyLoop:
-	MOVE.L	(A0)+,d0
+	MOVE.L	(A0)+,D0			; originally MOVE.B	(A0)+,(A1)+
 	move.l	d0,(A1)+
 	move.l	d0,(A2)+
 	DBRA	D3,.copyLoop
@@ -1693,17 +1494,17 @@ lbC04944C:
 	RTS
 
 validateNetworkMenuSelection:
-	MOVE.B	receivedKey,D0		; Load remote player's key press
-	BMI	lbC049480		; If $80 (no key), return negative
-	MOVE.B	maxMenuIndex,D3		; Load max menu index
-	ADDQ.B	#$01,D3			; Convert to count (max+1)
-	CMP.B	D3,D0			; Check if selection > max
-	BGT	lbC049480		; If out of range, return negative
-	MOVE.B	receivedKey,selectedMenuItem	; Valid: update current menu selection
-	RTS				; Return positive (valid)
+	MOVE.B	receivedKey,D0
+	BMI	lbC049480
+	MOVE.B	maxMenuIndex,D3
+	ADDQ.B	#$01,D3
+	CMP.B	D3,D0
+	BGT	lbC049480
+	MOVE.B	receivedKey,selectedMenuItem
+	RTS
 
 lbC049480:
-	MOVE.B	#$80,D0			; Return $80 with negative flag
+	MOVE.B	#$80,D0
 	RTS
 
 waitForUnpause:
@@ -5023,11 +4824,11 @@ lbC04CD9A:
 	RTS
 
 updateRaceStartRoll:
-	MOVE.B	#$0E,D4						; originally $10
+	MOVE.B	#$0C,D4						; originally $10
 	TST.B	trackSideIndicator
 	BPL	lbC04CDBC
 	NEG.B	D0
-	MOVE.B	#$F2,D4						; originally $F0
+	MOVE.B	#$F4,D4						; originally $F0
 lbC04CDBC:
 	ASL.W	#$08,D0
 	MOVE.B	#TIMESTEP_FACTOR,D2
@@ -5292,13 +5093,13 @@ displayMenu:
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
 renderAllMenuOptions:
-	MOVE.B	#$00,D0				; Reset item counter
-	MOVE.B	D0,currentMenuItem		; Store as 0
+	MOVE.B	#$00,D0
+	MOVE.B	D0,currentMenuItem
 lbC04D188:
-	MOVE.B	currentMenuItem,D2		; Load current item index
-	MOVE.B	D2,tempByte1			; Store for later use
-	CMP.B	selectedMenuItem,D2		; Is this the selected item?
-	BNE	lbC04D1B6			; Skip highlight logic if not
+	MOVE.B	currentMenuItem,D2
+	MOVE.B	D2,tempByte1
+	CMP.B	selectedMenuItem,D2
+	BNE	lbC04D1B6
 	MOVE.B	#$00,D0
 	MOVE.B	menuHighlightMode,D2
 	BNE	lbC04D1B0
@@ -5306,14 +5107,14 @@ lbC04D188:
 lbC04D1B0:
 	MOVE.B	D0,menuCursorObjectType
 lbC04D1B6:
-	JSR	renderMenuCursorAndAdvance		; Draw cursor/arrow sprite
+	JSR	renderMenuCursorAndAdvance
 	MOVE.B	tempByte1,D0
 	ADDQ.B	#$01,D0
-	JSR	renderDigit			; Draw "1", "2", "3", etc.
+	JSR	renderDigit
 	MOVE.B	#$2E,D0
-	JSR	renderCharacter			; Draw "."
+	JSR	renderCharacter
 	MOVE.B	#$20,D0
-	JSR	renderCharacter			; Draw " "
+	JSR	renderCharacter
 	MOVE.B	tempByte1,D2
 	ADD.B	currentTrackCoordinate,D2
 	MOVE.L	#menuStringOffsetTable,A2
@@ -5369,39 +5170,39 @@ readInputLoop:
 	BRA	renderAllMenuOptions
 
 processLocalMenuInput:
-	MOVE.B	maxMenuIndex,D2		; Load max menu index
-	ADDQ.B	#$01,D2			; Convert to item count
+	MOVE.B	maxMenuIndex,D2
+	ADDQ.B	#$01,D2
 lbC04D2D2:
-	MOVE.L	#keycodeTable,A2	; Point to keycode table [1,2,3,4]
-	MOVE.B	$00(A2,D2.W),D1		; Get keycode for this index
-	JSR	checkKeyPressed		; Check if number key pressed
-	BNE	lbC04D2F2		; Not pressed, try next
-	MOVE.B	D2,selectedMenuItem		; Key pressed! Set selection
-	JMP	renderAllMenuOptions	; Re-render menu
+	MOVE.L	#keycodeTable,A2
+	MOVE.B	$00(A2,D2.W),D1
+	JSR	checkKeyPressed
+	BNE	lbC04D2F2
+	MOVE.B	D2,selectedMenuItem
+	JMP	renderAllMenuOptions
 
 lbC04D2F2:
-	SUBQ.B	#$01,D2			; Try next lower key
-	BPL	lbC04D2D2		; Loop if >= 0
+	SUBQ.B	#$01,D2
+	BPL	lbC04D2D2
 lbC04D2F8:
-	MOVE.B	selectedMenuItem,D1	; Load current selection
-	MOVE.B	inputStateFlags,D0	; Get joystick state
-	AND.B	#$03,D0			; Isolate up/down bits
-	BEQ	readInputLoop		; None pressed, loop back to wait
-	AND.B	#$01,D0			; Check bit 0 (up direction)
-	BEQ	lbC04D322		; If not up, handle down
-	SUBQ.B	#$01,D1			; Decrement selection
-	BPL	lbC04D332		; Valid, store it
-	MOVE.B	#$00,D1			; Wrap to top (stay at 0)
+	MOVE.B	selectedMenuItem,D1
+	MOVE.B	inputStateFlags,D0
+	AND.B	#$03,D0
+	BEQ	readInputLoop
+	AND.B	#$01,D0
+	BEQ	lbC04D322
+	SUBQ.B	#$01,D1
+	BPL	lbC04D332
+	MOVE.B	#$00,D1
 	BEQ	lbC04D332
-lbC04D322:				; Move selection down:
-	CMP.B	maxMenuIndex,D1		; At max index?
-	BEQ	lbC04D330		; Wrap around
-	BCC	lbC04D332		; Beyond max, store as-is
+lbC04D322:
+	CMP.B	maxMenuIndex,D1
+	BEQ	lbC04D330
+	BCC	lbC04D332
 lbC04D330:
-	ADDQ.B	#$01,D1			; Increment selection
+	ADDQ.B	#$01,D1
 lbC04D332:
-	MOVE.B	D1,selectedMenuItem	; Store new selection
-	JMP	renderAllMenuOptions	; Re-render with new cursor
+	MOVE.B	D1,selectedMenuItem
+	JMP	renderAllMenuOptions
 
 delayRoutine:
 	MOVE.B	#$14,D2
@@ -5568,7 +5369,7 @@ setCurrentTrackID:
 	MOVE.B	D0,D1
 	MOVE.L	#trackIDLookupTable,A0
 	MOVE.B	$00(A0,D1.W),currentTrackID
-;	TST.B	currentPlayerContext		; fixed dead code
+;	TST.B	currentPlayerContext		; removed: dead code
 ;	BEQ	.evenOddOk
 ;	BCHG	#$00,D1
 ;.evenOddOk:
@@ -5872,7 +5673,7 @@ lbC04DA76:
 	LSR.W	#$08,D0
 	ADDQ.B	#$01,D0
 ;	ASL.B	#$01,D0
-;	MOVE.B	D0,lbB00D4E5				; fixed dead code
+;	MOVE.B	D0,lbB00D4E5				; removed: dead code
 ;	ASL.B	#$01,D0
 	add.b	d0,d0					; added
 	add.b	d0,d0
@@ -6886,7 +6687,7 @@ loadPlayerConfiguration:
 lbC04F0B4:
 	JSR	calculateTransformMatrices
 	MOVE.W	#$0400,viewportCenterY
-;	MOVE.W	#$FF00,visualEffectFlags		; fixed dead code
+;	MOVE.W	#$FF00,visualEffectFlags		; removed: dead code
 	JSR	disableAudio
 	MOVE.B	#$04,maxLapsForRace
 	JSR	initializeRandomSeeds
@@ -7105,7 +6906,7 @@ updateFrameThrottlingAndTimers:
 	ADDQ.B	#$01,globalFrameCounter
 	MOVE.B	#$00,D2
 	MOVE.B	#TIMESTEP_FACTOR,D0
-;	BEQ	lbC04F452		; originally BEQ
+;	BEQ	lbC04F452				; removed
 	ADD.B	D0,frameThrottleAccumulator
 	BCS	lbC04F452
 	SUBQ.B	#$01,D2
@@ -7297,11 +7098,11 @@ checkRaceCompletion:
 lbC04F720:
 	TST.B	raceCompletionState
 	BNE	lbC04F798
-	MOVE.L	#player1LapCounter,A1			; Lap counter array
-	MOVE.B	$00(A1,D1.W),D0			; Get player's lap count
-	CMP.B	maxLapsForRace,D0			; Compare with max laps (typically 4)
-	BNE	lbC04F798			; Skip if not finished
-	MOVE.B	D0,raceCompletionState		; Set race end flag
+	MOVE.L	#player1LapCounter,A1
+	MOVE.B	$00(A1,D1.W),D0
+	CMP.B	maxLapsForRace,D0
+	BNE	lbC04F798
+	MOVE.B	D0,raceCompletionState
 	MOVE.B	blinkCountdownTimer,D0
 	BNE	lbC04F758
 	MOVE.B	#$2C,D0
@@ -7459,7 +7260,7 @@ updateDamageAndTimers:
 	JSR	renderNewHole
 	MOVE.B	#MAJOR_IMPACT_COOLDOWN_TIME,D0
 	MOVE.B	D0,majorImpactCooldownTimer
-;	MOVE.B	#$0A,D0					; fixed unnecessary code
+;	MOVE.B	#$0A,D0					; removed: unnecessary code
 	MOVE.B	#$05,D0					; major impact
 	BRA	.playSample				; originally BNE
 .minorImpact:
@@ -7922,7 +7723,7 @@ initiateCarWreck:
 	MOVE.B	#$92,D0
 	MOVE.B	D0,wheelBaseHeight
 	MOVE.B	#$82,D0
-;	MOVE.B	D0,visualEffectFlags			; fixed dead code
+;	MOVE.B	D0,visualEffectFlags			; removed: dead code
 	MOVE.B	#$3C,D0
 	MOVE.B	D0,blinkCountdownTimer
 	MOVE.B	#$02,D0
@@ -7945,21 +7746,21 @@ selectGameMode:
 	JMP	gameModeSelected
 
 addMultiplayerPlayers:
-	MOVE.B	#$00,D0			; Initialize menu option
-	MOVE.B	#$01,D2			; Menu parameter 2
-	MOVE.B	#$14,D1			; Menu ID $14 ("Add another player?" prompt)
-	JSR	displayMenu		; Display menu and get user choice
-	CMP.B	#$00,D0			; Check if option 0 selected
-	BNE	lbC05021A		; Exit if other option chosen
-	ADDQ.B	#$01,additionalPlayerCount	; Increment player count
+	MOVE.B	#$00,D0
+	MOVE.B	#$01,D2
+	MOVE.B	#$14,D1
+	JSR	displayMenu
+	CMP.B	#$00,D0
+	BNE	lbC05021A
+	ADDQ.B	#$01,additionalPlayerCount
 gameModeMultiplayer:
-	JSR	runPlayerNameEntry		; Update display
+	JSR	runPlayerNameEntry
 	MOVE.B	additionalPlayerCount,D0
-	CMP.B	#$07,D0			; Check if < 7 players
-	BCS	addMultiplayerPlayers	; Loop back to add more
+	CMP.B	#$07,D0
+	BCS	addMultiplayerPlayers
 lbC05021A:
 	MOVE.B	additionalPlayerCount,D0
-	BEQ	addMultiplayerPlayers	; If 0 players, force selection
+	BEQ	addMultiplayerPlayers
 gameModeSelected:
 	MOVE.B	#$00,D0
 	MOVE.B	D0,textRenderingFlag
@@ -7971,15 +7772,15 @@ gameModeComputerLink:
 	BRA	gameModeSelected
 
 displayLeagueRaceResults:
-	JSR	sortRaceResults		; Sort race standings
+	JSR	sortRaceResults
 	MOVE.B	#$10,D0
-	MOVE.B	D0,displayColumnOffset		; Set display offset
+	MOVE.B	D0,displayColumnOffset
 	MOVE.B	#$0E,D0
-	MOVE.B	D0,resultsTableHeader	; Set column position
-	MOVE.B	multiplayerRaceDisplayFlag,D0		; Load multiplayer race flag
-	AND.B	standingsDisplayModeFlag,D0		; AND with display mode flag
-	BPL	lbC050324		; If either not negative, use simple mode
-	JSR	drawScreenFrame		; === FULL LEAGUE STANDINGS DISPLAY PATH ===
+	MOVE.B	D0,resultsTableHeader
+	MOVE.B	multiplayerRaceDisplayFlag,D0
+	AND.B	standingsDisplayModeFlag,D0
+	BPL	lbC050324
+	JSR	drawScreenFrame
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$0B,D1
@@ -7992,13 +7793,13 @@ displayLeagueRaceResults:
 	BCS	lbC0502A4
 	JSR	setTextYOffset4
 lbC0502A4:
-	MOVE.B	additionalPlayerCount,D1	; Calculate position based on division:
+	MOVE.B	additionalPlayerCount,D1
 	MOVE.L	#divisionRowPositions,A1
-	MOVE.B	$00(A1,D1.W),D0		; Get row position
+	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,D2
 	ADDQ.B	#$02,D0
 	MOVE.B	D0,displayColumnOffset
-	JSR	renderTrackInfoDisplay	; Display "Track: The [NAME]"
+	JSR	renderTrackInfoDisplay
 	MOVE.B	#$00,D0
 	JSR	setBackgroundColor
 	JSR	displayRecordHolders
@@ -8022,21 +7823,21 @@ lbC050318:
 	MOVE.B	D0,displayColumnOffset
 	JMP	lbC050384
 
-lbC050324:				; === SIMPLE RESULTS DISPLAY PATH ===
+lbC050324:
 	JSR	renderDivisionBackgroundAndHeader
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
-	TST.B	multiplayerRaceDisplayFlag		; Check multiplayer flag
+	TST.B	multiplayerRaceDisplayFlag
 	BMI	lbC05037A
-	MOVE.B	#$86,D1			; Display league header:
-	JSR	renderLeagueText	; "DRIVERS CHAMPIONSHIP" or similar
-	CMP.B	#$03,raceSeriesCounter		; Check race series counter
+	MOVE.B	#$86,D1
+	JSR	renderLeagueText
+	CMP.B	#$03,raceSeriesCounter
 	BCS	lbC050398
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	JSR	setTextYOffset4
 	MOVE.B	#$13,D1
-	JSR	renderStatsText		; "FINAL SEASON"
+	JSR	renderStatsText
 	JSR	resetTextYOffset
 	JMP	lbC050398
 
@@ -8069,33 +7870,33 @@ incrementMenuPosition:
 	RTS
 
 renderTrackInfoDisplay:
-	MOVE.B	D2,lbB050474		; Save Y coordinate
-	MOVE.B	currentTrackID,D1	; Get track ID (0-7)
-	MOVE.L	#trackDisplayYOffsets,A0	; Point to Y offset lookup table
-	MOVE.B	$00(A0,D1.W),D1		; Load Y offset for this track
-	SUBQ.B	#$06,D1			; Adjust Y (-6 pixels)
-	TST.B	additionalPlayerCount		; Check if in league mode
-	BEQ	lbC05040E		; Skip adjustment if not
-	TST.B	currentPlayerContext	; Check if player 2 context
-	BEQ	lbC05040E		; Skip if player 1
-	SUBQ.B	#$02,D1			; Further adjust Y (-2 more pixels)
+	MOVE.B	D2,lbB050474
+	MOVE.B	currentTrackID,D1
+	MOVE.L	#trackDisplayYOffsets,A0
+	MOVE.B	$00(A0,D1.W),D1
+	SUBQ.B	#$06,D1
+	TST.B	additionalPlayerCount
+	BEQ	lbC05040E
+	TST.B	currentPlayerContext
+	BEQ	lbC05040E
+	SUBQ.B	#$02,D1
 lbC05040E:
-	JSR	setTextPosition		; Set cursor position (X=D1, Y=D2)
-	MOVE.B	#$0F,D0			; Color $0F (white)
-	JSR	setBackgroundColor	; Set text background
-	MOVE.B	#$93,D1			; String offset $93 = "Track:  The "
-	JSR	renderMenuString	; Render prefix text
-	MOVE.B	currentTrackID,D1	; Get track ID again
-	JSR	renderTrackName		; Render track name (e.g., "LITTLE RAMP")
-	MOVE.B	additionalPlayerCount,D0	; Check league mode
-	BEQ	lbC050462		; Skip if not in league
-	MOVE.B	currentPlayerContext,D0	; Check player context
-	BEQ	lbC050462		; Skip if player 1
-	MOVE.B	#$21,D1			; X = $21 (33 decimal)
-	MOVE.B	lbB050474,D2		; Restore saved Y coordinate
-	JSR	setTextPosition		; Position cursor
-	MOVE.B	#$63,D1			; String offset $63 = " S."
-	JSR	renderMenuString	; Render opponent indicator
+	JSR	setTextPosition
+	MOVE.B	#$0F,D0
+	JSR	setBackgroundColor
+	MOVE.B	#$93,D1
+	JSR	renderMenuString
+	MOVE.B	currentTrackID,D1
+	JSR	renderTrackName
+	MOVE.B	additionalPlayerCount,D0
+	BEQ	lbC050462
+	MOVE.B	currentPlayerContext,D0
+	BEQ	lbC050462
+	MOVE.B	#$21,D1
+	MOVE.B	lbB050474,D2
+	JSR	setTextPosition
+	MOVE.B	#$63,D1
+	JSR	renderMenuString
 lbC050462:
 	RTS
 
@@ -8685,7 +8486,7 @@ lbC050E6A:
 	ORI.B	#$01,CCR
 	RTS
 
-;lbC050E90:						; fixed dead code
+;lbC050E90:						; removed: dead code
 ;	MOVE.L	D0,D2
 ;	MOVE.B	lbB00D494,D0
 ;	BMI.L	lbC050EA6
@@ -10091,19 +9892,19 @@ lbC05257E:
 handleGroundCollision:
 	MOVE.B	#$06,grindSampleID	; ground grind
 	MOVE.B	carSpeedMagnitude,D0
-	CMP.B	#$10,D0			; Cap at 16 (decimal)
+	CMP.B	#$10,D0
 	BLT	lbC0525AC
 	MOVE.B	#$10,D0
 lbC0525AC:
 	MOVE.B	D0,collisionImpactLevel
-	MOVE.B	#$0F,D1			; Only 16 particles (0-15)
+	MOVE.B	#$0F,D1
 	TST.B	networkGameMode
 	BEQ	lbC0525C4
-	MOVE.B	#$03,D1			; Only 4 particles in network mode!
+	MOVE.B	#$03,D1
 lbC0525C4:
 	JSR	generateRandomNumber
-	AND.W	#$001C,D0		; Random 0-28 (multiples of 4)
-	ADD.W	#$01C2,D0		; Add 450 (range 450-478)
+	AND.W	#$001C,D0
+	ADD.W	#$01C2,D0
 	MOVE.W	D0,sampleGroundCollisionPeriod
 	BRA	setParticleCountAndPlayGrindSound
 
@@ -10148,7 +9949,7 @@ lbC052638:
 	LSR.B	#$01,D0
 ;	BRA	lbC052682
 
-;	CMP.B	#$08,D0			; fixed dead code
+;	CMP.B	#$08,D0			; removed: dead code
 ;	BGE	lbC05266A
 ;	MOVE.B	#$08,D0
 ;	BNE	lbC052682
@@ -10243,7 +10044,7 @@ setParticleCountAndPlayGrindSound:
 	RTS
 
 validateAndRenderParticle:
-	MOVE.B	D1,tempByte5	; Save particle index
+	MOVE.B	D1,tempByte5
 	MOVE.W	$40(A4,D1.W),D5
 	CMP.W	#$0080,D5
 	BCC	.resetY
@@ -10296,33 +10097,33 @@ validateAndRenderParticle:
 
 initializeDustCloudParticle:
 	JSR	generateRandomNumber
-	AND.W	#$00FF,D0		; Random X: 0-255
-	MOVE.W	D0,$00(A4,D1.W)		; Set X position (full screen width)
-	MOVE.W	D0,D5			; Save for velocity
+	AND.W	#$00FF,D0
+	MOVE.W	D0,$00(A4,D1.W)
+	MOVE.W	D0,D5
 	JSR	generateRandomNumber
-	AND.W	#$0007,D0		; Random 0-7
-	ADD.W	#$0076,D0		; Add 118 (range 118-125)
-	MOVE.W	D0,$40(A4,D1.W)		; Set Y position (upper screen)
+	AND.W	#$0007,D0
+	ADD.W	#$0076,D0
+	MOVE.W	D0,$40(A4,D1.W)
 	RTS
 
 renderDustCloud:
 	MOVE.B	D1,D2
-	LSR.B	#$01,D2			; Particle index / 2
-	ADD.B	frameCounter,D2		; Add frame counter for animation
-	AND.W	#$000F,D2		; Mask to 0-15
-	MOVE.L	#dustCloudAnimSequence,A0		; Dust cloud animation sequence table
-	MOVE.B	$00(A0,D2.W),D2		; Get frame index
-	ASL.B	#$01,D2			; Multiply by 2
-	MOVE.W	$00(A4,D1.W),D4		; Load X position
-	MOVE.L	#dustCloudOffsetTable,A0		; Offset table
-	SUB.W	$00(A0,D2.W),D4		; Adjust X by offset
-	ADD.W	#$0020,D4		; Add 32 (center)
-	MOVE.W	$40(A4,D1.W),D5		; Load Y position
-	ADD.W	#$0010,D5		; Add 16 (center)
+	LSR.B	#$01,D2
+	ADD.B	frameCounter,D2
+	AND.W	#$000F,D2
+	MOVE.L	#dustCloudAnimSequence,A0
+	MOVE.B	$00(A0,D2.W),D2
+	ASL.B	#$01,D2
+	MOVE.W	$00(A4,D1.W),D4
+	MOVE.L	#dustCloudOffsetTable,A0
+	SUB.W	$00(A0,D2.W),D4
+	ADD.W	#$0020,D4
+	MOVE.W	$40(A4,D1.W),D5
+	ADD.W	#$0010,D5
 	MOVE.B	D2,D0
-	LSR.B	#$01,D0			; Index / 2
-	ADD.B	#$1D,D0			; Add 29 (dust cloud ID offset)
-	JMP	renderGraphicsObjectAtPosition		; Render dust cloud
+	LSR.B	#$01,D0
+	ADD.B	#$1D,D0
+	JMP	renderGraphicsObjectAtPosition
 
 updateWheelSpeed:
 	MOVE.W	carLocalVelocityZ,D0
@@ -10909,7 +10710,7 @@ setAudioChannel0:
 verticalBlankDone:
 	RTS
 
-;	MOVEM.L	(SP)+,D0-D7/A0-A6				; fixed dead code
+;	MOVEM.L	(SP)+,D0-D7/A0-A6				; removed: dead code
 ;	RTS
 
 adjustCoordinateBoundsFromCenter:
@@ -11155,21 +10956,21 @@ lbC05341E:
 integrateVelocityComponents:
 	MOVE.W	angularAccelerationX,D0
 	MOVE.B	#TIMESTEP_FACTOR,D2
-;	BEQ	lbC053438			; fixed unnecessary
+;	BEQ	lbC053438			; removed: unnecessary
 	MULS	D2,D0
 	ASR.L	#$08,D0
 ;lbC053438:
 	ADD.W	D0,rotationSpeedX
 	MOVE.W	angularAccelerationY,D0
 	MOVE.B	#TIMESTEP_FACTOR,D2
-;	BEQ	lbC053450			; fixed unnecessary
+;	BEQ	lbC053450			; removed: unnecessary
 	MULS	D2,D0
 	ASR.L	#$08,D0
 ;lbC053450:
 	ADD.W	D0,rotationSpeedY
 	MOVE.W	angularAccelerationZ,D0
 	MOVE.B	#TIMESTEP_FACTOR,D2
-;	BEQ	lbC053468			; fixed unnecessary
+;	BEQ	lbC053468			; removed: unnecessary
 	MULS	D2,D0
 	ASR.L	#$08,D0
 ;lbC053468:
@@ -12497,8 +12298,8 @@ handleOpponentPositioning:
 	MOVE.B	D0,D2
 	MOVE.L	#geometryParameterTable,A2
 	MOVE.B	$00(A2,D2.W),D0
-	BPL	.targetLateralPosOk3			; special geometry?
-	MOVE.B	#$80,opponentTargetLateralPosition	; center
+	BPL	.targetLateralPosOk3
+	MOVE.B	#$80,opponentTargetLateralPosition
 .targetLateralPosOk3:
 	JSR	advanceToNextSegment
 	SUBQ.B	#$01,tempByte2
@@ -13159,10 +12960,10 @@ updateOpponentWheelSuspension:
 	MOVE.B	D2,D1
 .wheelToAdjustSelected:
 	MOVE.L	#opponentWheelPositions,A0
-	ADD.W	D3,$00(A0,D1.W)			 ; Add negative value to push wheel down
+	ADD.W	D3,$00(A0,D1.W)			 
 	CMP.B	#$04,D2
 	BEQ	.fullAveraging
-	MOVE.B	#$00,D1				 ; Average front and rear
+	MOVE.B	#$00,D1				 
 	JMP	averageWheelVelocities
 
 .fullAveraging:
@@ -13180,7 +12981,7 @@ updateOpponentWheelSuspension:
 	BNE	.dampingDone
 	MOVE.B	aiEnabled,D0
 	BNE	.dampingDone
-;	TST.B	tempByte1			; fixed nop code
+;	TST.B	tempByte1			; removed: nop code
 ;	BMI	lbC055BBC
 ;lbC055BBC:
 	MOVE.W	$00(A4,D1.W),D0
@@ -13470,7 +13271,7 @@ lbC0560B4:
 	CMP.B	maxRenderingIndex,D0
 	RTS
 
-;	MOVE.B	#$07,D0					; fixed dead code
+;	MOVE.B	#$07,D0					; removed: dead code
 ;	JSR	displayPlayerMatchupScreen
 ;	MOVE.B	#$60,D1
 ;	JSR	renderLeagueText
@@ -13951,7 +13752,7 @@ processGameFrame:
 	MOVE.B	prevSegmentDepthCounter,segmentDepthCounter
 	BRA	.setupRendering
 
-;	JSR	busyWaitDelay				; fixed dead code
+;	JSR	busyWaitDelay				; removed: dead code
 ;	JSR	renderHorizon
 ;	JSR	renderMountainHorizon
 ;	JMP	lbC0569E2
@@ -14010,7 +13811,7 @@ lbC0568E2:
 	JSR	processTrackVisibility
 	JSR	processRenderData
 	JSR	processTrackSegments
-;	MOVE.B	#$00,lbB00D4E5				; fixed dead code
+;	MOVE.B	#$00,lbB00D4E5				; removed: dead code
 	MOVE.B	#$00,renderingLoopIndex
 	MOVE.B	#$04,segmentDataStartIndex
 	JSR	shiftCoordinateArrays
@@ -20064,7 +19865,7 @@ renderMaskedGraphicsObject:
 	MOVE.W	$0004(A2),D0
 	MOVE.W	$0006(A2),D3
 	MOVE.L	renderFrameBuffer,A0
-	cmp.w	#$33,d5					; added render directly to chip if message background or top bar
+	cmp.w	#$33,d5					; added: render directly to chip if message background or top bar
 	beq.s	.copyChip
 	cmp.w	#16,d3
 	bcs.s	.copyChip
@@ -20270,8 +20071,909 @@ readWriteSaveSlotData:
 infiniteBoost:
 	ds.l	1
 
-	include	"gameDataOffsets.i"
-	include	"gameDataOffsetsBSS.i"
+ORIGINAL_LOAD_ADDRESS		equ	$e700
+audioChannelMasks		equ	gameData+$c50
+audioChannel0Period		equ	gameData+$cfc8
+sampleParameterTable		equ	gameData+$cfca
+sampleGrindPeriod		equ	gameData+$cfe2
+sampleImpactVolume		equ	gameData+$d005
+audioSample4Volume		equ	gameData+$d015
+sampleGroundCollisionPeriod	equ	gameData+$d032
+sampleEnginePointer		equ	gameData+$d03a
+sampleEngineSize		equ	gameData+$d03e
+joystickState			equ	gameData+$d18e
+lbW00D190			equ	gameData+$94
+lbB00D194			equ	gameData+$98
+uppercaseTable			equ	gameData+$d198
+lowercaseTable			equ	gameData+$d250
+sineTable			equ	gameData+$e342
+reciprocalTable			equ	gameData+$e546
+arctanTable			equ	gameData+$f546
+transformationMatrix		equ	gameData+$10546
+playerNamesWithSpaces		equ	gameData+$105aa
+playerNames			equ	gameData+$105ab
+opponentDriverNames		equ	gameData+$105ea
+obfuscationWhitespace		equ	gameData+$1065b
+nameInputBuffer			equ	gameData+$1066b
+opponentBehaviorTraits		equ	gameData+$1068a
+trackNames			equ	gameData+$106aa
+attenuationTable		equ	gameData+$107ca
+distanceLookupTable		equ	gameData+$1084a
+trackGeometryDatabase		equ	gameData+$10882
+segmentGeometryOffsetTable	equ	gameData+$108a2
+trackDataOffsetTable		equ	gameData+$109a2
+geometryParameterTable		equ	gameData+$109c2
+lbW01172C			equ	gameData+$1172c
+playerContextConfiguration	equ	gameData+$1176c
+primaryFontBitmapData		equ	gameData+$11782
+lbB0117ED			equ	gameData+$117ed
+lbB0117F7			equ	gameData+$117f7
+lbB0117F8			equ	gameData+$117f8
+lbL01197A			equ	gameData+$1197a
+lbW01197E			equ	gameData+$1197e
+lbB011980			equ	gameData+$11980
+imageMainGameBackgroundPalette	equ	gameData+$11a84
+imageMainGameBackground		equ	gameData+$11aa4
+imageMenuScreenPalette		equ	gameData+$15532
+imageMenuScreen			equ	gameData+$15552
+alternateFontBitmapData		equ	gameData+$18bc2
+imageTrackPreviewBackgroundPalette	equ	gameData+$1d274
+imageTrackPreviewBackground	equ	gameData+$1d294
+imageStandingsBackgroundPalette	equ	gameData+$224d0
+imageStandingsBackground	equ	gameData+$224f0
+imagePlayersPalette		equ	gameData+$27376
+imagePlayers			equ	gameData+$27396
+imageWreck			equ	gameData+$2f0b6
+imageWon			equ	gameData+$3607c
+imageLost			equ	gameData+$3c83e
+imagePromotion			equ	gameData+$4274c
+lbL049700			equ	gameData+$49700
+lbW049A46			equ	gameData+$49a46
+lbW049A4E			equ	gameData+$49a4e
+lbW049A56			equ	gameData+$49a56
+encodedControlIndices		equ	gameData+$49d9a
+keyboardMatrixTable		equ	gameData+$49e00
+lbL04A180			equ	gameData+$4a180
+lbB04A3A2			equ	gameData+$4a3a2
+lbW04A3A4			equ	gameData+$4a3a4
+lbW04A420			equ	gameData+$4a420
+lbW04A49A			equ	gameData+$4a49a
+lbL04A4BC			equ	gameData+$4a4bc
+playerGraphicsMask		equ	gameData+$4a4d6
+lbW04AA40			equ	gameData+$4aa40
+leagueStatisticsTextTable	equ	gameData+$4aa5e
+alternateEndScreenEnabledFlag	equ	gameData+$4acf6
+interpolationBlendFactor	equ	gameData+$4be4e
+textStringTable			equ	gameData+$4bf9a
+lbB04C057			equ	gameData+$4c057
+aiBaseSkillTable		equ	gameData+$4c3f4
+divisionBaseOffsets		equ	gameData+$4c442
+player1OpponentIndices		equ	gameData+$4c4c8
+player2OpponentIndices		equ	gameData+$4c4ce
+specialSegmentLookupTable	equ	gameData+$4cbc4
+menuStringOffsetTable		equ	gameData+$4d5d0
+aiMovementPatterns		equ	gameData+$4d734
+lbL04DFB8			equ	gameData+$4dfb8
+lbB04E1F4			equ	gameData+$4e1f4
+lbB04E7E2			equ	gameData+$4e7e2
+lbL04E82C			equ	gameData+$4e82c
+defaultRecordTemplate		equ	gameData+$4e830
+lbL04FD6C			equ	gameData+$4fd6c
+gameMessageMode			equ	gameData+$4ff5a
+gameMessageIndex		equ	gameData+$4ff5b
+gameMessageTable		equ	gameData+$4ff5c
+divisionRowPositions		equ	gameData+$50464
+trackColumnOffsets		equ	gameData+$5046c
+raceCount			equ	gameData+$50478
+currentPlayerID			equ	gameData+$50479
+lbB05047E			equ	gameData+$5047e
+menuTextStrings			equ	gameData+$5047f
+lbL050548			equ	gameData+$50548
+trackRecordMessage		equ	gameData+$50555
+raceResultsText			equ	gameData+$50592
+resultsTableHeader		equ	gameData+$50620
+commandSkipStandingsScreen	equ	gameData+$50e8a
+commandRestoreDriverNames	equ	gameData+$50e8e
+diskIOMessages			equ	gameData+$50f41
+obfuscationLcgState		equ	gameData+$51020
+lbB0513DE			equ	gameData+$513de
+messageTypeTable		equ	gameData+$513e3
+playersControlKeys		equ	gameData+$5143a
+trackAbbreviationCodes1		equ	gameData+$516e0
+trackAbbreviationCodes2		equ	gameData+$516e1
+lbL051E52			equ	gameData+$51e52
+lbB051E56			equ	gameData+$51e56
+lbL051E5A			equ	gameData+$51e5a
+obfuscationCipherIndex		equ	gameData+$52586
+controlKeys			equ	gameData+$5143a
+keycodeTable			equ	gameData+$49a6d
+dustCloudOffsetTable		equ	gameData+$5289c
+dustCloudAnimSequence		equ	gameData+$528ac
+steeringOffsetTable		equ	gameData+$52b5a
+trackDisplayYOffsets		equ	gameData+$52b9a
+lbB0530CA			equ	gameData+$530ca
+cameraAngleThresholds		equ	gameData+$533d4
+saveLoadMenuText		equ	gameData+$53ece
+lbB0544B8			equ	gameData+$544b8
+lbB0544B9			equ	gameData+$544b9
+lbW054632			equ	gameData+$54632
+lbW054F84			equ	gameData+$54f84
+savedRandomSeed1		equ	gameData+$54fb8
+savedRandomSeed3		equ	gameData+$54fbc
+opponentSuspensionDampingTable	equ	gameData+$55bea
+leagueTextTable			equ	gameData+$55c54
+lbB055C56			equ	gameData+$55c56
+lbB055C63			equ	gameData+$55c63
+trackSpecificYOffset		equ	gameData+$55cad
+trackIDLookupTable		equ	gameData+$561c2
+lbL0563C6			equ	gameData+$563c6
+lbL0563EC			equ	gameData+$563ec
+lapRecordsLoadedFlag		equ	gameData+$563f0
+lbL0563F4			equ	gameData+$563f4
+displayColumnOffset		equ	gameData+$56402
+menuCursorObjectType		equ	gameData+$56518
+lbL05651A			equ	gameData+$5651a
+lbB056DC0			equ	gameData+$56dc0
+trackSpecificRenderDepthOverrides	equ	gameData+$57730
+damageBarVerticalOffset		equ	gameData+$57baa
+damageBarColor			equ	gameData+$57bab
+lbW0580E0			equ	gameData+$580e0
+bitMaskTable			equ	gameData+$58160
+trackColorIndex2		equ	gameData+$5aab2
+trackColorIndex1		equ	gameData+$5aab3
+mountainShape0Data		equ	gameData+$5b09e
+mountainShape1Data		equ	gameData+$5b0c0
+mountainShape2Data		equ	gameData+$5b0e8
+mountainShape3Data		equ	gameData+$5b132
+mountainShape4Data		equ	gameData+$5b168
+mountainData00			equ	gameData+$5b18a
+mountainData01			equ	gameData+$5b194
+mountainData02			equ	gameData+$5b19e
+mountainData03			equ	gameData+$5b1a8
+mountainData04			equ	gameData+$5b1b2
+mountainData05			equ	gameData+$5b1bc
+mountainData06			equ	gameData+$5b1c6
+mountainData07			equ	gameData+$5b1d0
+mountainData08			equ	gameData+$5b1da
+mountainData09			equ	gameData+$5b1e4
+mountainData0a			equ	gameData+$5b1ee
+mountainData0b			equ	gameData+$5b1f8
+mountainData0c			equ	gameData+$5b202
+mountainData0d			equ	gameData+$5b20c
+mountainData10			equ	gameData+$5b236
+mountainData11			equ	gameData+$5b248
+mountainData12			equ	gameData+$5b25a
+mountainData13			equ	gameData+$5b26c
+mountainData20			equ	gameData+$5b27e
+mountainData21			equ	gameData+$5b28c
+mountainData22			equ	gameData+$5b29a
+mountainData23			equ	gameData+$5b2a8
+mountainData30			equ	gameData+$5b2b6
+trackMountainCountsAnglesAndIndices	equ	gameData+$5b388
+spritePalette			equ	gameData+$5b7b4
+spriteYOffset			equ	gameData+$5b7c4
+dmaconValueToSet		equ	gameData+$5b7de
+graphicsRenderingParameters	equ	gameData+$5ba6c
+rightWheelHeight		equ	gameData+$5ba76
+leftWheelHeight			equ	gameData+$5baa6
+chainRenderParams		equ	gameData+$5bba6
+bitplaneMaskTable		equ	gameData+$5beb6
+
+sampleEngineParameters		equ	gameData+$d74
+downsampledSampleEngineTable	equ	gameData+$d78
+palette				equ	gameData+$13a
+sourcePalette			equ	gameData+$15a
+keyboardState			equ	gameData+$3d6
+serialReceiveBuffer		equ	gameData+$456
+serialTransmitBuffer		equ	gameData+$556
+ciaBTimerBSet			equ	gameData+$9a8
+serialBufferIndex		equ	gameData+$b54
+lbB000B55			equ	gameData+$b55
+serialWriteIndex		equ	gameData+$b56
+serialReadIndex			equ	gameData+$b57
+lbB000B58			equ	gameData+$b58
+lbW000B5A			equ	gameData+$b5a
+grindSampleID			equ	gameData+$c60
+audioDMAEnableGuard		equ	gameData+$cee
+bitplane1Pointer		equ	gameData+$d112
+copperlistUpdatePendingFlag	equ	gameData+$d116
+framesSinceCopperlistUpdateAccumulator	equ	gameData+$d117
+gameDataRegionStart		equ	gameData+$d3f8		; label only, marks start of init-cleared region
+playerContextValues		equ	gameData+$d3f8
+gasInputIntensityValue		equ	gameData+$d3fa
+gasInputAccumulatorValue	equ	gameData+$d3fb
+aiBaseSpeedHigh			equ	gameData+$d3fc
+aiBaseSpeedLow			equ	gameData+$d3fd
+fuelConsumptionRate		equ	gameData+$d3fe
+trackWidthMultiplier		equ	gameData+$d401
+trackViewOffsetX		equ	gameData+$d404
+trackViewOffsetY		equ	gameData+$d406
+subGridOffsetX			equ	gameData+$d407
+subGridOffsetZ			equ	gameData+$d409
+trackProgressionByte		equ	gameData+$d40a
+opponentSubSegmentProgress	equ	gameData+$d40c
+trackProgressionOffset		equ	gameData+$d40e
+lbB00D40F			equ	gameData+$d40f
+lbW00D410			equ	gameData+$d410
+trackDistance			equ	gameData+$d412
+trackDistanceHigh		equ	gameData+$d413
+currentMenuItem			equ	gameData+$d416
+encodeDecodeFlag		equ	currentMenuItem
+tempByte0			equ	gameData+$d417
+tempByte1			equ	gameData+$d418
+tempByte2			equ	gameData+$d419
+tempByte3			equ	gameData+$d41a
+tempByte4			equ	gameData+$d41b
+playerSegmentIndex		equ	gameData+$d41c
+opponentSegmentIndex		equ	gameData+$d41d
+lapCrossingDetectionFlag	equ	gameData+$d41e
+player1LapCounter		equ	gameData+$d420
+player2LapCounter		equ	gameData+$d421
+baseCoordinateX			equ	gameData+$d422
+cameraGridOffsetXLow		equ	gameData+$d423
+baseCoordinateY			equ	gameData+$d426
+cameraGridOffsetZLow		equ	gameData+$d427
+perpendicularOffsetY		equ	gameData+$d42a
+rawDisplacementValue		equ	gameData+$d42b
+tempAttenuatedValue		equ	gameData+$d42c
+attenuatedDisplacementValue	equ	gameData+$d42d
+cameraGridOffsetXHigh		equ	gameData+$d42e
+cameraGridOffsetZHigh		equ	gameData+$d432
+lbW00D434			equ	gameData+$d434
+lbW00D436			equ	gameData+$d436
+trackRenderingEnableFlag	equ	gameData+$d438
+opponentSpeedFractional		equ	gameData+$d43c
+fuelConsumptionTimer		equ	gameData+$d43d
+drawBridgeActive		equ	gameData+$d43f
+trackDirection			equ	gameData+$d440
+restartTimerCountdown		equ	gameData+$d441
+framesToProcess			equ	gameData+$d442
+distanceCharacteristic		equ	gameData+$d443
+aiEnabled			equ	gameData+$d444
+boundaryCollisionDirectionFlag	equ	gameData+$d445
+collisionActiveFlag		equ	gameData+$d446
+inputStateFlags			equ	gameData+$d447
+segmentRepeatCounter		equ	gameData+$d448
+collisionDistanceTemp		equ	gameData+$d44a
+segmentSteeringFlags		equ	gameData+$d44d
+accumulatedForceFrontLeft	equ	gameData+$d44f
+accumulatedForceFrontRight	equ	gameData+$d450
+accumulatedForceRear		equ	gameData+$d451
+damageAccumulationActive	equ	gameData+$d454
+accumulatedCarDamage		equ	gameData+$d455
+highCompressionFrameCount	equ	gameData+$d456
+cameraAngleIndex		equ	gameData+$d457
+segmentDepthCounter		equ	gameData+$d458
+trackSegmentLimitDoubled	equ	gameData+$d459
+maxSegmentIndexDoubled		equ	gameData+$d45a
+raceMode			equ	gameData+$d45b
+lbB00D45C			equ	gameData+$d45c
+trackDirectionMultiplier	equ	gameData+$d45d
+displayRowOffset		equ	gameData+$d45e
+displayTrackID			equ	gameData+$d45f
+renderingLoopIndex		equ	gameData+$d460
+segmentPropertyFlags		equ	gameData+$d461
+boostActiveFlag			equ	gameData+$d462
+gameExitFlag			equ	gameData+$d463
+playerInputState		equ	gameData+$d464
+wheelOutOfLateralBoundsFlag	equ	gameData+$d465
+segmentRenderingFlag		equ	gameData+$d466
+lbB00D467			equ	gameData+$d467
+lbB00D468			equ	gameData+$d468
+flameAnimationFrame		equ	gameData+$d469
+trackModeParameter		equ	gameData+$d46a
+leagueSessionMode		equ	gameData+$d46b
+blinkCountdownTimer		equ	gameData+$d46c
+textHorizontalOffset		equ	gameData+$d46d
+textYOffset			equ	gameData+$d46e
+frameBufferSyncMask		equ	gameData+$d46f
+raceActiveFlag			equ	gameData+$d470
+drawBridgeUpdateFlag		equ	gameData+$d471
+frameProcessingFlag		equ	gameData+$d472
+majorImpactCooldownTimer	equ	gameData+$d473
+crashRecoveryTimer		equ	gameData+$d474
+raceCompletionCheckFlag		equ	gameData+$d475
+networkConnectionState		equ	gameData+$d476
+lineDrawingModeFlag		equ	gameData+$d477
+geometryFormatFlag		equ	gameData+$d479
+segmentProcessingIndex		equ	gameData+$d47a
+segmentOrientationPrimary	equ	gameData+$d47b
+previousSegmentOffset		equ	gameData+$d47c
+hardImpactCount			equ	gameData+$d47d
+wheelMovementActive		equ	gameData+$d47e
+lbB00D47F			equ	gameData+$d47f
+currentSegmentIndex		equ	gameData+$d485
+trackGeometryTypeIndex		equ	gameData+$d486
+blinkFlag			equ	gameData+$d488
+lapTimeSubsecondVisibility	equ	gameData+$d489
+currentTrackCoordinate		equ	gameData+$d48b
+unusedDisplayFlag2		equ	gameData+$d48c
+maxMenuIndex			equ	gameData+$d48d
+gameMessageActiveFlag		equ	gameData+$d48e
+segmentConfigLoadedFlag		equ	gameData+$d48f
+renderModeFlag			equ	gameData+$d490
+trackOffsetBase			equ	gameData+$d491
+diskOperationAborted		equ	gameData+$d492
+gridSweepDirection		equ	gameData+$d493
+lbB00D494			equ	gameData+$d494
+maxBoostFuel			equ	gameData+$d495
+trackSegmentLimit		equ	gameData+$d497
+maxSegmentIndex			equ	gameData+$d498
+maxLapsForRace			equ	gameData+$d499
+renderingOrderMode		equ	gameData+$d49a
+lastValidSegmentIndex		equ	gameData+$d49b
+offTrackStateFlags		equ	gameData+$d49c
+aiPatternControlFlags		equ	gameData+$d49d
+prevSegmentDepthCounter		equ	gameData+$d49e
+prevTrackProgressionOffset	equ	gameData+$d49f
+playerLateralPosition		equ	gameData+$d4a1
+segmentDataIndexScaled		equ	gameData+$d4a3
+pauseState			equ	gameData+$d4a4
+pauseKeyPressed			equ	gameData+$d4a5
+lbB00D4A6			equ	gameData+$d4a6
+opponentTargetLateralPosition	equ	gameData+$d4a7
+accelerationStateFlag		equ	gameData+$d4a8
+framesSinceCopperlistUpdate	equ	gameData+$d4a9
+raceMatchupScreenTypeFlag	equ	gameData+$d4aa
+lbB00D4AB			equ	gameData+$d4ab
+frameCounter			equ	gameData+$d4ac
+lbB00D4AD			equ	gameData+$d4ad
+lbB00D4AE			equ	gameData+$d4ae
+raceCompletionState		equ	gameData+$d4af
+drawBridgeAnimationPhase	equ	gameData+$d4b0
+displayFlags			equ	gameData+$d4b1
+raceWinnerBits			equ	gameData+$d4b2
+raceOutcomeFlags		equ	gameData+$d4b4
+savedHoleRenderingPosition	equ	gameData+$d4b5
+targetDamageLevel		equ	gameData+$d4b6
+opponentAheadFlag		equ	gameData+$d4b8
+disableWheelUpdateFlag		equ	gameData+$d4b9
+curveSmoothingFlag		equ	gameData+$d4ba
+trackSideIndicatorCopy		equ	gameData+$d4bb
+singleBufferRenderMode		equ	gameData+$d4bc
+aiMovementOverride		equ	gameData+$d4bd
+opponentSegmentOffset1		equ	gameData+$d4be
+opponentSegmentOffset2		equ	gameData+$d4bf
+aiActionTimer			equ	gameData+$d4c0
+rollTransitionFlag		equ	gameData+$d4c1
+aiPatternOffset			equ	gameData+$d4c2
+opponentCollisionTimer		equ	gameData+$d4c3
+raceStartComplete		equ	gameData+$d4c4
+segmentDataStartIndex		equ	gameData+$d4c5
+steeringInputDirection		equ	gameData+$d4c6
+draftingTimer			equ	gameData+$d4c7
+frameBufferToggle		equ	gameData+$d4c8
+globalFrameCounter		equ	gameData+$d4c9
+menuHighlightMode		equ	gameData+$d4ca
+multiplayerRaceDisplayFlag	equ	gameData+$d4cb
+lapTimeDisplayDuration		equ	gameData+$d4cc
+frameThrottleFlag		equ	gameData+$d4cd
+frameThrottleAccumulator	equ	gameData+$d4cf
+lbB00D4D0			equ	gameData+$d4d0
+offRoadSideFlags		equ	gameData+$d4d1
+lbB00D4D2			equ	gameData+$d4d2
+textTransparencyMode		equ	gameData+$d4d3
+segmentBaseSteeringOffset	equ	gameData+$d4d4
+currentPlayerNameOffset		equ	gameData+$d4d5
+gridLookupX			equ	gameData+$d4d5
+selectedMenuItem		equ	gameData+$d4d6
+gridLookupY			equ	gameData+$d4d6
+collisionImpactLevel		equ	gameData+$d4d7
+segmentOrientationAlternate	equ	gameData+$d4d9
+wheelBouncePhaseAccumulator	equ	gameData+$d4da
+wheelRotationFrame		equ	gameData+$d4db
+segmentAlternateFlag		equ	gameData+$d4dc
+wheelBaseHeight			equ	gameData+$d4dd
+unusedDisplayFlag1		equ	gameData+$d4de
+raceStartTimer			equ	gameData+$d4df
+multiplayerSyncFlag		equ	gameData+$d4e0
+trackSideIndicator		equ	gameData+$d4e1
+gameModeStateFlags		equ	gameData+$d4e2
+wheelAnimationAccumulator	equ	gameData+$d4e3
+tempByte5			equ	gameData+$d4e4
+segmentHalfFlags		equ	gameData+$d4e6
+renderingIndex			equ	gameData+$d4e8
+chainLiftVelocity		equ	gameData+$d4e9
+chainVerticalPosition		equ	gameData+$d4ea
+opponentCollisionActive		equ	gameData+$d4eb
+opponentDistanceOffset		equ	gameData+$d4ec
+opponentLateralPosition		equ	gameData+$d4ed
+aiCurrentSpeed			equ	gameData+$d4ee
+lbB00D4EF			equ	gameData+$d4ef
+aiTargetSpeed			equ	gameData+$d4f0
+aiTargetSpeedHigh		equ	gameData+$d4f1
+trackHeightDifference		equ	gameData+$d4f2
+enginePitchDelta		equ	gameData+$d4f4
+enginePitchDeltaLow		equ	gameData+$d4f5
+tempWord1			equ	gameData+$d4f6
+playerOpponentLateralDistance	equ	gameData+$d4f7
+raceSetupFlags			equ	gameData+$d4f7
+tempWord2			equ	gameData+$d4f8
+wheelDataOffset			equ	gameData+$d4f9
+cameraHeightBaseline		equ	gameData+$d4fa
+raceStartRoll			equ	gameData+$d500
+raceStartRollLow		equ	gameData+$d501
+splineControlPoint1		equ	gameData+$d502
+splineControlPoint2		equ	gameData+$d504
+splineControlPoint3		equ	gameData+$d506
+splineControlPoint4		equ	gameData+$d508
+additionalInterpolationPoints1	equ	gameData+$d50a
+additionalInterpolationPoints2	equ	gameData+$d50c
+segmentBezierOffset1		equ	gameData+$d50e
+segmentBezierOffset2		equ	gameData+$d510
+opponentSegmentQueueOffset	equ	gameData+$d512
+processedSegmentIndices1	equ	gameData+$d514
+processedSegmentIndices2	equ	gameData+$d516
+speedBarLength			equ	gameData+$d518
+lbW00D51C			equ	gameData+$d51c
+minimumRenderQueueOffset	equ	gameData+$d51e
+previousSpeedBarLength		equ	gameData+$d520
+lateralPositionOutOfBounds	equ	gameData+$d522
+lbB00D524			equ	gameData+$d524
+visibilityAccumulator		equ	gameData+$d526
+prevVisibilityAccumulator	equ	gameData+$d528
+segmentProgressDistance		equ	gameData+$d52a
+segmentProgressDistanceLow	equ	gameData+$d52b
+cameraYawPerspectiveOffset	equ	gameData+$d52e
+cameraRotationFlags		equ	gameData+$d530
+reverseDirectionFlag		equ	gameData+$d532
+enginePitchAccumulator		equ	gameData+$d534
+perspectiveDepthDivisor		equ	gameData+$d536
+opponentDistance		equ	gameData+$d538
+opponentDistanceLow		equ	gameData+$d539
+maxCompressionVelocity		equ	gameData+$d53a
+steeringScaleFactor		equ	gameData+$d53c
+playerDistanceDifference	equ	gameData+$d53e
+forwardPositionIntermediate	equ	gameData+$d540
+segmentBlendParam		equ	gameData+$d541
+viewportCenterY			equ	gameData+$d542
+trackDirectionInversionFlag	equ	gameData+$d544
+segmentSlopeFlags		equ	gameData+$d54a
+adjustedDistanceValue		equ	gameData+$d54c
+lateralTrackPosition		equ	gameData+$d54d
+lbB00D554			equ	gameData+$d554
+previousSegmentProperties	equ	gameData+$d555
+horizonFillStartY		equ	gameData+$d556
+maxRenderingIndex		equ	gameData+$d557
+polygonFillStartY		equ	gameData+$d558
+trackBaseOffset			equ	gameData+$d559
+offsetFromRoadCenter		equ	gameData+$d55a
+lateralRoadPosition		equ	gameData+$d55c
+speedMinor			equ	gameData+$d55d
+trackSurfaceHeight		equ	gameData+$d55e
+wheelSpeed			equ	gameData+$d560
+viewOffsetX			equ	gameData+$d562
+viewStepX			equ	gameData+$d564
+viewOffsetY			equ	gameData+$d566
+viewStepY			equ	gameData+$d568
+quadRectHalfWidth		equ	gameData+$d56a
+quadRectWidth			equ	gameData+$d56c
+quadRectHalfHeight		equ	gameData+$d56e
+quadRectHeight			equ	gameData+$d570
+stepSizeXHalf			equ	gameData+$d572
+stepSizeYHalf			equ	gameData+$d574
+lbW00D578			equ	gameData+$d578
+lbW00D57A			equ	gameData+$d57a
+stepSizeXQuarter		equ	gameData+$d57c
+stepSizeYQuarter		equ	gameData+$d57e
+lbW00D580			equ	gameData+$d580
+lbW00D582			equ	gameData+$d582
+quadTranslateX			equ	gameData+$d584
+quadTranslateY			equ	gameData+$d586
+adjustedViewX			equ	gameData+$d588
+adjustedViewY			equ	gameData+$d58a
+primaryGeometryOffset		equ	gameData+$d58c
+alternateGeometryOffset		equ	gameData+$d590
+trackSurfaceFrontLeft		equ	gameData+$d594
+trackSurfaceFrontRight		equ	gameData+$d598
+trackSurfaceRear		equ	gameData+$d59c
+trackOffsetAdjustment		equ	gameData+$d5a0
+postWreckStateFlag		equ	gameData+$d5a2
+wheelHeightFrontLeft		equ	gameData+$d5a4
+wheelHeightFrontRight		equ	gameData+$d5a8
+wheelHeightRear			equ	gameData+$d5ac
+suspensionTravelFrontLeft	equ	gameData+$d5b0
+suspensionTravelFrontRight	equ	gameData+$d5b4
+suspensionTravelRear		equ	gameData+$d5b8
+geometryDatabaseOffset		equ	gameData+$d5bc
+rawTrackDataOffset		equ	gameData+$d5c0
+obfuscationBufferPointer	equ	rawTrackDataOffset
+lbB00D5C8			equ	gameData+$d5c8
+rotatedCameraX			equ	gameData+$d5cc
+carHeightPosition		equ	gameData+$d5d0
+rotatedCameraZ			equ	gameData+$d5d4
+cameraWorldX			equ	gameData+$d5d8
+lbW00D5DA			equ	gameData+$d5da
+cameraWorldY			equ	gameData+$d5dc
+lbB00D5DD			equ	gameData+$d5dd
+lbW00D5DE			equ	gameData+$d5de
+cameraWorldZ			equ	gameData+$d5e0
+lbW00D5E2			equ	gameData+$d5e2
+cameraAngleX			equ	gameData+$d5e4
+cameraAngleY			equ	gameData+$d5e6
+cameraAngleYLow			equ	gameData+$d5e7
+cameraAngleZ			equ	gameData+$d5e8
+worldXSpeed			equ	gameData+$d5ea
+worldYSpeed			equ	gameData+$d5ec
+worldZSpeed			equ	gameData+$d5ee
+rotationSpeedX			equ	gameData+$d5f0
+rotationSpeedY			equ	gameData+$d5f2
+rotationSpeedZ			equ	gameData+$d5f4
+worldAccelerationX		equ	gameData+$d5f6
+worldAccelerationY		equ	gameData+$d5f8
+worldAccelerationZ		equ	gameData+$d5fa
+angularAccelerationX		equ	gameData+$d5fc
+angularAccelerationY		equ	gameData+$d5fe
+angularAccelerationZ		equ	gameData+$d600
+wheelCornerXFrontLeft		equ	gameData+$d602
+wheelCornerXFrontRight		equ	gameData+$d604
+wheelCornerXRearCenter		equ	gameData+$d606
+wheelCornerYFrontLeft		equ	gameData+$d608
+wheelCornerYFrontRight		equ	gameData+$d60a
+wheelCornerYRearCenter		equ	gameData+$d60c
+baseTargetRoll			equ	gameData+$d60e
+baseRollAngle			equ	gameData+$d610
+additionalYawOffset		equ	gameData+$d612
+clampedSuspensionFrontLeft	equ	gameData+$d614
+clampedSuspensionFrontRight	equ	gameData+$d616
+clampedSuspensionRear		equ	gameData+$d618
+previousSuspensionFrontLeft	equ	gameData+$d61a
+previousSuspensionFrontRight	equ	gameData+$d61c
+previousSuspensionRear		equ	gameData+$d61e
+suspensionVelocityFrontLeft	equ	gameData+$d620
+suspensionVelocityFrontRight	equ	gameData+$d622
+suspensionVelocityRear		equ	gameData+$d624
+targetPitchRate			equ	gameData+$d626
+targetRollRate			equ	gameData+$d628
+gasOutputAccumulatorValue	equ	gameData+$d62a
+gasOutputIntensityValue		equ	gameData+$d62b
+carLocalVelocityX		equ	gameData+$d62c
+carLocalVelocityY		equ	gameData+$d62e
+carLocalVelocityZ		equ	gameData+$d630
+adjustedRollAngle		equ	gameData+$d632
+adjustedPitchAngle		equ	gameData+$d634
+adjustedYawAngle		equ	gameData+$d636
+averageWheelVelocity		equ	gameData+$d638
+averageWheelVelocityLow		equ	gameData+$d639
+transformedAngularVelocityX	equ	gameData+$d63a
+transformedAngularVelocityY	equ	gameData+$d63c
+transformedAngularVelocityZ	equ	gameData+$d63e
+rollSpringAngle			equ	gameData+$d640
+pitchSpringAngle		equ	gameData+$d642
+yawSpringAngle			equ	gameData+$d644
+lbW00D646			equ	gameData+$d646
+rollDisplacement		equ	gameData+$d648
+pitchReferenceZero		equ	gameData+$d64a
+pitchDisplacement		equ	gameData+$d64c
+rollSpringComponent		equ	gameData+$d64e
+pitchSpringComponent		equ	gameData+$d650
+yawSpringComponent		equ	gameData+$d652
+lateralOpponentCollisionForce	equ	gameData+$d654
+verticalOpponentCollisionForce	equ	gameData+$d656
+forwardOpponentCollisionForce	equ	gameData+$d658
+segmentTargetAngle		equ	gameData+$d65a
+carSpeedMagnitude		equ	gameData+$d65c
+opponentFrontWheelAccel		equ	gameData+$d65e
+opponentWheelAccelerationRL	equ	gameData+$d660
+opponentWheelAccelerationRR	equ	gameData+$d662
+opponentWheelPositions		equ	gameData+$d666
+opponentRearLeftWheelPosition	equ	gameData+$d668
+opponentRearRightWheelPosition	equ	gameData+$d66a
+opponentFrontWheelHeightPrev	equ	gameData+$d66e
+opponentWheelHeightRL		equ	gameData+$d670
+opponentWheelHeightRR		equ	gameData+$d672
+opponentWheelVelocities		equ	gameData+$d676
+opponentRearLeftWheelVelocity	equ	gameData+$d678
+opponentRearRightWheelVelocity	equ	gameData+$d67a
+opponentWheelForceTotal		equ	gameData+$d67e
+opponentWheelForceRL		equ	gameData+$d680
+opponentWheelForceRR		equ	gameData+$d682
+boundsMinX			equ	gameData+$d686
+boundsMaxX			equ	gameData+$d688
+boundsMinY			equ	gameData+$d68a
+trackCoordinatesX		equ	gameData+$d68e
+trackCoordinatesY		equ	gameData+$d6ae
+segmentProcessedFlags		equ	gameData+$d6d0
+lbL00D76C			equ	gameData+$d76c
+trackSegmentData		equ	gameData+$d770
+inputCoordX1			equ	gameData+$d864
+inputCoordY1			equ	gameData+$d866
+inputCoordX2			equ	gameData+$d868
+inputCoordY2			equ	gameData+$d86a
+clampedCoordX1			equ	gameData+$d888
+clampedCoordY1			equ	gameData+$d88a
+clampedCoordX2			equ	gameData+$d88c
+clampedCoordY2			equ	gameData+$d88e
+coordinateLookupTable		equ	gameData+$d8b0
+lbW00D8B4			equ	gameData+$d8b4
+lbW00D8B6			equ	gameData+$d8b6
+transformedCoordinates1		equ	gameData+$d9a0
+transformedCoordinates2		equ	gameData+$d9a2
+quadVertexX4			equ	gameData+$d9b0
+quadVertexX5			equ	gameData+$d9b2
+quadVertexX6			equ	gameData+$d9b4
+quadVertexX7			equ	gameData+$d9b6
+lbW00D9B8			equ	gameData+$d9b8
+lbW00D9BA			equ	gameData+$d9ba
+lbW00D9BC			equ	gameData+$d9bc
+lbW00D9BE			equ	gameData+$d9be
+quadVertexX0			equ	gameData+$d9c0
+quadVertexX1			equ	gameData+$d9c2
+quadVertexX2			equ	gameData+$d9c4
+quadVertexX3			equ	gameData+$d9c6
+lbW00D9C8			equ	gameData+$d9c8
+lbW00D9CA			equ	gameData+$d9ca
+lbW00D9CC			equ	gameData+$d9cc
+lbW00D9CE			equ	gameData+$d9ce
+transformedVertexBounds		equ	gameData+$d9f0
+lbW00D9F4			equ	gameData+$d9f4
+lbW00D9F6			equ	gameData+$d9f6
+quadVertexY4			equ	gameData+$daf0
+quadVertexY5			equ	gameData+$daf2
+quadVertexY6			equ	gameData+$daf4
+quadVertexY7			equ	gameData+$daf6
+lbW00DAF8			equ	gameData+$daf8
+lbW00DAFA			equ	gameData+$dafa
+lbW00DAFC			equ	gameData+$dafc
+lbW00DAFE			equ	gameData+$dafe
+quadVertexY0			equ	gameData+$db00
+quadVertexY1			equ	gameData+$db02
+quadVertexY2			equ	gameData+$db04
+quadVertexY3			equ	gameData+$db06
+lbW00DB08			equ	gameData+$db08
+lbW00DB0A			equ	gameData+$db0a
+lbW00DB0C			equ	gameData+$db0c
+lbW00DB0E			equ	gameData+$db0e
+lbL00DB30			equ	gameData+$db30
+transformMatrix34		equ	gameData+$db64
+transformMatrix38		equ	gameData+$db68
+transformMatrix3E		equ	gameData+$db6e
+transformMatrix44		equ	gameData+$db72
+transformMatrix46		equ	gameData+$db74
+transformMatrix48		equ	gameData+$db76
+trackSegmentGrid		equ	gameData+$db80
+debrisParticleXPositions	equ	gameData+$dc80
+debrisParticleYPositions	equ	gameData+$dcc0
+debrisParticleXVelocities	equ	gameData+$dd00
+debrisParticleYVelocities	equ	gameData+$dd40
+segmentGeometryIndices		equ	gameData+$ddc0
+segmentAlternateGeometryIndices	equ	gameData+$de24
+trackSegmentCoordinates		equ	gameData+$de88
+trackSegmentPropertiesTable	equ	gameData+$deec
+segmentInterpolationPoint1	equ	gameData+$df50
+raceRecordDisplayBuffer		equ	gameData+$df6c
+drawBridgeSegmentBase1		equ	gameData+$dfb6
+drawBridgeSegmentBase2		equ	gameData+$dfb8
+segmentInterpolationPoint2	equ	gameData+$e018
+segmentWorldPositions		equ	gameData+$e0e0
+obstacleSegmentIndices		equ	gameData+$e1a8
+obstacleTypes			equ	gameData+$e1c8
+trackFeatureData		equ	gameData+$e1e8
+playerStatsArray		equ	gameData+$e208
+lbB00E209			equ	gameData+$e209
+lbB00E216			equ	gameData+$e216
+lbB00E217			equ	gameData+$e217
+lapTimeSeconds			equ	gameData+$e220
+lbB00E221			equ	gameData+$e221
+lbB00E22E			equ	gameData+$e22e
+lbB00E22F			equ	gameData+$e22f
+lapTimeSubseconds		equ	gameData+$e238
+lbB00E239			equ	gameData+$e239
+lbB00E246			equ	gameData+$e246
+lbB00E247			equ	gameData+$e247
+segmentVisibilityData		equ	gameData+$e252
+drawBridgeHeightValues		equ	gameData+$e282
+lbL00E2B6			equ	gameData+$e2b6
+leagueStandingsTable		equ	gameData+$e2c2
+currentDivision			equ	gameData+$e2ce
+holeRenderingPosition		equ	gameData+$e2cf
+currentPlayerContext		equ	gameData+$e2d0
+aiSkillLevelTable		equ	gameData+$e2d2
+playerRaceWins			equ	gameData+$e2de
+playerSecondPlaceFinishes	equ	gameData+$e2ea
+raceParticipationCounters	equ	gameData+$e2f6
+playerRankingScores		equ	gameData+$e302
+sortedRaceStandings		equ	gameData+$e30e
+trackDataBuffer			equ	gameData+$e319
+numTrackSegments		equ	gameData+$e31a
+playerSpawnSegment		equ	gameData+$e31b
+lapApproachSegment		equ	gameData+$e31c
+finishLineSegmentIndex		equ	gameData+$e31d
+startWorldPosition		equ	gameData+$e31e
+boostFuelLevel			equ	gameData+$e320
+selectedTrackInDivision		equ	gameData+$e322
+bestLapRecordHolder		equ	gameData+$e323
+bestRaceRecordHolder		equ	gameData+$e324
+lbB00E325			equ	gameData+$e325
+lbB00E326			equ	gameData+$e326
+player1ID			equ	gameData+$e327
+player2ID			equ	gameData+$e328
+opponentID			equ	gameData+$e329
+trackMetadataBuffer		equ	gameData+$e32a
+trackDamageFrameBase		equ	gameData+$e32b
+trackBoostFuelPlayer1		equ	gameData+$e32c
+trackBoostFuelPlayer2		equ	gameData+$e32d
+obstacleCount			equ	gameData+$e32e
+trackFeatureCount		equ	gameData+$e32f
+writeMode			equ	gameData+$e331
+lapLineSegment			equ	gameData+$e332
+currentTrackID			equ	gameData+$e333
+bufferEncodedFlag		equ	gameData+$e334
+currentRaceNumber		equ	gameData+$e335
+playerHolePositions		equ	gameData+$e336
+ciaTimerFlag			equ	gameData+$48aa8
+lbW049538			equ	gameData+$49538
+networkPacketReadyFlag		equ	gameData+$4953a
+networkGameMode			equ	gameData+$4953c
+steeringInputDirectionBackup	equ	gameData+$4953d
+checksumAccumulator		equ	gameData+$4953e
+networkDataCounter1		equ	gameData+$49540
+savedNetworkCounter		equ	gameData+$49542
+networkDataCounter2		equ	gameData+$49544
+lbW049546			equ	gameData+$49546
+lbW049548			equ	gameData+$49548
+lbW04954A			equ	gameData+$4954a
+lbW04954C			equ	gameData+$4954c
+lbW04954E			equ	gameData+$4954e
+lbB049550			equ	gameData+$49550
+lbB049551			equ	gameData+$49551
+lbB049552			equ	gameData+$49552
+lbB049553			equ	gameData+$49553
+lbB049554			equ	gameData+$49554
+lbB049555			equ	gameData+$49555
+lbB049556			equ	gameData+$49556
+lbB049557			equ	gameData+$49557
+lbB049558			equ	gameData+$49558
+lbB049559			equ	gameData+$49559
+lbB04955A			equ	gameData+$4955a
+networkInputSyncEnabled		equ	gameData+$4955b
+receivedGameStateID		equ	gameData+$4955c
+receivedGameInitFlag		equ	gameData+$4955d
+receivedPlayerCommand		equ	gameData+$4955e
+receivedPlayerState		equ	gameData+$4955f
+receivedInputState		equ	gameData+$49560
+lbB049561			equ	gameData+$49561
+gameStateID			equ	gameData+$49562
+networkInitPhase		equ	gameData+$49563
+networkProtocolState		equ	gameData+$49564
+localPlayerStateCache		equ	gameData+$49565
+localInputStateCache		equ	gameData+$49566
+raceSeriesCounter		equ	gameData+$49567
+localPlayerReadyFlag		equ	gameData+$49568
+opponentRelativePosition	equ	gameData+$49569
+lbB04956A			equ	gameData+$4956a
+lbB04956B			equ	gameData+$4956b
+lbB04956C			equ	gameData+$4956c
+lbB04956D			equ	gameData+$4956d
+lbB04956E			equ	gameData+$4956e
+receivedKey			equ	gameData+$4956f
+lbW049570			equ	gameData+$49570
+totalRaceCounter		equ	gameData+$49572
+lbW049574			equ	gameData+$49574
+lbW049576			equ	gameData+$49576
+lbB0499D6			equ	gameData+$499d6
+lbB0499D7			equ	gameData+$499d7
+lbL04A4AE			equ	gameData+$4a4ae
+lbB04A4BA			equ	gameData+$4a4ba
+lbB04A4BB			equ	gameData+$4a4bb
+lbB04A4C8			equ	gameData+$4a4c8
+bitplaneMask1			equ	gameData+$4a4ca
+bitplaneMask2			equ	gameData+$4a4ce
+bitplaneMaskPointer		equ	gameData+$4a4d2
+lbB04AA3E			equ	gameData+$4aa3e
+useAlternateFontFlag		equ	gameData+$4ab4a
+lbB04AB4B			equ	gameData+$4ab4b
+playerNameRenderingPosition	equ	gameData+$4ab4c
+foregroundColorMask1		equ	gameData+$4b12e
+foregroundColorMask2		equ	gameData+$4b132
+backgroundColorMask1		equ	gameData+$4b136
+backgroundColorMask2		equ	gameData+$4b13a
+textCursorColumn		equ	gameData+$4b13e
+textCursorRow			equ	gameData+$4b13f
+characterByteOffset		equ	gameData+$4b140
+characterPixelOffset		equ	gameData+$4b141
+savedTransparencyFlag		equ	gameData+$4b142
+textControlCodeState		equ	gameData+$4b143
+controlCodeByteCounter		equ	gameData+$4b144
+engineAudioNoiseFlag		equ	gameData+$4cf46
+maxInputLength			equ	gameData+$4d13c
+directionalInputBits		equ	gameData+$4d13d
+currentInputPosition		equ	gameData+$4d13e
+displayUpdateFlag		equ	gameData+$4f024
+buttonReleaseMask		equ	gameData+$4f2dA
+bufferSelector			equ	gameData+$4f3be
+lbB050474			equ	gameData+$50474
+textRenderingFlag		equ	gameData+$50475
+additionalPlayerCount		equ	gameData+$50476
+remainingRaces			equ	gameData+$50477
+standingsDisplayModeFlag	equ	gameData+$5047a
+raceSeriesProgress		equ	gameData+$5047b
+selectedDivision		equ	gameData+$5047c
+divisionSelectedFlag		equ	gameData+$5047d
+lbB0513DC			equ	gameData+$513dc
+lbB0513DD			equ	gameData+$513dd
+menuInitializedFlag		equ	gameData+$528bc
+framesToWait			equ	gameData+$52fd8
+framesToWaitWhenFading		equ	gameData+$52fda
+creakingSoundCooldownTimer	equ	gameData+$52fdb
+impactSoundCooldownTimer	equ	gameData+$539b6
+grindSoundCooldownTimer		equ	gameData+$539b7
+randomSeed1			equ	gameData+$53ea2
+randomSeed2			equ	gameData+$53ea4
+randomSeed2Low			equ	gameData+$53ea5
+randomSeed3			equ	gameData+$53ea6
+currentSaveSlotIndex		equ	gameData+$544b4
+disableDirectionalInputFlag	equ	gameData+$544b5
+selectedSaveSlotIndex		equ	gameData+$544b6
+backupSaveSlotIndex		equ	gameData+$544b7
+lbB0544BA			equ	gameData+$544ba
+saveSlotHighlightFlag		equ	gameData+$544bb
+lbB0544BC			equ	gameData+$544bc
+lbB054608			equ	gameData+$54608
+aiLookAheadDistance		equ	gameData+$555e0
+aiCorneringSkill		equ	gameData+$555e1
+damageFrameLimit		equ	gameData+$555e2
+minBoundaryDistance		equ	gameData+$557de
+collisionSoundCooldown		equ	gameData+$557e0
+suppressMenuTextFlag		equ	gameData+$55e30
+segmentRenderDepthTable		equ	gameData+$57770
+transformedGridX		equ	gameData+$577C0
+transformedGridY		equ	gameData+$577C2
+lbB0579FA			equ	gameData+$579fa
+lbW0579FC			equ	gameData+$579fc
+lbW0579FE			equ	gameData+$579fe
+segmentRenderFlags		equ	gameData+$57a00
+segmentDataWritePointer		equ	gameData+$57a02
+lbB057D75			equ	gameData+$57d75
+lbB0581A0			equ	gameData+$581a0
+lbW0581A2			equ	gameData+$581a2
+lbW0581A4			equ	gameData+$581a4
+lbW0581A6			equ	gameData+$581a6
+lineDrawingBufferPointer	equ	gameData+$59a44
+renderCommandQueueOffset	equ	gameData+$59a48
+savedXCoordinate		equ	gameData+$59ad4
+edgeDirectionFlag		equ	gameData+$59da6
+clipRequiredFlag		equ	gameData+$59da7
+clipIterationCounter		equ	gameData+$59da8
+renderingFlag			equ	gameData+$59da9
+farSegmentQueueOffset		equ	gameData+$5ac2c
+mountainHorizontalAngles	equ	gameData+$5b036
+mountainShapeIndices		equ	gameData+$5b066
+lbB05B096			equ	gameData+$5b096
+lbB05B097			equ	gameData+$5b097
+lbB05B098			equ	gameData+$5b098
+mountainSegmentCount		equ	gameData+$5b099
+mountainScreenX			equ	gameData+$5b09a
+mountainScreenY			equ	gameData+$5b09c
+scanlineCounter			equ	gameData+$5b3ca
+lbW05B3CC			equ	gameData+$5b3cc
+lbW05B3CE			equ	gameData+$5b3ce
+currentEdgePointer1		equ	gameData+$5b3d0
+currentEdgePointer2		equ	gameData+$5b3d4
+segmentAlternateRenderFlag	equ	gameData+$5b3d8
+segmentProcessedFlag		equ	gameData+$5b3da
+edgeClipFailedFlag		equ	gameData+$5b3dc
+lbB05B3DE			equ	gameData+$5b3de
+lbB05B3E2			equ	gameData+$5b3e2
+currentSegmentQueueOffset	equ	gameData+$5b3e6
+barrierSegmentQueueOffset	equ	gameData+$5b3e8
+lbB05B3EA			equ	gameData+$5b3ea
+lbB05B3EC			equ	gameData+$5b3ec
+lbL05B3F0			equ	gameData+$5b3f0
+lbL05B3F4			equ	gameData+$5b3f4
+lbL05B3F8			equ	gameData+$5b3f8
+edgeSortBuffer			equ	gameData+$5b484
+renderDataBuffer		equ	gameData+$5b504
+loadingHardwareSprite		equ	gameData+$5b840
+spriteUpdatePendingFlag		equ	gameData+$5b841
+lbW05BA66			equ	gameData+$5ba66
+renderGraphicsCurrentX		equ	gameData+$5ba68
+renderGraphicsCurrentY		equ	gameData+$5ba6a
+graphicsPointerTable		equ	gameData+$5bdac
+frameBuffers			equ	gameData+$5be84
+displayFrameBuffer		equ	gameData+$5be88
+renderFrameBuffer		equ	gameData+$5be8c
+viewportTopAddress		equ	gameData+$5be90
 
 	section Data,data
 
@@ -20314,7 +21016,7 @@ trackMountainDataTable:
 name_graphics:	dc.b	"graphics.library",0
 
 	ifeq	WHDLOAD
-version:	dc.b	"$VER: Stunt Car Racer Ultimate 0.20260330 (30.03.2026) Work in progress!",0
+version:	dc.b	"$VER: Stunt Car Racer Unleashed 1.0 (09.05.2026)",0
 	endif
 
 	section	ChipData,data_c
@@ -20337,7 +21039,7 @@ copperlistSprite0:
 	dc.w	$0000,spr0ptl,$0000,spr1pth,$0000,spr1ptl,$0000,spr2pth,$0000
 	dc.w	spr2ptl,$0000,spr3pth,$0000,spr3ptl,$0000,spr4pth,$0000,spr4ptl
 	dc.w	$0000,spr5pth,$0000,spr5ptl,$0000,spr6pth,$0000,spr6ptl,$0000
-	dc.w	spr7pth,$0000,spr7ptl,$0000,$FFFF				; originally $FA01,$FF00,intreq,$8010,
+	dc.w	spr7pth,$0000,spr7ptl,$0000,$FFFF	; originally $FA01,$FF00,intreq,$8010,
 	dc.w	$FFFE
 
 	section BSS,bss
@@ -20350,7 +21052,7 @@ leagueSeasonData:	ds.b	$1b
 randomSeedBuffer1:	ds.b	5
 randomSeedBuffer2:	ds.b	5
 obfuscatedLeagueBuffer:	ds.b	$1db
-saveSlotNameBuffer:	ds.b	10			; this must be a contiguous block at least up to multiplayerObfuscationTable
+saveSlotNameBuffer:	ds.b	10		; this must be a contiguous block at least up to multiplayerObfuscationTable
 savedSlotIndex:	ds.b	1
 saveSlotFlags:	ds.b	$f
 saveDataValidationBuffer:	ds.b	$1e2
@@ -20403,3 +21105,193 @@ lineDrawingBuffer:	ds.b	$2710
 lineDrawingBufferEnd:
 frameBuffer1:   ds.b    40*200*4
 frameBuffer2:   ds.b    40*200*4
+
+_ciaa		equ	$00BFE001
+_ciab		equ	$00BFD000
+_custom		equ	$00DFF000
+ac_len		equ	$00000004
+ac_per		equ	$00000006
+adkcon		equ	$0000009E
+aud0		equ	$000000A0
+beamcon0	equ	$1dc
+bltafwm		equ	$00000044
+bltamod		equ	$00000064
+bltbmod		equ	$00000062
+bltcdat		equ	$00000070
+bltdmod		equ	$00000066
+bpl1mod		equ	$00000108
+bpl1pth		equ	$0e0
+bpl1ptl		equ	$0e2
+bpl2mod		equ	$0000010A
+bpl2pth		equ	$0e4
+bpl2ptl		equ	$0e6
+bpl3pth		equ	$0e8
+bpl3ptl		equ	$0ea
+bpl4pth		equ	$0ec
+bpl4ptl		equ	$0ee
+bplcon0		equ	$00000100
+bplcon1		equ	$00000102
+bplcon2		equ	$00000104
+ciacra		equ	$00000E00
+ciacrb		equ	$00000F00
+ciaddra		equ	$00000200
+ciaicr		equ	$00000D00
+ciapra		equ	$00000000
+ciaprb		equ	$00000100
+ciasdr		equ	$00000C00
+ciatbhi		equ	$00000700
+ciatblo		equ	$00000600
+color00 	equ	$180
+color01 	equ	$182
+color02 	equ	$184
+color03 	equ	$186
+color04 	equ	$188
+color05 	equ	$18a
+color06 	equ	$18c
+color07 	equ	$18e
+color08 	equ	$190
+color09 	equ	$192
+color10		equ	$194
+color11		equ	$196
+color12		equ	$198
+color13		equ	$19a
+color14		equ	$19c
+color15		equ	$19e
+color16		equ	$1a0
+color17		equ	$1a2
+color18		equ	$1a4
+color19		equ	$1a6
+color20		equ	$1a8
+color21		equ	$1aa
+color22		equ	$1ac
+color23		equ	$1ae
+color24		equ	$1b0
+color25		equ	$1b2
+color26		equ	$1b4
+color27		equ	$1b6
+color28		equ	$1b8
+color29		equ	$1ba
+color30		equ	$1bc
+color31		equ	$1be
+cop1lc		equ	$00000080
+cop1lch		equ	$080
+copjmp1		equ	$00000088
+ddfstop		equ	$00000094
+ddfstrt		equ	$00000092
+diwstop		equ	$00000090
+diwstrt		equ	$0000008E
+dmacon		equ	$00000096
+dmaconr		equ	$00000002
+dsklen		equ	$00000024
+dsksync		equ	$0000007E
+intena		equ	$0000009A
+intenar		equ	$01c 
+intreq		equ	$0000009C
+intreqr		equ	$0000001E
+joy1dat		equ	$0000000C
+serdat		equ	$00000030
+serdatr		equ	$00000018
+serper		equ	$00000032
+spr0pth		equ	$120
+spr0ptl		equ	$122
+spr1pth		equ	$124
+spr1ptl		equ	$126
+spr2pth		equ	$128
+spr2ptl		equ	$12a
+spr3pth		equ	$12c
+spr3ptl		equ	$12e
+spr4pth		equ	$130
+spr4ptl		equ	$132
+spr5pth		equ	$134
+spr5ptl		equ	$136
+spr6pth		equ	$138
+spr6ptl		equ	$13a
+spr7pth		equ	$13c
+spr7ptl		equ	$13e
+
+CIACRAF_RUNMODE	equ	$00000008
+CIACRBF_RUNMODE	equ	$00000008
+CIAF_COMCD	equ	$00000020
+CIAF_COMCTS	equ	$00000010
+CIAF_COMDSR	equ	$00000008
+CIAF_COMDTR	equ	$00000080
+CIAF_DSKSEL0	equ	$00000008
+CIAF_PRTRBUSY	equ	$00000001
+CIAF_PRTRPOUT	equ	$00000002
+CIAF_PRTRSEL	equ	$00000004
+CIAICRB_TB	equ	$00000001
+CIAICRF_ALRM	equ	$00000004
+CIAICRF_FLG	equ	$00000010
+CIAICRF_SETCLR	equ	$00000080
+CIAICRF_SP	equ	$00000008
+CIAICRF_TA	equ	$00000001
+CIAICRF_TB	equ	$00000002
+DMAB_BLITTER	equ	$00000006
+DMAF_ALL	equ	$01FF
+DMAF_AUD0	equ	$00000001
+DMAF_AUD1	equ	$00000002
+DMAF_AUD2	equ	$00000004
+DMAF_AUD3	equ	$00000008
+DMAF_AUDIO	equ	$0000000F
+DMAF_BLITHOG	equ	$00000400
+DMAF_BLITTER	equ	$00000040
+DMAF_BLTDONE	equ	$00004000
+DMAF_BLTNZERO	equ	$00002000
+DMAF_COPPER	equ	$00000080
+DMAF_DISK	equ	$00000010
+DMAF_MASTER	equ	$00000200
+DMAF_RASTER	equ	$00000100
+DMAF_SETCLR	equ	$00008000
+INTB_AUD0	equ	$00000007
+INTB_COPER	equ	$00000004
+INTB_DSKBLK	equ	$00000001
+INTB_SETCLR	equ	$0000000F
+INTB_TBE	equ	$00000000
+INTB_VERTB	equ	$00000005
+INTF_AUD0	equ	$00000080
+INTF_AUD1	equ	$00000100
+INTF_AUD2	equ	$00000200
+INTF_AUD3	equ	$00000400
+INTF_BLIT	equ	$00000040
+INTF_COPER	equ	$00000010
+INTF_DSKBLK	equ	$00000002
+INTF_DSKSYNC	equ	$00001000
+INTF_EXTER	equ	$00002000
+INTF_INTEN	equ	$00004000
+INTF_PORTS	equ	$00000008
+INTF_RBF	equ	$00000800
+INTF_SETCLR	equ	$00008000
+INTF_SOFTINT	equ	$00000004
+INTF_TBE	equ	$00000001
+INTF_VERTB	equ	$00000020
+
+_LVOOpenLibrary		equ	-$228
+_LVOCloseLibrary	equ	-$19e
+_LVOForbid		equ	-$84
+_LVOPermit		equ	-$8a
+_LVOSuperVisor		equ	-$1e
+_LVOCacheControl	equ	-$288
+_LVOLoadView		equ	-$de
+_LVOWaitTOF		equ	-$10e
+AttnFlags		equ	$128
+CACR_EnableI		equ	$00000001
+CACR_FreezeI		equ	$00000002
+CACR_ClearI		equ	$00000008
+CACR_IBE		equ	$00000010
+CACR_EnableD		equ	$00000100
+CACR_FreezeD		equ	$00000200
+CACR_ClearD		equ	$00000800
+CACR_DBE		equ	$00001000
+CACR_WriteAllocate	equ	$00002000
+CACR_EnableE		equ	$40000000
+CACR_CopyBack		equ	$80000000
+gb_ActiView		equ	34
+gb_copinit		equ	38
+tv_Lev1IntVect	equ	$00000064
+tv_Lev2IntVect	equ	$00000068
+tv_Lev3IntVect	equ	$0000006C
+tv_Lev4IntVect	equ	$00000070
+tv_Lev5IntVect	equ	$00000074
+tv_Lev6IntVect	equ	$00000078
+tv_Lev7IntVect	equ	$0000007C
+tv_UserIntVects	equ	$00000100
