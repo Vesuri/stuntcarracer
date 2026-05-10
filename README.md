@@ -7,6 +7,6 @@ A disassembly of the 1989 Amiga game **Stunt Car Racer** (Geoff Crammond / Micro
 - `StuntCarRacer.s` — Motorola 68000 assembly source for the game, targeting the Amiga OCS/ECS chipset.
 - `StuntCarRacerSlave.s` — WHDLoad slave for loading and running the game.
 
-## History
+## How the source was produced
 
-The git history reconstructs the development from numbered snapshots, with each commit timestamped to the original file's modification date. Date-suffix tags (`20260407`, `20260505`, `20260509`) mark named releases.
+The code was initially disassembled from the game binary using **ReSource**. Labels have been renamed manually as the code was analysed. Modifications to the original behaviour are marked with comments such as `; added`, `; removed`, `; originally` and `; fixed`.
