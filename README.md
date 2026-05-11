@@ -26,6 +26,4 @@ Written by Vesuri / dA JoRMaS — <vesuri@jormas.com>.
 
 The WHDLoad slave is partially based on the work by Codetapper/Action! & StingRay.
 
-Thanks to Harry, Carlo Pirri, AmiGer/CARE, Galahad and Frank for the great icons.
-
 Original game (1989): Geoff Crammond / MicroStyle.
