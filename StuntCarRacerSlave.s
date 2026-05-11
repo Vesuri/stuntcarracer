@@ -4,17 +4,6 @@
 	include	"whdmacros.i"
 	include	"libraries/dos_lib.i"
 
-	IFD BARFLY
-	OUTPUT	"StuntCarRacer.slave"
-	BOPT	O+
-	BOPT	OG+
-	BOPT	ODd-
-	BOPT	ODe-
-	BOPT	w4-
-	BOPT	wo-
-	SUPER
-	ENDC
-
 gameDataSize	equ	408540
 expMemSize	equ	$88000			; $87054
 
@@ -48,15 +37,7 @@ _name		dc.b	"Stunt Car Racer",0
 _copy		dc.b	"1989 Geoff Crammond/Microstyle",0
 _info		dc.b	"Adapted by Vesuri",10
 		dc.b	"Work in progress "
-		IFD	BARFLY
-		IFND	.passchk
-		DOSCMD	"WDate >T:date"
-.passchk
-		ENDC
-		INCBIN	"T:date"
-		ELSE
-		dc.b	"(09.05.2026)"
-		ENDC
+		incbin	"T:date"
 		dc.b	-1,"This slave is partially based on the work by"
 		dc.b	10,"Codetapper/Action! & StingRay."
 		dc.b	-1,"Thanks to Harry, Carlo Pirri, AmiGer/CARE,"
@@ -255,5 +236,5 @@ _Decrypt	movem.l	d0/d5-d7/a0,-(sp)	;Rob Northen Decryption (3 Key)
 		movem.l	(sp)+,d0/d5-d7/a0
 		rts
 
-executable:	incbin	"StuntCarRacer"
+executable:	incbin	"StuntCarRacerWithoutData"
 executableSize	equ	*-executable

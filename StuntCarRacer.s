@@ -1,4 +1,7 @@
-WHDLOAD				equ	1
+	ifnd	WHDLOAD
+WHDLOAD				equ	0
+	endc
+
 FRAMERATE_MULTIPLIER		equ	6				; 8FPS -> 48FPS
 TIMESTEP_FACTOR			equ	$EE/FRAMERATE_MULTIPLIER	; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
