@@ -20,6 +20,12 @@ Status: work in progress / beta. Known limitations:
 
 The code was initially disassembled from the game binary using **ReSource**. Labels have been renamed manually as the code was analysed. Modifications to the original behaviour are marked with comments such as `; added`, `; removed`, `; originally` and `; fixed`.
 
-## Author
+## Credits
 
 Written by Vesuri / dA JoRMaS — <vesuri@jormas.com>.
+
+The WHDLoad slave is partially based on the work by Codetapper/Action! & StingRay.
+
+Thanks to Harry, Carlo Pirri, AmiGer/CARE, Galahad and Frank for the great icons.
+
+Original game (1989): Geoff Crammond / MicroStyle.
