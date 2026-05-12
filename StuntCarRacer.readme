@@ -1,13 +1,11 @@
-Stunt Car Racer 50FPS, Work In Progess version (09.05.2026)
-===========================================================
+Stunt Car Racer (Framerate Unleashed) beta version (12.05.2026)
+===============================================================
 
 What is it?
 ===========
 - This is a modification of Stunt Car Racer which unlocks the framerate without modifying the speed or the physics of the game.
 - The modification is intended to be run on Amigas with a fast CPU and fast memory. It will not improve the performance of the game on an Amiga 500.
 - The modification is distributed as a WHDLoad slave file. A Stunt Car Racer WHDLoad installation is required.
-- It is still a work in progress. Consider it a beta version. See below for known issues.
-- Source code will be distributed once it is no longer a work in progress.
 
 How to use it?
 ==============
@@ -18,7 +16,7 @@ How to use it?
 What is still to be done?
 =========================
 - Support for different versions
-- Support for both PAL and NTSC
+- Support for NTSC
 - The original code has not been optimized in any way - there's probably room for improvement
 
 Who did it?
