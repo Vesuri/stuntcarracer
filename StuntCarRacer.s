@@ -9827,7 +9827,7 @@ lbC052482:
 	MOVE.B	#$03,framesToWaitWhenFading
 lbC0524A2:
 	TST.B	framesToWaitWhenFading
-	BNE.L	lbC0524A2
+	BNE	lbC0524A2
 	RTS
 
 readControllerInput:
@@ -12506,17 +12506,17 @@ lbC055494:
 	MOVE.W	aiTargetSpeed,D0
 	SUB.W	tempByte1,D0
 	TST.B	aiEnabled
-	BEQ.L	lbC0554E4
+	BEQ	lbC0554E4
 	MOVE.W	boundsMinX,D3
 	ADD.W	boundsMaxX,D3
 	LSR.W	#$01,D3
 	SUB.W	boundsMinY,D3
 	MOVE.W	D3,D4
-	BPL.L	lbC0554C6
+	BPL	lbC0554C6
 	NEG.W	D4
 lbC0554C6:
 	CMPI.W	#$0200,D4
-	BCS.L	lbC0554D2
+	BCS	lbC0554D2
 	MOVE.W	#$01FE,D4
 lbC0554D2:
 	LSR.W	#$01,D4
@@ -12524,7 +12524,7 @@ lbC0554D2:
 	ASR.W	#$02,D5
 	ADD.W	D4,D5
 	TST.W	D3
-	BPL.L	lbC0554E2
+	BPL	lbC0554E2
 	NEG.W	D5
 lbC0554E2:
 	ADD.W	D5,D0
