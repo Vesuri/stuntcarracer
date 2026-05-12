@@ -6908,8 +6908,10 @@ lbC04F422:
 updateFrameThrottlingAndTimers:
 	ADDQ.B	#$01,globalFrameCounter
 	MOVE.B	#$00,D2
-	MOVE.B	#TIMESTEP_FACTOR,D0
-;	BEQ	lbC04F452				; removed
+	MOVE.B	framesSinceCopperlistUpdate,D0	; originally #TIMESTEP_FACTOR
+	BEQ	lbC04F452
+	and.w	#$ff,d0				; added
+	mulu	#TIMESTEP_FACTOR,d0
 	ADD.B	D0,frameThrottleAccumulator
 	BCS	lbC04F452
 	SUBQ.B	#$01,D2
