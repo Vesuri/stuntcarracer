@@ -10128,7 +10128,10 @@ renderDustCloud:
 	MOVE.L	#dustCloudOffsetTable,A0
 	SUB.W	$00(A0,D2.W),D4
 	ADD.W	#$0020,D4
-	MOVE.W	$40(A4,D1.W),D5
+	cmp.w	#$fe,d4			; added
+	bcs.s	.xOk
+	rts
+.xOk:	MOVE.W	$40(A4,D1.W),D5
 	ADD.W	#$0010,D5
 	MOVE.B	D2,D0
 	LSR.B	#$01,D0
