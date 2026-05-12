@@ -1,4 +1,3 @@
-; Stunt Car Racer WHDLoad slave by Vesa Halttunen
 	incdir	"INCLUDE:"
 	include	"whdload.i"
 	include	"whdmacros.i"
@@ -35,19 +34,19 @@ _expmem		dc.l	expMemSize		;ws_ExpMem
 
 _name		dc.b	"Stunt Car Racer",0
 _copy		dc.b	"1989 Geoff Crammond/Microstyle",0
-_info		dc.b	"Adapted by Vesuri",10
-		dc.b	"Work in progress "
+_info		dc.b	"Framerate Unleashed by Vesuri",10
+		dc.b	"Beta version "
 		incbin	"T:date"
 		dc.b	-1,"This slave is partially based on the work by"
 		dc.b	10,"Codetapper/Action! & StingRay."
-		dc.b	-1,"Thanks to Harry, Carlo Pirri, AmiGer/CARE,"
-		dc.b	10,"Galahad and Frank for the great icons!"
 		dc.b	-1,"F6: Toggle infinite boost"
 		dc.b	10,"Help: Win race"
 		dc.b	0
 _TimesName	dc.b	"StuntCarRacer.times",0
 _SaveName	dc.b	"StuntCarRacer.save",0
-		dc.b	"$VER: StuntCarRacer.slave 0.x (09.05.2026)",0
+		dc.b	"$VER: StuntCarRacer.slave 0.x "
+		incbin	"T:date"
+		dc.b	0
 		EVEN
 
 ;======================================================================
