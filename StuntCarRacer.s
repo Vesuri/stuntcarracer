@@ -6908,10 +6908,8 @@ lbC04F422:
 updateFrameThrottlingAndTimers:
 	ADDQ.B	#$01,globalFrameCounter
 	MOVE.B	#$00,D2
-	MOVE.B	framesSinceCopperlistUpdate,D0	; originally #TIMESTEP_FACTOR
-	BEQ	lbC04F452
-	and.w	#$ff,d0				; added
-	mulu	#TIMESTEP_FACTOR,d0
+	MOVE.B	#TIMESTEP_FACTOR,D0
+;	BEQ	lbC04F452			; removed
 	ADD.B	D0,frameThrottleAccumulator
 	BCS	lbC04F452
 	SUBQ.B	#$01,D2
@@ -7182,7 +7180,13 @@ clearGameDataSlot:
 updateLapTimer:
 	tst.b	frameThrottleFlag	; added
 	bne.s	lbC04F8AC
-	MOVE.B	#$14,D0			; originally $13
+	moveq	#0,d0
+	MOVE.B	#$14,D1			; originally #$13,D0
+	moveq	#0,d2
+	move.b	framesSinceCopperlistUpdate,d2
+.loop:	abcd	d1,d0
+	subq	#1,d2
+	bpl.s	.loop
 incrementLapTimeBCD:
 	MOVE.L	#lapTimeSubseconds,A0
 	MOVE.L	#lapTimeSeconds,A1
