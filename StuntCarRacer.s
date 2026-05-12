@@ -7179,14 +7179,15 @@ clearGameDataSlot:
 
 updateLapTimer:
 	tst.b	frameThrottleFlag	; added
-	bne.s	lbC04F8AC
-	moveq	#0,d0
-	MOVE.B	#$14,D1			; originally #$13,D0
-	moveq	#0,d2
-	move.b	framesSinceCopperlistUpdate,d2
-.loop:	abcd	d1,d0
-	subq	#1,d2
-	bpl.s	.loop
+	bne	lbC04F8AC
+	MOVE.B	#$14,D0			; originally #$13
+	moveq	#0,d3			; added
+	move.b	framesSinceCopperlistUpdate,d3
+	subq	#2,d3
+	bmi.s	incrementLapTimeBCD
+	move.b	d0,d2
+.loop:	abcd	d2,d0
+	dbra	d3,.loop
 incrementLapTimeBCD:
 	MOVE.L	#lapTimeSubseconds,A0
 	MOVE.L	#lapTimeSeconds,A1
