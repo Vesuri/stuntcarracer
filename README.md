@@ -8,6 +8,7 @@ Status: work in progress / beta. Known limitations:
 
 - Only one game version is currently supported.
 - Only PAL is currently supported.
+- Computer link using a serial cable does not work as expected.
 - The original code has not been optimized in any way — there is probably room for improvement.
 
 ## Files
