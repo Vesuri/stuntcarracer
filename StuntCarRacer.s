@@ -21029,7 +21029,9 @@ trackMountainDataTable:
 name_graphics:	dc.b	"graphics.library",0
 
 	ifeq	WHDLOAD
-version:	dc.b	"$VER: Stunt Car Racer Unleashed 1.0 (09.05.2026)",0
+	dc.b	"$VER: Stunt Car Racer Unleashed 0.9 "
+	incbin	"T:date"
+	dc.b	0
 	endif
 
 	section	ChipData,data_c

@@ -44,7 +44,7 @@ _info		dc.b	"Framerate Unleashed by Vesuri",10
 		dc.b	0
 _TimesName	dc.b	"StuntCarRacer.times",0
 _SaveName	dc.b	"StuntCarRacer.save",0
-		dc.b	"$VER: StuntCarRacer.slave 0.x "
+		dc.b	"$VER: StuntCarRacer.slave 0.9 "
 		incbin	"T:date"
 		dc.b	0
 		EVEN
