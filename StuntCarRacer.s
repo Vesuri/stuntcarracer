@@ -150,7 +150,11 @@ begin:	lea	gameData,a0			; expected to be here by the slave
 	add.l	d0,5*16(a0)
 	add.l	d0,6*16(a0)
 
-	tst.l	trackDataOffsetTablePtr		; added: allows loading custom tracks
+	tst.l	trackDisplayYOffsetsPtr		; added: allows loading custom tracks
+	bne.s	.trackDisplayYOffsetsPtrOk
+	move.l	#trackDisplayYOffsets,trackDisplayYOffsetsPtr
+.trackDisplayYOffsetsPtrOk:
+	tst.l	trackDataOffsetTablePtr
 	bne.s	.trackDataOffsetTablePtrOk
 	move.l	#trackDataOffsetTable,trackDataOffsetTablePtr
 .trackDataOffsetTablePtrOk:
@@ -158,10 +162,6 @@ begin:	lea	gameData,a0			; expected to be here by the slave
 	bne.s	.trackGeometryDatabasePtrOk
 	move.l	#trackGeometryDatabase,trackGeometryDatabasePtr
 .trackGeometryDatabasePtrOk:
-	tst.l	trackDisplayYOffsetsPtr
-	bne.s	.trackDisplayYOffsetsPtrOk
-	move.l	#trackDisplayYOffsets,trackDisplayYOffsetsPtr
-.trackDisplayYOffsetsPtrOk:
 
 	JSR	initialize
 	JMP	initializeGameMemoryAndState
@@ -20096,11 +20096,11 @@ readWriteSaveSlotData:
 	ds.l	1
 infiniteBoost:
 	ds.l	1
+trackDisplayYOffsetsPtr:
+	ds.l	1
 trackDataOffsetTablePtr:
 	ds.l	1
 trackGeometryDatabasePtr:
-	ds.l	1
-trackDisplayYOffsetsPtr:
 	ds.l	1
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700
@@ -20186,8 +20186,6 @@ specialSegmentLookupTable	equ	gameData+$4cbc4
 menuStringOffsetTable		equ	gameData+$4d5d0
 aiMovementPatterns		equ	gameData+$4d734
 lbL04DFB8			equ	gameData+$4dfb8
-lbB04E1F4			equ	gameData+$4e1f4
-lbB04E7E2			equ	gameData+$4e7e2
 lbL04E82C			equ	gameData+$4e82c
 defaultRecordTemplate		equ	gameData+$4e830
 lbL04FD6C			equ	gameData+$4fd6c
