@@ -131,7 +131,10 @@ _Start						;A0 = resident loader
 	jsr	resload_FlushCache(a2)
 
 	; Apply TNT track data if Custom2 (The New Tracks) is enabled
-	lea	_PL_TNTData(pc),a0
+	lea	_TNTDataRef(pc),a0		;_PL_TNTData is far; use self-relative offset
+	move.l	(a0),d0
+	add.l	a0,d0
+	movea.l	d0,a0
 	move.l	a5,a1
 	jsr	resload_Patch(a2)
 
@@ -160,6 +163,7 @@ _Custom2	dc.l	0
 		dc.l	TAG_DONE
 _SaveFileSize	dc.l	0
 _ChipPtr	dc.l	$800
+_TNTDataRef	dc.l	_PL_TNTData-_TNTDataRef
 
 ;======================================================================
 
@@ -242,6 +246,9 @@ _Decrypt	movem.l	d0/d5-d7/a0,-(sp)	;Rob Northen Decryption (3 Key)
 		bne.s	.DecryptLoop
 		movem.l	(sp)+,d0/d5-d7/a0
 		rts
+
+executable:	incbin	"StuntCarRacerWithoutData"
+executableSize	equ	*-executable
 
 ;======================================================================
 ; TNT track data patch list
@@ -2368,5 +2375,3 @@ _PL_TNTData
 	PL_ENDIF
 	PL_END
 
-executable:	incbin	"StuntCarRacerWithoutData"
-executableSize	equ	*-executable
