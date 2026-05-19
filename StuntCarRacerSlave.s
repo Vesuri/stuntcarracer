@@ -97,6 +97,17 @@ _Start						;A0 = resident loader
 	move.l	a0,(a3)+
 	lea	_Custom1(pc),a0
 	move.l	(a0),(a3)+
+	lea	_Custom2(pc),a0
+	tst.l	(a0)
+	beq.s	.noTNT
+	lea	tntDataRef(pc),a0
+	move.l	(a0),a0
+;	move.l	a0,(a3)+		; trackDisplayYOffsetsPtr
+	addq	#8,a0
+;	move.l	a0,(a3)+		; trackDataOffsetTablePtr
+	lea	16(a0),a0
+;	move.l	a0,(a3)+		; trackGeometryDatabasePtr
+.noTNT:
 
 	; Rob Northen requires one longword before the actual payload
 	lea	-4(a5),a5
@@ -131,7 +142,7 @@ _Start						;A0 = resident loader
 	jsr	resload_FlushCache(a2)
 
 	; Apply TNT track data if Custom2 (The New Tracks) is enabled
-	lea	_TNTDataRef(pc),a0		;_PL_TNTData is far; use self-relative offset
+	lea	_PL_TNTDataRef(pc),a0		;_PL_TNTData is far; use self-relative offset
 	move.l	(a0),d0
 	add.l	a0,d0
 	movea.l	d0,a0
@@ -163,7 +174,8 @@ _Custom2	dc.l	0
 		dc.l	TAG_DONE
 _SaveFileSize	dc.l	0
 _ChipPtr	dc.l	$800
-_TNTDataRef	dc.l	_PL_TNTData-_TNTDataRef
+_PL_TNTDataRef	dc.l	_PL_TNTData-_PL_TNTDataRef
+tntDataRef	dc.l	tntData-tntDataRef
 
 ;======================================================================
 
@@ -253,38 +265,38 @@ executableSize	equ	*-executable
 ;======================================================================
 ; TNT track data patch list
 ; Applied when C2 (The New Tracks) is enabled.
-; Geometry regions merged with 128-byte gap tolerance, all even-length.
 ;======================================================================
 _PL_TNTData
 	PL_START
 	PL_IFC2
-	; TNT track names (8 x 16 bytes)
+	; trackNames
 	PL_DATA	$0106aa,128
-		dc.b	$44,$49,$5a,$5a,$59,$20,$44,$45,$53,$43,$45,$4e,$54,$20,$20,$20	; DIZZY DESCENT
-		dc.b	$57,$49,$54,$54,$59,$20,$57,$41,$59,$20,$20,$20,$20,$20,$20,$20	; WITTY WAY
-		dc.b	$43,$52,$41,$5a,$59,$20,$43,$41,$50,$45,$52,$20,$20,$20,$20,$20	; CRAZY CAPER
-		dc.b	$41,$4d,$41,$5a,$49,$4e,$47,$20,$41,$44,$45,$50,$54,$20,$20,$20	; AMAZING ADEPT
-		dc.b	$4a,$45,$52,$4b,$49,$4c,$59,$20,$4a,$55,$4d,$50,$20,$20,$20,$20	; JERKILY JUMP
-		dc.b	$45,$56,$49,$4c,$4c,$59,$20,$45,$50,$49,$53,$4f,$44,$45,$20,$20	; EVILLY EPISODE
-		dc.b	$54,$45,$41,$53,$49,$4e,$47,$20,$54,$45,$4d,$50,$45,$52,$20,$20	; TEASING TEMPER
-		dc.b	$52,$41,$54,$20,$52,$41,$43,$45,$20,$20,$20,$20,$20,$20,$20,$20	; RAT RACE
-	; Data table byte fix
-	PL_B	$01123e,$66
-	; Colour fix: preview screen reds -> blues
+		dc.b	"DIZZY DESCENT   "
+		dc.b	"WITTY WAY       "
+		dc.b	"CRAZY CAPER     "
+		dc.b	"AMAZING ADEPT   "
+		dc.b	"JERKILY JUMP    "
+		dc.b	"EVILLY EPISODE  "
+		dc.b	"TEASING TEMPER  "
+		dc.b	"RAT RACE        "
+	; geometryParameterTable byte fix
+	PL_B    $01123e,$66
+	; imageTrackPreviewBackgroundPalette reds -> blues
 	PL_L	$1d286,$00020113
-	; Track geometry (14 regions, all even-length)
-	PL_DATA	$015be7,16
-		dc.b	$30,$ff,$88,$00,$00,$00,$00,$00,$00,$00,$00,$0f,$ff,$01,$ff,$0a
-	PL_DATA	$015c87,10
-		dc.b	$60,$ff,$10,$00,$00,$00,$00,$00,$00,$00
-	PL_DATA	$015d27,10
-		dc.b	$60,$ff,$90,$00,$03,$00,$03,$00,$00,$00
-	PL_DATA	$015dc7,10
-		dc.b	$c0,$fe,$20,$00,$0c,$00,$0b,$00,$00,$00
-	PL_DATA	$015e67,16
-		dc.b	$c0,$fc,$20,$00,$04,$00,$0c,$00,$00,$00,$00,$3f,$ff,$21,$ff,$0a
-	PL_DATA	$015f07,16
-		dc.b	$80,$f8,$40,$00,$0a,$00,$02,$00,$08,$00,$00,$1f,$ff,$01,$ff,$0e
+	; imageMenuScreen
+;	PL_DATA	$015be7,16
+;		dc.b	$30,$ff,$88,$00,$00,$00,$00,$00,$00,$00,$00,$0f,$ff,$01,$ff,$0a
+;	PL_DATA	$015c87,10
+;		dc.b	$60,$ff,$10,$00,$00,$00,$00,$00,$00,$00
+;	PL_DATA	$015d27,10
+;		dc.b	$60,$ff,$90,$00,$03,$00,$03,$00,$00,$00
+;	PL_DATA	$015dc7,10
+;		dc.b	$c0,$fe,$20,$00,$0c,$00,$0b,$00,$00,$00
+;	PL_DATA	$015e67,16
+;		dc.b	$c0,$fc,$20,$00,$04,$00,$0c,$00,$00,$00,$00,$3f,$ff,$21,$ff,$0a
+;	PL_DATA	$015f07,16
+;		dc.b	$80,$f8,$40,$00,$0a,$00,$02,$00,$08,$00,$00,$1f,$ff,$01,$ff,$0e
+	; imageMenuScreen TNT logo
 	PL_DATA	$015fa6,29354
 		dc.b	$01,$40,$00,$80,$00,$0a,$00,$0a,$00,$00,$00,$00,$1f,$ff,$01,$ff
 		dc.b	$0a,$00,$1a,$00,$9f,$ff,$8f,$ff,$10,$00,$2f,$ff,$ff,$ff,$ff,$ff
@@ -2121,18 +2133,9 @@ _PL_TNTData
 		dc.b	$00,$00,$5f,$8c,$43,$40,$69,$bc,$00,$00,$2a,$fc,$00,$00,$17,$e6
 		dc.b	$00,$00,$17,$e6,$00,$cc,$7c,$33,$00,$00,$7c,$ff,$00,$01,$ff,$be
 		dc.b	$00,$00,$ff,$bf,$00,$80,$ff,$44,$00,$00
+	; imagePlayers remove track names
 	PL_C	$02e236,3678
-	PL_DATA	$04c09e,4
-		dc.b	$4e,$71,$4e,$71
-	PL_DATA	$04e1f2,2
-		dc.b	$06,$08
-	PL_DATA	$04e7fa,6
-		dc.b	$4e,$71,$4e,$71,$4e,$71
-	PL_DATA	$0538f8,18
-		dc.b	$60,$00,$00,$0a,$12,$3c,$00,$f8,$60,$00,$00,$1e,$b0,$3c,$00,$04
-		dc.b	$60,$00
-	PL_DATA	$0563ec,4
-		dc.b	$9c,$ed,$cd,$02
+	; trackSpecificRenderDepthOverrides
 	PL_DATA	$057740,44
 		dc.b	$80,$00,$00,$00,$00,$00,$00,$00,$80,$00,$00,$00,$00,$00,$00,$00
 		dc.b	$80,$00,$00,$00,$00,$00,$00,$00,$80,$00,$00,$00,$00,$00,$00,$00
@@ -2140,3 +2143,5 @@ _PL_TNTData
 	PL_ENDIF
 	PL_END
 
+tntData:	incbin	"TNTData"
+tntDataSize	equ	*-tntData
