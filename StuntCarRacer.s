@@ -129,7 +129,7 @@ doQuit:	move.l	sp_quit,sp
 	jmp	shutdown
 	endc
 
-begin:	lea	gameData,a0
+begin:	lea	gameData,a0			; expected to be here by the slave
         sub.l   #ORIGINAL_LOAD_ADDRESS,a0
 	add.l	sampleParameterTable,a0
 	lea	sampleData,a1
@@ -149,6 +149,19 @@ begin:	lea	gameData,a0
 	add.l	d0,4*16(a0)
 	add.l	d0,5*16(a0)
 	add.l	d0,6*16(a0)
+
+	tst.l	trackDataOffsetTablePtr		; added: allows loading custom tracks
+	bne.s	.trackDataOffsetTablePtrOk
+	move.l	#trackDataOffsetTable,trackDataOffsetTablePtr
+.trackDataOffsetTablePtrOk:
+	tst.l	trackGeometryDatabasePtr
+	bne.s	.trackGeometryDatabasePtrOk
+	move.l	#trackGeometryDatabase,trackGeometryDatabasePtr
+.trackGeometryDatabasePtrOk:
+	tst.l	trackDisplayYOffsetsPtr
+	bne.s	.trackDisplayYOffsetsPtrOk
+	move.l	#trackDisplayYOffsets,trackDisplayYOffsetsPtr
+.trackDisplayYOffsetsPtrOk:
 
 	JSR	initialize
 	JMP	initializeGameMemoryAndState
@@ -4414,13 +4427,13 @@ processTrackDataBuffer:
 	MOVE.B	D1,D0
 	ASL.B	#$01,D0
 	MOVE.B	D0,D2
-	MOVE.L	#trackDataOffsetTable,A2
+	MOVE.L	trackDataOffsetTablePtr,A2		; originally #trackDataOffsetTable
 	MOVE.W	$00(A2,D2.W),rawTrackDataOffset
 	MOVE.W	rawTrackDataOffset,D0
 	ROL.W	#$08,D0
 	SUB.W	#$B100,D0
 	AND.L	#$FFFF,D0
-	ADD.L	#trackGeometryDatabase,D0
+	ADD.L	trackGeometryDatabasePtr,D0		; originally #trackGeometryDatabase
 	MOVE.L	D0,A5
 	MOVE.W	#$0000,D5
 lbC04C778:
@@ -7882,7 +7895,7 @@ incrementMenuPosition:
 renderTrackInfoDisplay:
 	MOVE.B	D2,lbB050474
 	MOVE.B	currentTrackID,D1
-	MOVE.L	#trackDisplayYOffsets,A0
+	MOVE.L	trackDisplayYOffsetsPtr,A0	; originally #trackDisplayYOffsets
 	MOVE.B	$00(A0,D1.W),D1
 	SUBQ.B	#$06,D1
 	TST.B	additionalPlayerCount
@@ -10329,7 +10342,7 @@ lbC052B46:
 displayTrackHeader:
 	JSR	setTextYOffset4
 	MOVE.B	currentTrackID,D1
-	MOVE.L	#trackDisplayYOffsets,A1
+	MOVE.L	trackDisplayYOffsetsPtr,A1	; originally #trackDisplayYOffsets
 	MOVE.B	$00(A1,D1.W),D0
 	MOVE.B	D0,trackSpecificYOffset
 	MOVE.B	#$58,D1
@@ -20082,6 +20095,12 @@ saveLapRecords:
 readWriteSaveSlotData:
 	ds.l	1
 infiniteBoost:
+	ds.l	1
+trackDataOffsetTablePtr:
+	ds.l	1
+trackGeometryDatabasePtr:
+	ds.l	1
+trackDisplayYOffsetsPtr:
 	ds.l	1
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700
