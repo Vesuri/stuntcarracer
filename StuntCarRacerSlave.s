@@ -135,7 +135,7 @@ _Start						;A0 = resident loader
 	move.l	(a0),d0
 	add.l	a0,d0
 	movea.l	d0,a0
-	move.l	a5,a1
+	lea	4(a5),a1			;a5 points 4 bytes before game data (RN canary prefix)
 	jsr	resload_Patch(a2)
 
 	; Store save filesize
