@@ -101,12 +101,13 @@ _Start						;A0 = resident loader
 	tst.l	(a0)
 	beq.s	.noTNT
 	lea	tntDataRef(pc),a0
-	move.l	(a0),a0
-;	move.l	a0,(a3)+		; trackDisplayYOffsetsPtr
-	addq	#8,a0
-;	move.l	a0,(a3)+		; trackDataOffsetTablePtr
-	lea	16(a0),a0
-;	move.l	a0,(a3)+		; trackGeometryDatabasePtr
+	move.l	(a0),d0
+	add.l	a0,d0
+	move.l	d0,(a3)+		; trackDisplayYOffsetsPtr
+	addq	#8,d0
+	move.l	d0,(a3)+		; trackDataOffsetTablePtr
+	add.l	#16,d0
+	move.l	d0,(a3)+		; trackGeometryDatabasePtr
 .noTNT:
 
 	; Rob Northen requires one longword before the actual payload
