@@ -3,16 +3,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BASE_LHA_URL="https://whdload.de/games/StuntCarRacer.lha"
-OUTPUT="$SCRIPT_DIR/StuntCarRacerUnleashed.lha"
+OUTPUT="$SCRIPT_DIR/StuntCarRacerUnleashed.tar"
 PAL_SLAVE="$SCRIPT_DIR/StuntCarRacer.slave"
 NTSC_SLAVE="$SCRIPT_DIR/StuntTrackRacer.slave"
 OLD_DIR="StuntCarRacerHD"
 NEW_DIR="StuntCarRacerUnleashed"
-
-if ! command -v olha &>/dev/null; then
-    echo "Error: olha not found. Build from https://codeberg.org/MastaTabs/olha"
-    exit 1
-fi
 
 if [[ ! -f "$PAL_SLAVE" ]]; then
     echo "Error: $PAL_SLAVE not found. Build with 'make' on the Amiga first."
@@ -47,6 +42,6 @@ cp "$WORK/StuntTrackRacerHD/StuntTrackRacer.newicon"  "$WORK/$NEW_DIR/"
 cp "$WORK/StuntTrackRacerHD/StuntTrackRacer.glowicon" "$WORK/$NEW_DIR/"
 
 rm -f "$OUTPUT"
-(cd "$WORK" && olha c "$OUTPUT" "${NEW_DIR}.info" "$NEW_DIR")
+(cd "$WORK" && tar cf "$OUTPUT" "${NEW_DIR}.info" "$NEW_DIR")
 
 echo "Created: $OUTPUT"
