@@ -4,7 +4,7 @@ A modification of the 1989 Amiga game **Stunt Car Racer** (Geoff Crammond / Micr
 
 ## PAL version — Stunt Car Racer
 
-The modification is distributed as a WHDLoad slave. A Stunt Car Racer WHDLoad installation (original PAL disk-based version) is required: replace the original `StuntCarRacer.slave` with the one built from this source, then run WHDLoad as usual.
+The modification is distributed as a WHDLoad slave. The installer (`Install`) can create a full installation from the original PAL floppy disk, or upgrade an existing Stunt Car Racer WHDLoad installation by replacing `StuntCarRacer.slave` in place.
 
 The tooltype `C2=1` enables **The New Tracks** option, which plays the game using the track layouts from the TNT hack by AmiGer/CARE. Save and lap time data for the TNT tracks are stored separately in `StuntCarRacerTNT.save` and `StuntCarRacerTNT.times`.
 
@@ -25,7 +25,9 @@ Work in progress / beta. Known limitations:
 
 - `StuntCarRacer.s` — Source code for the game with enhancements (PAL and NTSC, selected at build time with `-dNTSC=1`).
 - `StuntCarRacerSlave.s` — WHDLoad slave for loading and running the game (`StuntCarRacer.slave` for PAL, `StuntTrackRacer.slave` for NTSC).
-- `StuntCarRacer.readme` — Amiga-style readme distributed alongside the slave binary.
+- `Install` — Amiga Installer script for creating or upgrading a WHDLoad installation.
+- `ReadMe` — Readme distributed in the release archive, in WHDLoad template format.
+- `create_release.sh` — Builds the release archive (`StuntCarRacerUnleashed.tar`). Run via `make dist`.
 
 ## About the source
 
