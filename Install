@@ -99,15 +99,20 @@
     )
   ))
 
-  (P_AskSrcDrv)
+  (if (exists (tackon #dest "disk.1"))
+    (working "disk.1 already exists, skipping disk imaging.")
+    (
+      (P_AskSrcDrv)
 
-  ;the following lines must be copied and adjusted for multiple disk images
+      ;the following lines must be copied and adjusted for multiple disk images
 
-  (set #CI_disknum 1)
-  (set #CI_diskname ("%s Disk %ld" @app-name #CI_disknum))
-  (set #CI_disklen 468480)
-  (set #CI_skiptrk "")
-  (P_CreateImage)
+      (set #CI_disknum 1)
+      (set #CI_diskname ("%s Disk %ld" @app-name #CI_disknum))
+      (set #CI_disklen 468480)
+      (set #CI_skiptrk "")
+      (P_CreateImage)
+    )
+  )
 )
 
 ;----------------------------
@@ -627,8 +632,12 @@
     )
   )
 )
-(set #copy-file #highs-file)
-(P_CopyFile)
+(if (NOT (exists (tackon #dest #highs-file)))
+  (
+    (set #copy-file #highs-file)
+    (P_CopyFile)
+  )
+)
 (P_MakeImages)
 (if (= #newstuff 1)
   (openwbobject #dest-org)
