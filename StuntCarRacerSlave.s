@@ -165,6 +165,16 @@ _Start						;A0 = resident loader
 	bsr	_Decrypt
 	jsr	resload_FlushCache(a2)
 
+	ifd	NTSC
+	; Apply NTSC imageMenuScreen logo patch (Stunt Car Racer -> Stunt Track Racer)	; added
+	lea	_PL_NTSCDataRef(pc),a0						; added
+	move.l	(a0),d0								; added
+	add.l	a0,d0								; added
+	movea.l	d0,a0								; added
+	lea	4(a5),a1							; added
+	jsr	resload_Patch(a2)						; added
+	endc
+
 	; Apply TNT track data if Custom2 (The New Tracks) is enabled
 	lea	_PL_TNTDataRef(pc),a0		;_PL_TNTData is far; use self-relative offset
 	move.l	(a0),d0
@@ -172,16 +182,6 @@ _Start						;A0 = resident loader
 	movea.l	d0,a0
 	lea	4(a5),a1			;a5 points 4 bytes before game data (RN canary prefix)
 	jsr	resload_Patch(a2)
-
-	ifd	NTSC
-	; Apply NTSC imageMenuScreen logo patch (Stunt Car Racer -> Stunt Track Racer)
-	lea	_PL_NTSCDataRef(pc),a0
-	move.l	(a0),d0
-	add.l	a0,d0
-	movea.l	d0,a0
-	lea	4(a5),a1
-	jsr	resload_Patch(a2)
-	endc
 
 	; Store save filesize
 	lea     _SaveName(pc),a0
