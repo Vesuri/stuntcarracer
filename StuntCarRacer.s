@@ -1,8 +1,15 @@
 	ifnd	WHDLOAD
 WHDLOAD				equ	0
 	endc
+	ifnd	NTSC
+NTSC				equ	0				; added: 0 = PAL, 1 = NTSC
+	endc
 
-FRAMERATE_MULTIPLIER		equ	6				; 8FPS -> 48FPS
+	ifeq	NTSC
+FRAMERATE_MULTIPLIER		equ	6				; 8FPS -> 48FPS PAL
+	else
+FRAMERATE_MULTIPLIER		equ	7				; 8FPS -> 56FPS NTSC
+	endc
 TIMESTEP_FACTOR			equ	$EE/FRAMERATE_MULTIPLIER	; originally $EE
 MAJOR_IMPACT_COOLDOWN_TIME	equ	$FF				; originally $45
 
@@ -190,16 +197,26 @@ initialize:
 	JSR	initializeSpritePointers
 	JSR	loadPaletteColors
 	MOVE.W	#$4200,_custom+bplcon0
+	ifeq	NTSC
 	MOVE.W	#$3C81,_custom+diwstrt
 	MOVE.W	#$04C1,_custom+diwstop
 	MOVE.W	#$003C,spriteYOffset
+	else
+	MOVE.W	#$2C81,_custom+diwstrt
+	MOVE.W	#$F4C1,_custom+diwstop
+	MOVE.W	#$002C,spriteYOffset
+	endc
 	MOVE.W	#$0038,_custom+ddfstrt
 	MOVE.W	#$00D0,_custom+ddfstop
 	MOVE.W	#$0000,_custom+bpl1mod
 	MOVE.W	#$0000,_custom+bpl2mod
 	MOVE.W	#$0000,_custom+bplcon1
 	MOVE.W	#$0024,_custom+bplcon2
+	ifeq	NTSC
 	move.w	#$0020,_custom+beamcon0
+	else
+	move.w	#$0000,_custom+beamcon0
+	endc
 	MOVE.L	#copperlistStart,A0
 	MOVE.L	A0,_custom+cop1lc
 	MOVE.W	_custom+copjmp1,D0
@@ -7301,7 +7318,11 @@ updateDamageAndTimers:
 .volumeOk:
 	MOVE.B	D0,audioSample4Volume
 	MOVE.B	#$04,D0					; creaking
-	move.b	#17,creakingSoundCooldownTimer		; added
+	ifeq	NTSC					; added
+	move.b	#17,creakingSoundCooldownTimer
+	else
+	move.b	#20,creakingSoundCooldownTimer
+	endc
 .playSample:
 	JSR	playSample
 .sampleOk:
