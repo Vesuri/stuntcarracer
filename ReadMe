@@ -1,0 +1,59 @@
+
+ THIS PACKAGE COMES WITH ABSOLUTELY NO WARRANTY OF ANY KIND, EITHER EXPRESS OR
+ IMPLIED, STATUTORY OR OTHERWISE. THE ENTIRE RISK AS TO USE, RESULTS AND
+ PERFORMANCE OF THE PACKAGE IS ASSUMED BY YOU AND IF THE PACKAGE SHOULD PROVE
+ TO BE DEFECTIVE, YOU ASSUME THE ENTIRE COST OF ALL NECESSARY SERVICING,
+ REPAIR OR OTHER REMEDIATION.
+ UNDER NO CIRCUMSTANCES, CAN THE AUTHOR BE HELD RESPONSIBLE FOR ANY DAMAGE
+ CAUSED IN ANY USUAL, SPECIAL, OR ACCIDENTAL WAY, ALSO IF THE OWNER OR A THIRD
+ PARTY HAS BEEN POINTED AT SUCH POSSIBILITIES OF DAMAGE.
+
+ This install applies to "Stunt Car Racer" © 1989 Geoff Crammond/Microstyle.
+ Framerate Unleashed modification by Vesuri/dA JoRMaS.
+
+ Requirements:
+ -------------
+ This install requires WHDLoad version 17.0 and DIC to be in the path.
+ These programs can be found in the WHDLoad package.
+ To install from a different drive than DF0: select installation mode Expert.
+
+ The installed program requires 0.5 MB ChipMem and 0.5 MB fast memory.
+ A fast CPU (68020 or better) is required for the improved framerate to be
+ of any benefit. The game will run on an Amiga 500 but the framerate will
+ not be improved.
+ The game can be quit by pressing F10 (key can be changed with Tooltype
+ "QuitKey=").
+
+ Features:
+ ---------
+ This modification unlocks the framerate of Stunt Car Racer without
+ modifying the speed or the physics of the game.
+
+ Two slave files are provided:
+   StuntCarRacer.slave   - PAL version, 50 FPS
+   StuntTrackRacer.slave - NTSC version, 60 FPS (title: Stunt Track Racer)
+
+ Both slaves support the following tooltypes:
+   C1: Toggle infinite boost (F6)
+   C2: The New Tracks - enables the Stunt Car Racer TNT hack version
+
+ History:
+ --------
+ beta (20.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
+ - initial release
+ - partially based on the original WHDLoad install by Codetapper/Action! &
+   StingRay
+
+ Contact:
+ --------
+ If you have problems with this installation please try and get a newer
+ version of this package from the WHDLoad WWW-Page. If that doesn't help try
+ some Tooltypes like NOCACHE, NOAUTOVEC, EXPCHIP, NOMMU, PAL or NTSC. If
+ that also fails, please inform the author via the Bug-Report-Form which
+ can be accessed on the WHDLoad WWW-Page.
+
+ For the full WHDLoad package, other installs and updates refer to:
+	http://www.whdload.de/
+ or	aminet:dev/misc/whdload#?
+ and	aminet:game/patch/
+

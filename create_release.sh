@@ -33,7 +33,7 @@ mv "$WORK/${OLD_DIR}.info" "$WORK/${NEW_DIR}.info"
 
 rm -rf "$WORK/$NEW_DIR/Source"
 
-cp "$SCRIPT_DIR/StuntCarRacer.readme" "$WORK/$NEW_DIR/ReadMe"
+cp "$SCRIPT_DIR/ReadMe" "$WORK/$NEW_DIR/ReadMe"
 cp "$SCRIPT_DIR/Install"            "$WORK/$NEW_DIR/Install"
 cp "$PAL_SLAVE"  "$WORK/$NEW_DIR/StuntCarRacer.slave"
 cp "$NTSC_SLAVE" "$WORK/$NEW_DIR/StuntTrackRacer.slave"
