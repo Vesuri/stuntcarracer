@@ -5,6 +5,13 @@
 
 gameDataSize	equ	408540
 expMemSize	equ	$88000			; $87054
+	ifd	NTSC
+TIMESNAME_LEN	equ	21
+SAVENAME_LEN	equ	20
+	else
+TIMESNAME_LEN	equ	19
+SAVENAME_LEN	equ	18
+	endc
 
 ;======================================================================
 
@@ -33,7 +40,11 @@ _expmem		dc.l	expMemSize		;ws_ExpMem
 
 ;============================================================================
 
+	ifd	NTSC
+_name		dc.b	"Stunt Track Racer",0
+	else
 _name		dc.b	"Stunt Car Racer",0
+	endc
 _copy		dc.b	"1989 Geoff Crammond/Microstyle",0
 _info		dc.b	"Framerate Unleashed by Vesuri",10
 		dc.b	"Beta version "
@@ -43,9 +54,15 @@ _info		dc.b	"Framerate Unleashed by Vesuri",10
 		dc.b	-1,"F6: Toggle infinite boost"
 		dc.b	10,"Help: Win race"
 		dc.b	0
+	ifd	NTSC
+_TimesName	dc.b	"StuntTrackRacer.times",0,0,0,0
+_SaveName	dc.b	"StuntTrackRacer.save",0,0,0,0
+		dc.b	"$VER: StuntTrackRacer.slave 0.9 "
+	else
 _TimesName	dc.b	"StuntCarRacer.times",0,0,0,0
 _SaveName	dc.b	"StuntCarRacer.save",0,0,0,0
 		dc.b	"$VER: StuntCarRacer.slave 0.9 "
+	endc
 		incbin	"T:date"
 		dc.b	0
 		EVEN
@@ -110,7 +127,7 @@ _Start						;A0 = resident loader
 	add.l	#16,d0
 	move.l	d0,(a3)+		; trackGeometryDatabasePtr
 	; Modify lap times and save data file names
-	lea	_TimesName+19(pc),a0
+	lea	_TimesName+TIMESNAME_LEN(pc),a0
 	lea	3(a0),a1
 	move.b	-(a0),-(a1)
 	move.b	-(a0),-(a1)
@@ -121,7 +138,7 @@ _Start						;A0 = resident loader
 	move.b	#'T',-(a1)
 	move.b	#'N',-(a1)
 	move.b	#'T',-(a1)
-	lea	_SaveName+18(pc),a0
+	lea	_SaveName+SAVENAME_LEN(pc),a0
 	lea	3(a0),a1
 	move.b	-(a0),-(a1)
 	move.b	-(a0),-(a1)
@@ -296,7 +313,11 @@ _Decrypt	movem.l	d0/d5-d7/a0,-(sp)	;Rob Northen Decryption (3 Key)
 		movem.l	(sp)+,d0/d5-d7/a0
 		rts
 
+	ifd	NTSC
+executable:	incbin	"StuntTrackRacerWithoutData"
+	else
 executable:	incbin	"StuntCarRacerWithoutData"
+	endc
 executableSize	equ	*-executable
 
 ;======================================================================
