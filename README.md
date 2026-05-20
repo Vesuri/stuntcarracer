@@ -1,21 +1,30 @@
-# Stunt Car Racer (Framerate Unleashed)
+# Stunt Car Racer / Stunt Track Racer (Framerate Unleashed)
 
-A modification of the 1989 Amiga game **Stunt Car Racer** (Geoff Crammond / MicroStyle) that unlocks the framerate to 50 FPS without changing the original speed or physics. Intended for Amigas with a fast CPU and fast memory — it will not improve performance on a stock Amiga 500.
+A modification of the 1989 Amiga game **Stunt Car Racer** (Geoff Crammond / MicroStyle) that unlocks the framerate to 50/60 FPS without changing the original speed or physics. Intended for Amigas with a fast CPU and fast memory — it will not improve performance on a stock Amiga 500.
+
+## PAL version — Stunt Car Racer
 
 The modification is distributed as a WHDLoad slave. A Stunt Car Racer WHDLoad installation (original PAL disk-based version) is required: replace the original `StuntCarRacer.slave` with the one built from this source, then run WHDLoad as usual.
 
 The tooltype `C2=1` enables **The New Tracks** option, which plays the game using the track layouts from the TNT hack by AmiGer/CARE. Save and lap time data for the TNT tracks are stored separately in `StuntCarRacerTNT.save` and `StuntCarRacerTNT.times`.
 
-Status: work in progress / beta. Known limitations:
+## NTSC version — Stunt Track Racer
 
-- Only PAL is currently supported.
+A separate NTSC build (`StuntTrackRacer.slave`) targets 60 FPS on NTSC hardware. It requires a Stunt Car Racer WHDLoad installation using the **original PAL disk** — the slave loads and patches the PAL binary at runtime, replacing the title logo with the North American *Stunt Track Racer* branding.
+
+The `C2=1` tooltype works the same way as in the PAL version.
+
+## Status
+
+Work in progress / beta. Known limitations:
+
 - Computer link using a serial cable does not work as expected.
 - The original code has not been optimized in any way — there is probably room for improvement.
 
 ## Files
 
-- `StuntCarRacer.s` — Source code for the game with enhancements.
-- `StuntCarRacerSlave.s` — WHDLoad slave for loading and running the game.
+- `StuntCarRacer.s` — Source code for the game with enhancements (PAL and NTSC, selected at build time with `-dNTSC=1`).
+- `StuntCarRacerSlave.s` — WHDLoad slave for loading and running the game (`StuntCarRacer.slave` for PAL, `StuntTrackRacer.slave` for NTSC).
 - `StuntCarRacer.readme` — Amiga-style readme distributed alongside the slave binary.
 
 ## About the source
