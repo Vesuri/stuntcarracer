@@ -27,9 +27,11 @@ fi
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-BASE_LHA="$WORK/StuntCarRacer.lha"
-curl -fsSL "$BASE_LHA_URL" -o "$BASE_LHA"
-lha "xw=$WORK" "$BASE_LHA"
+curl -fsSL "$BASE_LHA_URL" -o "$WORK/StuntCarRacer.lha"
+lha "xw=$WORK" "$WORK/StuntCarRacer.lha"
+
+curl -fsSL "https://whdload.de/games/StuntTrackRacer.lha" -o "$WORK/StuntTrackRacer.lha"
+lha "xw=$WORK" "$WORK/StuntTrackRacer.lha"
 
 mv "$WORK/$OLD_DIR" "$WORK/$NEW_DIR"
 mv "$WORK/${OLD_DIR}.info" "$WORK/${NEW_DIR}.info"
@@ -41,8 +43,8 @@ cp "$SCRIPT_DIR/Install"            "$WORK/$NEW_DIR/Install"
 cp "$PAL_SLAVE"  "$WORK/$NEW_DIR/StuntCarRacer.slave"
 cp "$NTSC_SLAVE" "$WORK/$NEW_DIR/StuntTrackRacer.slave"
 
-cp "$SCRIPT_DIR/data/StuntTrackRacerHD/StuntTrackRacer.newicon"  "$WORK/$NEW_DIR/"
-cp "$SCRIPT_DIR/data/StuntTrackRacerHD/StuntTrackRacer.glowicon" "$WORK/$NEW_DIR/"
+cp "$WORK/StuntTrackRacerHD/StuntTrackRacer.newicon"  "$WORK/$NEW_DIR/"
+cp "$WORK/StuntTrackRacerHD/StuntTrackRacer.glowicon" "$WORK/$NEW_DIR/"
 
 rm -f "$OUTPUT"
 (cd "$WORK" && olha c "$OUTPUT" "${NEW_DIR}.info" "$NEW_DIR")
