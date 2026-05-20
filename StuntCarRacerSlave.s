@@ -43,8 +43,8 @@ _info		dc.b	"Framerate Unleashed by Vesuri",10
 		dc.b	-1,"F6: Toggle infinite boost"
 		dc.b	10,"Help: Win race"
 		dc.b	0
-_TimesName	dc.b	"StuntCarRacer.times",0
-_SaveName	dc.b	"StuntCarRacer.save",0
+_TimesName	dc.b	"StuntCarRacer.times",0,0,0,0
+_SaveName	dc.b	"StuntCarRacer.save",0,0,0,0
 		dc.b	"$VER: StuntCarRacer.slave 0.9 "
 		incbin	"T:date"
 		dc.b	0
@@ -100,6 +100,7 @@ _Start						;A0 = resident loader
 	lea	_Custom2(pc),a0
 	tst.l	(a0)
 	beq.s	.noTNT
+	; Set up TNT track data
 	lea	tntDataRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0
@@ -108,6 +109,28 @@ _Start						;A0 = resident loader
 	move.l	d0,(a3)+		; trackDataOffsetTablePtr
 	add.l	#16,d0
 	move.l	d0,(a3)+		; trackGeometryDatabasePtr
+	; Modify lap times and save data file names
+	lea	_TimesName+19(pc),a0
+	lea	3(a0),a1
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	#'T',-(a1)
+	move.b	#'N',-(a1)
+	move.b	#'T',-(a1)
+	lea	_SaveName+18(pc),a0
+	lea	3(a0),a1
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	-(a0),-(a1)
+	move.b	#'T',-(a1)
+	move.b	#'N',-(a1)
+	move.b	#'T',-(a1)
 .noTNT:
 
 	; Rob Northen requires one longword before the actual payload
