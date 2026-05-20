@@ -47,7 +47,7 @@ _name		dc.b	"Stunt Car Racer",0
 	endc
 _copy		dc.b	"1989 Geoff Crammond/Microstyle",0
 _info		dc.b	"Framerate Unleashed by Vesuri",10
-		dc.b	"Beta version "
+		dc.b	"1.0 "
 		incbin	"T:date"
 		dc.b	-1,"This slave is partially based on the work by"
 		dc.b	10,"Codetapper/Action! & StingRay."
@@ -57,11 +57,11 @@ _info		dc.b	"Framerate Unleashed by Vesuri",10
 	ifd	NTSC
 _TimesName	dc.b	"StuntTrackRacer.times",0,0,0,0
 _SaveName	dc.b	"StuntTrackRacer.save",0,0,0,0
-		dc.b	"$VER: StuntTrackRacer.slave 0.9 "
+		dc.b	"$VER: StuntTrackRacer.slave 1.0 "
 	else
 _TimesName	dc.b	"StuntCarRacer.times",0,0,0,0
 _SaveName	dc.b	"StuntCarRacer.save",0,0,0,0
-		dc.b	"$VER: StuntCarRacer.slave 0.9 "
+		dc.b	"$VER: StuntCarRacer.slave 1.0 "
 	endc
 		incbin	"T:date"
 		dc.b	0

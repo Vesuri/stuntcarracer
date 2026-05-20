@@ -39,13 +39,13 @@
 
  Known limitations:
  ------------------
- - Computer link play via serial cable is not yet supported.
+ - Computer link play via serial cable is not supported.
  - The original game code has not been optimized; there is likely room for
    further performance improvement.
 
  History:
  --------
- beta (21.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
+ 1.0 (21.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
  - initial release
  - partially based on the original WHDLoad install by Codetapper/Action! &
    StingRay

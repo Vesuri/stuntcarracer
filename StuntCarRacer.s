@@ -21067,7 +21067,7 @@ trackMountainDataTable:
 name_graphics:	dc.b	"graphics.library",0
 
 	ifeq	WHDLOAD
-	dc.b	"$VER: Stunt Car Racer Unleashed 0.9 "
+	dc.b	"$VER: Stunt Car Racer Unleashed 1.0 "
 	incbin	"T:date"
 	dc.b	0
 	endif

@@ -14,11 +14,9 @@ A separate NTSC build (`StuntTrackRacer.slave`) targets 60 FPS on NTSC hardware.
 
 The `C2=1` tooltype works the same way as in the PAL version.
 
-## Status
+## Known limitations
 
-Work in progress / beta. Known limitations:
-
-- Computer link using a serial cable does not work as expected.
+- Computer link play via serial cable is not supported.
 - The original code has not been optimized in any way — there is probably room for improvement.
 
 ## Files
