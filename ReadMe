@@ -37,9 +37,15 @@
    C1: Toggle infinite boost (F6)
    C2: The New Tracks - enables the Stunt Car Racer TNT hack version
 
+ Known limitations:
+ ------------------
+ - Computer link play via serial cable is not yet supported.
+ - The original game code has not been optimized; there is likely room for
+   further performance improvement.
+
  History:
  --------
- beta (20.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
+ beta (21.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
  - initial release
  - partially based on the original WHDLoad install by Codetapper/Action! &
    StingRay
