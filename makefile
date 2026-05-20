@@ -46,5 +46,8 @@ $(SLAVE_NTSC) : $(SLAVE_SOURCE) $(GAME_NTSC_WITHOUT_DATA)
 	WDate >T:date
 	basm $(SLAVE_NTSC_OPTS) -o$(SLAVE_NTSC) $(SLAVE_SOURCE)
 
+dist:
+	./create_release.sh
+
 clean:
 	delete $(GAME) $(GAME_NTSC) $(GAME_WITHOUT_DATA) $(GAME_NTSC_WITHOUT_DATA) $(SLAVE) $(SLAVE_NTSC)
