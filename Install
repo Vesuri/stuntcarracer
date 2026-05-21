@@ -99,6 +99,15 @@
     )
   ))
 
+  (set #copy-file "StuntTrackRacer.times")
+  (if (exists #copy-file) (
+    (copyfiles
+      (help @copyfiles-help)
+      (source #copy-file)
+      (dest #dest)
+    )
+  ))
+
   (if (exists (tackon #dest "disk.1"))
     (working "disk.1 already exists, skipping disk imaging.")
     (
@@ -635,6 +644,12 @@
 (if (NOT (exists (tackon #dest #highs-file)))
   (
     (set #copy-file #highs-file)
+    (P_CopyFile)
+  )
+)
+(if (NOT (exists (tackon #dest "StuntTrackRacer.save")))
+  (
+    (set #copy-file "StuntTrackRacer.save")
     (P_CopyFile)
   )
 )
