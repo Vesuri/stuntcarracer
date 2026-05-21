@@ -2,8 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BASE_LHA_URL="https://whdload.de/games/StuntCarRacer.lha"
-OUTPUT="$SCRIPT_DIR/StuntCarRacerUnleashed.tar"
+DIST="$SCRIPT_DIR/dist"
 PAL_SLAVE="$SCRIPT_DIR/StuntCarRacer.slave"
 NTSC_SLAVE="$SCRIPT_DIR/StuntTrackRacer.slave"
 OLD_DIR="StuntCarRacerHD"
@@ -19,29 +18,30 @@ if [[ ! -f "$NTSC_SLAVE" ]]; then
     exit 1
 fi
 
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+rm -rf "$DIST"
+mkdir "$DIST"
 
-curl -fsSL "$BASE_LHA_URL" -o "$WORK/StuntCarRacer.lha"
-lha "xw=$WORK" "$WORK/StuntCarRacer.lha"
+curl -fsSL "https://whdload.de/games/StuntCarRacer.lha" -o "$DIST/StuntCarRacer.lha"
+lha "xw=$DIST" "$DIST/StuntCarRacer.lha"
+rm "$DIST/StuntCarRacer.lha"
 
-curl -fsSL "https://whdload.de/games/StuntTrackRacer.lha" -o "$WORK/StuntTrackRacer.lha"
-lha "xw=$WORK" "$WORK/StuntTrackRacer.lha"
+curl -fsSL "https://whdload.de/games/StuntTrackRacer.lha" -o "$DIST/StuntTrackRacer.lha"
+lha "xw=$DIST" "$DIST/StuntTrackRacer.lha"
+rm "$DIST/StuntTrackRacer.lha"
 
-mv "$WORK/$OLD_DIR" "$WORK/$NEW_DIR"
-mv "$WORK/${OLD_DIR}.info" "$WORK/${NEW_DIR}.info"
+mv "$DIST/$OLD_DIR" "$DIST/$NEW_DIR"
+mv "$DIST/${OLD_DIR}.info" "$DIST/${NEW_DIR}.info"
 
-rm -rf "$WORK/$NEW_DIR/Source"
+rm -rf "$DIST/$NEW_DIR/Source"
 
-cp "$SCRIPT_DIR/ReadMe" "$WORK/$NEW_DIR/ReadMe"
-cp "$SCRIPT_DIR/Install"            "$WORK/$NEW_DIR/Install"
-cp "$PAL_SLAVE"  "$WORK/$NEW_DIR/StuntCarRacer.slave"
-cp "$NTSC_SLAVE" "$WORK/$NEW_DIR/StuntTrackRacer.slave"
+cp "$SCRIPT_DIR/ReadMe" "$DIST/$NEW_DIR/ReadMe"
+cp "$SCRIPT_DIR/Install" "$DIST/$NEW_DIR/Install"
+cp "$PAL_SLAVE"  "$DIST/$NEW_DIR/StuntCarRacer.slave"
+cp "$NTSC_SLAVE" "$DIST/$NEW_DIR/StuntTrackRacer.slave"
 
-cp "$WORK/StuntTrackRacerHD/StuntTrackRacer.newicon"  "$WORK/$NEW_DIR/"
-cp "$WORK/StuntTrackRacerHD/StuntTrackRacer.glowicon" "$WORK/$NEW_DIR/"
+cp "$DIST/StuntTrackRacerHD/StuntTrackRacer.newicon"  "$DIST/$NEW_DIR/"
+cp "$DIST/StuntTrackRacerHD/StuntTrackRacer.glowicon" "$DIST/$NEW_DIR/"
 
-rm -f "$OUTPUT"
-(cd "$WORK" && tar cf "$OUTPUT" "${NEW_DIR}.info" "$NEW_DIR")
+rm -rf "$DIST/StuntTrackRacerHD" "$DIST/StuntTrackRacerHD.info"
 
-echo "Created: $OUTPUT"
+echo "Done: $DIST/"

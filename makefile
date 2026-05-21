@@ -49,5 +49,9 @@ $(SLAVE_NTSC) : $(SLAVE_SOURCE) $(GAME_NTSC_WITHOUT_DATA)
 dist:
 	./create_release.sh
 
+distclean:
+	rm -rf dist
+	$(MAKE) clean
+
 clean:
 	delete $(GAME) $(GAME_NTSC) $(GAME_WITHOUT_DATA) $(GAME_NTSC_WITHOUT_DATA) $(SLAVE) $(SLAVE_NTSC)
