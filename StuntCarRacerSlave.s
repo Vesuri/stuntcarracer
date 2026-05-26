@@ -339,6 +339,12 @@ _PL_TNTData
 		dc.b	"RAT RACE        "
 	; geometryParameterTable byte fix
 	PL_B    $01123e,$66
+	; imageMainGameBackgroundPalette: 7 colors patched by CARE Universal Loader at runtime
+	; Colors 1-2: slightly shifted tones; colors 9-12: red->blue (road edges, cockpit frame);
+	; color 13: minor tweak. Colors 0, 3-8, 14-15 left at standard values.
+	PL_DATA	$011a84,32
+		dc.w	$0000,$0242,$03c3,$0770,$0451,$0233,$0257,$0247
+		dc.w	$0123,$0002,$0113,$0224,$0446,$0322,$0555,$0777
 	; imageTrackPreviewBackgroundPalette reds -> blues
 	PL_L	$1d286,$00020113
 	; imageMenuScreen
