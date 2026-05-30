@@ -8,13 +8,15 @@
  CAUSED IN ANY USUAL, SPECIAL, OR ACCIDENTAL WAY, ALSO IF THE OWNER OR A THIRD
  PARTY HAS BEEN POINTED AT SUCH POSSIBILITIES OF DAMAGE.
 
- This install applies to "Stunt Car Racer" © 1989 Geoff Crammond/Microstyle.
+ This install applies to "Stunt Car Racer" ï¿½ 1989 Geoff Crammond/Microstyle.
  Framerate Unleashed modification by Vesuri/dA JoRMaS.
 
  Requirements:
  -------------
- This install requires the original Stunt Car Racer (PAL/European) floppy disk,
- WHDLoad version 17.0 and DIC to be in the path.
+ This install requires the Stunt Car Racer (PAL/European) floppy disk or ADF
+ image. Both the original (Rob Northen protected) disk and the common cracked
+ version are supported. Unrecognised disk images produce a clean error message
+ instead of crashing. WHDLoad version 17.0 and DIC must be in the path.
  These programs can be found in the WHDLoad package.
  The installer supports real floppy disks, ADF disk images and warp files.
 
@@ -46,6 +48,10 @@
 
  History:
  --------
+ 1.1 (30.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
+ - support for the common cracked PAL disk image added
+ - unrecognised disk images now exit with a clean error instead of crashing
+
  1.0 (21.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
  - initial release
  - partially based on the original WHDLoad install by Codetapper/Action! &

@@ -4,7 +4,7 @@ A modification of the 1989 Amiga game **Stunt Car Racer** (Geoff Crammond / Micr
 
 ## PAL version — Stunt Car Racer
 
-The modification is distributed as a WHDLoad slave. The installer (`Install`) can create a full installation from the original PAL floppy disk, or upgrade an existing Stunt Car Racer WHDLoad installation by replacing `StuntCarRacer.slave` in place.
+The modification is distributed as a WHDLoad slave. The installer (`Install`) can create a full installation from the original PAL floppy disk or the common cracked ADF image, or upgrade an existing Stunt Car Racer WHDLoad installation by replacing `StuntCarRacer.slave` in place. Unrecognised disk images produce a clean WHDLoad error instead of crashing.
 
 The tooltype `C2=1` enables **The New Tracks** option, which plays the game using the track layouts from the TNT hack by AmiGer/CARE. Save and lap time data for the TNT tracks are stored separately in `StuntCarRacerTNT.save` and `StuntCarRacerTNT.times`.
 
