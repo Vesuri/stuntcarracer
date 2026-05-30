@@ -150,33 +150,27 @@ _Start						;A0 = resident loader
 	move.b	#'T',-(a1)
 .noTNT:
 
-	; Check for supported disk image (original Rob Northen protected disk)
+	; Probe disk marker to determine image version
 	move.l	#$2c00,d0		; byte offset of RN preamble marker
 	moveq	#4,d1			; read one longword
 	moveq	#1,d2			; disk 1
 	move.l	a5,a0			; scratch — overwritten by load below
 	jsr	resload_DiskLoad(a2)
 	cmp.l	#$6000007a,(a5)
-	beq.s	.diskOk
-	move.l	_resload(pc),a2
-	pea	TDREASON_WRONGVER
-	jmp	resload_Abort(a2)
-.diskOk:
+	bne	.crackedImage
 
-	; Rob Northen requires one longword before the actual payload
-	lea	-4(a5),a5
-
-	; Load the encrypted game data 8192 bytes at a time
+	; --- Original image: Rob Northen encrypted at $e898 ---
+	lea	-4(a5),a5		; one longword canary prefix before payload
 	move.l	a5,a3
 	move.l	#$e898,d6
 	move.l	#gameDataSize+4,d7
-.readLoop:
+.readLoopOrig:
 	move.l	d6,d0
 	move.l	d7,d1
 	cmp.l	#$2000,d1
-	bls.s	.sizeOk
+	bls.s	.sizeOkOrig
 	move.l	#$2000,d1
-.sizeOk:
+.sizeOkOrig:
 	moveq	#1,d2
 	move.l	a3,a0
 	lea	(a3,d1.w),a3
@@ -184,25 +178,55 @@ _Start						;A0 = resident loader
 	sub.l	d1,d7
 	jsr	resload_DiskLoad(a2)
 	tst.l	d7
-	bne.s	.readLoop
-
-	; Decrypt the game data
+	bne.s	.readLoopOrig
+	; Decrypt
 	move.l	#(gameDataSize+4)>>2,d0
 	move.l	#$c905b365,d5
 	move.l	#$a0cff27b,d6
 	move.l	#$59f3a592,d7
 	move.l	a5,a0
 	bsr	_Decrypt
+	lea	4(a5),a5		; normalize: a5 = gameData
+	bra.s	.imageLoaded
+
+.crackedImage:
+	; --- Cracked image: plaintext at $dc00, no RN canary ---
+	move.l	a5,a3			; a5 = gameData already, no -4 adjustment
+	move.l	#$dc00,d6
+	move.l	#gameDataSize,d7
+.readLoopCrk:
+	move.l	d6,d0
+	move.l	d7,d1
+	cmp.l	#$2000,d1
+	bls.s	.sizeOkCrk
+	move.l	#$2000,d1
+.sizeOkCrk:
+	moveq	#1,d2
+	move.l	a3,a0
+	lea	(a3,d1.w),a3
+	add.l	d1,d6
+	sub.l	d1,d7
+	jsr	resload_DiskLoad(a2)
+	tst.l	d7
+	bne.s	.readLoopCrk
+	; Sanity-check: first longword of game data must be $207c0000
+	cmp.l	#$207c0000,(a5)
+	beq.s	.imageLoaded
+	move.l	_resload(pc),a2
+	pea	TDREASON_WRONGVER
+	jmp	resload_Abort(a2)
+
+.imageLoaded:
 	jsr	resload_FlushCache(a2)
 
 	ifd	NTSC
-	; Apply NTSC imageMenuScreen logo patch (Stunt Car Racer -> Stunt Track Racer)	; added
-	lea	_PL_NTSCDataRef(pc),a0						; added
-	move.l	(a0),d0								; added
-	add.l	a0,d0								; added
-	movea.l	d0,a0								; added
-	lea	4(a5),a1							; added
-	jsr	resload_Patch(a2)						; added
+	; Apply NTSC imageMenuScreen logo patch (Stunt Car Racer -> Stunt Track Racer)
+	lea	_PL_NTSCDataRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0
+	movea.l	d0,a0
+	move.l	a5,a1			; a5 = gameData (normalized for both image versions)
+	jsr	resload_Patch(a2)
 	endc
 
 	; Apply TNT track data if Custom2 (The New Tracks) is enabled
@@ -210,7 +234,7 @@ _Start						;A0 = resident loader
 	move.l	(a0),d0
 	add.l	a0,d0
 	movea.l	d0,a0
-	lea	4(a5),a1			;a5 points 4 bytes before game data (RN canary prefix)
+	move.l	a5,a1			; a5 = gameData (normalized for both image versions)
 	jsr	resload_Patch(a2)
 
 	; Store save filesize
