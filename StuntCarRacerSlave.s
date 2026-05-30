@@ -150,6 +150,19 @@ _Start						;A0 = resident loader
 	move.b	#'T',-(a1)
 .noTNT:
 
+	; Check for supported disk image (original Rob Northen protected disk)
+	move.l	#$2c00,d0		; byte offset of RN preamble marker
+	moveq	#4,d1			; read one longword
+	moveq	#1,d2			; disk 1
+	move.l	a5,a0			; scratch — overwritten by load below
+	jsr	resload_DiskLoad(a2)
+	cmp.l	#$6000007a,(a5)
+	beq.s	.diskOk
+	move.l	_resload(pc),a2
+	pea	TDREASON_WRONGVER
+	jmp	resload_Abort(a2)
+.diskOk:
+
 	; Rob Northen requires one longword before the actual payload
 	lea	-4(a5),a5
 
