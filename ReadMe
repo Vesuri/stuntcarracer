@@ -14,7 +14,7 @@
  Requirements:
  -------------
  This install requires the Stunt Car Racer (PAL/European) floppy disk or ADF
- image. Both the original (Rob Northen protected) disk and the common cracked
+ image. Both the original (Rob Northen protected) disk and the Quartex cracked
  version are supported. Unrecognised disk images produce a clean error message
  instead of crashing. WHDLoad version 17.0 and DIC must be in the path.
  These programs can be found in the WHDLoad package.
@@ -48,14 +48,12 @@
 
  History:
  --------
- 1.1 (30.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
- - support for the common cracked PAL disk image added
+ 1.1 (30.05.2026)
+ - support for the Quartex cracked PAL disk image added
  - unrecognised disk images now exit with a clean error instead of crashing
 
- 1.0 (21.05.2026) done by Vesuri/dA JoRMaS <vesuri@jormas.com>:
+ 1.0 (26.05.2026)
  - initial release
- - partially based on the original WHDLoad install by Codetapper/Action! &
-   StingRay
 
  Contact:
  --------
