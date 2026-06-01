@@ -852,7 +852,30 @@ copyPaletteToCopperlist:
 .rOk:	MOVE.W	D3,(A0)+
 	ADD.L	#$00000002,A0
 	DBRA	D4,.copyLoop
-	RTS
+	TST.B	thirtyTwoColorMode		; added - also write colours 16-31 in 32-colour mode
+	BEQ	.done
+	MOVE.L	#palette32,A1
+	MOVE.L	#copperlistColor16,A0
+	MOVE.W	#$000F,D4
+.copyLoop32:
+	MOVE.W	(A1)+,D3
+	ASL.W	#$01,D3
+	MOVE.B	D3,D0
+	AND.B	#$0F,D0
+	BEQ	.b32Ok
+	OR.B	#$01,D3
+.b32Ok:	MOVE.B	D3,D0
+	AND.B	#$F0,D0
+	BEQ	.g32Ok
+	OR.B	#$10,D3
+.g32Ok:	MOVE.W	D3,D0
+	AND.W	#$0F00,D0
+	BEQ	.r32Ok
+	OR.W	#$0100,D3
+.r32Ok:	MOVE.W	D3,(A0)+
+	ADD.L	#$00000002,A0
+	DBRA	D4,.copyLoop32
+.done:	RTS
 
 copyMainGameBackground:
 	MOVE.L	frameBuffers,A1
@@ -2882,6 +2905,37 @@ lbC04AD38:
 	DBRA	D5,lbC04AD02
 	ADD.L	#$FFFF8328,A2
 	DBRA	D6,lbC04ACFE
+	RTS
+
+; Decode a single-bitplane RLE stream (same packet format as decompressRLEImage)
+; to a flat 40*200 byte buffer.  Used to decode bitplane 4 of a 32-colour image.
+; In:  A0 = RLE source, A1 = destination (bitplane5Buffer, 8000 bytes)
+decompressRLEBitplane:				; added
+	MOVE.W	#$00C7,D6			; 200 rows
+.rowLoop:
+	MOVE.W	#$0000,D3			; byte counter for this row
+.byteLoop:
+	MOVE.B	(A0)+,D0
+	BPL	.literal
+	NEG.B	D0
+	BMI	.byteLoop			; $80 no-op
+	AND.W	#$00FF,D0
+	MOVE.B	(A0)+,D4
+.runLoop:
+	MOVE.B	D4,(A1)+
+	ADDQ.B	#$01,D3
+	DBRA	D0,.runLoop
+	BRA	.rowCheck
+.literal:
+	AND.W	#$00FF,D0
+.litLoop:
+	MOVE.B	(A0)+,(A1)+
+	ADDQ.B	#$01,D3
+	DBRA	D0,.litLoop
+.rowCheck:
+	CMP.B	#$28,D3				; 40 bytes per row done?
+	BNE	.byteLoop
+	DBRA	D6,.rowLoop
 	RTS
 
 decompressRLEObjectToMask:
@@ -21221,6 +21275,7 @@ ciabcrb_old:	ds.b	1
 quit:			ds.b	1
 bitplane5Pointer:	ds.l	1	; added - copper bpl5 address; default bitplane5Buffer1
 thirtyTwoColorMode:	ds.b	1	; added - non-zero when displaying a 32-colour image
+palette32:		ds.w	16	; added - current copper colours 16-31 (written by copyPaletteToCopperlist)
 
 	section	ChipBSS,bss_c
 sampleData:		ds.b	43310
