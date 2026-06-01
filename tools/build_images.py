@@ -2,26 +2,26 @@
 """Re-encode modified PNGs into self-describing image files for the WHDLoad
 slave to load as alternative graphics.
 
-Output format (one file per image, named after the original asset):
+16-colour format (flag bit 6 = 0):
 
-    offset 0   1 byte    flag      $80 = RLE-compressed, $00 = raw interleaved
-    offset 1   1 byte    padding   (unused)
-    offset 2   32 bytes  palette   16 big-endian $0RGB words (Amiga 9-bit color
-                                   levels 0..7; copyPaletteToCopperlist
-                                   expands them at runtime)
-    offset 34  variable  data      RLE packets (decompressRLEImage in
-                                   StuntCarRacer.s:2758) when flag=$80, or
-                                   32000 bytes of word-interleaved bitplanes
-                                   (bp0, bp1, bp2, bp3 per word group) when
-                                   flag=$00
+    offset 0   1 byte    flag      $80 = RLE, $00 = raw word-interleaved
+    offset 1   1 byte    padding
+    offset 2   32 bytes  palette   16 big-endian $0RGB words
+    offset 34  variable  data      RLE (decompressRLEImage) or 32000 bytes raw
 
-This matches the layout the game already uses for imageWreck / imageWon /
-imageLost / imagePromotion (displayResultScreen, StuntCarRacer.s:2710), so the
-slave can share one load+decode routine for every replacement.
+32-colour format (flag bit 6 = 1, i.e. $C0 = RLE):
 
-Palette colors are quantized to the Amiga 9-bit color space (8 levels per
-channel: $00 $33 $55 $77 $99 $BB $DD $FF after the brightness expansion in
-copyPaletteToCopperlist).
+    offset 0   1 byte    flag      $C0 (RLE + 32-colour)
+    offset 1   1 byte    padding
+    offset 2   32 bytes  palette   colours  0-15 ($0RGB words)
+    offset 34  32 bytes  palette   colours 16-31 ($0RGB words)
+    offset 66  variable  4-plane RLE data   (decompressRLEImage, planes 0-3)
+    after      variable  1-plane RLE data   (decompressRLEBitplane, plane 4)
+
+The game detects 32-colour by testing bit 6 of the flag byte.  The data
+pointer written to replacementImagePtrs is block+$42 for 32-colour so that
+palette-low starts at ptr-$40 and palette-high at ptr-$20 (matching the
+ptr-$20 convention the display sites use to locate the palette).
 """
 
 import argparse
@@ -36,6 +36,9 @@ ROW_BYTES = WIDTH // 8                       # 40
 BITPLANE_BYTES = ROW_BYTES * HEIGHT           # 8000
 NUM_BITPLANES = 4
 IMAGE_BYTES = NUM_BITPLANES * BITPLANE_BYTES  # 32000
+
+MAX_COLORS_16 = 16
+MAX_COLORS_32 = 32
 
 IMAGE_NAMES = [
     'imageMainGameBackground',
@@ -85,9 +88,9 @@ def _unfilter(filter_type, line, prev, bpp):
     return bytes(out)
 
 
-def read_indexed_png(path):
+def _read_indexed_png_raw(path):
     """Read a 320x200 indexed-color PNG. Returns (pixels, palette) where pixels
-    is bytes of length 320*200 with values 0..15 and palette is a list of 16
+    is bytes of length 320*200 with raw palette indices and palette is a list of
     (r,g,b) tuples (0..255)."""
     data = path.read_bytes()
     if data[:8] != b"\x89PNG\r\n\x1a\n":
@@ -123,9 +126,6 @@ def read_indexed_png(path):
         raise ValueError(f"{path}: unsupported bit depth {depth}")
     if palette is None:
         raise ValueError(f"{path}: missing PLTE chunk")
-    while len(palette) < 16:
-        palette.append((0, 0, 0))
-
     raw = zlib.decompress(b"".join(idat_parts))
     bytes_per_scanline = (width * depth + 7) // 8
     prev = b""
@@ -149,8 +149,20 @@ def read_indexed_png(path):
             pixels.extend(row[:width])
     if len(pixels) != width * height:
         raise ValueError(f"{path}: pixel count mismatch ({len(pixels)} vs {width*height})")
-    if any(p > 15 for p in pixels):
-        raise ValueError(f"{path}: pixel value > 15 (more than 16 colors used)")
+    return bytes(pixels), palette
+
+
+def read_indexed_png(path, *, max_colors=MAX_COLORS_16):
+    """Read a 320x200 indexed PNG, enforcing a colour-count limit.
+    Returns (pixels, palette) with the palette padded to max_colors entries."""
+    pixels, palette = _read_indexed_png_raw(path)
+    if any(p >= max_colors for p in pixels):
+        raise ValueError(
+            f"{path}: pixel index >= {max_colors} "
+            f"(image uses more than {max_colors} colours)"
+        )
+    while len(palette) < max_colors:
+        palette.append((0, 0, 0))
     return bytes(pixels), palette
 
 
@@ -188,26 +200,23 @@ def rgb_palette_to_amiga(palette, *, warn_label=None):
 # Bitplane packing
 # ---------------------------------------------------------------------------
 
-def indexed_to_planar(pixels):
-    """One byte per pixel (color 0..15) -> 4 contiguous bitplanes of 8000 bytes."""
-    out = bytearray(IMAGE_BYTES)
+def indexed_to_planar(pixels, num_planes=NUM_BITPLANES):
+    """One byte per pixel -> num_planes contiguous bitplanes of 8000 bytes each."""
+    out = bytearray(BITPLANE_BYTES * num_planes)
     for y in range(HEIGHT):
         row_off = y * ROW_BYTES
         in_off = y * WIDTH
         for byte_idx in range(ROW_BYTES):
-            b0 = b1 = b2 = b3 = 0
+            planes = [0] * num_planes
             base = in_off + byte_idx * 8
             for bit in range(8):
                 pixel = pixels[base + bit]
                 m = 0x80 >> bit
-                if pixel & 1: b0 |= m
-                if pixel & 2: b1 |= m
-                if pixel & 4: b2 |= m
-                if pixel & 8: b3 |= m
-            out[0 * BITPLANE_BYTES + row_off + byte_idx] = b0
-            out[1 * BITPLANE_BYTES + row_off + byte_idx] = b1
-            out[2 * BITPLANE_BYTES + row_off + byte_idx] = b2
-            out[3 * BITPLANE_BYTES + row_off + byte_idx] = b3
+                for p in range(num_planes):
+                    if pixel & (1 << p):
+                        planes[p] |= m
+            for p in range(num_planes):
+                out[p * BITPLANE_BYTES + row_off + byte_idx] = planes[p]
     return bytes(out)
 
 
@@ -260,12 +269,11 @@ def encode_rle_segment(segment):
     return bytes(out)
 
 
-def encode_rle(planar):
-    """Encode the full planar image in row-major, bitplane-inner order
-    (matches the order decompressRLEImage consumes)."""
+def encode_rle(planar, num_planes=NUM_BITPLANES):
+    """Encode planar image data in row-major, bitplane-inner order."""
     out = bytearray()
     for row in range(HEIGHT):
-        for bp in range(NUM_BITPLANES):
+        for bp in range(num_planes):
             seg_start = bp * BITPLANE_BYTES + row * ROW_BYTES
             out.extend(encode_rle_segment(planar[seg_start:seg_start + ROW_BYTES]))
     return bytes(out)
@@ -276,17 +284,43 @@ def encode_rle(planar):
 # ---------------------------------------------------------------------------
 
 def build_one(image_path, name, *, raw):
-    pixels, palette = read_indexed_png(image_path)
-    pal_bytes = rgb_palette_to_amiga(palette, warn_label=image_path.stem)
-    planar = indexed_to_planar(pixels)
+    """Build a 16-colour self-describing image block."""
+    pixels, palette = read_indexed_png(image_path, max_colors=MAX_COLORS_16)
+    pal_bytes = rgb_palette_to_amiga(palette[:16], warn_label=image_path.stem)
+    planar = indexed_to_planar(pixels, num_planes=4)
     use_raw = raw or (name in ALWAYS_RAW)
     if use_raw:
         flag = 0x00
         data = planar_to_interleaved(planar)
     else:
         flag = 0x80
-        data = encode_rle(planar)
+        data = encode_rle(planar, num_planes=4)
     return bytes([flag, 0]) + pal_bytes + data
+
+
+def build_one_32(image_path):
+    """Build a 32-colour self-describing image block (flag=$C0, RLE only).
+
+    Block layout (total header = $42 bytes):
+      [0]     flag $C0  (bit7=RLE, bit6=32-colour)
+      [1]     pad  $00
+      [2..33] palette colours  0-15 (16 words)
+      [34..65] palette colours 16-31 (16 words)
+      [66..]  4-plane RLE data  (decompressRLEImage, planes 0-3)
+              1-plane RLE data  (decompressRLEBitplane, plane 4)
+
+    The slave writes block+$42 as the data pointer so that:
+      ptr - $40 = colours 0-15 palette start
+      ptr - $20 = colours 16-31 palette start
+    """
+    pixels, palette = read_indexed_png(image_path, max_colors=MAX_COLORS_32)
+    pal_low  = rgb_palette_to_amiga(palette[:16],    warn_label=image_path.stem)
+    pal_high = rgb_palette_to_amiga(palette[16:32])
+    planar5  = indexed_to_planar(pixels, num_planes=5)
+    rle_4    = encode_rle(planar5, num_planes=4)     # planes 0-3
+    plane4   = planar5[4 * BITPLANE_BYTES:]          # plane 4 data (8000 bytes)
+    rle_5    = encode_rle(plane4, num_planes=1)      # plane 4 only
+    return bytes([0xC0, 0]) + pal_low + pal_high + rle_4 + rle_5
 
 
 def main():
@@ -299,6 +333,10 @@ def main():
                     help="Emit raw word-interleaved bitplanes (flag=$00) instead "
                          "of RLE-compressed data. Fixed 32034-byte payload. "
                          "imageMenuScreen is always built raw regardless of this flag.")
+    ap.add_argument("--32", dest="colors32", action="store_true",
+                    help="Build a 32-colour (5-bitplane) image block (flag=$C0). "
+                         "The source PNG must use at most 32 distinct palette indices. "
+                         "Only valid with a single name=path argument.")
     ap.add_argument("images", nargs="*",
                     help="Image names to build, or name=path pairs to specify an "
                          "explicit source PNG (e.g. "
@@ -338,7 +376,10 @@ def main():
                 return 1
             continue
         try:
-            payload = build_one(png_path, name, raw=args.raw)
+            if args.colors32:
+                payload = build_one_32(png_path)
+            else:
+                payload = build_one(png_path, name, raw=args.raw)
         except Exception as exc:
             print(f"failed {name}: {exc}", file=sys.stderr)
             return 1
@@ -349,9 +390,14 @@ def main():
     if not built:
         print("nothing built", file=sys.stderr)
         return 1
-    fmt = "raw" if args.raw else "RLE"
-    print(f"built {len(built)} image file(s) in {output_dir} (default {fmt}, "
-          f"always-raw: {', '.join(sorted(ALWAYS_RAW))}):")
+    if args.colors32:
+        fmt = "32-colour RLE"
+    elif args.raw:
+        fmt = "raw"
+    else:
+        fmt = "RLE"
+    print(f"built {len(built)} image file(s) in {output_dir} "
+          f"({fmt}, always-raw: {', '.join(sorted(ALWAYS_RAW))}):")
     for name, size in built:
         print(f"  {name:32}  {size:>6} bytes")
     return 0

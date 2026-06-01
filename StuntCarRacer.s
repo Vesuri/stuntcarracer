@@ -2828,6 +2828,32 @@ displayResultScreen:
 	lsl.w	#2,D1
 	lea	replacementImagePtrs,A0
 	movea.l	(A0,D1.W),A6
+	; Check flag bit 6: set = 32-colour image (5 bitplanes, 64-byte palette)
+	btst	#6,(A6)				; added
+	beq.s	.sixteenColour			; added
+	; 32-colour path: palette-low at +$02, palette-high at +$22, data at +$42
+	MOVE.B	#1,thirtyTwoColorMode		; added
+	LEA	$0002(A6),A1
+	JSR	copyPalette			; colours 0-15 -> sourcePalette
+	LEA	$0022(A6),A1			; added - colours 16-31
+	MOVE.L	#palette32,A0			; added
+	MOVE.W	#$000F,D4			; added
+.copyPalette32Loop:				; added
+	MOVE.W	(A1)+,(A0)+			; added
+	DBRA	D4,.copyPalette32Loop		; added
+	LEA	$0042(A6),A0			; added - image data (after 66-byte header)
+	MOVE.L	displayFrameBuffer,A1
+	JSR	decompressRLEImage		; planes 0-3 to displayFrameBuffer
+	MOVE.L	bitplane5Pointer,A1		; added - plane 4 to bitplane5Buffer
+	JSR	decompressRLEBitplane		; added
+	MOVE.W	#$5200,_custom+bplcon0		; added - switch to 5 bitplanes
+	JSR	animatePaletteToTarget
+	JSR	waitForFireButtonPress
+	MOVE.W	#$4200,_custom+bplcon0		; added - restore 4 bitplanes
+	CLR.B	thirtyTwoColorMode		; added
+	RTS
+.sixteenColour:
+	CLR.B	thirtyTwoColorMode		; added - ensure flag is clear
 	LEA	$0002(A6),A1
 	JSR	copyPalette
 	LEA	$0022(A6),A0
