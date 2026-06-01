@@ -230,6 +230,7 @@ initialize:
 	MOVE.L	D0,renderFrameBuffer
 	ADD.L	#$00007D00,D0
 	MOVE.L	D0,displayFrameBuffer
+	MOVE.L	#bitplane5Buffer1,bitplane5Pointer	; added
 	JSR	setupFrameBufferAddresses
 	JSR	initializeSpritePointers
 	JSR	loadPaletteColors
@@ -767,6 +768,11 @@ lbC00D0F0:
 	ADD.L	#$00000008,A0
 	ADD.L	#$00001F40,D0
 	DBRA	D4,lbC00D0F0
+	MOVE.L	bitplane5Pointer,D0		; added - bpl5 follows bpl4 in the copperlist
+	MOVE.L	D0,D3
+	SWAP	D3
+	MOVE.W	D3,$0002(A0)
+	MOVE.W	D0,$0006(A0)
 	MOVEM.L	(SP)+,D3/D4
 	RTS
 
@@ -21142,7 +21148,8 @@ copperlistStart:
 	dc.w	$0801,$fffe
 copperlist:
 	dc.w	bpl1pth,$0007,bpl1ptl,$8000,bpl2pth,$0007,bpl2ptl,$A000,bpl3pth
-	dc.w	$0007,bpl3ptl,$C000,bpl4pth,$0007,bpl4ptl,$E000,color00
+	dc.w	$0007,bpl3ptl,$C000,bpl4pth,$0007,bpl4ptl,$E000,bpl5pth	; added bpl5pth
+	dc.w	$0007,bpl5ptl,$E000,color00					; added bpl5ptl
 copperlistColor0:
 	dc.w	$0000,color01,$0000,color02,$0000,color03,$0000,color04,$0000
 	dc.w	color05,$0000,color06,$0000,color07,$0000,color08,$0000,color09
@@ -21212,6 +21219,8 @@ ciaacrb_old:	ds.b	1
 ciabcra_old:	ds.b	1
 ciabcrb_old:	ds.b	1
 quit:			ds.b	1
+bitplane5Pointer:	ds.l	1	; added - copper bpl5 address; default bitplane5Buffer1
+thirtyTwoColorMode:	ds.b	1	; added - non-zero when displaying a 32-colour image
 
 	section	ChipBSS,bss_c
 sampleData:		ds.b	43310
@@ -21223,6 +21232,8 @@ lineDrawingBuffer:	ds.b	$2710
 lineDrawingBufferEnd:
 frameBuffer1:   ds.b    40*200*4
 frameBuffer2:   ds.b    40*200*4
+bitplane5Buffer1:	ds.b	40*200		; added - 5th bitplane for 32-colour mode
+bitplane5Buffer2:	ds.b	40*200		; added
 
 _ciaa		equ	$00BFE001
 _ciab		equ	$00BFD000
@@ -21247,6 +21258,8 @@ bpl3pth		equ	$0e8
 bpl3ptl		equ	$0ea
 bpl4pth		equ	$0ec
 bpl4ptl		equ	$0ee
+bpl5pth		equ	$0f0		; added
+bpl5ptl		equ	$0f2		; added
 bplcon0		equ	$00000100
 bplcon1		equ	$00000102
 bplcon2		equ	$00000104
