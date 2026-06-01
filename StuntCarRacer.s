@@ -170,6 +170,43 @@ begin:	lea	gameData,a0			; expected to be here by the slave
 	move.l	#trackGeometryDatabase,trackGeometryDatabasePtr
 .trackGeometryDatabasePtrOk:
 
+	tst.l	replacementImagePtrs+0*4	; added
+	bne.s	.img0ok
+	move.l	#imageMainGameBackground,replacementImagePtrs+0*4
+.img0ok:
+	tst.l	replacementImagePtrs+1*4
+	bne.s	.img1ok
+	move.l	#imageMenuScreen,replacementImagePtrs+1*4
+.img1ok:
+	tst.l	replacementImagePtrs+2*4
+	bne.s	.img2ok
+	move.l	#imageTrackPreviewBackground,replacementImagePtrs+2*4
+.img2ok:
+	tst.l	replacementImagePtrs+3*4
+	bne.s	.img3ok
+	move.l	#imageStandingsBackground,replacementImagePtrs+3*4
+.img3ok:
+	tst.l	replacementImagePtrs+4*4
+	bne.s	.img4ok
+	move.l	#imagePlayers,replacementImagePtrs+4*4
+.img4ok:
+	tst.l	replacementImagePtrs+5*4
+	bne.s	.img5ok
+	move.l	#imageWreck,replacementImagePtrs+5*4
+.img5ok:
+	tst.l	replacementImagePtrs+6*4
+	bne.s	.img6ok
+	move.l	#imageWon,replacementImagePtrs+6*4
+.img6ok:
+	tst.l	replacementImagePtrs+7*4
+	bne.s	.img7ok
+	move.l	#imageLost,replacementImagePtrs+7*4
+.img7ok:
+	tst.l	replacementImagePtrs+8*4
+	bne.s	.img8ok
+	move.l	#imagePromotion,replacementImagePtrs+8*4
+.img8ok:
+
 	JSR	initialize
 	JMP	initializeGameMemoryAndState
 
@@ -813,7 +850,7 @@ copyPaletteToCopperlist:
 
 copyMainGameBackground:
 	MOVE.L	frameBuffers,A1
-	MOVE.L	#imageMainGameBackground,A0
+	MOVE.L	replacementImagePtrs,A0		; originally #imageMainGameBackground
 	JSR	decompressRLEImage
 	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A1
@@ -2267,12 +2304,24 @@ copyStatsFromBuffers:
 	RTS
 
 displaySinglePlayerResults:
+	move.l	replacementImagePtrs+4*4,A0	; added
+	beq.s	.useOriginalPlayers
+	MOVE.W	-$20(A0),D0
+	JSR	fadeToColor
+	MOVE.L	replacementImagePtrs+4*4,A0
+	LEA	-$20(A0),A1
+	JSR	copyPalette
+	MOVE.L	replacementImagePtrs+4*4,A1
+	MOVE.L	displayFrameBuffer,A0
+	bra.s	.decodePlayers
+.useOriginalPlayers:
 	MOVE.W	imagePlayersPalette,D0
 	JSR	fadeToColor
 	MOVE.L	#imagePlayersPalette,A1
 	JSR	copyPalette
 	MOVE.L	#imagePlayers,A1
 	MOVE.L	displayFrameBuffer,A0
+.decodePlayers:
 	MOVE.L	A0,A3
 	ADD.L	#$00001F40,A3
 lbC04A1B4:
@@ -2336,7 +2385,7 @@ lbC04A27A:
 	MOVE.L	#lbW04A420,A0
 	AND.W	#$000F,D0
 	MOVE.B	$00(A0,D0.W),D0
-	MOVE.L	#imagePlayers,A0
+	MOVE.L	replacementImagePtrs+4*4,A0	; originally #imagePlayers
 	MOVE.L	renderFrameBuffer,A3
 	MOVE.L	#lbW04A3A4,A1
 	AND.W	#$00FF,D0
@@ -2743,8 +2792,13 @@ displayResultScreen:
 	MOVE.W	#$0000,D0
 	JSR	fadeToColor
 	MOVE.W	(SP)+,D0
-	MOVE.L	#resultScreenPointerTable,A0
-	MOVE.L	$00(A0,D0.W),A6
+	move.w	D0,D1				; added
+	lsr.w	#2,D1
+	lea	.resultIndexMap(pc),A0
+	move.b	(A0,D1.W),D1
+	lsl.w	#2,D1
+	lea	replacementImagePtrs,A0
+	movea.l	(A0,D1.W),A6
 	LEA	$0002(A6),A1
 	JSR	copyPalette
 	LEA	$0022(A6),A0
@@ -2768,6 +2822,9 @@ displayResultScreen:
 	JSR	animatePaletteToTarget
 	JSR	waitForFireButtonPress
 	RTS
+
+.resultIndexMap:	dc.b	0,6,7,5,8	; added
+	even
 
 copyTrackPreviewRegion:
 	MOVE.L	frameBuffers,A0
@@ -6398,16 +6455,18 @@ lbC04EAF6:
 
 runTrackPreviewScreen:
 	JSR	loadPlayerConfiguration
-	MOVE.W	imageTrackPreviewBackgroundPalette,D0
+	MOVE.L	replacementImagePtrs+2*4,A0	; added
+	MOVE.W	-$20(A0),D0			; originally imageTrackPreviewBackgroundPalette
 	JSR	fadeToColor
 	MOVE.B	#$40,D0
 	MOVE.B	D0,displayUpdateFlag
-	MOVE.L	#imageTrackPreviewBackgroundPalette,A1
+	MOVE.L	replacementImagePtrs+2*4,A1	; originally #imageTrackPreviewBackgroundPalette
+	LEA	-$20(A1),A1			; added
 	JSR	copyPalette
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
-	MOVE.L	#imageTrackPreviewBackground,A0
+	MOVE.L	replacementImagePtrs+2*4,A0	; originally #imageTrackPreviewBackground
 	MOVE.L	frameBuffers,A1
 	JSR	decompressRLEImage
 	MOVE.L	frameBuffers,A1
@@ -6472,7 +6531,8 @@ lbC04EC48:
 	MOVE.B	#$00,networkInitPhase
 	JSR	loadPlayerConfiguration
 	JSR	copyMainGameBackground
-	MOVE.L	#imageMainGameBackgroundPalette,A1
+	MOVE.L	replacementImagePtrs,A1		; originally #imageMainGameBackgroundPalette
+	LEA	-$20(A1),A1			; added
 	JSR	copyPalette
 	MOVE.B	#$0E,D0
 	JSR	setForegroundColor
@@ -8882,7 +8942,8 @@ lbC05149A:
 
 displayTrackRecordsScreen:
 	MOVE.B	#$42,displayUpdateFlag
-	MOVE.W	imageStandingsBackgroundPalette,D0
+	MOVE.L	replacementImagePtrs+3*4,A0	; added
+	MOVE.W	-$20(A0),D0			; originally imageStandingsBackgroundPalette
 	JSR	fadeToColor
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	displayFrameBuffer,renderFrameBuffer
@@ -8903,12 +8964,13 @@ lbC051500:
 	SUBQ.B	#$01,D2
 	SUBQ.B	#$01,D1
 	BPL	lbC051500
-	MOVE.L	#imageStandingsBackgroundPalette,A1
+	MOVE.L	replacementImagePtrs+3*4,A1	; originally #imageStandingsBackgroundPalette
+	LEA	-$20(A1),A1			; added
 	JSR	copyPalette
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
-	MOVE.L	#imageStandingsBackground,A0
+	MOVE.L	replacementImagePtrs+3*4,A0	; originally #imageStandingsBackground
 	MOVE.L	displayFrameBuffer,A1
 	JSR	decompressRLEImage
 	MOVE.B	#$02,textHorizontalOffset
@@ -13160,7 +13222,8 @@ lbC055E24:
 
 displayMenuScreen:
 	clr.b	frameProcessingFlag		; added
-	MOVE.W	imageMenuScreenPalette,D0
+	MOVE.L	replacementImagePtrs+1*4,A0	; added
+	MOVE.W	-$20(A0),D0			; originally imageMenuScreenPalette
 	JSR	fadeToColor
 	MOVE.B	#$80,singleBufferRenderMode
 	MOVE.L	frameBuffers,D0
@@ -13168,9 +13231,9 @@ displayMenuScreen:
 	ADD.L	#$00007D00,D0
 	MOVE.L	D0,displayFrameBuffer
 	JSR	setupFrameBufferAddresses
-	MOVE.L	#imageMenuScreenPalette,A1
+	MOVE.L	replacementImagePtrs+1*4,A1	; originally #imageMenuScreenPalette
+	LEA	-$20(A1),A1			; added
 	JSR	copyPalette
-	MOVE.L	#imageMenuScreen,A1
 	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A3
 	ADD.L	#$00001F40,A3
@@ -13525,7 +13588,7 @@ renderMenuCursorAndAdvanceMultiSegment:
 	CLR.W	D4
 	MOVE.B	menuCursorObjectType,D4
 	ASL.W	#$02,D4
-	MOVE.L	#imageMenuScreen,A0
+	MOVE.L	replacementImagePtrs+1*4,A0	; originally #imageMenuScreen
 	SUB.L	#$00000500,A0
 	MOVE.L	#lbL05651A,A1
 	ADD.L	$00(A1,D4.W),A0
@@ -20123,6 +20186,8 @@ trackDataOffsetTablePtr:
 	ds.l	1
 trackGeometryDatabasePtr:
 	ds.l	1
+replacementImagePtrs:
+	ds.l	9				; added
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700
 audioChannelMasks		equ	gameData+$c50

@@ -36,6 +36,7 @@ _expmem		dc.l	expMemSize		;ws_ExpMem
 
 .config		dc.b	"C1:B:Infinite Boost;"
 		dc.b	"C2:B:The New Tracks;"
+		dc.b	"C3:B:Enhanced Graphics;"
 		dc.b	0
 
 ;============================================================================
@@ -150,6 +151,57 @@ _Start						;A0 = resident loader
 	move.b	#'T',-(a1)
 .noTNT:
 
+	; Apply enhanced graphics if Custom3 is enabled.
+	; Write 9 replacement image pointers at gameData+gameDataSize+24 (fixed
+	; offset: after SaveTimes/Loader/Custom1 and the 3 optional TNT slots).
+	lea	_Custom3(pc),a0
+	tst.l	(a0)
+	beq.s	.noEnhancedGfx
+	move.l	a5,a3
+	add.l	#gameDataSize+24,a3		; a3 -> replacementImagePtrs[0]
+	lea	enhancedImageMainGameBackgroundRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0
+	add.l	#$22,d0
+	move.l	d0,0*4(a3)			; [0] imageMainGameBackground data
+;	lea	enhancedImageMenuScreenRef(pc),a0
+;	move.l	(a0),d0
+;	add.l	a0,d0
+;	add.l	#$22,d0
+;	move.l	d0,1*4(a3)			; [1] imageMenuScreen data
+;	lea	enhancedImageTrackPreviewBackgroundRef(pc),a0
+;	move.l	(a0),d0
+;	add.l	a0,d0
+;	add.l	#$22,d0
+;	move.l	d0,2*4(a3)			; [2] imageTrackPreviewBackground data
+;	lea	enhancedImageStandingsBackgroundRef(pc),a0
+;	move.l	(a0),d0
+;	add.l	a0,d0
+;	add.l	#$22,d0
+;	move.l	d0,3*4(a3)			; [3] imageStandingsBackground data
+	lea	enhancedImagePlayersRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0
+	add.l	#$22,d0
+	move.l	d0,4*4(a3)			; [4] imagePlayers data
+;	lea	enhancedImageWreckRef(pc),a0
+;	move.l	(a0),d0
+;	add.l	a0,d0
+;	move.l	d0,5*4(a3)			; [5] imageWreck block
+;	lea	enhancedImageWonRef(pc),a0
+;	move.l	(a0),d0
+;	add.l	a0,d0
+;	move.l	d0,6*4(a3)			; [6] imageWon block
+;	lea	enhancedImageLostRef(pc),a0
+;	move.l	(a0),d0
+;	add.l	a0,d0
+;	move.l	d0,7*4(a3)			; [7] imageLost block
+;	lea	enhancedImagePromotionRef(pc),a0
+;	move.l	(a0),d0
+;	add.l	a0,d0
+;	move.l	d0,8*4(a3)			; [8] imagePromotion block
+.noEnhancedGfx:
+
 	; Probe disk marker to determine image version
 	move.l	#$2c00,d0		; byte offset of RN preamble marker
 	moveq	#4,d1			; read one longword
@@ -259,11 +311,23 @@ _Tags		dc.l	WHDLTAG_CUSTOM1_GET
 _Custom1	dc.l	0
 		dc.l	WHDLTAG_CUSTOM2_GET
 _Custom2	dc.l	0
+		dc.l	WHDLTAG_CUSTOM3_GET
+_Custom3	dc.l	0
 		dc.l	TAG_DONE
 _SaveFileSize	dc.l	0
 _ChipPtr	dc.l	$800
 _PL_TNTDataRef	dc.l	_PL_TNTData-_PL_TNTDataRef
 tntDataRef	dc.l	tntData-tntDataRef
+; Self-relative pointers to replacement image data (incbinned at end of file)
+enhancedImageMainGameBackgroundRef:		dc.l	enhancedImageMainGameBackground-enhancedImageMainGameBackgroundRef
+enhancedImageMenuScreenRef:			dc.l	enhancedImageMenuScreen-enhancedImageMenuScreenRef
+enhancedImageTrackPreviewBackgroundRef:	dc.l	enhancedImageTrackPreviewBackground-enhancedImageTrackPreviewBackgroundRef
+enhancedImageStandingsBackgroundRef:		dc.l	enhancedImageStandingsBackground-enhancedImageStandingsBackgroundRef
+enhancedImagePlayersRef:			dc.l	enhancedImagePlayers-enhancedImagePlayersRef
+enhancedImageWreckRef:			dc.l	enhancedImageWreck-enhancedImageWreckRef
+enhancedImageWonRef:				dc.l	enhancedImageWon-enhancedImageWonRef
+enhancedImageLostRef:			dc.l	enhancedImageLost-enhancedImageLostRef
+enhancedImagePromotionRef:			dc.l	enhancedImagePromotion-enhancedImagePromotionRef
 	ifd	NTSC
 _PL_NTSCDataRef	dc.l	_PL_NTSCData-_PL_NTSCDataRef
 	endc
@@ -2692,3 +2756,29 @@ tntData:
 		dc.b	$03,$87,$10,$17,$16,$d6,$01,$1a,$1b,$40,$02,$03,$04,$05,$04,$23
 		dc.b	$2d,$00,$09,$05,$08,$09,$32,$33,$34,$35,$36,$37
 tntDataSize	equ	*-tntData
+
+;======================================================================
+; Replacement image data (C3: Enhanced Graphics)
+; Self-describing format: flag(1) + pad(1) + palette×32 + image data
+; imageMenuScreen is always raw (flag=$00); others are RLE (flag=$80).
+; Order matches replacementImagePtrs[0..8] in StuntCarRacer.s.
+;======================================================================
+	EVEN
+enhancedImageMainGameBackground:
+	incbin	"gfx/imageMainGameBackground"
+enhancedImageMenuScreen:
+;	incbin	"gfx/imageMenuScreen"
+enhancedImageTrackPreviewBackground:
+;	incbin	"gfx/imageTrackPreviewBackground"
+enhancedImageStandingsBackground:
+;	incbin	"gfx/imageStandingsBackground"
+enhancedImagePlayers:
+	incbin	"gfx/imagePlayers"
+enhancedImageWreck:
+;	incbin	"gfx/imageWreck"
+enhancedImageWon:
+;	incbin	"gfx/imageWon"
+enhancedImageLost:
+;	incbin	"gfx/imageLost"
+enhancedImagePromotion:
+;	incbin	"gfx/imagePromotion"
