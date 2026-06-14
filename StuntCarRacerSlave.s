@@ -161,8 +161,18 @@ _Start						;A0 = resident loader
 	add.l	#gameDataSize+24,a3		; a3 -> replacementImagePtrs[0]
 	lea	enhancedImageMainGameBackgroundRef(pc),a0
 	move.l	(a0),d0
-	add.l	a0,d0
-	add.l	#$22,d0
+	add.l	a0,d0				; d0 = block start
+	movea.l	d0,a1
+	btst	#6,(a1)				; bit 6 set = 32-colour (flag=$C0)
+	beq.s	.bg16colour
+	add.l	#$42,d0				; 32-colour: data at block+$42
+	move.l	a5,a1
+	adda.l	#gameDataSize+60,a1		; a1 -> bg32color in game BSS
+	move.b	#1,(a1)				; signal 32-colour to game code
+	bra.s	.bgColourDone
+.bg16colour:
+	add.l	#$22,d0				; 16-colour: data at block+$22
+.bgColourDone:
 	move.l	d0,0*4(a3)			; [0] imageMainGameBackground data
 ;	lea	enhancedImageMenuScreenRef(pc),a0
 ;	move.l	(a0),d0

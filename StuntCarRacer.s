@@ -880,7 +880,33 @@ copyPaletteToCopperlist:
 copyMainGameBackground:
 	MOVE.L	frameBuffers,A1
 	MOVE.L	replacementImagePtrs,A0		; originally #imageMainGameBackground
-	JSR	decompressRLEImage
+	TST.B	bg32color			; added
+	BEQ	.decode
+	; 32-colour: install both palette halves, then decode planes 0-3 + plane 4
+	MOVEM.L	A0-A1,-(SP)
+	LEA	-$40(A0),A1			; added - colours 0-15 at ptr-$40
+	JSR	copyPalette			; A1 advances to ptr-$20
+	MOVE.L	#palette32,A0			; added
+	MOVE.W	#$000F,D4
+.highPal:
+	MOVE.W	(A1)+,(A0)+			; added - colours 16-31 to palette32
+	DBRA	D4,.highPal
+	MOVEM.L	(SP)+,A0-A1
+	MOVE.B	#1,thirtyTwoColorMode		; added
+	MOVE.W	#$5200,_custom+bplcon0		; added
+.decode:
+	JSR	decompressRLEImage		; planes 0-3; A0 → plane 4 data in 32-colour mode
+	TST.B	bg32color			; added
+	BEQ	.copyToSecond
+	MOVE.L	#bitplane5Buffer1,A1		; added
+	JSR	decompressRLEBitplane		; added - plane 4 to bitplane5Buffer1
+	MOVE.L	#bitplane5Buffer1,A0		; added - mirror to buffer2 for double-buffering
+	MOVE.L	#bitplane5Buffer2,A1
+	MOVE.W	#40*200/4-1,D3
+.copy5th:
+	MOVE.L	(A0)+,(A1)+
+	DBRA	D3,.copy5th
+.copyToSecond:
 	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A1
 	ADD.W	#$7D00,A1
@@ -6617,9 +6643,12 @@ lbC04EC48:
 	MOVE.B	#$00,networkInitPhase
 	JSR	loadPlayerConfiguration
 	JSR	copyMainGameBackground
+	TST.B	bg32color			; added - 32-colour path installed palette already
+	BNE	.bgPaletteOk
 	MOVE.L	replacementImagePtrs,A1		; originally #imageMainGameBackgroundPalette
 	LEA	-$20(A1),A1			; added
 	JSR	copyPalette
+.bgPaletteOk:
 	MOVE.B	#$0E,D0
 	JSR	setForegroundColor
 	MOVE.B	#$00,D0
@@ -13308,6 +13337,11 @@ lbC055E24:
 
 displayMenuScreen:
 	clr.b	frameProcessingFlag		; added
+	TST.B	thirtyTwoColorMode		; added - restore 4-plane mode when leaving race
+	BEQ	.fourPlaneOk
+	CLR.B	thirtyTwoColorMode
+	MOVE.W	#$4200,_custom+bplcon0
+.fourPlaneOk:
 	MOVE.L	replacementImagePtrs+1*4,A0	; added
 	MOVE.W	-$20(A0),D0			; originally imageMenuScreenPalette
 	JSR	fadeToColor
@@ -20274,6 +20308,8 @@ trackGeometryDatabasePtr:
 	ds.l	1
 replacementImagePtrs:
 	ds.l	9				; added
+bg32color:
+	ds.b	1				; added - set by slave when replacementImagePtrs[0] is 32-colour
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700
 audioChannelMasks		equ	gameData+$c50
