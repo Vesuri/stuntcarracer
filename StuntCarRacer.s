@@ -21335,8 +21335,8 @@ ciaacrb_old:	ds.b	1
 ciabcra_old:	ds.b	1
 ciabcrb_old:	ds.b	1
 quit:			ds.b	1
-bitplane5Pointer:	ds.l	1	; added - copper bpl5 address; default bitplane5Buffer1
 thirtyTwoColorMode:	ds.b	1	; added - non-zero when displaying a 32-colour image
+bitplane5Pointer:	ds.l	1	; added - copper bpl5 address; default bitplane5Buffer1
 palette32:		ds.w	16	; added - current copper colours 16-31 (written by copyPaletteToCopperlist)
 
 	section	ChipBSS,bss_c
