@@ -20031,12 +20031,12 @@ lbC05B77A:
 	RTS
 
 loadPaletteColors:
-	MOVE.L	#copperlistColor16,A0
-	MOVE.L	#spritePalette,A1
-	MOVE.W	#$0007,D0
-.loop:	MOVE.W	(A1)+,(A0)+
-	ADDQ.L	#$02,A0
-	DBRA	D0,.loop
+	MOVE.W	spritePalette+1*2,copperlistColor16+1*4	; color17
+	MOVE.W	spritePalette+2*2,copperlistColor16+2*4	; color18
+	MOVE.W	spritePalette+3*2,copperlistColor16+3*4	; color19
+	MOVE.W	spritePalette+5*2,copperlistColor16+5*4	; color21
+	MOVE.W	spritePalette+6*2,copperlistColor16+6*4	; color22
+	MOVE.W	spritePalette+7*2,copperlistColor16+7*4	; color23
 	RTS
 
 initializeSpritePointers:
