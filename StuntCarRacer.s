@@ -2469,6 +2469,19 @@ copyPlayersPlane5:				; added
 	MOVEM.L	(SP)+,D3/A0/A1			; added
 	RTS					; added
 
+; A1 -> an image's colours 16-31 (its data pointer - $20). Installs them as the
+; fade target so they fade in together with colours 0-15, and leaves A1 pointing
+; at the image data - the same convention copyPalette follows.
+copyHighPaletteTarget:				; added
+	MOVEM.L	D4/A2,-(SP)			; added
+	MOVE.L	#palette32Target,A2		; added
+	MOVE.W	#$000F,D4			; added
+.copyLoop:					; added
+	MOVE.W	(A1)+,(A2)+			; added
+	DBRA	D4,.copyLoop			; added
+	MOVEM.L	(SP)+,D4/A2			; added
+	RTS					; added
+
 ; Blank the 5th bitplane. Every screen showing a 16-colour image must call this
 ; in fivePlaneMode, otherwise the previous screen's 5th bitplane still sets the
 ; high palette bit and those pixels render in colours 16-31.
@@ -6694,20 +6707,41 @@ lbC04EAF6:
 runTrackPreviewScreen:
 	JSR	loadPlayerConfiguration
 	MOVE.L	replacementImagePtrs+2*4,A0	; added
+	tst.b	preview32color			; added - 32-colour: colours 0-15 at ptr-$40
+	beq.s	.fadeColour16			; added
+	MOVE.W	-$40(A0),D0			; added
+	bra.s	.fadeColourOk			; added
+.fadeColour16:					; added
 	MOVE.W	-$20(A0),D0			; originally imageTrackPreviewBackgroundPalette
+.fadeColourOk:					; added
 	JSR	fadeToColor
 	MOVE.B	#$40,D0
 	MOVE.B	D0,displayUpdateFlag
 	MOVE.L	replacementImagePtrs+2*4,A1	; originally #imageTrackPreviewBackgroundPalette
+	tst.b	preview32color			; added - 32-colour: palette-low at ptr-$40,
+	beq.s	.palette16			; added - palette-high at ptr-$20
+	LEA	-$40(A1),A1			; added
+	JSR	copyPalette			; added
+	JSR	copyHighPaletteTarget		; added
+	bra.s	.paletteOk			; added
+.palette16:					; added
 	LEA	-$20(A1),A1			; added
 	JSR	copyPalette
+.paletteOk:					; added
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
 	MOVE.L	replacementImagePtrs+2*4,A0	; originally #imageTrackPreviewBackground
 	MOVE.L	frameBuffers,A1
-	JSR	decompressRLEImage
+	JSR	decompressRLEImage		; A0 -> plane 4 data in 32-colour mode
+	tst.b	preview32color			; added - install or blank the 5th bitplane
+	beq.s	.previewPlane5Clear		; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	JSR	decompressRLEBitplane		; added
+	bra.s	.previewPlane5Done		; added
+.previewPlane5Clear:				; added
 	JSR	clearPlane5			; added - 16-colour image: blank the 5th bitplane
+.previewPlane5Done:				; added
 	MOVE.L	frameBuffers,A1
 	MOVE.L	displayFrameBuffer,A0
 	MOVE.L	A0,renderFrameBuffer
@@ -9185,7 +9219,13 @@ lbC05149A:
 displayTrackRecordsScreen:
 	MOVE.B	#$42,displayUpdateFlag
 	MOVE.L	replacementImagePtrs+3*4,A0	; added
+	tst.b	standings32color		; added - 32-colour: colours 0-15 at ptr-$40
+	beq.s	.fadeColour16			; added
+	MOVE.W	-$40(A0),D0			; added
+	bra.s	.fadeColourOk			; added
+.fadeColour16:					; added
 	MOVE.W	-$20(A0),D0			; originally imageStandingsBackgroundPalette
+.fadeColourOk:					; added
 	JSR	fadeToColor
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	displayFrameBuffer,renderFrameBuffer
@@ -9207,15 +9247,30 @@ lbC051500:
 	SUBQ.B	#$01,D1
 	BPL	lbC051500
 	MOVE.L	replacementImagePtrs+3*4,A1	; originally #imageStandingsBackgroundPalette
+	tst.b	standings32color		; added - 32-colour: palette-low at ptr-$40,
+	beq.s	.palette16			; added - palette-high at ptr-$20
+	LEA	-$40(A1),A1			; added
+	JSR	copyPalette			; added
+	JSR	copyHighPaletteTarget		; added
+	bra.s	.paletteOk			; added
+.palette16:					; added
 	LEA	-$20(A1),A1			; added
 	JSR	copyPalette
+.paletteOk:					; added
 	MOVE.B	#$0F,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$80,textTransparencyMode
 	MOVE.L	replacementImagePtrs+3*4,A0	; originally #imageStandingsBackground
 	MOVE.L	displayFrameBuffer,A1
-	JSR	decompressRLEImage
+	JSR	decompressRLEImage		; A0 -> plane 4 data in 32-colour mode
+	tst.b	standings32color		; added - install or blank the 5th bitplane
+	beq.s	.standingsPlane5Clear		; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	JSR	decompressRLEBitplane		; added
+	bra.s	.standingsPlane5Done		; added
+.standingsPlane5Clear:				; added
 	JSR	clearPlane5			; added - 16-colour image: blank the 5th bitplane
+.standingsPlane5Done:				; added
 	MOVE.B	#$02,textHorizontalOffset
 	MOVE.B	#$3B,D1
 	MOVE.B	currentPlayerContext,D0
@@ -13520,7 +13575,13 @@ stepPalette32Fade:				; added
 displayMenuScreen:
 	clr.b	frameProcessingFlag		; added
 	MOVE.L	replacementImagePtrs+1*4,A0	; added
+	tst.b	menu32color			; added - 32-colour: colours 0-15 sit at ptr-$40
+	beq.s	.fadeColour16			; added
+	MOVE.W	-$40(A0),D0			; added
+	bra.s	.fadeColourOk			; added
+.fadeColour16:					; added
 	MOVE.W	-$20(A0),D0			; originally imageMenuScreenPalette
+.fadeColourOk:					; added
 	JSR	fadeToColor			; moved above the plane switch - fadeToColor
 						; fades colours 16-31 out as well
 	tst.b	fivePlaneMode			; added - with enhanced graphics every screen
@@ -13537,8 +13598,16 @@ displayMenuScreen:
 	MOVE.L	D0,displayFrameBuffer
 	JSR	setupFrameBufferAddresses
 	MOVE.L	replacementImagePtrs+1*4,A1	; originally #imageMenuScreenPalette
+	tst.b	menu32color			; added - 32-colour: palette-low at ptr-$40,
+	beq.s	.palette16			; added - palette-high at ptr-$20
+	LEA	-$40(A1),A1			; added
+	JSR	copyPalette			; added - A1 advances to ptr-$20
+	JSR	copyHighPaletteTarget		; added - A1 advances to the image data
+	bra.s	.paletteOk			; added
+.palette16:					; added
 	LEA	-$20(A1),A1			; added
-	JSR	copyPalette
+	JSR	copyPalette			; A1 advances to the image data
+.paletteOk:					; added
 	MOVE.L	frameBuffers,A0
 	MOVE.L	A0,A3
 	ADD.L	#$00001F40,A3
@@ -13555,8 +13624,19 @@ displayMenuScreen:
 	CMP.L	A3,A0
 	BNE	.copyImageLoop
 	MOVE.B	#$41,displayUpdateFlag
-	JSR	clearPlane5			; added - menu image is 16-colour: blank the
-						; 5th bitplane while the palette is still flat
+	tst.b	menu32color			; added - install the 5th bitplane (or blank it
+	bne.s	.menuPlane5			; added - for a 16-colour image) while the
+	JSR	clearPlane5			; added - palette is still flat
+	bra.s	.menuPlane5Done			; added
+.menuPlane5:					; added
+	MOVE.L	replacementImagePtrs+1*4,A0	; added - raw plane 4 follows planes 0-3
+	ADD.L	#32000,A0			; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	MOVE.W	#40*200/4-1,D3			; added
+.menuPlane5Copy:				; added
+	MOVE.L	(A0)+,(A1)+			; added
+	DBRA	D3,.menuPlane5Copy		; added
+.menuPlane5Done:				; added
 	JSR	renderDivisionBackgroundAndHeader
 	JSR	copyFirstFrameBufferToSecond
 	JMP	animatePaletteToTarget
@@ -20509,6 +20589,12 @@ fivePlaneMode:
 	ds.b	1				; added - set by slave when enhanced graphics are in
 						; use: stay in 5 bitplanes on every screen so the
 						; plane count never changes mid-fade
+menu32color:
+	ds.b	1				; added - set by slave when replacementImagePtrs[1] is 32-colour
+preview32color:
+	ds.b	1				; added - set by slave when replacementImagePtrs[2] is 32-colour
+standings32color:
+	ds.b	1				; added - set by slave when replacementImagePtrs[3] is 32-colour
 	even					; added - keep any following data word-aligned
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700

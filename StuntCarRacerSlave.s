@@ -177,21 +177,51 @@ _Start						;A0 = resident loader
 	add.l	#$22,d0				; 16-colour: data at block+$22
 .bgColourDone:
 	move.l	d0,0*4(a3)			; [0] imageMainGameBackground data
-;	lea	enhancedImageMenuScreenRef(pc),a0
-;	move.l	(a0),d0
-;	add.l	a0,d0
-;	add.l	#$22,d0
-;	move.l	d0,1*4(a3)			; [1] imageMenuScreen data
-;	lea	enhancedImageTrackPreviewBackgroundRef(pc),a0
-;	move.l	(a0),d0
-;	add.l	a0,d0
-;	add.l	#$22,d0
-;	move.l	d0,2*4(a3)			; [2] imageTrackPreviewBackground data
-;	lea	enhancedImageStandingsBackgroundRef(pc),a0
-;	move.l	(a0),d0
-;	add.l	a0,d0
-;	add.l	#$22,d0
-;	move.l	d0,3*4(a3)			; [3] imageStandingsBackground data
+	lea	enhancedImageMenuScreenRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0				; d0 = block start
+	movea.l	d0,a1				; added
+	btst	#6,(a1)				; added - bit 6 set = 32-colour
+	beq.s	.menu16colour			; added
+	add.l	#$42,d0				; added - 32-colour: data at block+$42
+	move.l	a5,a1				; added
+	adda.l	#gameDataSize+63,a1		; added - menu32color in game BSS
+	move.b	#1,(a1)				; added
+	bra.s	.menuColourDone			; added
+.menu16colour:					; added
+	add.l	#$22,d0				; 16-colour: data at block+$22
+.menuColourDone:				; added
+	move.l	d0,1*4(a3)			; [1] imageMenuScreen data
+	lea	enhancedImageTrackPreviewBackgroundRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0				; d0 = block start
+	movea.l	d0,a1				; added
+	btst	#6,(a1)				; added - bit 6 set = 32-colour
+	beq.s	.preview16colour		; added
+	add.l	#$42,d0				; added - 32-colour: data at block+$42
+	move.l	a5,a1				; added
+	adda.l	#gameDataSize+64,a1		; added - preview32color in game BSS
+	move.b	#1,(a1)				; added
+	bra.s	.previewColourDone		; added
+.preview16colour:				; added
+	add.l	#$22,d0				; 16-colour: data at block+$22
+.previewColourDone:				; added
+	move.l	d0,2*4(a3)			; [2] imageTrackPreviewBackground data
+	lea	enhancedImageStandingsBackgroundRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0				; d0 = block start
+	movea.l	d0,a1				; added
+	btst	#6,(a1)				; added - bit 6 set = 32-colour
+	beq.s	.standings16colour		; added
+	add.l	#$42,d0				; added - 32-colour: data at block+$42
+	move.l	a5,a1				; added
+	adda.l	#gameDataSize+65,a1		; added - standings32color in game BSS
+	move.b	#1,(a1)				; added
+	bra.s	.standingsColourDone		; added
+.standings16colour:				; added
+	add.l	#$22,d0				; 16-colour: data at block+$22
+.standingsColourDone:				; added
+	move.l	d0,3*4(a3)			; [3] imageStandingsBackground data
 	lea	enhancedImagePlayersRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0				; d0 = block start
@@ -2782,21 +2812,29 @@ tntDataSize	equ	*-tntData
 
 ;======================================================================
 ; Replacement image data (C3: Enhanced Graphics)
-; Self-describing format: flag(1) + pad(1) + palette×32 + image data
-; imageMenuScreen is always raw (flag=$00); others are RLE (flag=$80).
+; Self-describing format: flag(1) + pad(1) + palette + image data.
+; imageMenuScreen and imagePlayers are always raw (flag=$00, or $40 when
+; 32-colour); the others are RLE (flag=$80, or $C0 when 32-colour).
 ; Order matches replacementImagePtrs[0..8] in StuntCarRacer.s.
+; Each block needs EVEN: RLE payloads have odd lengths, and the palettes are
+; read as words, which would be an address error on a 68000.
 ;======================================================================
 	EVEN
 enhancedImageMainGameBackground:
 	incbin	"gfx/imageMainGameBackground"
+	EVEN
 enhancedImageMenuScreen:
-;	incbin	"gfx/imageMenuScreen"
+	incbin	"gfx/imageMenuScreen"
+	EVEN
 enhancedImageTrackPreviewBackground:
-;	incbin	"gfx/imageTrackPreviewBackground"
+	incbin	"gfx/imageTrackPreviewBackground"
+	EVEN
 enhancedImageStandingsBackground:
-;	incbin	"gfx/imageStandingsBackground"
+	incbin	"gfx/imageStandingsBackground"
+	EVEN
 enhancedImagePlayers:
 	incbin	"gfx/imagePlayers"
+	EVEN
 enhancedImageWreck:
 ;	incbin	"gfx/imageWreck"
 enhancedImageWon:
