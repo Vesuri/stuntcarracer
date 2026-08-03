@@ -23,6 +23,15 @@ Examples:
 
   python3 tools/remap_to_original_palette.py --image imageMainGameBackground \\
       --reserve-sprites in.png out.png
+
+  # pin all 32 slots to another image's palette (imageMenuScreen must match
+  # imagePlayers, because portraits are blitted onto menu-based screens)
+  python3 tools/remap_to_original_palette.py \\
+      --reference-png images/enhanced/imagePlayers_remapped.png \\
+      images/enhanced/imageMenuScreen_chatgpt.png \\
+      images/enhanced/imageMenuScreen_remapped.png
+
+See tools/README.md for which remap each image needs.
 """
 
 import argparse

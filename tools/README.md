@@ -102,15 +102,21 @@ those eight values per channel, no quantization happens.
 
 ## 32-colour images (5 bitplanes)
 
-`imageMainGameBackground` and `imagePlayers` can be supplied as 32-colour,
-5-bitplane images.  Build with the `--32` flag:
+All nine images can be supplied as 32-colour, 5-bitplane images, and the game
+runs every screen in 5 bitplanes whenever enhanced graphics are active.  Build
+with the `--32` flag:
 
 ```
 python3 tools/build_images.py --32 \
-    'imageMainGameBackground=images/wip/imageMainGameBackground_WIP_2.png'
+    'imageMainGameBackground=images/enhanced/imageMainGameBackground_remapped.png'
 python3 tools/build_images.py --32 \
     'imagePlayers=images/enhanced/imagePlayers_remapped.png'
+python3 tools/build_images.py --32 \
+    'imageMenuScreen=images/enhanced/imageMenuScreen_remapped.png'
 ```
+
+`--raw` is not needed for `imageMenuScreen`/`imagePlayers`: they are in
+`ALWAYS_RAW`, so `--32` already emits the raw form their renderers require.
 
 The PNG must use at most 32 distinct palette indices.  There are two 32-colour
 output formats; both share a `$42`-byte header and are distinguished by bit 7
@@ -149,6 +155,53 @@ Note that palette indices 16–31 (the high half) double as the car sprites'
 colour registers in 32-colour mode, so some of them are not free — see
 `enhanced-graphics.md` for which entries are reserved and the safe-to-edit
 regions of each image.
+
+## remap_to_original_palette.py
+
+```
+python3 tools/remap_to_original_palette.py [--image NAME | --reference-png PNG] \
+                                           [--reserve-sprites] SRC DST
+```
+
+Reorders a replacement PNG's palette so the low slots hold a *fixed* palette,
+moving the image's own extra colours into the free high slots.  No pixel changes
+colour unless a colour has to be merged.  This matters because the game selects
+many colours **by index** (text, HUD, track and cursor colours), so those slots
+have a fixed meaning and cannot be reassigned freely.
+
+- `--image NAME` pins indices 0–15 to that image's original palette, read from
+  `scr.exe.decrypted`, and leaves 16–31 free for the artist.
+- `--reference-png PNG` pins **all 32** slots to another PNG's palette.  Use it
+  when two images share one displayed palette; nothing is left free, so any
+  colour absent from the reference is mapped to its nearest neighbour (lossy —
+  the tool reports how many pixels shift).
+- `--reserve-sprites` additionally pins 17,18,19,21,22,23 to the car sprite
+  colours.  Only `imageMainGameBackground` needs this.
+
+### What each image needs
+
+| Image | Remap | Why |
+|---|---|---|
+| `imageMainGameBackground` | `--image imageMainGameBackground --reserve-sprites` | HUD colours by index; palette 16–31 drives the car sprite registers |
+| `imagePlayers` | `--image imagePlayers` | no sprites on the results screen; 16–31 free |
+| `imageMenuScreen` | `--reference-png .../imagePlayers_remapped.png` | portraits are blitted from `imagePlayers` onto menu-based screens, so an index must mean the same colour in both |
+| `imageTrackPreviewBackground` | `--image imageTrackPreviewBackground` | 3-D preview and text pick colours by index |
+| `imageStandingsBackground` | `--image imageStandingsBackground` | records table text picks colours by index |
+| `imageWreck`/`Won`/`Lost`/`Promotion` | **none** | nothing is drawn over them and no index is referenced — all 32 free |
+
+Full workflow for the menu screen, which needs both steps:
+
+```
+python3 tools/remap_to_original_palette.py \
+    --reference-png images/enhanced/imagePlayers_remapped.png \
+    images/enhanced/imageMenuScreen_chatgpt.png \
+    images/enhanced/imageMenuScreen_remapped.png
+python3 tools/build_images.py --32 \
+    'imageMenuScreen=images/enhanced/imageMenuScreen_remapped.png'
+```
+
+If `imagePlayers` ever changes, rerun **both** steps for the menu, or the two
+palettes drift apart again.
 
 ## Round-trip sanity check
 
