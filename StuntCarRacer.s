@@ -2497,6 +2497,21 @@ clearPlane5:					; added
 
 ; Copy one 80x55 portrait's 5th bitplane. plane5SourcePtr / plane5DestPtr are
 ; set up by renderPlayerDisplay; both have a 40-byte planar row stride.
+; Blank one portrait's 5th bitplane, for the masked render path: its mask applies
+; to planes 0-3 only, so copying plane 4 would set high palette bits outside the
+; masked shape. Blanking keeps the portrait within colours 0-15 instead.
+blankPortraitPlane5:				; added
+	MOVEM.L	D3/D5/A1,-(SP)			; added
+	MOVE.L	plane5DestPtr,A1		; added
+	MOVE.W	#$0036,D5			; added - 55 rows
+.row:	MOVE.W	#$0004,D3			; added - 5 words = 80 pixels
+.word:	CLR.W	(A1)+				; added
+	DBRA	D3,.word			; added
+	ADD.L	#$0000001E,A1			; added - 40 - 10 bytes consumed
+	DBRA	D5,.row				; added
+	MOVEM.L	(SP)+,D3/D5/A1			; added
+	RTS					; added
+
 blitPortraitPlane5:				; added
 	MOVEM.L	D3/D5/A0/A1,-(SP)		; added
 	MOVE.L	plane5SourcePtr,A0		; added
@@ -2557,8 +2572,8 @@ lbC04A27A:
 	ASL.W	#$02,D3
 	ADD.L	$00(A1,D0.W),A0
 	ADD.L	$00(A1,D3.W),A3
-	tst.b	players32Active			; added - stash 5th-bitplane src/dst
-	beq.s	.no5thPlane			; added
+	tst.b	players32color			; added - stash 5th-bitplane src/dst whenever the
+	beq.s	.no5thPlane			; added - image has one, on every portrait screen
 	MOVEM.L	D1-D2,-(SP)			; added
 	MOVE.L	$00(A1,D0.W),D1			; added - src offset = row*160 + word*8
 	LSR.L	#$02,D1				; added - /4 gives row*40 + word*2
@@ -2621,9 +2636,14 @@ lbC04A376:
 	ADD.L	#$0000001E,A3
 	DBRA	D5,lbC04A334
 lbC04A38A:
-	tst.b	players32Active			; added - portrait 5th bitplane
-	beq.s	.no5thPlaneBlit			; added
-	JSR	blitPortraitPlane5		; added
+	tst.b	players32color			; added - portrait 5th bitplane. Needed on every
+	beq.s	.no5thPlaneBlit			; added - screen that blits a portrait, not just
+	tst.b	lbB04A4BA			; added - the results screen. The masked path only
+	bne.s	.blankPortraitPlane5		; added - masks planes 0-3, so blank plane 5 there
+	JSR	blitPortraitPlane5		; added - rather than copying it unmasked
+	bra.s	.no5thPlaneBlit			; added
+.blankPortraitPlane5:				; added
+	JSR	blankPortraitPlane5		; added
 .no5thPlaneBlit:				; added
 	CMP.B	#$0B,lbB04A3A2
 	BNE	lbC04A39C
