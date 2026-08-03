@@ -156,7 +156,8 @@ _Start						;A0 = resident loader
 	; offset: after SaveTimes/Loader/Custom1 and the 3 optional TNT slots).
 	lea	_Custom3(pc),a0
 	tst.l	(a0)
-	beq.s	.noEnhancedGfx
+	beq	.noEnhancedGfx			; changed from beq.s - all nine images are wired
+						; now, so the skipped block exceeds a byte branch
 	move.l	a5,a3
 	add.l	#gameDataSize+24,a3		; a3 -> replacementImagePtrs[0]
 	move.l	a5,a1				; added - enhanced graphics are active, so run
