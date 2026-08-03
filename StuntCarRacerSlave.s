@@ -237,22 +237,25 @@ _Start						;A0 = resident loader
 	add.l	#$22,d0				; 16-colour: data at block+$22
 .playersColourDone:				; added
 	move.l	d0,4*4(a3)			; [4] imagePlayers data
-;	lea	enhancedImageWreckRef(pc),a0
-;	move.l	(a0),d0
-;	add.l	a0,d0
-;	move.l	d0,5*4(a3)			; [5] imageWreck block
-;	lea	enhancedImageWonRef(pc),a0
-;	move.l	(a0),d0
-;	add.l	a0,d0
-;	move.l	d0,6*4(a3)			; [6] imageWon block
-;	lea	enhancedImageLostRef(pc),a0
-;	move.l	(a0),d0
-;	add.l	a0,d0
-;	move.l	d0,7*4(a3)			; [7] imageLost block
-;	lea	enhancedImagePromotionRef(pc),a0
-;	move.l	(a0),d0
-;	add.l	a0,d0
-;	move.l	d0,8*4(a3)			; [8] imagePromotion block
+	; The four result screens get the BLOCK start, not the data: their loader
+	; (displayResultScreen) reads the flag byte itself and derives the palette
+	; and data offsets, so they need no 32-colour flag in the game BSS.
+	lea	enhancedImageWreckRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0
+	move.l	d0,5*4(a3)			; [5] imageWreck block
+	lea	enhancedImageWonRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0
+	move.l	d0,6*4(a3)			; [6] imageWon block
+	lea	enhancedImageLostRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0
+	move.l	d0,7*4(a3)			; [7] imageLost block
+	lea	enhancedImagePromotionRef(pc),a0
+	move.l	(a0),d0
+	add.l	a0,d0
+	move.l	d0,8*4(a3)			; [8] imagePromotion block
 .noEnhancedGfx:
 
 	; Probe disk marker to determine image version
@@ -2836,10 +2839,14 @@ enhancedImagePlayers:
 	incbin	"gfx/imagePlayers"
 	EVEN
 enhancedImageWreck:
-;	incbin	"gfx/imageWreck"
+	incbin	"gfx/imageWreck"
+	EVEN
 enhancedImageWon:
-;	incbin	"gfx/imageWon"
+	incbin	"gfx/imageWon"
+	EVEN
 enhancedImageLost:
-;	incbin	"gfx/imageLost"
+	incbin	"gfx/imageLost"
+	EVEN
 enhancedImagePromotion:
-;	incbin	"gfx/imagePromotion"
+	incbin	"gfx/imagePromotion"
+	EVEN

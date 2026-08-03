@@ -2987,18 +2987,13 @@ displayResultScreen:
 	MOVE.B	#1,thirtyTwoColorMode		; added
 	LEA	$0002(A6),A1
 	JSR	copyPalette			; colours 0-15 -> sourcePalette
-	LEA	$0022(A6),A1			; added - colours 16-31
-	MOVE.L	#palette32,A0			; added
-	MOVE.W	#$000F,D4			; added
-.copyPalette32Loop:				; added
-	MOVE.W	(A1)+,(A0)+			; added
-	DBRA	D4,.copyPalette32Loop		; added
-	MOVE.L	#palette32,A0			; added - mirror into the fade target so the
-	MOVE.L	#palette32Target,A1		; added - high half is already at its final
-	MOVE.W	#$000F,D4			; added - value (stepPalette32Fade is a no-op)
-.copyPalette32TargetLoop:			; added
-	MOVE.W	(A0)+,(A1)+			; added
-	DBRA	D4,.copyPalette32TargetLoop	; added
+	LEA	$0022(A6),A1			; added - colours 16-31 are the fade TARGET
+	JSR	copyHighPaletteTarget		; added - so they fade in with colours 0-15
+	MOVE.L	#palette32,A0			; added - start them black, matching the
+	MOVE.W	#$000F,D4			; added - fadeToColor #$0000 above, instead of
+.blackHighPalette:				; added - popping straight to full brightness
+	CLR.W	(A0)+				; added
+	DBRA	D4,.blackHighPalette		; added
 	LEA	$0042(A6),A0			; added - image data (after 66-byte header)
 	MOVE.L	displayFrameBuffer,A1
 	JSR	decompressRLEImage		; planes 0-3 to displayFrameBuffer
