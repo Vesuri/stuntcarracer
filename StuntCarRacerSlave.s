@@ -191,8 +191,18 @@ _Start						;A0 = resident loader
 ;	move.l	d0,3*4(a3)			; [3] imageStandingsBackground data
 	lea	enhancedImagePlayersRef(pc),a0
 	move.l	(a0),d0
-	add.l	a0,d0
-	add.l	#$22,d0
+	add.l	a0,d0				; d0 = block start
+	movea.l	d0,a1				; added
+	btst	#6,(a1)				; added - bit 6 set = 32-colour (flag=$40)
+	beq.s	.players16colour		; added
+	add.l	#$42,d0				; added - 32-colour: data at block+$42
+	move.l	a5,a1				; added
+	adda.l	#gameDataSize+61,a1		; added - players32color in game BSS
+	move.b	#1,(a1)				; added - signal 32-colour to game code
+	bra.s	.playersColourDone		; added
+.players16colour:				; added
+	add.l	#$22,d0				; 16-colour: data at block+$22
+.playersColourDone:				; added
 	move.l	d0,4*4(a3)			; [4] imagePlayers data
 ;	lea	enhancedImageWreckRef(pc),a0
 ;	move.l	(a0),d0

@@ -102,15 +102,21 @@ those eight values per channel, no quantization happens.
 
 ## 32-colour images (5 bitplanes)
 
-`imageMainGameBackground` can be supplied as a 32-colour, 5-bitplane image.
-Build it with the `--32` flag:
+`imageMainGameBackground` and `imagePlayers` can be supplied as 32-colour,
+5-bitplane images.  Build with the `--32` flag:
 
 ```
 python3 tools/build_images.py --32 \
     'imageMainGameBackground=images/wip/imageMainGameBackground_WIP_2.png'
+python3 tools/build_images.py --32 \
+    'imagePlayers=images/enhanced/imagePlayers_remapped.png'
 ```
 
-The PNG must use at most 32 distinct palette indices.  The output format is:
+The PNG must use at most 32 distinct palette indices.  There are two 32-colour
+output formats; both share a `$42`-byte header and are distinguished by bit 7
+of the flag byte.
+
+**RLE (flag `$C0`)** — the default:
 
 | Offset | Size | Meaning |
 |---|---|---|
@@ -121,32 +127,28 @@ The PNG must use at most 32 distinct palette indices.  The output format is:
 | 66 | var | 4-plane RLE data (planes 0–3, `decompressRLEImage`) |
 | —  | var | 1-plane RLE data (plane 4, `decompressRLEBitplane`) |
 
-### Reserved sprite palette entries
+**Raw (flag `$40`)** — used automatically for the always-raw images
+(`imagePlayers`, `imageMenuScreen`) and with `--32 --raw`.  Their renderers blit
+sub-regions straight out of the image data in memory, which rules out RLE:
 
-The game hardware sprites use Amiga color registers 16–23.  These are set
-once at startup by `loadPaletteColors` from the original game binary and are
-**overwritten every frame** by `copyPaletteToCopperlist` when 32-colour mode
-is active.  For the car sprites to display correctly, palette indices 16–23
-in the replacement image must match the original values:
-
-| Index | Value | Role |
+| Offset | Size | Meaning |
 |---|---|---|
-| 16 | `$500` | **Transparent** (sprite index 0 = background shows through; value ignored by hardware) |
-| 17 | `$f8e` | Sprites 0 & 1 — colour 1 (bright pink/mauve) |
-| 18 | `$c00` | Sprites 0 & 1 — colour 2 (dark red) |
-| 19 | `$07b` | Sprites 0 & 1 — colour 3 (mid blue) |
-| 20 | `$500` | **Transparent** (same as index 16, for sprite group 2/3) |
-| 21 | `$01c` | Sprites 2 & 3 — colour 1 (deep blue) |
-| 22 | `$000` | Sprites 2 & 3 — colour 2 (black) |
-| 23 | `$f82` | Sprites 2 & 3 — colour 3 (orange-yellow) |
+| 0  | 1   | flag `$40` (bit 7 = raw, bit 6 = 32-colour) |
+| 1  | 1   | padding |
+| 2  | 32  | palette colours  0–15 |
+| 34 | 32  | palette colours 16–31 |
+| 66 | 32000 | word-interleaved planes 0–3 (same layout as the 16-colour raw form) |
+| 32066 | 8000 | planar plane 4 (40 bytes/row) |
 
-Palette indices 24–31 are **not** written by `loadPaletteColors`; they default
-to `$000` (black) and are free to use for background detail.  Sprites 4–7
-are unused by the car renderer and will appear black regardless.
+Fixed total: 40066 bytes.  Planes 0–3 keep the 160-byte interleaved row stride
+of the 16-colour form, so existing sub-region source offsets stay valid; a
+plane-4 offset is the plane-0–3 offset divided by 4 (`row*160 + word*8` →
+`row*40 + word*2`).
 
-Values are 12-bit hardware color register values (4 bits per channel, written
-directly — no brightness expansion), unlike the 0–7-per-channel values used
-for 16-colour palette entries.
+Note that palette indices 16–31 (the high half) double as the car sprites'
+colour registers in 32-colour mode, so some of them are not free — see
+`enhanced-graphics.md` for which entries are reserved and the safe-to-edit
+regions of each image.
 
 ## Round-trip sanity check
 

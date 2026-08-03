@@ -2360,7 +2360,9 @@ copyStatsFromBuffers:
 
 displaySinglePlayerResults:
 	move.l	replacementImagePtrs+4*4,A0	; added
-	beq.s	.useOriginalPlayers
+	beq	.useOriginalPlayers		; changed from beq.s - .players32 block added below
+	tst.b	players32color			; added - 32-colour raw imagePlayers?
+	bne.s	.players32			; added
 	MOVE.W	-$20(A0),D0
 	JSR	fadeToColor
 	MOVE.L	replacementImagePtrs+4*4,A0
@@ -2369,6 +2371,25 @@ displaySinglePlayerResults:
 	MOVE.L	replacementImagePtrs+4*4,A1
 	MOVE.L	displayFrameBuffer,A0
 	bra.s	.decodePlayers
+.players32:					; added - palette-low at ptr-$40, high at ptr-$20
+	MOVE.W	-$40(A0),D0			; added
+	JSR	fadeToColor			; added
+	MOVE.L	replacementImagePtrs+4*4,A0	; added
+	LEA	-$40(A0),A1			; added
+	JSR	copyPalette			; added - colours 0-15 -> sourcePalette
+	MOVE.L	replacementImagePtrs+4*4,A0	; added
+	LEA	-$20(A0),A1			; added - colours 16-31
+	MOVE.L	#palette32,A2			; added
+	MOVE.W	#$000F,D4			; added
+.copyHighPalette:				; added
+	MOVE.W	(A1)+,(A2)+			; added
+	DBRA	D4,.copyHighPalette		; added
+	MOVE.B	#1,thirtyTwoColorMode		; added
+	MOVE.B	#1,players32Active		; added - enable portrait 5th-bitplane blits
+	MOVE.W	#$5200,_custom+bplcon0		; added - switch to 5 bitplanes
+	MOVE.L	replacementImagePtrs+4*4,A1	; added
+	MOVE.L	displayFrameBuffer,A0		; added
+	bra.s	.decodePlayers			; added
 .useOriginalPlayers:
 	MOVE.W	imagePlayersPalette,D0
 	JSR	fadeToColor
@@ -2386,6 +2407,10 @@ lbC04A1B4:
 	MOVE.W	(A1)+,$5DBE(A0)
 	CMP.L	A3,A0
 	BNE	lbC04A1B4
+	tst.b	players32Active			; added - install the 5th bitplane
+	beq.s	.plane5Done			; added
+	JSR	copyPlayersPlane5		; added
+.plane5Done:					; added
 	MOVE.L	renderFrameBuffer,-(SP)
 	MOVE.L	displayFrameBuffer,renderFrameBuffer
 	MOVE.L	#leagueStandingsTable,A6
@@ -2401,7 +2426,38 @@ lbC04A1E2:
 	MOVE.L	(SP)+,renderFrameBuffer
 	JSR	animatePaletteToTarget
 	JSR	waitForFireButtonPress
+	CLR.B	players32Active			; added - displayMenuScreen restores 4-plane mode
 	JMP	displayMenuScreen
+
+; Copy the 32-colour imagePlayers 5th bitplane (8000 bytes, planar) from just
+; after the interleaved planes 0-3 into the copper's 5th-bitplane buffer.
+copyPlayersPlane5:				; added
+	MOVEM.L	D3/A0/A1,-(SP)			; added
+	MOVE.L	replacementImagePtrs+4*4,A0	; added
+	ADD.L	#32000,A0			; added - plane 4 follows planes 0-3
+	MOVE.L	bitplane5Pointer,A1		; added
+	MOVE.W	#40*200/4-1,D3			; added
+.copyLoop:					; added
+	MOVE.L	(A0)+,(A1)+			; added
+	DBRA	D3,.copyLoop			; added
+	MOVEM.L	(SP)+,D3/A0/A1			; added
+	RTS					; added
+
+; Copy one 80x55 portrait's 5th bitplane. plane5SourcePtr / plane5DestPtr are
+; set up by renderPlayerDisplay; both have a 40-byte planar row stride.
+blitPortraitPlane5:				; added
+	MOVEM.L	D3/D5/A0/A1,-(SP)		; added
+	MOVE.L	plane5SourcePtr,A0		; added
+	MOVE.L	plane5DestPtr,A1		; added
+	MOVE.W	#$0036,D5			; added - 55 rows
+.row:	MOVE.W	#$0004,D3			; added - 5 words = 80 pixels
+.word:	MOVE.W	(A0)+,(A1)+			; added
+	DBRA	D3,.word			; added
+	ADD.L	#$0000001E,A0			; added - 40 - 10 bytes consumed
+	ADD.L	#$0000001E,A1			; added
+	DBRA	D5,.row				; added
+	MOVEM.L	(SP)+,D3/D5/A0/A1		; added
+	RTS					; added
 
 renderRaceMatchupPortraits:
 	JSR	configurePlayersAndCars
@@ -2449,6 +2505,20 @@ lbC04A27A:
 	ASL.W	#$02,D3
 	ADD.L	$00(A1,D0.W),A0
 	ADD.L	$00(A1,D3.W),A3
+	tst.b	players32Active			; added - stash 5th-bitplane src/dst
+	beq.s	.no5thPlane			; added
+	MOVEM.L	D1-D2,-(SP)			; added
+	MOVE.L	$00(A1,D0.W),D1			; added - src offset = row*160 + word*8
+	LSR.L	#$02,D1				; added - /4 gives row*40 + word*2
+	MOVE.L	replacementImagePtrs+4*4,D2	; added
+	ADD.L	#32000,D2			; added - plane 4 base
+	ADD.L	D2,D1				; added
+	MOVE.L	D1,plane5SourcePtr		; added
+	MOVE.L	$00(A1,D3.W),D1			; added - dest offset is already planar
+	ADD.L	bitplane5Pointer,D1		; added
+	MOVE.L	D1,plane5DestPtr		; added
+	MOVEM.L	(SP)+,D1-D2			; added
+.no5thPlane:					; added
 	MOVE.L	A3,playerNameRenderingPosition
 	TST.B	lbB04A4BA
 	BEQ	renderPlayerGraphicsToScreen
@@ -2499,6 +2569,10 @@ lbC04A376:
 	ADD.L	#$0000001E,A3
 	DBRA	D5,lbC04A334
 lbC04A38A:
+	tst.b	players32Active			; added - portrait 5th bitplane
+	beq.s	.no5thPlaneBlit			; added
+	JSR	blitPortraitPlane5		; added
+.no5thPlaneBlit:				; added
 	CMP.B	#$0B,lbB04A3A2
 	BNE	lbC04A39C
 	JSR	displayPlayerName
@@ -20316,6 +20390,8 @@ replacementImagePtrs:
 	ds.l	9				; added
 bg32color:
 	ds.b	1				; added - set by slave when replacementImagePtrs[0] is 32-colour
+players32color:
+	ds.b	1				; added - set by slave when replacementImagePtrs[4] is 32-colour
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700
 audioChannelMasks		equ	gameData+$c50
@@ -21344,6 +21420,10 @@ quit:			ds.b	1
 thirtyTwoColorMode:	ds.b	1	; added - non-zero when displaying a 32-colour image
 bitplane5Pointer:	ds.l	1	; added - copper bpl5 address; default bitplane5Buffer1
 palette32:		ds.w	16	; added - current copper colours 16-31 (written by copyPaletteToCopperlist)
+plane5SourcePtr:	ds.l	1	; added - portrait 5th-bitplane source (in image data)
+plane5DestPtr:		ds.l	1	; added - portrait 5th-bitplane destination
+players32Active:	ds.b	1	; added - non-zero while a 32-colour imagePlayers screen is up
+	even				; added - keep following data word-aligned
 
 	section	ChipBSS,bss_c
 sampleData:		ds.b	43310

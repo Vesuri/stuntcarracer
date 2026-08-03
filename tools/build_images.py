@@ -323,6 +323,34 @@ def build_one_32(image_path):
     return bytes([0xC0, 0]) + pal_low + pal_high + rle_4 + rle_5
 
 
+def build_one_32_raw(image_path):
+    """Build a 32-colour RAW self-describing image block (flag=$40).
+
+    Needed for images whose renderer blits sub-regions straight out of the
+    image data in memory (imagePlayers), which rules out RLE.
+
+    Block layout (total header = $42 bytes, same as the RLE 32-colour form):
+      [0]      flag $40  (bit7=0 raw, bit6=1 32-colour)
+      [1]      pad  $00
+      [2..33]  palette colours  0-15 (16 words)
+      [34..65] palette colours 16-31 (16 words)
+      [66..]   32000 bytes word-interleaved planes 0-3 (unchanged layout, so
+               existing sub-region source offsets stay valid)
+      [32066..] 8000 bytes planar plane 4 (40 bytes/row)
+
+    Because planes 0-3 keep the original 160-byte interleaved row stride, a
+    plane-4 offset is simply the plane-0-3 offset divided by 4
+    (offset = row*160 + word*8  ->  row*40 + word*2).
+    """
+    pixels, palette = read_indexed_png(image_path, max_colors=MAX_COLORS_32)
+    pal_low = rgb_palette_to_amiga(palette[:16], warn_label=image_path.stem)
+    pal_high = rgb_palette_to_amiga(palette[16:32])
+    planar5 = indexed_to_planar(pixels, num_planes=5)
+    interleaved = planar_to_interleaved(planar5)          # reads planes 0-3 only
+    plane4 = planar5[4 * BITPLANE_BYTES:5 * BITPLANE_BYTES]
+    return bytes([0x40, 0]) + pal_low + pal_high + interleaved + plane4
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--input-dir", default="images",
@@ -377,7 +405,11 @@ def main():
             continue
         try:
             if args.colors32:
-                payload = build_one_32(png_path)
+                # images whose renderer needs raw data cannot use RLE
+                if args.raw or name in ALWAYS_RAW:
+                    payload = build_one_32_raw(png_path)
+                else:
+                    payload = build_one_32(png_path)
             else:
                 payload = build_one(png_path, name, raw=args.raw)
         except Exception as exc:
@@ -391,7 +423,7 @@ def main():
         print("nothing built", file=sys.stderr)
         return 1
     if args.colors32:
-        fmt = "32-colour RLE"
+        fmt = "32-colour RLE (raw for always-raw images)"
     elif args.raw:
         fmt = "raw"
     else:
