@@ -2359,8 +2359,9 @@ copyStatsFromBuffers:
 	RTS
 
 displaySinglePlayerResults:
+	tst.l	replacementImagePtrs+4*4	; added - MOVEA.L does not set the CCR, so the
+	beq	.useOriginalPtrPlayers		; added - pointer must be tested explicitly
 	move.l	replacementImagePtrs+4*4,A0	; added
-	beq	.useOriginalPlayers		; changed from beq.s - .players32 block added below
 	tst.b	players32color			; added - 32-colour raw imagePlayers?
 	bne.s	.players32			; added
 	MOVE.W	-$20(A0),D0
@@ -2390,7 +2391,7 @@ displaySinglePlayerResults:
 	MOVE.L	replacementImagePtrs+4*4,A1	; added
 	MOVE.L	displayFrameBuffer,A0		; added
 	bra.s	.decodePlayers			; added
-.useOriginalPlayers:
+.useOriginalPtrPlayers:				; renamed - reached only if the pointer is 0
 	MOVE.W	imagePlayersPalette,D0
 	JSR	fadeToColor
 	MOVE.L	#imagePlayersPalette,A1
