@@ -102,14 +102,30 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('src')
     ap.add_argument('dst')
-    ap.add_argument('--image', required=True, choices=sorted(ORIGINAL_PALETTE_OFFSETS),
+    ap.add_argument('--image', choices=sorted(ORIGINAL_PALETTE_OFFSETS),
                     help='which original palette to align to')
+    ap.add_argument('--reference-png',
+                    help='instead of an original palette, pin ALL 32 slots to this '
+                         'PNG\'s palette. Needed when two images are shown with one '
+                         'palette - e.g. imageMenuScreen must match imagePlayers, '
+                         'because portraits are blitted from imagePlayers onto '
+                         'menu-based screens. No slot is left free, so every colour '
+                         'not in the reference is mapped to its nearest neighbour.')
     ap.add_argument('--binary', default=BIN_DEFAULT)
     ap.add_argument('--reserve-sprites', action='store_true',
                     help='also pin slots 17,18,19,21,22,23 to the car sprite colours')
     args = ap.parse_args()
 
-    orig = read_original_palette(args.binary, ORIGINAL_PALETTE_OFFSETS[args.image])
+    if bool(args.image) == bool(args.reference_png):
+        print('error: give exactly one of --image or --reference-png', file=sys.stderr)
+        return 1
+
+    if args.reference_png:
+        _, ref = _read_indexed_png_raw(Path(args.reference_png))
+        ref = list(ref) + [(0, 0, 0)] * (NUM_SLOTS - len(ref))
+        orig = [rgb8_to_lvl(*ref[i]) for i in range(NUM_SLOTS)]
+    else:
+        orig = read_original_palette(args.binary, ORIGINAL_PALETTE_OFFSETS[args.image])
     # lowest index wins when the original palette repeats a colour
     orig_pos = {}
     for i, L in enumerate(orig):
@@ -130,14 +146,15 @@ def main():
     used = {L for L, c in lvl_hist.items() if c > 0}
 
     reserved = dict(SPRITE_SLOTS) if args.reserve_sprites else {}
-    free_slots = [i for i in range(16, NUM_SLOTS) if i not in reserved]
+    free_slots = [i for i in range(len(orig), NUM_SLOTS) if i not in reserved]
 
     matched = sorted(used & set(orig), key=lambda L: orig_pos[L])
     extras = sorted((L for L in used if L not in orig_pos), key=lambda L: -lvl_hist[L])
 
-    print(f'{args.image}: {len(used)} distinct colours used '
+    label = args.image or f'reference {Path(args.reference_png).name}'
+    print(f'{label}: {len(used)} distinct colours used '
           f'({len(matched)} match the original palette, {len(extras)} extra)')
-    print(f'original palette has {len(set(orig))} distinct entries; '
+    print(f'pinned palette has {len(set(orig))} distinct entries; '
           f'{len(set(orig)) - len(matched)} unused by this image')
     print(f'free high slots: {len(free_slots)}'
           + (f' (sprite slots {sorted(reserved)} reserved)' if reserved else ''))
@@ -159,7 +176,7 @@ def main():
     tgt_index = {}
     for i in range(NUM_SLOTS - 1, -1, -1):
         tgt_index[tgt[i]] = i
-    for i in range(15, -1, -1):
+    for i in range(len(orig) - 1, -1, -1):
         tgt_index[tgt[i]] = i
 
     def nearest(L):
@@ -178,7 +195,7 @@ def main():
             new_index[L] = nearest(L)
 
     if merged:
-        print(f'MERGED {len(merged)} least-used extra colour(s) (no free slot left):')
+        print(f'MAPPED {len(merged)} colour(s) to their nearest pinned neighbour:')
         for L in merged:
             d = new_index[L]
             print(f'  ${L:03x} ({lvl_hist[L]} px) -> slot {d} (${tgt[d]:03x})')
@@ -195,9 +212,9 @@ def main():
 
     # ---- verify by re-reading the file we just wrote ----
     chk_px, chk_pal = _read_indexed_png_raw(Path(args.dst))
-    ok = all(rgb8_to_lvl(*chk_pal[i]) == orig[i] for i in range(16))
+    ok = all(rgb8_to_lvl(*chk_pal[i]) == orig[i] for i in range(len(orig)))
     print(f'verify PLTE entries: {len(chk_pal)}')
-    print(f'verify indices 0-15 == original palette: {ok}')
+    print(f'verify indices 0-{len(orig)-1} == pinned palette: {ok}')
     if reserved:
         print('verify sprite slots: ' + ', '.join(
             f'{s}=${rgb8_to_lvl(*chk_pal[s]):03x}' for s in sorted(reserved)))
