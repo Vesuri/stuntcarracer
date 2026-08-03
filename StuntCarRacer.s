@@ -234,7 +234,14 @@ initialize:
 	JSR	setupFrameBufferAddresses
 	JSR	initializeSpritePointers
 	JSR	loadPaletteColors
+	tst.b	fivePlaneMode			; added - with enhanced graphics every screen
+	beq.s	.fourPlanes			; added - runs in 5 bitplanes, so the plane
+	MOVE.B	#1,thirtyTwoColorMode		; added - count never changes and no fade can
+	MOVE.W	#$5200,_custom+bplcon0		; added - reveal a stale 5th bitplane
+	bra.s	.planesSet			; added
+.fourPlanes:					; added
 	MOVE.W	#$4200,_custom+bplcon0
+.planesSet:					; added
 	ifeq	NTSC
 	MOVE.W	#$3C81,_custom+diwstrt
 	MOVE.W	#$04C1,_custom+diwstop
@@ -881,7 +888,10 @@ copyMainGameBackground:
 	MOVE.L	frameBuffers,A1
 	MOVE.L	replacementImagePtrs,A0		; originally #imageMainGameBackground
 	TST.B	bg32color			; added
-	BEQ	.decode
+	BNE	.thirtyTwoColour		; added
+	JSR	clearPlane5			; added - 16-colour: blank the 5th bitplane
+	BRA	.decode				; added
+.thirtyTwoColour:				; added
 	; 32-colour: install both palette halves, then decode planes 0-3 + plane 4
 	MOVEM.L	A0-A1,-(SP)
 	LEA	-$40(A0),A1			; added - colours 0-15 at ptr-$40
@@ -2377,6 +2387,7 @@ displaySinglePlayerResults:
 	JSR	copyPalette
 	MOVE.L	replacementImagePtrs+4*4,A1
 	MOVE.L	displayFrameBuffer,A0
+	JSR	clearPlane5			; added - 16-colour: blank the 5th bitplane
 	bra	.decodePlayers			; changed from bra.s - .players32 block grew
 .players32:					; added - palette-low at ptr-$40, high at ptr-$20
 	MOVE.W	-$40(A0),D0			; added
@@ -2411,6 +2422,7 @@ displaySinglePlayerResults:
 	JSR	copyPalette
 	MOVE.L	#imagePlayers,A1
 	MOVE.L	displayFrameBuffer,A0
+	JSR	clearPlane5			; added - 16-colour: blank the 5th bitplane
 .decodePlayers:
 	MOVE.L	A0,A3
 	ADD.L	#$00001F40,A3
@@ -2455,6 +2467,19 @@ copyPlayersPlane5:				; added
 	MOVE.L	(A0)+,(A1)+			; added
 	DBRA	D3,.copyLoop			; added
 	MOVEM.L	(SP)+,D3/A0/A1			; added
+	RTS					; added
+
+; Blank the 5th bitplane. Every screen showing a 16-colour image must call this
+; in fivePlaneMode, otherwise the previous screen's 5th bitplane still sets the
+; high palette bit and those pixels render in colours 16-31.
+clearPlane5:					; added
+	MOVEM.L	D3/A1,-(SP)			; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	MOVE.W	#40*200/4-1,D3			; added
+.clearLoop:					; added
+	CLR.L	(A1)+				; added
+	DBRA	D3,.clearLoop			; added
+	MOVEM.L	(SP)+,D3/A1			; added
 	RTS					; added
 
 ; Copy one 80x55 portrait's 5th bitplane. plane5SourcePtr / plane5DestPtr are
@@ -2944,7 +2969,7 @@ displayResultScreen:
 	movea.l	(A0,D1.W),A6
 	; Check flag bit 6: set = 32-colour image (5 bitplanes, 64-byte palette)
 	btst	#6,(A6)				; added
-	beq.s	.sixteenColour			; added
+	beq	.sixteenColour			; changed from beq.s - the 32-colour block grew
 	; 32-colour path: palette-low at +$02, palette-high at +$22, data at +$42
 	MOVE.B	#1,thirtyTwoColorMode		; added
 	LEA	$0002(A6),A1
@@ -2969,11 +2994,18 @@ displayResultScreen:
 	MOVE.W	#$5200,_custom+bplcon0		; added - switch to 5 bitplanes
 	JSR	animatePaletteToTarget
 	JSR	waitForFireButtonPress
+	tst.b	fivePlaneMode			; added - stay in 5 bitplanes when enhanced
+	bne.s	.keepFivePlanes			; added - graphics are active
 	MOVE.W	#$4200,_custom+bplcon0		; added - restore 4 bitplanes
 	CLR.B	thirtyTwoColorMode		; added
+.keepFivePlanes:				; added
 	RTS
 .sixteenColour:
+	JSR	clearPlane5			; added - blank the 5th bitplane so no stale
+	tst.b	fivePlaneMode			; added - high bits survive from the last screen
+	bne.s	.keepFlag			; added - (and keep colours 16-31 being written)
 	CLR.B	thirtyTwoColorMode		; added - ensure flag is clear
+.keepFlag:					; added
 	LEA	$0002(A6),A1
 	JSR	copyPalette
 	LEA	$0022(A6),A0
@@ -6675,6 +6707,7 @@ runTrackPreviewScreen:
 	MOVE.L	replacementImagePtrs+2*4,A0	; originally #imageTrackPreviewBackground
 	MOVE.L	frameBuffers,A1
 	JSR	decompressRLEImage
+	JSR	clearPlane5			; added - 16-colour image: blank the 5th bitplane
 	MOVE.L	frameBuffers,A1
 	MOVE.L	displayFrameBuffer,A0
 	MOVE.L	A0,renderFrameBuffer
@@ -9182,6 +9215,7 @@ lbC051500:
 	MOVE.L	replacementImagePtrs+3*4,A0	; originally #imageStandingsBackground
 	MOVE.L	displayFrameBuffer,A1
 	JSR	decompressRLEImage
+	JSR	clearPlane5			; added - 16-colour image: blank the 5th bitplane
 	MOVE.B	#$02,textHorizontalOffset
 	MOVE.B	#$3B,D1
 	MOVE.B	currentPlayerContext,D0
@@ -13362,6 +13396,14 @@ lbC055D66:
 	MOVE.W	(A0),$20(A0,D4.W)
 	SUBQ.W	#$02,D4
 	BPL	lbC055D66
+	TST.B	thirtyTwoColorMode		; added - fade colours 16-31 to the same colour,
+	BEQ.S	.lowHalfTargetOnly		; added - otherwise they would stay lit while
+	MOVE.L	#palette32Target,A0		; added - 0-15 fade away
+	MOVE.W	#$000F,D4			; added
+.fadeHighTarget:				; added
+	MOVE.W	D0,(A0)+			; added
+	DBRA	D4,.fadeHighTarget		; added
+.lowHalfTargetOnly:				; added
 animatePaletteToTarget:
 	MOVE.L	#palette,A0
 	MOVE.W	#$001E,D4
@@ -13477,14 +13519,17 @@ stepPalette32Fade:				; added
 
 displayMenuScreen:
 	clr.b	frameProcessingFlag		; added
-	TST.B	thirtyTwoColorMode		; added - restore 4-plane mode when leaving race
-	BEQ	.fourPlaneOk
-	CLR.B	thirtyTwoColorMode
-	MOVE.W	#$4200,_custom+bplcon0
-.fourPlaneOk:
 	MOVE.L	replacementImagePtrs+1*4,A0	; added
 	MOVE.W	-$20(A0),D0			; originally imageMenuScreenPalette
-	JSR	fadeToColor
+	JSR	fadeToColor			; moved above the plane switch - fadeToColor
+						; fades colours 16-31 out as well
+	tst.b	fivePlaneMode			; added - with enhanced graphics every screen
+	bne.s	.fourPlaneOk			; added - stays in 5 bitplanes
+	TST.B	thirtyTwoColorMode		; added - restore 4-plane mode when leaving a
+	BEQ	.fourPlaneOk			; 32-colour screen. The display is a flat
+	CLR.B	thirtyTwoColorMode		; colour by now, so the switch is invisible
+	MOVE.W	#$4200,_custom+bplcon0
+.fourPlaneOk:
 	MOVE.B	#$80,singleBufferRenderMode
 	MOVE.L	frameBuffers,D0
 	MOVE.L	D0,renderFrameBuffer
@@ -13510,6 +13555,8 @@ displayMenuScreen:
 	CMP.L	A3,A0
 	BNE	.copyImageLoop
 	MOVE.B	#$41,displayUpdateFlag
+	JSR	clearPlane5			; added - menu image is 16-colour: blank the
+						; 5th bitplane while the palette is still flat
 	JSR	renderDivisionBackgroundAndHeader
 	JSR	copyFirstFrameBufferToSecond
 	JMP	animatePaletteToTarget
@@ -20458,6 +20505,11 @@ bg32color:
 	ds.b	1				; added - set by slave when replacementImagePtrs[0] is 32-colour
 players32color:
 	ds.b	1				; added - set by slave when replacementImagePtrs[4] is 32-colour
+fivePlaneMode:
+	ds.b	1				; added - set by slave when enhanced graphics are in
+						; use: stay in 5 bitplanes on every screen so the
+						; plane count never changes mid-fade
+	even					; added - keep any following data word-aligned
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700
 audioChannelMasks		equ	gameData+$c50

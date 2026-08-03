@@ -159,6 +159,9 @@ _Start						;A0 = resident loader
 	beq.s	.noEnhancedGfx
 	move.l	a5,a3
 	add.l	#gameDataSize+24,a3		; a3 -> replacementImagePtrs[0]
+	move.l	a5,a1				; added - enhanced graphics are active, so run
+	adda.l	#gameDataSize+62,a1		; added - every screen in 5 bitplanes; the plane
+	move.b	#1,(a1)				; added - count then never changes mid-fade
 	lea	enhancedImageMainGameBackgroundRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0				; d0 = block start
