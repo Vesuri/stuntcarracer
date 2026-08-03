@@ -891,6 +891,12 @@ copyMainGameBackground:
 .highPal:
 	MOVE.W	(A1)+,(A0)+			; added - colours 16-31 to palette32
 	DBRA	D4,.highPal
+	MOVE.L	#palette32,A0			; added - mirror into the fade target so the
+	MOVE.L	#palette32Target,A1		; added - high half is already at its final
+	MOVE.W	#$000F,D4			; added - value (stepPalette32Fade is a no-op)
+.highPalTarget:					; added
+	MOVE.W	(A0)+,(A1)+			; added
+	DBRA	D4,.highPalTarget		; added
 	MOVEM.L	(SP)+,A0-A1
 	MOVE.B	#1,thirtyTwoColorMode		; added
 	MOVE.W	#$5200,_custom+bplcon0		; added
@@ -2371,7 +2377,7 @@ displaySinglePlayerResults:
 	JSR	copyPalette
 	MOVE.L	replacementImagePtrs+4*4,A1
 	MOVE.L	displayFrameBuffer,A0
-	bra.s	.decodePlayers
+	bra	.decodePlayers			; changed from bra.s - .players32 block grew
 .players32:					; added - palette-low at ptr-$40, high at ptr-$20
 	MOVE.W	-$40(A0),D0			; added
 	JSR	fadeToColor			; added
@@ -2379,15 +2385,22 @@ displaySinglePlayerResults:
 	LEA	-$40(A0),A1			; added
 	JSR	copyPalette			; added - colours 0-15 -> sourcePalette
 	MOVE.L	replacementImagePtrs+4*4,A0	; added
-	LEA	-$20(A0),A1			; added - colours 16-31
-	MOVE.L	#palette32,A2			; added
+	LEA	-$20(A0),A1			; added - colours 16-31 are the fade TARGET
+	MOVE.L	#palette32Target,A2		; added
 	MOVE.W	#$000F,D4			; added
 .copyHighPalette:				; added
 	MOVE.W	(A1)+,(A2)+			; added
 	DBRA	D4,.copyHighPalette		; added
+	MOVE.W	palette,D0			; added - fadeToColor left the fade colour here
+	MOVE.L	#palette32,A2			; added - start colours 16-31 at the fade
+	MOVE.W	#$000F,D4			; added - colour so they fade in with 0-15
+.grayHighPalette:				; added
+	MOVE.W	D0,(A2)+			; added
+	DBRA	D4,.grayHighPalette		; added
 	MOVE.B	#1,thirtyTwoColorMode		; added
 	MOVE.B	#1,players32Active		; added - enable portrait 5th-bitplane blits
-	MOVE.W	#$5200,_custom+bplcon0		; added - switch to 5 bitplanes
+	JSR	copyPaletteToCopperlist		; added - push the faded colours 16-31 before
+	MOVE.W	#$5200,_custom+bplcon0		; added - revealing the 5th bitplane
 	MOVE.L	replacementImagePtrs+4*4,A1	; added
 	MOVE.L	displayFrameBuffer,A0		; added
 	bra.s	.decodePlayers			; added
@@ -2942,6 +2955,12 @@ displayResultScreen:
 .copyPalette32Loop:				; added
 	MOVE.W	(A1)+,(A0)+			; added
 	DBRA	D4,.copyPalette32Loop		; added
+	MOVE.L	#palette32,A0			; added - mirror into the fade target so the
+	MOVE.L	#palette32Target,A1		; added - high half is already at its final
+	MOVE.W	#$000F,D4			; added - value (stepPalette32Fade is a no-op)
+.copyPalette32TargetLoop:			; added
+	MOVE.W	(A0)+,(A1)+			; added
+	DBRA	D4,.copyPalette32TargetLoop	; added
 	LEA	$0042(A6),A0			; added - image data (after 66-byte header)
 	MOVE.L	displayFrameBuffer,A1
 	JSR	decompressRLEImage		; planes 0-3 to displayFrameBuffer
@@ -13396,6 +13415,11 @@ lbC055DEE:
 	MOVE.B	D0,$01(A0,D4.W)
 	SUBQ.W	#$02,D4
 	BPL	lbC055D7E
+	TST.B	thirtyTwoColorMode		; added - fade colours 16-31 in step with 0-15
+	BEQ	.lowHalfOnly			; added
+	JSR	stepPalette32Fade		; added - D0 = channels still moving
+	ADD.B	D0,D7				; added
+.lowHalfOnly:					; added
 	TST.B	D7
 	BEQ	lbC055E24
 	JSR	copyPaletteToCopperlist
@@ -13409,6 +13433,47 @@ lbC055E24:
 	TST.B	framesToWaitWhenFading
 	BNE	lbC055E24
 	RTS
+
+; Step the 16 colours in palette32 one level towards palette32Target, the same
+; way animatePaletteToTarget steps palette towards sourcePalette. Values are
+; stored levels ($0RGB, 0-7 per channel); copyPaletteToCopperlist expands them.
+; Returns D0 = number of channels that still moved (0 when the fade is done).
+stepPalette32Fade:				; added
+	MOVEM.L	D1-D7/A0/A1,-(SP)		; added
+	MOVE.L	#palette32,A0			; added
+	MOVE.L	#palette32Target,A1		; added
+	MOVEQ	#$00,D0				; added - channels still moving
+	MOVE.W	#$000F,D5			; added - 16 colours
+.colour:					; added
+	MOVE.W	(A0),D1				; added - current
+	MOVE.W	(A1)+,D2			; added - target
+	MOVEQ	#$00,D3				; added - rebuilt value
+	MOVEQ	#$08,D4				; added - channel shift: 8 (R), 4 (G), 0 (B)
+.channel:					; added
+	MOVE.W	D1,D6				; added
+	LSR.W	D4,D6				; added
+	AND.W	#$000F,D6			; added - current channel
+	MOVE.W	D2,D7				; added
+	LSR.W	D4,D7				; added
+	AND.W	#$000F,D7			; added - target channel
+	CMP.W	D7,D6				; added
+	BEQ	.channelDone			; added
+	BCS	.channelUp			; added
+	SUBQ.W	#$01,D6				; added - step down
+	BRA	.channelStepped			; added
+.channelUp:					; added
+	ADDQ.W	#$01,D6				; added - step up
+.channelStepped:				; added
+	ADDQ.W	#$01,D0				; added
+.channelDone:					; added
+	LSL.W	D4,D6				; added
+	OR.W	D6,D3				; added
+	SUBQ.W	#$04,D4				; added
+	BPL	.channel			; added
+	MOVE.W	D3,(A0)+			; added - store stepped colour
+	DBRA	D5,.colour			; added
+	MOVEM.L	(SP)+,D1-D7/A0/A1		; added
+	RTS					; added
 
 displayMenuScreen:
 	clr.b	frameProcessingFlag		; added
@@ -21421,6 +21486,7 @@ quit:			ds.b	1
 thirtyTwoColorMode:	ds.b	1	; added - non-zero when displaying a 32-colour image
 bitplane5Pointer:	ds.l	1	; added - copper bpl5 address; default bitplane5Buffer1
 palette32:		ds.w	16	; added - current copper colours 16-31 (written by copyPaletteToCopperlist)
+palette32Target:	ds.w	16	; added - fade target for colours 16-31 (see stepPalette32Fade)
 plane5SourcePtr:	ds.l	1	; added - portrait 5th-bitplane source (in image data)
 plane5DestPtr:		ds.l	1	; added - portrait 5th-bitplane destination
 players32Active:	ds.b	1	; added - non-zero while a 32-colour imagePlayers screen is up
