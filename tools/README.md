@@ -159,8 +159,9 @@ regions of each image.
 ## remap_to_original_palette.py
 
 ```
-python3 tools/remap_to_original_palette.py [--image NAME | --reference-png PNG] \
-                                           [--reserve-sprites] SRC DST
+python3 tools/remap_to_original_palette.py \
+    [--image NAME | --reference-png PNG] [--high-reference PNG] \
+    [--reserve-sprites] SRC DST
 ```
 
 Reorders a replacement PNG's palette so the low slots hold a *fixed* palette,
@@ -169,12 +170,19 @@ colour unless a colour has to be merged.  This matters because the game selects
 many colours **by index** (text, HUD, track and cursor colours), so those slots
 have a fixed meaning and cannot be reassigned freely.
 
-- `--image NAME` pins indices 0–15 to that image's original palette, read from
-  `scr.exe.decrypted`, and leaves 16–31 free for the artist.
-- `--reference-png PNG` pins **all 32** slots to another PNG's palette.  Use it
-  when two images share one displayed palette; nothing is left free, so any
-  colour absent from the reference is mapped to its nearest neighbour (lossy —
-  the tool reports how many pixels shift).
+- `--image NAME` pins indices 0–15 to that image's own original palette, read
+  from `scr.exe.decrypted` (including its own index-0 background), and leaves
+  16–31 free for the artist.
+- `--reference-png PNG` pins **all 32** slots to another PNG's palette,
+  including index 0.  Only appropriate when two images are meant to show the
+  *identical* palette, background included.
+- `--high-reference PNG` (combine with `--image NAME`) pins only slots 16–31
+  to another PNG's slots 16–31, while 0–15 stay pinned to this image's own
+  original palette — so index 0 (the background) is free to differ between
+  the two images.  Use this when two images share portrait/extra colours
+  but have independent backgrounds — e.g. `imageMenuScreen`'s 16–31 must
+  match `imagePlayers`' so portraits blitted from one onto the other render
+  correctly, but each screen keeps its own background at index 0.
 - `--reserve-sprites` additionally pins 17,18,19,21,22,23 to the car sprite
   colours.  Only `imageMainGameBackground` needs this.
 
@@ -183,8 +191,8 @@ have a fixed meaning and cannot be reassigned freely.
 | Image | Remap | Why |
 |---|---|---|
 | `imageMainGameBackground` | `--image imageMainGameBackground --reserve-sprites` | HUD colours by index; palette 16–31 drives the car sprite registers |
-| `imagePlayers` | `--image imagePlayers` | no sprites on the results screen; 16–31 free |
-| `imageMenuScreen` | `--reference-png .../imagePlayers_remapped.png` | portraits are blitted from `imagePlayers` onto menu-based screens, so an index must mean the same colour in both |
+| `imagePlayers` | `--image imagePlayers` | no sprites on the results screen; 16–31 free for the artist |
+| `imageMenuScreen` | `--image imageMenuScreen --high-reference .../imagePlayers_remapped.png` | portraits are blitted from `imagePlayers` onto menu-based screens, so 16–31 must mean the same colour in both; index 0 (background) stays independent |
 | `imageTrackPreviewBackground` | `--image imageTrackPreviewBackground` | 3-D preview and text pick colours by index |
 | `imageStandingsBackground` | `--image imageStandingsBackground` | records table text picks colours by index |
 | `imageWreck`/`Won`/`Lost`/`Promotion` | **none** | nothing is drawn over them and no index is referenced — all 32 free |
@@ -193,7 +201,8 @@ Full workflow for the menu screen, which needs both steps:
 
 ```
 python3 tools/remap_to_original_palette.py \
-    --reference-png images/enhanced/imagePlayers_remapped.png \
+    --image imageMenuScreen \
+    --high-reference images/enhanced/imagePlayers_remapped.png \
     images/enhanced/imageMenuScreen_chatgpt.png \
     images/enhanced/imageMenuScreen_remapped.png
 python3 tools/build_images.py --32 \

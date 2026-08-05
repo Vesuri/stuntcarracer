@@ -123,10 +123,24 @@ def main():
     ap.add_argument('--binary', default=BIN_DEFAULT)
     ap.add_argument('--reserve-sprites', action='store_true',
                     help='also pin slots 17,18,19,21,22,23 to the car sprite colours')
+    ap.add_argument('--high-reference',
+                    help='pin slots 16-31 to another PNG\'s slots 16-31, while slots '
+                         '0-15 stay pinned to this image\'s OWN original palette '
+                         '(via --image, including its own index-0 background - it is '
+                         'not forced to match the reference). Use this instead of '
+                         '--reference-png when two images share portrait/extra colours '
+                         'but have independent backgrounds - e.g. imageMenuScreen\'s '
+                         'slots 16-31 must match imagePlayers\' so blitted portraits '
+                         'render correctly, but the menu keeps its own index 0-15. '
+                         'Requires --image; incompatible with --reference-png.')
     args = ap.parse_args()
 
     if bool(args.image) == bool(args.reference_png):
         print('error: give exactly one of --image or --reference-png', file=sys.stderr)
+        return 1
+
+    if args.high_reference and not args.image:
+        print('error: --high-reference requires --image', file=sys.stderr)
         return 1
 
     if args.reference_png:
@@ -135,6 +149,13 @@ def main():
         orig = [rgb8_to_lvl(*ref[i]) for i in range(NUM_SLOTS)]
     else:
         orig = read_original_palette(args.binary, ORIGINAL_PALETTE_OFFSETS[args.image])
+
+    high_ref_lvl = None
+    if args.high_reference:
+        _, href = _read_indexed_png_raw(Path(args.high_reference))
+        href = list(href) + [(0, 0, 0)] * (NUM_SLOTS - len(href))
+        high_ref_lvl = [rgb8_to_lvl(*href[i]) for i in range(len(orig), NUM_SLOTS)]
+
     # lowest index wins when the original palette repeats a colour
     orig_pos = {}
     for i, L in enumerate(orig):
@@ -155,7 +176,8 @@ def main():
     used = {L for L, c in lvl_hist.items() if c > 0}
 
     reserved = dict(SPRITE_SLOTS) if args.reserve_sprites else {}
-    free_slots = [i for i in range(len(orig), NUM_SLOTS) if i not in reserved]
+    free_slots = ([] if high_ref_lvl is not None else
+                  [i for i in range(len(orig), NUM_SLOTS) if i not in reserved])
 
     matched = sorted(used & set(orig), key=lambda L: orig_pos[L])
     extras = sorted((L for L in used if L not in orig_pos), key=lambda L: -lvl_hist[L])
@@ -165,8 +187,12 @@ def main():
           f'({len(matched)} match the original palette, {len(extras)} extra)')
     print(f'pinned palette has {len(set(orig))} distinct entries; '
           f'{len(set(orig)) - len(matched)} unused by this image')
-    print(f'free high slots: {len(free_slots)}'
-          + (f' (sprite slots {sorted(reserved)} reserved)' if reserved else ''))
+    if high_ref_lvl is not None:
+        print(f'slots {len(orig)}-{NUM_SLOTS - 1} pinned to '
+              f'{Path(args.high_reference).name}\'s high slots')
+    else:
+        print(f'free high slots: {len(free_slots)}'
+              + (f' (sprite slots {sorted(reserved)} reserved)' if reserved else ''))
 
     kept, merged = extras[:len(free_slots)], extras[len(free_slots):]
 
@@ -176,6 +202,9 @@ def main():
         tgt[i] = L
     for slot, L in reserved.items():
         tgt[slot] = L
+    if high_ref_lvl is not None:
+        for slot, L in zip(range(len(orig), NUM_SLOTS), high_ref_lvl):
+            tgt[slot] = L
     extra_slot = {}
     for slot, L in zip(free_slots, kept):
         tgt[slot] = L
@@ -227,6 +256,11 @@ def main():
     if reserved:
         print('verify sprite slots: ' + ', '.join(
             f'{s}=${rgb8_to_lvl(*chk_pal[s]):03x}' for s in sorted(reserved)))
+    if high_ref_lvl is not None:
+        hok = all(rgb8_to_lvl(*chk_pal[len(orig) + i]) == L
+                  for i, L in enumerate(high_ref_lvl))
+        print(f'verify indices {len(orig)}-{NUM_SLOTS-1} == '
+              f'{Path(args.high_reference).name}\'s high slots: {hok}')
     ch = collections.Counter(chk_px)
     lo = sum(c for i, c in ch.items() if i < 16)
     hi = sum(c for i, c in ch.items() if i >= 16)
