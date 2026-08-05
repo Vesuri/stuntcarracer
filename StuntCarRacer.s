@@ -20213,7 +20213,7 @@ initializeGraphicsData:
 	CMP.W	#$0034,D4
 	BNE	.loadGraphicsElementLoop
 	MOVE.L	A1,-(SP)
-	MOVE.L	#imageMainGameBackground,A0
+	MOVE.L	replacementImagePtrs,A0		; originally #imageMainGameBackground
 	MOVE.L	#bitplaneMaskTable,A1
 	JSR	decompressRLEObjectToMask
 	MOVE.L	(SP)+,A1
