@@ -1,7 +1,8 @@
 # tools/
 
 Helper scripts for working with the game's image assets. Run from the project
-root; Python 3 only, no external dependencies.
+root. Python 3 with no external dependencies, except `quantize_artwork.py`
+(and the one-off `remap_wip2.py`), which need Pillow and NumPy.
 
 ## Workflow
 
@@ -156,6 +157,69 @@ colour registers in 32-colour mode, so some of them are not free — see
 `enhanced-graphics.md` for which entries are reserved and the safe-to-edit
 regions of each image.
 
+## quantize_artwork.py
+
+```
+python3 tools/quantize_artwork.py [--image NAME | --low-reference PNG] \
+    [--protect-rect X,Y,W,H ...] [--no-protect] [--high-colors N] \
+    [--dither none|fs] [--resample lanczos|bicubic|bilinear|box] SRC DST
+```
+
+Turns a **high-resolution, full-colour** artwork into a 320×200 indexed PNG
+ready for `build_images.py --32`.  Use this when the source is a painting or a
+render rather than an already-indexed 320×200 edit — the other tools all expect
+the latter.  It does three things at once:
+
+1. **Scales** the source to 320×200 (Lanczos by default; warns if the source
+   aspect is not 1.6).
+2. **Pins indices 0–15** to a fixed palette — `--image NAME` reads that image's
+   original palette out of `scr.exe.decrypted`, `--low-reference PNG` takes the
+   first 16 PLTE entries of another PNG.  This is the same guarantee
+   `remap_to_original_palette.py` provides, so a source that went through this
+   tool does **not** need the remap step afterwards.
+3. **Chooses indices 16–31** for the pixels that may use them.  The Amiga's
+   reproducible colour space is only 8×8×8 = 512 colours, so rather than
+   clustering and snapping afterwards (which collapses slots onto duplicates)
+   the tool searches that whole space: each free slot goes to the ladder colour
+   that most reduces the total weighted error, given the pinned 16 and the
+   slots already picked.  Error is squared RGB distance weighted by BT.601 luma.
+
+### Protected rectangles
+
+Some screens have regions the game draws into with **4 bitplanes only**, so it
+cannot set or clear the 5th plane there; artwork in those regions must stay
+within indices 0–15 or the game's own drawing comes out in colours 16–31.  The
+tool restricts those pixels to the low palette, excludes them from the high-slot
+optimization, and verifies the result:
+
+| Image | Protected rectangle | Why |
+|---|---|---|
+| `imageTrackPreviewBackground` | x 32–287, y 16–143 (256×128) | the 3-D track-preview viewport (`clearPlane5Rect`, `StuntCarRacer.s:2498`) |
+
+That default applies automatically with `--image imageTrackPreviewBackground`.
+Override with `--protect-rect X,Y,W,H` (repeatable) or drop it with
+`--no-protect`.  The run prints how many pixels can use 16–31, the error before
+and after each chosen colour, and the per-region error; it exits non-zero if any
+protected pixel ended up on a high index.
+
+### Dithering
+
+`--dither none` (default) keeps flat areas flat — better for RLE size and it
+avoids speckle under the wireframe.  `--dither fs` is Floyd–Steinberg honouring
+the per-pixel palette restriction; it helps smooth gradients but on the track
+preview it measurably *hurt* (mean error 959 vs 275) because the protected area
+only has 15 colours to diffuse across.  Compare both before committing to it.
+
+Track preview, end to end:
+
+```
+python3 tools/quantize_artwork.py --image imageTrackPreviewBackground \
+    images/enhanced/imageTrackPreviewBackground_chatgpt.png \
+    images/enhanced/imageTrackPreviewBackground_32c.png
+python3 tools/build_images.py --32 \
+    'imageTrackPreviewBackground=images/enhanced/imageTrackPreviewBackground_32c.png'
+```
+
 ## remap_to_original_palette.py
 
 ```
@@ -193,7 +257,7 @@ have a fixed meaning and cannot be reassigned freely.
 | `imageMainGameBackground` | `--image imageMainGameBackground --reserve-sprites` | HUD colours by index; palette 16–31 drives the car sprite registers |
 | `imagePlayers` | `--image imagePlayers` | no sprites on the results screen; 16–31 free for the artist |
 | `imageMenuScreen` | `--image imageMenuScreen --high-reference .../imagePlayers_remapped.png` | portraits are blitted from `imagePlayers` onto menu-based screens, so 16–31 must mean the same colour in both; index 0 (background) stays independent |
-| `imageTrackPreviewBackground` | `--image imageTrackPreviewBackground` | 3-D preview and text pick colours by index |
+| `imageTrackPreviewBackground` | `--image imageTrackPreviewBackground` | 3-D preview and text pick colours by index; the viewport rect is also 0–15 only — see `quantize_artwork.py` |
 | `imageStandingsBackground` | `--image imageStandingsBackground` | records table text picks colours by index |
 | `imageWreck`/`Won`/`Lost`/`Promotion` | **none** | nothing is drawn over them and no index is referenced — all 32 free |
 
