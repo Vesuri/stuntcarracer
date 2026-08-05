@@ -2495,6 +2495,38 @@ clearPlane5:					; added
 	MOVEM.L	(SP)+,D3/A1			; added
 	RTS					; added
 
+; Blank the 5th bitplane inside the 3-D track-preview viewport only. The
+; wireframe renderer writes planes 0-3 exclusively (plotPixel, scanlinePolygonFill)
+; and copyTrackPreviewRegion restores only those four planes, so a plane-4 bit the
+; background image sets inside the window would push every track pixel drawn there
+; into colours 16-31. Clearing just the window keeps the track in colours 0-15
+; while a 32-colour preview background keeps its high-palette detail everywhere
+; else. Called once per screen entry - nothing dirties plane 5 afterwards.
+; Window origin is viewportTopAddress = renderFrameBuffer+$284 (x 32, y 16); the
+; renderer clips to X 0..255 / Y 0..127 (drawClippedLine, renderTrackNear).
+PREVIEW_WINDOW_TOP	equ	16		; added - first scanline of the viewport
+PREVIEW_WINDOW_LEFT	equ	4		; added - first byte column (x = 32)
+PREVIEW_WINDOW_ROWS	equ	128		; added - viewport height in scanlines
+PREVIEW_WINDOW_LONGS	equ	8		; added - viewport width, 256 px = 8 longwords
+
+clearPlane5Rect:				; added
+	MOVEM.L	D5/A1,-(SP)			; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	ADD.L	#PREVIEW_WINDOW_TOP*40+PREVIEW_WINDOW_LEFT,A1	; added
+	MOVE.W	#PREVIEW_WINDOW_ROWS-1,D5	; added
+.row:	CLR.L	(A1)+				; added - 8 longwords = 256 px, unrolled;
+	CLR.L	(A1)+				; added - even addresses, though not $4-aligned
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	ADD.L	#40-PREVIEW_WINDOW_LONGS*4,A1	; added - advance to the next row
+	DBRA	D5,.row				; added
+	MOVEM.L	(SP)+,D5/A1			; added
+	RTS					; added
+
 ; Copy one 80x55 portrait's 5th bitplane. plane5SourcePtr / plane5DestPtr are
 ; set up by renderPlayerDisplay; both have a 40-byte planar row stride.
 ; Blank one portrait's 5th bitplane, for the masked render path: its mask applies
@@ -6753,6 +6785,7 @@ runTrackPreviewScreen:
 	beq.s	.previewPlane5Clear		; added
 	MOVE.L	bitplane5Pointer,A1		; added
 	JSR	decompressRLEBitplane		; added
+	JSR	clearPlane5Rect			; added - keep the 3-D window in colours 0-15
 	bra.s	.previewPlane5Done		; added
 .previewPlane5Clear:				; added
 	JSR	clearPlane5			; added - 16-colour image: blank the 5th bitplane
