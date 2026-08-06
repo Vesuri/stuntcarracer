@@ -163,10 +163,14 @@ _Start						;A0 = resident loader
 	move.l	a5,a1				; added - enhanced graphics are active, so run
 	adda.l	#gameDataSize+62,a1		; added - every screen in 5 bitplanes; the plane
 	move.b	#1,(a1)				; added - count then never changes mid-fade
+	moveq	#1,d2				; added - running "every image is 12-bit" flag,
+						; added - cleared by chk12BitPalette below. d2 is
+						; added - dead here; the disk loads reload it.
 	lea	enhancedImageMainGameBackgroundRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0				; d0 = block start
 	movea.l	d0,a1
+	bsr	chk12BitPalette			; added
 	btst	#6,(a1)				; bit 6 set = 32-colour (flag=$C0)
 	beq.s	.bg16colour
 	add.l	#$42,d0				; 32-colour: data at block+$42
@@ -182,6 +186,7 @@ _Start						;A0 = resident loader
 	move.l	(a0),d0
 	add.l	a0,d0				; d0 = block start
 	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	btst	#6,(a1)				; added - bit 6 set = 32-colour
 	beq.s	.menu16colour			; added
 	add.l	#$42,d0				; added - 32-colour: data at block+$42
@@ -197,6 +202,7 @@ _Start						;A0 = resident loader
 	move.l	(a0),d0
 	add.l	a0,d0				; d0 = block start
 	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	btst	#6,(a1)				; added - bit 6 set = 32-colour
 	beq.s	.preview16colour		; added
 	add.l	#$42,d0				; added - 32-colour: data at block+$42
@@ -212,6 +218,7 @@ _Start						;A0 = resident loader
 	move.l	(a0),d0
 	add.l	a0,d0				; d0 = block start
 	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	btst	#6,(a1)				; added - bit 6 set = 32-colour
 	beq.s	.standings16colour		; added
 	add.l	#$42,d0				; added - 32-colour: data at block+$42
@@ -227,6 +234,7 @@ _Start						;A0 = resident loader
 	move.l	(a0),d0
 	add.l	a0,d0				; d0 = block start
 	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	btst	#6,(a1)				; added - bit 6 set = 32-colour (flag=$40)
 	beq.s	.players16colour		; added
 	add.l	#$42,d0				; added - 32-colour: data at block+$42
@@ -244,19 +252,30 @@ _Start						;A0 = resident loader
 	lea	enhancedImageWreckRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0
+	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	move.l	d0,5*4(a3)			; [5] imageWreck block
 	lea	enhancedImageWonRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0
+	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	move.l	d0,6*4(a3)			; [6] imageWon block
 	lea	enhancedImageLostRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0
+	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	move.l	d0,7*4(a3)			; [7] imageLost block
 	lea	enhancedImagePromotionRef(pc),a0
 	move.l	(a0),d0
 	add.l	a0,d0
+	movea.l	d0,a1				; added
+	bsr	chk12BitPalette			; added
 	move.l	d0,8*4(a3)			; [8] imagePromotion block
+	move.l	a5,a1				; added - twelveBitPalette in game BSS: set only
+	adda.l	#gameDataSize+66,a1		; added - if all nine images declared bit 5, so
+	move.b	d2,(a1)				; added - one legacy file keeps the whole game 9-bit
 .noEnhancedGfx:
 
 	; Probe disk marker to determine image version
@@ -362,6 +381,19 @@ _Start						;A0 = resident loader
 	move.l	_resload,a2
 	pea	TDREASON_OK
 	jmp	resload_Abort(a2)
+
+; Clear d2 unless the replacement image at (a1) declares a 12-bit palette.
+; Header flag byte: bit 7 = RLE, bit 6 = 32-colour, bit 5 = palette nibbles hold
+; true Amiga 0-15 values rather than Atari-ST levels 0-7. Only the game's
+; copyPaletteToCopperlist cares, and it is one global switch, so a single legacy
+; image has to drag every screen back to the 9-bit ladder.
+; In: a1 = image block start. Out: d2 cleared on a legacy image. Clobbers nothing else.
+chk12BitPalette:				; added
+	btst	#5,(a1)				; added
+	bne.s	.is12bit			; added
+	moveq	#0,d2				; added
+.is12bit:					; added
+	rts					; added
 
 _resload	dc.l	0			;Resident loader
 _Tags		dc.l	WHDLTAG_CUSTOM1_GET

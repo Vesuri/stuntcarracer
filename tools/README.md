@@ -65,9 +65,9 @@ file is self-describing:
 
 | Offset | Size | Meaning |
 |---|---|---|
-| 0  | 1   | flag — `$80` = RLE, `$00` = raw word-interleaved |
+| 0  | 1   | flag — bit 7 `$80` = RLE (else raw word-interleaved), bit 5 `$20` = 12-bit palette |
 | 1  | 1   | padding |
-| 2  | 32  | palette (16 big-endian `$0RGB` words; levels `0..7` per channel) |
+| 2  | 32  | palette (16 big-endian `$0RGB` words) |
 | 34 | var | image data |
 
 This is the same layout `displayResultScreen` at `StuntCarRacer.s:2710`
@@ -90,10 +90,23 @@ slightly faster to load but ~30–50% larger on disk).
 
 ### Palette quantization
 
-PNG palette colors are quantized to the eight Amiga levels per channel
-(`$00 $33 $55 $77 $99 $BB $DD $FF`). The first out-of-quantization color
-prints a one-time note; further mismatches are suppressed. If you stay on
-those eight values per channel, no quantization happens.
+PNG palette colors are quantized to the **sixteen** Amiga levels per channel —
+the multiples of 17 (`$00 $11 $22 … $EE $FF`), i.e. the full 12-bit `$0RGB`
+range the hardware's COLORxx registers have always had. The first
+out-of-quantization color prints a one-time note; further mismatches are
+suppressed. If you stay on those sixteen values per channel, no quantization
+happens.
+
+The stored palette word is `$0RGB` either way; **flag bit 5** says its nibbles
+hold true 0-15 values rather than the Atari-ST-derived levels 0-7 that the
+game's `copyPaletteToCopperlist` expands to `0,3,5,7,9,B,D,F`. Pass `--9bit` to
+emit the old form — only needed for a slave built before 12-bit support.
+
+The switch is all-or-nothing: the slave ANDs bit 5 across all nine images before
+setting the game's `twelveBitPalette`, so a single legacy file drags every screen
+back to the 8-level ladder. Rebuild all nine together. The old eight levels are a
+subset of the new sixteen, so ladder-quantized artwork is unaffected by the
+change.
 
 ### Image constraints
 
@@ -123,18 +136,18 @@ The PNG must use at most 32 distinct palette indices.  There are two 32-colour
 output formats; both share a `$42`-byte header and are distinguished by bit 7
 of the flag byte.
 
-**RLE (flag `$C0`)** — the default:
+**RLE (flag `$C0`, or `$E0` with the 12-bit palette bit)** — the default:
 
 | Offset | Size | Meaning |
 |---|---|---|
-| 0  | 1   | flag `$C0` (bit 7 = RLE, bit 6 = 32-colour) |
+| 0  | 1   | flag `$C0` (bit 7 = RLE, bit 6 = 32-colour, bit 5 = 12-bit palette) |
 | 1  | 1   | padding |
 | 2  | 32  | palette colours  0–15 (`$0RGB` words, levels `0..7` per channel) |
 | 34 | 32  | palette colours 16–31 (same format) |
 | 66 | var | 4-plane RLE data (planes 0–3, `decompressRLEImage`) |
 | —  | var | 1-plane RLE data (plane 4, `decompressRLEBitplane`) |
 
-**Raw (flag `$40`)** — used automatically for the always-raw images
+**Raw (flag `$40`, or `$60` with the 12-bit palette bit)** — used automatically for the always-raw images
 (`imagePlayers`, `imageMenuScreen`) and with `--32 --raw`.  Their renderers blit
 sub-regions straight out of the image data in memory, which rules out RLE:
 
@@ -178,11 +191,13 @@ the latter.  It does three things at once:
    `remap_to_original_palette.py` provides, so a source that went through this
    tool does **not** need the remap step afterwards.
 3. **Chooses indices 16–31** for the pixels that may use them.  The Amiga's
-   reproducible colour space is only 8×8×8 = 512 colours, so rather than
-   clustering and snapping afterwards (which collapses slots onto duplicates)
-   the tool searches that whole space: each free slot goes to the ladder colour
-   that most reduces the total weighted error, given the pinned 16 and the
-   slots already picked.  Error is squared RGB distance weighted by BT.601 luma.
+   reproducible colour space is 16×16×16 = 4096 colours (512 with `--9bit`), so
+   rather than clustering and snapping afterwards (which collapses slots onto
+   duplicates) the tool searches that whole space: each free slot goes to the
+   ladder colour that most reduces the total weighted error, given the pinned 16
+   and the slots already picked.  Error is squared RGB distance weighted by
+   BT.601 luma.  Keep `--9bit` in step with `build_images.py --9bit`; a full
+   4096-candidate run takes roughly 10 s.
 
 ### Protected rectangles
 

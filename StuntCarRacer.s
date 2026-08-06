@@ -837,7 +837,20 @@ copyPalette:
 	DBRA	D0,.copyLoop
 	RTS
 
+; Push the runtime palette arrays into the copperlist COLOR registers.
+;
+; The Amiga's COLORxx registers are 12-bit ($0RGB, 0-15 per channel), but the
+; original data format is the Atari ST's 9-bit one: each nibble holds 0-7 and
+; this routine expands it to the ladder 0,3,5,7,9,B,D,F on the way out (double
+; the level, then set the low bit of every non-zero nibble). Note the ASL.W
+; doubles the whole word at once, which only works because no nibble exceeds 7 -
+; an 8 would carry into the next channel.
+;
+; When twelveBitPalette is set, every palette in play already holds true 0-15
+; nibbles and goes to the copper untouched.
 copyPaletteToCopperlist:
+	tst.b	twelveBitPalette		; added - 12-bit palettes need no expansion
+	bne	.twelveBit			; added
 	MOVE.L	#palette,A1
 	MOVE.L	#copperlistColor0,A0
 	MOVE.W	#$000F,D4
@@ -883,6 +896,26 @@ copyPaletteToCopperlist:
 	ADD.L	#$00000002,A0
 	DBRA	D4,.copyLoop32
 .done:	RTS
+
+.twelveBit:					; added - straight copy, no level expansion
+	MOVE.L	#palette,A1			; added
+	MOVE.L	#copperlistColor0,A0		; added
+	MOVE.W	#$000F,D4			; added
+.copyLoop12:					; added
+	MOVE.W	(A1)+,(A0)+			; added
+	ADDQ.L	#$02,A0				; added - copperlist entry is MOVE #col,COLORxx
+	DBRA	D4,.copyLoop12			; added
+	TST.B	thirtyTwoColorMode		; added
+	BEQ.S	.done12				; added
+	MOVE.L	#palette32,A1			; added
+	MOVE.L	#copperlistColor16,A0		; added
+	MOVE.W	#$000F,D4			; added
+.copyLoop32_12:					; added
+	MOVE.W	(A1)+,(A0)+			; added
+	ADDQ.L	#$02,A0				; added
+	DBRA	D4,.copyLoop32_12		; added
+.done12:					; added
+	RTS					; added
 
 copyMainGameBackground:
 	MOVE.L	frameBuffers,A1
@@ -13568,7 +13601,12 @@ lbC055DEE:
 	TST.B	D7
 	BEQ	lbC055E24
 	JSR	copyPaletteToCopperlist
-	MOVE.B	#$02,framesToWait
+	MOVE.B	#$02,D0				; added - a 9-bit fade crosses at most 7 levels,
+	TST.B	twelveBitPalette		; added - a 12-bit one 15. Stepping twice as
+	BEQ.S	.cadenceOk			; added - often keeps the wall-clock duration of
+	MOVE.B	#$01,D0				; added - every fade the same as the original.
+.cadenceOk:					; added
+	MOVE.B	D0,framesToWait
 lbC055E16:
 	TST.B	framesToWait
 	BNE	lbC055E16
@@ -13581,7 +13619,9 @@ lbC055E24:
 
 ; Step the 16 colours in palette32 one level towards palette32Target, the same
 ; way animatePaletteToTarget steps palette towards sourcePalette. Values are
-; stored levels ($0RGB, 0-7 per channel); copyPaletteToCopperlist expands them.
+; stored $0RGB words - Atari-ST levels 0-7 that copyPaletteToCopperlist expands,
+; or true Amiga 0-15 nibbles when twelveBitPalette is set. The per-channel
+; shift-and-mask below is range-agnostic, so it needs no change either way.
 ; Returns D0 = number of channels that still moved (0 when the fade is done).
 stepPalette32Fade:				; added
 	MOVEM.L	D1-D7/A0/A1,-(SP)		; added
@@ -20643,6 +20683,14 @@ preview32color:
 	ds.b	1				; added - set by slave when replacementImagePtrs[2] is 32-colour
 standings32color:
 	ds.b	1				; added - set by slave when replacementImagePtrs[3] is 32-colour
+twelveBitPalette:
+	ds.b	1				; added - set by slave when EVERY replacement image declares
+						; a 12-bit palette (header flag bit 5). The stored palette
+						; word is $0RGB either way; this says whether the nibbles
+						; hold Atari-ST levels 0-7 that copyPaletteToCopperlist must
+						; expand to the 8-value ladder, or true Amiga 0-15 values
+						; that go to the copper untouched. All-or-nothing on purpose:
+						; one legacy image and the whole game stays 9-bit.
 	even					; added - keep any following data word-aligned
 
 ORIGINAL_LOAD_ADDRESS		equ	$e700

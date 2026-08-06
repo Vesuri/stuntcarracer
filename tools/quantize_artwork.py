@@ -10,7 +10,7 @@ colours, with two constraints the game imposes:
 
 Indices 16-31 are chosen freely, optimized for the pixels that are allowed to
 use them (i.e. everything outside the protected rectangles).  The Amiga's
-reproducible colour space is only 8x8x8 = 512 colours (see tools/README.md), so
+reproducible colour space is 16x16x16 = 4096 colours (512 with --9bit), so
 instead of a k-means with a lossy snap afterwards the tool searches that whole
 space directly: each free slot goes to the ladder colour that reduces the total
 weighted error the most, given the pinned palette and the slots picked so far.
@@ -70,15 +70,22 @@ RESAMPLE = {
 }
 
 
-def snap_to_ladder(rgb):
-    """Snap 8-bit RGB to the eight reproducible Amiga levels per channel."""
+def snap_to_ladder(rgb, bits12=True):
+    """Snap 8-bit RGB to the reproducible Amiga levels per channel.
+
+    12-bit: 16 levels, the multiples of 17.  9-bit: the original eight-value
+    ladder that copyPaletteToCopperlist expands to.
+    """
     arr = np.atleast_2d(np.asarray(rgb, dtype=np.float64))
     out = np.empty_like(arr)
     for i in range(arr.shape[0]):
         for c in range(3):
-            level = q(int(round(min(255, max(0, arr[i, c])))))
-            e = expand(level)
-            out[i, c] = (e << 4) | e
+            v = int(round(min(255, max(0, arr[i, c]))))
+            if bits12:
+                out[i, c] = min(15, max(0, (v + 8) // 17)) * 17
+            else:
+                e = expand(q(v))
+                out[i, c] = (e << 4) | e
     return out
 
 
@@ -100,15 +107,34 @@ def nearest(pixels, palette, chunk=8192):
     return idx, dist
 
 
-def ladder_colors():
-    """All 512 colours the Amiga palette can reproduce, as 8-bit RGB."""
-    levels = [((expand(n) << 4) | expand(n)) for n in range(8)]
+def ladder_colors(bits12=True):
+    """Every colour the Amiga palette can reproduce, as 8-bit RGB.
+
+    12-bit (the hardware's real COLORxx width): 16 levels per channel, the
+    multiples of 17, giving 4096 colours.  9-bit (the original Atari-ST-derived
+    data format): 8 levels per channel, 512 colours.
+    """
+    if bits12:
+        levels = [n * 17 for n in range(16)]
+    else:
+        levels = [((expand(n) << 4) | expand(n)) for n in range(8)]
     return np.array([(r, g, b) for r in levels for g in levels for b in levels],
                     dtype=np.float64)
 
 
-def choose_high_colors(pixels, low, count, verbose=True):
-    """Greedily fill `count` free slots from the 512-colour ladder.
+def _sqdist_block(block, cand_w, cand_sq):
+    """Weighted squared distance for one pixel block against all candidates.
+
+    Expanded as |p|^2 - 2 p.q + |q|^2 so the inner term is a single GEMM; the
+    naive (N,K,3) broadcast needs 3x the memory and is far slower once K is
+    4096 rather than 512.  The constant |p|^2 is dropped -- it is the same for
+    every candidate, and both callers only compare across candidates.
+    """
+    return cand_sq[None, :] - 2.0 * (block @ cand_w.T)
+
+
+def choose_high_colors(pixels, low, count, verbose=True, bits12=True):
+    """Greedily fill `count` free slots from the reproducible colour space.
 
     Each round picks the candidate with the largest total error reduction over
     `pixels` -- i.e. sum over pixels of max(0, current_error - error_with_c).
@@ -119,34 +145,47 @@ def choose_high_colors(pixels, low, count, verbose=True):
     if count <= 0 or len(pixels) == 0:
         return np.zeros((0, 3), dtype=np.float64)
 
-    candidates = ladder_colors()
+    candidates = ladder_colors(bits12)
     have = {tuple(int(v) for v in c) for c in low}
     keep = np.array([tuple(int(v) for v in c) not in have for c in candidates])
     candidates = candidates[keep]
 
-    # Distance from every allowed pixel to every candidate, computed once.
-    dists = np.empty((len(pixels), len(candidates)), dtype=np.float32)
-    for start in range(0, len(pixels), 4096):
-        block = pixels[start:start + 4096]
-        dists[start:start + 4096] = weighted_sqdist(block, candidates)
+    # Precomputing the full (pixels x candidates) distance matrix would need
+    # ~1 GB at 4096 candidates, so recompute it in blocks each round instead.
+    w = CHANNEL_WEIGHTS
+    cand_w = candidates * w
+    cand_sq = (candidates * candidates * w).sum(axis=1)
+    pix_sq = (pixels * pixels * w).sum(axis=1)
+    BLOCK = 8192
 
     _, err = nearest(pixels, low)
-    err = err.astype(np.float32)
     if verbose:
         print(f'  pinned 0-15 alone: error {err.mean():8.1f}')
     chosen = []
+    alive = np.ones(len(candidates), dtype=bool)
     for _ in range(count):
-        gains = np.maximum(0.0, err[:, None] - dists).sum(axis=0)
+        gains = np.zeros(len(candidates), dtype=np.float64)
+        for start in range(0, len(pixels), BLOCK):
+            block = pixels[start:start + BLOCK]
+            d = _sqdist_block(block, cand_w, cand_sq) + pix_sq[start:start + BLOCK, None]
+            np.add(gains, np.maximum(0.0, err[start:start + BLOCK, None] - d).sum(axis=0),
+                   out=gains)
+        gains[~alive] = -np.inf
         best = int(np.argmax(gains))
         if gains[best] <= 0:
             break
         chosen.append(candidates[best])
-        err = np.minimum(err, dists[:, best])
+        alive[best] = False
+        # Fold the winner into the running error.
+        one = candidates[best:best + 1]
+        for start in range(0, len(pixels), BLOCK):
+            block = pixels[start:start + BLOCK]
+            d = weighted_sqdist(block, one)[:, 0]
+            np.minimum(err[start:start + BLOCK], d, out=err[start:start + BLOCK])
         if verbose:
             r, g, b = (int(v) for v in candidates[best])
             print(f'  slot {16 + len(chosen) - 1:2d}: #{r:02x}{g:02x}{b:02x}'
                   f'  error now {err.mean():8.1f}')
-        dists[:, best] = np.inf                       # never pick it twice
     return np.array(chosen, dtype=np.float64) if chosen else np.zeros((0, 3))
 
 
@@ -217,10 +256,15 @@ def main():
     ap.add_argument('--dither', choices=('none', 'fs'), default='none',
                     help='none (default, flat/RLE-friendly) or Floyd-Steinberg')
     ap.add_argument('--resample', choices=sorted(RESAMPLE), default='lanczos')
+    ap.add_argument('--9bit', dest='ninebit', action='store_true',
+                    help="Restrict the high slots to the original 512-colour "
+                         "Atari-ST space instead of the Amiga's native 4096. "
+                         "Match this to build_images.py --9bit.")
     ap.add_argument('--quiet', action='store_true',
                     help='do not list each chosen high colour')
     args = ap.parse_args()
 
+    bits12 = not args.ninebit
     if args.high_colors < 0 or args.high_colors > 16:
         ap.error('--high-colors must be 0..16')
 
@@ -239,7 +283,7 @@ def main():
         low_src = args.low_reference
     low = np.array(low_rgb, dtype=np.float64)
     off_ladder = [i for i, c in enumerate(low)
-                  if tuple(int(v) for v in snap_to_ladder([c])[0]) !=
+                  if tuple(int(v) for v in snap_to_ladder([c], bits12)[0]) !=
                   tuple(int(v) for v in c)]
     if off_ladder:
         print(f'  note: pinned palette entries {off_ladder} are not on the '
@@ -281,7 +325,7 @@ def main():
 
     # --- choose the free half of the palette -------------------------------
     high = choose_high_colors(pixels[allowed], low, args.high_colors,
-                              verbose=not args.quiet)
+                              verbose=not args.quiet, bits12=bits12)
     palette = np.vstack([low, high]) if len(high) else low
     print(f'high colours chosen: {len(high)}')
 

@@ -18,10 +18,20 @@ slave to load as alternative graphics.
     offset 66  variable  4-plane RLE data   (decompressRLEImage, planes 0-3)
     after      variable  1-plane RLE data   (decompressRLEBitplane, plane 4)
 
+Flag byte bits: 7 = RLE, 6 = 32-colour, 5 = 12-bit palette.
+
 The game detects 32-colour by testing bit 6 of the flag byte.  The data
 pointer written to replacementImagePtrs is block+$42 for 32-colour so that
 palette-low starts at ptr-$40 and palette-high at ptr-$20 (matching the
 ptr-$20 convention the display sites use to locate the palette).
+
+Bit 5 says the $0RGB palette nibbles hold true Amiga 0-15 values.  The
+original data format is the Atari ST's 9-bit one (nibbles 0-7, expanded to
+the 0,3,5,7,9,B,D,F ladder by copyPaletteToCopperlist); the Amiga's COLORxx
+registers are 12-bit, so bit 5 unlocks all 4096 colours.  The slave ANDs bit
+5 across all nine images and only then tells the game to stop expanding, so
+mixing a legacy file in drags every screen back to the 9-bit ladder.  Build
+with --9bit to reproduce the old output.
 """
 
 import argparse
@@ -39,6 +49,11 @@ IMAGE_BYTES = NUM_BITPLANES * BITPLANE_BYTES  # 32000
 
 MAX_COLORS_16 = 16
 MAX_COLORS_32 = 32
+
+# Flag byte bit 5: the palette nibbles hold true Amiga 0-15 values that go to
+# the copper untouched, rather than Atari-ST levels 0-7 that the game's
+# copyPaletteToCopperlist has to expand to the 0,3,5,7,9,B,D,F ladder.
+PALETTE12_FLAG = 0x20
 
 IMAGE_NAMES = [
     'imageMainGameBackground',
@@ -170,21 +185,35 @@ def read_indexed_png(path, *, max_colors=MAX_COLORS_16):
 # Palette: 8-bit RGB -> 4-bit Amiga ($0RGB before copyPaletteToCopperlist)
 # ---------------------------------------------------------------------------
 
-_EXPANDED_LEVELS = (0x00, 0x33, 0x55, 0x77, 0x99, 0xBB, 0xDD, 0xFF)
+# 9-bit (Atari ST heritage): the stored nibble is 0-7 and the game's
+# copyPaletteToCopperlist expands it to this ladder on the way to the copper.
+_EXPANDED_LEVELS_9 = (0x00, 0x33, 0x55, 0x77, 0x99, 0xBB, 0xDD, 0xFF)
+# 12-bit (the Amiga's actual COLORxx width): the stored nibble is 0-15 and goes
+# to the copper untouched, so the reproducible values are the multiples of 17.
+_EXPANDED_LEVELS_12 = tuple(i * 17 for i in range(16))
 
 
-def _quantize_channel(byte):
+def expanded_levels(bits12):
+    return _EXPANDED_LEVELS_12 if bits12 else _EXPANDED_LEVELS_9
+
+
+def _quantize_channel(byte, bits12=False):
+    if bits12:
+        return min(15, max(0, (byte + 8) // 17))
     return min(7, max(0, (byte + 18) // 36))
 
 
-def rgb_palette_to_amiga(palette, *, warn_label=None):
+def rgb_palette_to_amiga(palette, *, warn_label=None, bits12=False):
     """Convert 16 (r,g,b) tuples to 32 bytes of $0RGB palette words."""
     out = bytearray(32)
+    levels = expanded_levels(bits12)
     warned = False
     for i, (r, g, b) in enumerate(palette[:16]):
-        rn = _quantize_channel(r); gn = _quantize_channel(g); bn = _quantize_channel(b)
+        rn = _quantize_channel(r, bits12)
+        gn = _quantize_channel(g, bits12)
+        bn = _quantize_channel(b, bits12)
         if warn_label and not warned:
-            expected = (_EXPANDED_LEVELS[rn], _EXPANDED_LEVELS[gn], _EXPANDED_LEVELS[bn])
+            expected = (levels[rn], levels[gn], levels[bn])
             if (r, g, b) != expected:
                 print(f"  note: {warn_label} color {i} #{r:02x}{g:02x}{b:02x} "
                       f"quantized to #{expected[0]:02x}{expected[1]:02x}{expected[2]:02x} "
@@ -283,10 +312,11 @@ def encode_rle(planar, num_planes=NUM_BITPLANES):
 # Main
 # ---------------------------------------------------------------------------
 
-def build_one(image_path, name, *, raw):
+def build_one(image_path, name, *, raw, bits12=True):
     """Build a 16-colour self-describing image block."""
     pixels, palette = read_indexed_png(image_path, max_colors=MAX_COLORS_16)
-    pal_bytes = rgb_palette_to_amiga(palette[:16], warn_label=image_path.stem)
+    pal_bytes = rgb_palette_to_amiga(palette[:16], warn_label=image_path.stem,
+                                     bits12=bits12)
     planar = indexed_to_planar(pixels, num_planes=4)
     use_raw = raw or (name in ALWAYS_RAW)
     if use_raw:
@@ -295,10 +325,12 @@ def build_one(image_path, name, *, raw):
     else:
         flag = 0x80
         data = encode_rle(planar, num_planes=4)
+    if bits12:
+        flag |= PALETTE12_FLAG
     return bytes([flag, 0]) + pal_bytes + data
 
 
-def build_one_32(image_path):
+def build_one_32(image_path, *, bits12=True):
     """Build a 32-colour self-describing image block (flag=$C0, RLE only).
 
     Block layout (total header = $42 bytes):
@@ -314,16 +346,18 @@ def build_one_32(image_path):
       ptr - $20 = colours 16-31 palette start
     """
     pixels, palette = read_indexed_png(image_path, max_colors=MAX_COLORS_32)
-    pal_low  = rgb_palette_to_amiga(palette[:16],    warn_label=image_path.stem)
-    pal_high = rgb_palette_to_amiga(palette[16:32])
+    pal_low  = rgb_palette_to_amiga(palette[:16], warn_label=image_path.stem,
+                                    bits12=bits12)
+    pal_high = rgb_palette_to_amiga(palette[16:32], bits12=bits12)
     planar5  = indexed_to_planar(pixels, num_planes=5)
     rle_4    = encode_rle(planar5, num_planes=4)     # planes 0-3
     plane4   = planar5[4 * BITPLANE_BYTES:]          # plane 4 data (8000 bytes)
     rle_5    = encode_rle(plane4, num_planes=1)      # plane 4 only
-    return bytes([0xC0, 0]) + pal_low + pal_high + rle_4 + rle_5
+    flag = 0xC0 | (PALETTE12_FLAG if bits12 else 0)
+    return bytes([flag, 0]) + pal_low + pal_high + rle_4 + rle_5
 
 
-def build_one_32_raw(image_path):
+def build_one_32_raw(image_path, *, bits12=True):
     """Build a 32-colour RAW self-describing image block (flag=$40).
 
     Needed for images whose renderer blits sub-regions straight out of the
@@ -343,12 +377,14 @@ def build_one_32_raw(image_path):
     (offset = row*160 + word*8  ->  row*40 + word*2).
     """
     pixels, palette = read_indexed_png(image_path, max_colors=MAX_COLORS_32)
-    pal_low = rgb_palette_to_amiga(palette[:16], warn_label=image_path.stem)
-    pal_high = rgb_palette_to_amiga(palette[16:32])
+    pal_low = rgb_palette_to_amiga(palette[:16], warn_label=image_path.stem,
+                                   bits12=bits12)
+    pal_high = rgb_palette_to_amiga(palette[16:32], bits12=bits12)
     planar5 = indexed_to_planar(pixels, num_planes=5)
     interleaved = planar_to_interleaved(planar5)          # reads planes 0-3 only
     plane4 = planar5[4 * BITPLANE_BYTES:5 * BITPLANE_BYTES]
-    return bytes([0x40, 0]) + pal_low + pal_high + interleaved + plane4
+    flag = 0x40 | (PALETTE12_FLAG if bits12 else 0)
+    return bytes([flag, 0]) + pal_low + pal_high + interleaved + plane4
 
 
 def main():
@@ -361,6 +397,10 @@ def main():
                     help="Emit raw word-interleaved bitplanes (flag=$00) instead "
                          "of RLE-compressed data. Fixed 32034-byte payload. "
                          "imageMenuScreen is always built raw regardless of this flag.")
+    ap.add_argument("--9bit", dest="ninebit", action="store_true",
+                    help="Emit an Atari-ST 9-bit palette (nibbles 0-7, flag bit 5 "
+                         "clear) instead of the Amiga's native 12-bit one. Only "
+                         "needed to rebuild assets for a pre-12-bit slave.")
     ap.add_argument("--32", dest="colors32", action="store_true",
                     help="Build a 32-colour (5-bitplane) image block (flag=$C0). "
                          "The source PNG must use at most 32 distinct palette indices. "
@@ -372,6 +412,7 @@ def main():
                          "Default: every image whose PNG exists in --input-dir.")
     args = ap.parse_args()
 
+    bits12 = not args.ninebit
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -407,11 +448,11 @@ def main():
             if args.colors32:
                 # images whose renderer needs raw data cannot use RLE
                 if args.raw or name in ALWAYS_RAW:
-                    payload = build_one_32_raw(png_path)
+                    payload = build_one_32_raw(png_path, bits12=bits12)
                 else:
-                    payload = build_one_32(png_path)
+                    payload = build_one_32(png_path, bits12=bits12)
             else:
-                payload = build_one(png_path, name, raw=args.raw)
+                payload = build_one(png_path, name, raw=args.raw, bits12=bits12)
         except Exception as exc:
             print(f"failed {name}: {exc}", file=sys.stderr)
             return 1
@@ -428,8 +469,9 @@ def main():
         fmt = "raw"
     else:
         fmt = "RLE"
+    pal = "12-bit palette" if bits12 else "9-bit palette (legacy)"
     print(f"built {len(built)} image file(s) in {output_dir} "
-          f"({fmt}, always-raw: {', '.join(sorted(ALWAYS_RAW))}):")
+          f"({fmt}, {pal}, always-raw: {', '.join(sorted(ALWAYS_RAW))}):")
     for name, size in built:
         print(f"  {name:32}  {size:>6} bytes")
     return 0
