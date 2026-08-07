@@ -2570,6 +2570,13 @@ clearPlane5Rect:				; added
 ; its own portraits, so clearing here is enough for all of them.
 ; Footprint matches drawScreenFrame below: rows 65-66 x 64..255 (12 words from
 ; byte column 8), rows 67-191 x 32..255 (14 words from byte column 4).
+; One panel screen reaches past that: displayLeagueStandingsTable's third portrait
+; sits at x 176 shifted right by 4, so its last drawn pixels are x 256..257, two
+; columns beyond the fill. Those two get cleared as well, over the portrait's rows
+; only, so nothing plane 4 can hold on a panel screen outlives it. The shipped
+; imageMenuScreen has no plane-4 bits at x 256..257 (nor do the portrait cells'
+; last drawn columns, so today the blit writes nothing there), which is what makes
+; clearing outside drawScreenFrame's own footprint safe.
 PANEL_TOP		equ	65		; added - first frame-fill scanline
 PANEL_NARROW_LEFT	equ	8		; added - first byte column (x = 64)
 PANEL_NARROW_LONGS	equ	6		; added - 192 px = 6 longwords
@@ -2577,6 +2584,10 @@ PANEL_WIDE_TOP		equ	67		; added - first full-width scanline
 PANEL_WIDE_LEFT		equ	4		; added - first byte column (x = 32)
 PANEL_WIDE_LONGS	equ	7		; added - 224 px = 7 longwords
 PANEL_WIDE_ROWS		equ	125		; added - rows 67..191
+PANEL_SPILL_TOP		equ	86		; added - the standings portraits' first scanline
+PANEL_SPILL_LEFT	equ	32		; added - byte column holding x 256..263
+PANEL_SPILL_ROWS	equ	55		; added - portrait height
+PANEL_SPILL_KEEP	equ	$3F		; added - keep x 258..263, clear x 256..257
 
 clearPlane5Frame:				; added
 	MOVEM.L	D5/A1,-(SP)			; added
@@ -2605,26 +2616,60 @@ clearPlane5Frame:				; added
 	CLR.L	(A1)+				; added
 	ADD.L	#40-PANEL_WIDE_LONGS*4,A1	; added - advance to the next row
 	DBRA	D5,.wideRow			; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	ADD.L	#PANEL_SPILL_TOP*40+PANEL_SPILL_LEFT,A1	; added
+	MOVE.W	#PANEL_SPILL_ROWS-1,D5		; added
+.spillRow:					; added
+	AND.B	#PANEL_SPILL_KEEP,(A1)		; added - two pixels wide, so mask rather
+	ADD.L	#40,A1				; added - than clear the whole byte
+	DBRA	D5,.spillRow			; added
 	MOVEM.L	(SP)+,D5/A1			; added
 	RTS					; added
 
-; Copy one 80x55 portrait's 5th bitplane. plane5SourcePtr / plane5DestPtr are
-; set up by renderPlayerDisplay; both have a 40-byte planar row stride.
-; Blank one portrait's 5th bitplane, for the masked render path: its mask applies
-; to planes 0-3 only, so copying plane 4 would set high palette bits outside the
-; masked shape. Blanking keeps the portrait within colours 0-15 instead.
-blankPortraitPlane5:				; added
-	MOVEM.L	D3/D5/A1,-(SP)			; added
+; Copy one 80x55 portrait's 5th bitplane through the same edge mask and horizontal
+; shift applyPlayerGraphicsMasks / renderObjectColumn apply to planes 0-3, so the
+; high palette bit lands on exactly the pixels those four planes drew.
+; Per 16-pixel column, lbW04A49A holds a keep-the-destination mask (both halves of
+; the long are the same word, one per plane pair): $C000 on the first column and
+; $0003 on the last leave the portrait's 2-pixel border transparent. The shift is
+; lbB04A4BA's low nibble, so 80 source pixels land across six destination words.
+; Masking the source and rotating (mask:$FFFF) reproduces renderObjectColumn's
+; arithmetic exactly: the high half covers the current word, the low half the next
+; one, whose leading shifted-in bits the following column then preserves.
+blitPortraitPlane5Masked:			; added
+	MOVEM.L	D0/D2-D5/D7/A0-A2,-(SP)		; added
+	MOVE.L	plane5SourcePtr,A0		; added
 	MOVE.L	plane5DestPtr,A1		; added
+	MOVE.B	lbB04A4BA,D3			; added - horizontal shift, as in renderObjectColumn
+	AND.W	#$000F,D3			; added
 	MOVE.W	#$0036,D5			; added - 55 rows
-.row:	MOVE.W	#$0004,D3			; added - 5 words = 80 pixels
-.word:	CLR.W	(A1)+				; added
-	DBRA	D3,.word			; added
-	ADD.L	#$0000001E,A1			; added - 40 - 10 bytes consumed
+.row:	MOVE.L	#lbW04A49A,A2			; added - the mask repeats on every row
+	MOVE.W	#$0004,D4			; added - 5 words = 80 pixels
+.word:	MOVE.W	$0002(A2),D2			; added - the word renderObjectColumn is handed
+	ADDQ.L	#$04,A2				; added - table entries are longwords
+	MOVE.W	(A0)+,D0			; added - source pixels
+	MOVE.W	D2,D7				; added
+	NOT.W	D7				; added
+	AND.W	D7,D0				; added - drop the pixels the mask keeps
+	SWAP	D0				; added - data into the high word, ...
+	CLR.W	D0				; added
+	LSR.L	D3,D0				; added - ... shifted right, spilling into the low one
+	SWAP	D2				; added
+	MOVE.W	#$FFFF,D2			; added - keep this word's masked pixels, then all
+	ROR.L	D3,D2				; added - of the next word bar the shifted-in bits
+	AND.L	D2,(A1)				; added - the long spans both destination words
+	OR.L	D0,(A1)				; added
+	ADDQ.L	#$02,A1				; added
+	DBRA	D4,.word			; added
+	ADD.L	#$0000001E,A0			; added - 40 - 10 bytes consumed
+	ADD.L	#$0000001E,A1			; added
 	DBRA	D5,.row				; added
-	MOVEM.L	(SP)+,D3/D5/A1			; added
+	MOVEM.L	(SP)+,D0/D2-D5/D7/A0-A2		; added
 	RTS					; added
 
+; Copy one 80x55 portrait's 5th bitplane straight across, for the unshifted render
+; path. plane5SourcePtr / plane5DestPtr are set up by renderPlayerDisplay; both
+; have a 40-byte planar row stride.
 blitPortraitPlane5:				; added
 	MOVEM.L	D3/D5/A0/A1,-(SP)		; added
 	MOVE.L	plane5SourcePtr,A0		; added
@@ -2751,12 +2796,12 @@ lbC04A376:
 lbC04A38A:
 	tst.b	players32color			; added - portrait 5th bitplane. Needed on every
 	beq.s	.no5thPlaneBlit			; added - screen that blits a portrait, not just
-	tst.b	lbB04A4BA			; added - the results screen. The masked path only
-	bne.s	.blankPortraitPlane5		; added - masks planes 0-3, so blank plane 5 there
-	JSR	blitPortraitPlane5		; added - rather than copying it unmasked
+	tst.b	lbB04A4BA			; added - the results screen. The masked path shifts
+	bne.s	.maskedPortraitPlane5		; added - and masks planes 0-3, so plane 4 has to
+	JSR	blitPortraitPlane5		; added - go through the same shift and mask
 	bra.s	.no5thPlaneBlit			; added
-.blankPortraitPlane5:				; added
-	JSR	blankPortraitPlane5		; added
+.maskedPortraitPlane5:				; added
+	JSR	blitPortraitPlane5Masked	; added
 .no5thPlaneBlit:				; added
 	CMP.B	#$0B,lbB04A3A2
 	BNE	lbC04A39C
