@@ -2560,6 +2560,54 @@ clearPlane5Rect:				; added
 	MOVEM.L	(SP)+,D5/A1			; added
 	RTS					; added
 
+; Blank the 5th bitplane over exactly the area drawScreenFrame refills in planes
+; 0-3. The fill wipes the previous screen's contents from planes 0-3, but nothing
+; touches plane 4, so portraits an earlier screen blitted into the panel keep
+; setting the high palette bit and reappear in colours 16-31. That is what leaves
+; the results screen's winner / best-lap portraits (offsets $0E/$0F, bottom left
+; and bottom right) visible on the division standings screen and on the following
+; race's matchup screen. Every panel screen calls drawScreenFrame before it blits
+; its own portraits, so clearing here is enough for all of them.
+; Footprint matches drawScreenFrame below: rows 65-66 x 64..255 (12 words from
+; byte column 8), rows 67-191 x 32..255 (14 words from byte column 4).
+PANEL_TOP		equ	65		; added - first frame-fill scanline
+PANEL_NARROW_LEFT	equ	8		; added - first byte column (x = 64)
+PANEL_NARROW_LONGS	equ	6		; added - 192 px = 6 longwords
+PANEL_WIDE_TOP		equ	67		; added - first full-width scanline
+PANEL_WIDE_LEFT		equ	4		; added - first byte column (x = 32)
+PANEL_WIDE_LONGS	equ	7		; added - 224 px = 7 longwords
+PANEL_WIDE_ROWS		equ	125		; added - rows 67..191
+
+clearPlane5Frame:				; added
+	MOVEM.L	D5/A1,-(SP)			; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	ADD.L	#PANEL_TOP*40+PANEL_NARROW_LEFT,A1	; added
+	MOVE.W	#$0001,D5			; added - the two narrow rows, 65 and 66
+.narrowRow:					; added
+	CLR.L	(A1)+				; added - 6 longwords = 192 px, unrolled;
+	CLR.L	(A1)+				; added - even addresses, though not $4-aligned
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	ADD.L	#40-PANEL_NARROW_LONGS*4,A1	; added - advance to the next row
+	DBRA	D5,.narrowRow			; added
+	MOVE.L	bitplane5Pointer,A1		; added
+	ADD.L	#PANEL_WIDE_TOP*40+PANEL_WIDE_LEFT,A1	; added
+	MOVE.W	#PANEL_WIDE_ROWS-1,D5		; added
+.wideRow:					; added
+	CLR.L	(A1)+				; added - 7 longwords = 224 px
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	CLR.L	(A1)+				; added
+	ADD.L	#40-PANEL_WIDE_LONGS*4,A1	; added - advance to the next row
+	DBRA	D5,.wideRow			; added
+	MOVEM.L	(SP)+,D5/A1			; added
+	RTS					; added
+
 ; Copy one 80x55 portrait's 5th bitplane. plane5SourcePtr / plane5DestPtr are
 ; set up by renderPlayerDisplay; both have a 40-byte planar row stride.
 ; Blank one portrait's 5th bitplane, for the masked render path: its mask applies
@@ -14134,6 +14182,10 @@ lbC056554:
 	RTS
 
 drawScreenFrame:
+	tst.b	fivePlaneMode			; added - blank plane 5 wherever the frame fill
+	beq.s	.plane5Ok			; added - refreshes planes 0-3, so the previous
+	JSR	clearPlane5Frame		; added - screen's portraits cannot survive there
+.plane5Ok:					; added
 	MOVE.B	#$01,D0
 	JSR	setBackgroundColor
 	MOVE.B	#$03,D0
