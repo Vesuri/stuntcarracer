@@ -15852,7 +15852,7 @@ plotPixel:
 	not.b	d0
 	btst	#3,d0
 	bne	.highByte
-	jmp	(pc,d1.w)
+	jmp	*+2(pc,d1.w)		; explicit zero PC displacement (vasm/basm)
 	bclr	d0,$0001(a0)
 	bclr	d0,$1f41(a0)
 	bclr	d0,$3e81(a0)
@@ -16051,7 +16051,7 @@ plotPixel:
 ;	dc.b	$E8,$3E,$80,$01				; BSET/BCLR D0,$5DC0(A0)
 ;lbB057D25:
 ;	dc.b	$E8,$5D,$C0
-	jmp	(pc,d1.w)
+	jmp	*+2(pc,d1.w)		; explicit zero PC displacement (vasm/basm)
 	bclr	d0,$0000(a0)
 	bclr	d0,$1f40(a0)
 	bclr	d0,$3e80(a0)
@@ -16269,7 +16269,7 @@ applyBitplaneMask:
 	NOT.W	D2
 	moveq	#0,d0
 	move.b	lbB057D75,d0
-	jmp	(pc,d0.w)
+	jmp	*+2(pc,d0.w)		; explicit zero PC displacement (vasm/basm)
 ;	dc.w	$6000					; original BRA.W + self modifying code
 ;	ds.b	1
 ;lbB057D75:

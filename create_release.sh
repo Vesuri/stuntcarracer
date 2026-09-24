@@ -3,20 +3,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DIST="$SCRIPT_DIR/dist"
-PAL_SLAVE="$SCRIPT_DIR/StuntCarRacer.slave"
-NTSC_SLAVE="$SCRIPT_DIR/StuntTrackRacer.slave"
+PAL_SLAVE="$SCRIPT_DIR/build/StuntCarRacer.slave"
+NTSC_SLAVE="$SCRIPT_DIR/build/StuntTrackRacer.slave"
 OLD_DIR="StuntCarRacerHD"
 NEW_DIR="StuntCarRacerUnleashed"
 
-if [[ ! -f "$PAL_SLAVE" ]]; then
-    echo "Error: $PAL_SLAVE not found. Build with 'make' on the Amiga first."
-    exit 1
-fi
-
-if [[ ! -f "$NTSC_SLAVE" ]]; then
-    echo "Error: $NTSC_SLAVE not found. Build with 'make' on the Amiga first."
-    exit 1
-fi
+make -C "$SCRIPT_DIR" all
 
 rm -rf "$DIST"
 mkdir "$DIST"

@@ -1,4 +1,6 @@
+	ifnd	HOSTBUILD
 	incdir	"INCLUDE:"
+	endc
 	include	"whdload.i"
 	include	"whdmacros.i"
 	include	"libraries/dos_lib.i"
@@ -49,7 +51,11 @@ _name		dc.b	"Stunt Car Racer",0
 _copy		dc.b	"1989 Geoff Crammond/Microstyle",0
 _info		dc.b	"Framerate Unleashed by Vesuri",10
 		dc.b	"1.1 "
+	ifd	HOSTBUILD
+		incbin	"build/date"
+	else
 		incbin	"T:date"
+	endc
 		dc.b	-1,"This slave is partially based on the work by"
 		dc.b	10,"Codetapper/Action! & StingRay."
 		dc.b	-1,"F6: Toggle infinite boost"
@@ -64,7 +70,11 @@ _TimesName	dc.b	"StuntCarRacer.times",0,0,0,0
 _SaveName	dc.b	"StuntCarRacer.save",0,0,0,0
 		dc.b	"$VER: StuntCarRacer.slave 1.1 "
 	endc
+	ifd	HOSTBUILD
+		incbin	"build/date"
+	else
 		incbin	"T:date"
+	endc
 		dc.b	0
 		EVEN
 
@@ -78,7 +88,7 @@ _Start						;A0 = resident loader
 	lea	_Tags(pc),a0
 	jsr	resload_Control(a2)
 
-	lea	executable,a0
+	lea	executable(pc),a0
 	move.l	_expmem(pc),a1
 	move.l	a1,a5
 	move.l	#executableSize/4-1,d1
@@ -378,7 +388,7 @@ _Start						;A0 = resident loader
 	jsr	(a4)
 
 	; Quit
-	move.l	_resload,a2
+	move.l	_resload(pc),a2
 	pea	TDREASON_OK
 	jmp	resload_Abort(a2)
 
@@ -464,7 +474,7 @@ _Save		jsr	resload_SaveFileOffset(a2)
 		cmp.l	(a3),d4
 		blt.b	_DiskOpDone
 		move.l	d4,(a3)			;Save new file length
-		bra.b	_DiskOpDone
+		; Fall through: a zero-displacement BRA.B cannot be encoded.
 
 _DiskOpDone	movem.l	(sp)+,d1-d4/a0-a3
 		moveq	#0,d0
@@ -504,9 +514,19 @@ _Decrypt	movem.l	d0/d5-d7/a0,-(sp)	;Rob Northen Decryption (3 Key)
 		rts
 
 	ifd	NTSC
-executable:	incbin	"StuntTrackRacerWithoutData"
+executable:
+	ifd	HOSTBUILD
+	incbin	"build/StuntTrackRacerWithoutData"
 	else
-executable:	incbin	"StuntCarRacerWithoutData"
+	incbin	"StuntTrackRacerWithoutData"
+	endc
+	else
+executable:
+	ifd	HOSTBUILD
+	incbin	"build/StuntCarRacerWithoutData"
+	else
+	incbin	"StuntCarRacerWithoutData"
+	endc
 	endc
 executableSize	equ	*-executable
 

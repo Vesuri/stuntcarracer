@@ -1,57 +1,40 @@
-BASENAME = StuntCarRacer
-BASENAME_NTSC = StuntTrackRacer
-GAME = $(BASENAME)
-GAME_NTSC = $(BASENAME_NTSC)
-GAME_WITHOUT_DATA = $(BASENAME)WithoutData
-SLAVE = $(BASENAME).slave
-GAME_NTSC_WITHOUT_DATA = $(BASENAME_NTSC)WithoutData
-SLAVE_NTSC = $(BASENAME_NTSC).slave
-GAME_SOURCE = $(BASENAME).s
-SLAVE_SOURCE = $(BASENAME)Slave.s
+# Native host build; the original basm build is make -f makefile.amiga.
+VASM ?= $(HOME)/.local/vasmm68k_mot
+WHDLOAD ?= $(HOME)/.local/share/amiga/WHDLoad
+NDK ?= $(HOME)/.local/opt/m68k-amiga-elf/sys-include
+PYTHON ?= python3
+# WHDLoad resload_Relocate rejects vasm's compact HUNK_DREL32 records.
+GAMEFLAGS = -m68000 -devpac -Fhunkexe -kick1hunks -nosym -DWHDLOAD=1
+SLAVEFLAGS = -m68000 -pic -x -devpac -Fhunkexe -nosym -DHOSTBUILD=1
+INCLUDES = -I"$(WHDLOAD)/Include" -I"$(NDK)"
+GFX = $(wildcard gfx/*)
 
-#   O+      enable optimizer
-#   OG+     enable global forward-reference optimizing
-#   ODd-    disable mulu optimizing
-#   ODe-    disable muls optimizing
-#   w4-     disable 64k-access warnings
-#   wo-     disable optimizing warnings
-#   ws-     disable supervisor warnings (was SUPER)
-COMMON_OPTS = -ws-
-GAME_OPTS = -m1 $(COMMON_OPTS)
-GAME_NTSC_OPTS = -m1 -dNTSC=1 $(COMMON_OPTS)
-GAME_WITHOUT_DATA_OPTS = -dWHDLOAD=1 $(COMMON_OPTS)
-GAME_NTSC_WITHOUT_DATA_OPTS = -dWHDLOAD=1 -dNTSC=1 $(COMMON_OPTS)
-SLAVE_OPTS = -O+ -OG+ -ODd- -ODe- -w4- -wo- $(COMMON_OPTS)
-SLAVE_NTSC_OPTS = -O+ -OG+ -ODd- -ODe- -w4- -wo- -dNTSC=1 $(COMMON_OPTS)
+.PHONY: all clean dist distclean FORCE
+.DELETE_ON_ERROR:
+all: build/StuntCarRacer.slave build/StuntTrackRacer.slave
 
-all : $(GAME_WITHOUT_DATA) $(SLAVE) $(GAME_NTSC_WITHOUT_DATA) $(SLAVE_NTSC)
+# Always rebuild: SDK/tool/option changes must not leave stale release binaries.
+build/date: FORCE
+	@mkdir -p build
+	$(PYTHON) tools/build_date.py $@
 
-$(GAME) : $(GAME_SOURCE)
-	basm $(GAME_OPTS) -o$(GAME) $(GAME_SOURCE)
+build/StuntCarRacerWithoutData: StuntCarRacer.s FORCE | build/date
+	"$(VASM)" $(GAMEFLAGS) -o $@ $<
 
-$(GAME_NTSC) : $(GAME_SOURCE)
-	basm $(GAME_NTSC_OPTS) -o$(GAME_NTSC) $(GAME_SOURCE)
+build/StuntTrackRacerWithoutData: StuntCarRacer.s FORCE | build/date
+	"$(VASM)" $(GAMEFLAGS) -DNTSC=1 -o $@ $<
 
-$(GAME_WITHOUT_DATA) : $(GAME_SOURCE)
-	basm $(GAME_WITHOUT_DATA_OPTS) -o$(GAME_WITHOUT_DATA) $(GAME_SOURCE)
+build/StuntCarRacer.slave: StuntCarRacerSlave.s build/StuntCarRacerWithoutData build/date $(GFX)
+	"$(VASM)" $(SLAVEFLAGS) $(INCLUDES) -o $@ $<
 
-$(GAME_NTSC_WITHOUT_DATA) : $(GAME_SOURCE)
-	basm $(GAME_NTSC_WITHOUT_DATA_OPTS) -o$(GAME_NTSC_WITHOUT_DATA) $(GAME_SOURCE)
-
-$(SLAVE) : $(SLAVE_SOURCE) $(GAME_WITHOUT_DATA)
-	WDate >T:date
-	basm $(SLAVE_OPTS) -o$(SLAVE) $(SLAVE_SOURCE)
-
-$(SLAVE_NTSC) : $(SLAVE_SOURCE) $(GAME_NTSC_WITHOUT_DATA)
-	WDate >T:date
-	basm $(SLAVE_NTSC_OPTS) -o$(SLAVE_NTSC) $(SLAVE_SOURCE)
+build/StuntTrackRacer.slave: StuntCarRacerSlave.s build/StuntTrackRacerWithoutData build/date $(GFX)
+	"$(VASM)" $(SLAVEFLAGS) -DNTSC=1 $(INCLUDES) -o $@ $<
 
 dist:
 	./create_release.sh
 
-distclean:
-	rm -rf dist
-	$(MAKE) clean
-
 clean:
-	delete $(GAME) $(GAME_NTSC) $(GAME_WITHOUT_DATA) $(GAME_NTSC_WITHOUT_DATA) $(SLAVE) $(SLAVE_NTSC)
+	rm -rf build
+
+distclean: clean
+	rm -rf dist
